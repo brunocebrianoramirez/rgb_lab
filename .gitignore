@@ -1,0 +1,12 @@
+# configuração local do Claude Code — não faz parte do laboratório
+.claude/
+
+# as referências são pesadas (453 MB) e têm material de terceiros
+# (specimens comerciais da Envato, usados só como mapa de categorias).
+# Ficam na sua máquina, fora do repositório.
+REFERENCIAS/
+
+# lixo do sistema
+Thumbs.db
+desktop.ini
+.DS_Store

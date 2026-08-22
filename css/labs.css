@@ -1,0 +1,1586 @@
+/* ============================================================================
+   rgb_lab — LABORATÓRIOS
+   Workspace de vídeo (viewport + timeline), áudio e tipografia.
+   ============================================================================ */
+
+/* ================================================== 01 CATÁLOGO DE EFEITOS */
+.cat-search{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:var(--line) solid var(--rule)}
+.cat-search input{
+  flex:1;font-family:var(--mono);font-size:var(--t-label);letter-spacing:.06em;text-transform:uppercase;
+  border:none;background:none;padding:2px 0;
+}
+.cat-search input::placeholder{color:var(--ink-4)}
+.cat-search input:focus{outline:none}
+.chips{display:flex;flex-wrap:wrap;gap:0;border-bottom:var(--line) solid var(--rule)}
+.chip{
+  font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:4px 6px;
+  border-right:var(--line) solid var(--rule);border-bottom:var(--line) solid var(--rule);color:var(--ink-3);
+  flex:1 0 auto;
+}
+.chip:hover{background:var(--paper-2);color:var(--ink)}
+.chip.on{background:var(--ch);color:var(--on-ch)}
+
+/* ---- as OITO FAMÍLIAS ----------------------------------------------
+   A coluna é estreita, então cada chip é uma LINHA SÓ: filete de cor da
+   família à esquerda, nome curto no meio, quantidade à direita. O nome
+   inteiro da família fica na dica. Com os rótulos longos os chips
+   quebravam em duas linhas e a caixa (que tem altura máxima e rolagem
+   própria) escondia metade das famílias.                              */
+.fam-chip{
+  display:flex;align-items:center;gap:5px;flex:1 0 46%;text-align:left;
+  font-size:7.5px;letter-spacing:.09em;padding:5px 5px 5px 4px;
+  border-left:3px solid transparent;white-space:nowrap;overflow:hidden;
+}
+.chip-t{overflow:hidden;text-overflow:ellipsis}
+.chip-n{
+  margin-left:auto;font-weight:400;color:var(--ink-4);font-size:7.5px;letter-spacing:.02em;
+  flex:0 0 auto;
+}
+.fam-chip.on .chip-n{color:var(--on-ch);opacity:.8}
+.fam-chip:hover .chip-n{color:var(--ink-2)}
+.fxlist{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;min-height:0}
+.fxitem{
+  display:grid;grid-template-columns:20px minmax(0,1fr) 12px;gap:7px;align-items:center;width:100%;
+  padding:6px 9px;border-bottom:var(--line) solid var(--rule);text-align:left;
+}
+.fxitem:hover{background:var(--accent)}
+.fxitem:hover,.fxitem:hover *{color:var(--on-accent)}
+.fxno{font-family:var(--mono);font-size:8px;color:var(--ink-4);letter-spacing:.04em}
+.fxtxt{display:block;min-width:0}
+.fxnm{
+  display:block;font-family:var(--mono);font-size:var(--t-label);letter-spacing:.04em;
+  text-transform:uppercase;line-height:1.25;
+}
+.fxds{
+  display:block;font-family:var(--mono);font-size:8px;color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.04em;line-height:1.4;margin-top:2px;
+}
+.fxcat{width:9px;height:9px;border:var(--line) solid var(--ink)}
+.presetlist{flex:1;overflow-y:auto;min-height:0}
+.preset{
+  display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;
+  border-bottom:var(--line) solid var(--rule);
+}
+.preset:hover{background:var(--accent)}
+.preset:hover,.preset:hover *{color:var(--on-accent)}
+.preset .pno{font-family:var(--mono);font-size:8px;color:var(--ink-4)}
+.preset .pnm{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.1em;text-transform:uppercase;flex:1}
+.preset .pdel{font-family:var(--mono);font-size:9px;color:var(--ink-4);padding:2px 4px}
+.preset .pdel:hover{background:var(--sys-orange);color:var(--paper)}
+
+/* fonte de mídia */
+.srcgrid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.srcbtn{
+  padding:9px 8px;border-right:var(--line) solid var(--rule);border-bottom:var(--line) solid var(--rule);
+  display:flex;flex-direction:column;gap:5px;align-items:flex-start;
+}
+.srcbtn:nth-child(2n){border-right:none}
+.srcbtn:hover{background:var(--ink);color:var(--paper)}
+.srcbtn:hover .micro{color:var(--paper)}
+.srcbtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.25}
+/* SOBREPOR ocupa a linha inteira: é uma ação diferente das outras —
+   não acrescenta um plano, põe uma imagem POR CIMA de outra.        */
+.srcbtn-hi{
+  grid-column:1 / -1;flex-direction:row;align-items:center;gap:8px;
+  border-right:none;background:var(--paper-2);
+}
+.srcbtn-hi svg rect:last-child{fill:var(--ch);stroke:var(--ch);opacity:.55}
+.srcbtn-hi:hover svg rect:last-child{fill:var(--paper);stroke:var(--paper);opacity:.7}
+
+/* ========================================================== 02 VIEWPORT */
+.vp-bar{
+  flex:0 0 30px;display:flex;align-items:center;gap:0;background:var(--paper);
+  border-bottom:var(--line) solid var(--rule);
+}
+.vp-bar > *{border-right:var(--line) solid var(--rule);height:100%;display:flex;align-items:center;gap:6px;padding:0 9px}
+.vp-bar > .spacer{border-right:none;padding:0}
+.zbtn{
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;color:var(--ink-3);padding:0 7px;
+  height:100%;border-right:var(--line) solid var(--rule);
+}
+.zbtn:hover{background:var(--paper-2);color:var(--ink)}
+.zbtn.on{background:var(--ch);color:var(--on-ch)}
+.zbtn.hot{background:var(--accent);color:var(--on-accent)}
+.zbtn.hot:hover{background:var(--ink);color:var(--accent)}
+
+.vp{
+  flex:1;position:relative;overflow:hidden;min-height:0;
+  background:
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%) 0 0/16px 16px,
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%) 8px 8px/16px 16px,
+    var(--paper-2);
+  cursor:crosshair;
+}
+.vp.panning{cursor:grabbing}
+.vp-stage{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.vp-stage canvas{display:block;background:transparent;image-rendering:auto}
+.vp-stage.pixel canvas{image-rendering:pixelated}
+.vp-frame{position:absolute;inset:-1px;border:var(--line) solid var(--ink);pointer-events:none}
+.vp-mask{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.vp-mask.active{pointer-events:auto;cursor:move}
+
+/* réguas do viewport */
+.vp-ruler{position:absolute;background:var(--paper);z-index:3;pointer-events:none;font-family:var(--mono)}
+.vp-ruler.x{top:0;left:0;right:0;height:14px;border-bottom:var(--line) solid var(--rule)}
+.vp-ruler.y{top:0;left:0;bottom:0;width:14px;border-right:var(--line) solid var(--rule)}
+.vp-ruler canvas{width:100%;height:100%;display:block}
+
+/* metadados sobre o viewport (canto) */
+.vp-meta{
+  position:absolute;z-index:4;font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);background:var(--paper);padding:2px 6px;
+  border:var(--line) solid var(--rule);pointer-events:none;
+}
+.vp-meta.tl{top:20px;left:20px}
+.vp-meta.tr{top:20px;right:20px;text-align:right}
+.vp-meta.bl{bottom:20px;left:20px}
+.vp-meta.br{bottom:20px;right:20px;text-align:right}
+.vp-meta b{font-weight:500;color:var(--ink)}
+
+/* transporte */
+.transport{
+  flex:0 0 34px;display:flex;align-items:center;background:var(--paper);
+  border-top:2px solid var(--rule-2);
+}
+.transport > *{height:100%;display:flex;align-items:center;gap:7px;padding:0 9px;border-right:var(--line) solid var(--rule)}
+.transport > .spacer{border-right:none;padding:0}
+.tp{
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-2);padding:4px 7px;
+  border:var(--line) solid transparent;
+}
+.tp:hover{background:var(--paper-2);color:var(--ink);border-color:var(--rule)}
+.tp.play{background:var(--ink);color:var(--paper);min-width:34px;justify-content:center;display:flex}
+.tp.play:hover{background:var(--accent);color:var(--on-accent)}
+.tp.on{background:var(--accent);color:var(--on-accent);border-color:var(--ink)}
+.tc{font-family:var(--mono);font-size:var(--t-body);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.tc i{color:var(--ink-4);font-style:normal;margin:0 4px}
+.tc span{color:var(--ink-3)}
+.chk{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);cursor:pointer}
+.chk:hover{color:var(--ink)}
+
+/* ========================================================== 03 LINHA DO TEMPO
+   Mesa de edição não linear. Vocabulário gráfico:
+     · filete de 1px para tudo que é estrutura
+     · o canal do clipe (azul/verde/vermelho) só na aba lateral e no rótulo
+     · nenhum ícone decorativo: indicadores são letras e sinais de 8px
+   ========================================================================== */
+.timeline{
+  flex:0 0 var(--tl-h);height:var(--tl-h);background:var(--paper);border-top:2px solid var(--rule-2);
+  display:flex;flex-direction:column;position:relative;min-height:150px;
+}
+.tl-resize{position:absolute;top:-3px;left:0;right:0;height:6px;cursor:ns-resize;z-index:9}
+.tl-resize:hover{background:var(--ch)}
+
+/* ---------------------------------------------------------------- barra */
+.tl-toolbar{
+  flex:0 0 28px;display:flex;align-items:center;border-bottom:var(--line) solid var(--rule);
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+}
+.tl-toolbar::-webkit-scrollbar{height:0}
+.tl-toolbar > *{
+  height:100%;display:flex;align-items:center;gap:6px;padding:0 8px;
+  border-right:var(--line) solid var(--rule);flex:0 0 auto;
+}
+.tl-toolbar > .spacer{border-right:none;padding:0;flex:1 1 auto}
+.tgroup{gap:0 !important;padding:0 !important}
+.tbtn{
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);padding:0 8px;height:100%;border-right:var(--line) solid var(--rule);
+  display:flex;align-items:center;
+}
+.tgroup .tbtn:last-child{border-right:none}
+.tbtn:hover{background:var(--ink);color:var(--paper)}
+.tbtn.on{background:var(--ch);color:var(--on-ch)}
+.tbtn.danger:hover{background:var(--sys-orange);color:var(--paper)}
+
+/* ---------------------------------------------------------------- corpo */
+.tl-body{flex:1;display:flex;min-height:0;position:relative}
+
+.tl-heads{
+  width:196px;flex:0 0 196px;border-right:2px solid var(--rule-2);overflow:hidden;
+  background:var(--paper);
+}
+.thead-pad{border-bottom:var(--line) solid var(--rule-2);background:var(--paper-2)}
+.thead{
+  border-bottom:var(--line) solid var(--rule);display:flex;align-items:center;gap:4px;
+  padding:0 5px 0 0;position:relative;background:var(--paper);box-sizing:border-box;
+}
+/* aba de canal: a leitura mais rápida do tipo de pista */
+.thead::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+.thead.kvideo::before{background:var(--ch-video)}
+.thead.kaudio::before{background:var(--ch-audio)}
+.thead.kfx::before{background:var(--ink-3)}
+.thead.kvideo{background:color-mix(in srgb,var(--ch-video) 4%,var(--paper))}
+.thead.kaudio{background:color-mix(in srgb,var(--ch-audio) 4%,var(--paper))}
+.thead.kfx{background:var(--paper-2)}
+.thead.locked{opacity:.62}
+.thead .tno{
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.06em;width:30px;flex:0 0 30px;
+  margin-left:9px;font-weight:500;
+}
+.thead.kvideo .tno{color:var(--ch-video)}
+.thead.kaudio .tno{color:var(--ch-audio)}
+.thead.kfx .tno{color:var(--ink-2)}
+.thead .tname{
+  flex:1;font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.06em;text-transform:uppercase;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;outline:none;color:var(--ink-2);min-width:0;
+}
+.thead .tname:empty::before{content:"—";color:var(--ink-4)}
+.thead .tname:focus{background:var(--accent);color:var(--on-accent)}
+.tbtns{display:flex;gap:3px;flex:0 0 auto}
+.ticon{
+  width:21px;height:21px;flex:0 0 21px;border:var(--line) solid var(--rule);font-family:var(--mono);
+  font-size:9px;display:flex;align-items:center;justify-content:center;color:var(--ink-3);
+  background:var(--paper);border-radius:2px;
+}
+.ticon .tsvg{width:14px;height:14px;display:block;pointer-events:none}
+.ticon:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* desligado (escondido / mudo) e travado gritam de longe: laranja de aviso
+   para o que sumiu, tinta cheia para o que está preso.                   */
+.ticon.off{background:var(--sys-orange);border-color:var(--sys-orange);color:var(--paper)}
+.ticon.act{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* cadeado fechado é o estado mais perigoso da pista: fica vermelho */
+.ticon[data-act="lock"].act{background:var(--sys-red);border-color:var(--sys-red);color:#fff}
+.clip .fl.lk{display:inline-flex;align-items:center;padding:0 1px;border-color:var(--sys-red);color:var(--sys-red)}
+.clip .fl.lk .tsvg{width:9px;height:9px;display:block}
+
+/* ------------------------------------------------------------ rolagem */
+.tl-scroll{flex:1;overflow:auto;position:relative;min-width:0}
+.tl-content{position:relative;min-width:100%;min-height:100%}
+
+/* ------------------------------------------------------------- régua */
+.tl-ruler{
+  height:24px;position:sticky;top:0;z-index:6;background:var(--paper-2);
+  border-bottom:var(--line) solid var(--rule-2);cursor:text;user-select:none;
+}
+.tick{position:absolute;top:0;bottom:0;border-left:var(--line) solid var(--ink-4)}
+.tick span{
+  position:absolute;left:3px;top:6px;font-family:var(--mono);font-size:8px;color:var(--ink-3);
+  letter-spacing:.04em;white-space:nowrap;
+}
+.tick.minor{border-left-color:var(--rule);top:16px}
+.inout{position:absolute;top:0;height:3px;background:var(--ch);opacity:.9}
+.iomark{
+  position:absolute;top:3px;font-family:var(--mono);font-size:8px;font-weight:700;color:var(--on-ch);
+  background:var(--ch);padding:0 3px;line-height:12px;
+}
+.iomark.o{transform:translateX(-100%)}
+.marker{position:absolute;top:0;bottom:0;cursor:ew-resize;z-index:2}
+.marker i{position:absolute;left:-4px;top:11px;width:8px;height:8px;background:var(--sys-orange);
+  transform:rotate(45deg);border:var(--line) solid var(--ink)}
+.marker span{
+  position:absolute;left:7px;top:11px;font-family:var(--mono);font-size:8px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--sys-orange);white-space:nowrap;pointer-events:none;
+}
+
+/* -------------------------------------------------------------- pistas */
+.tl-lanes{position:relative}
+.lane{
+  border-bottom:var(--line) solid var(--rule);position:relative;background:var(--paper);
+  box-sizing:border-box;
+}
+.lane.kfx{background:var(--paper-2)}
+.lane.kaudio{background:color-mix(in srgb,var(--ch-audio) 3%,var(--paper))}
+.lane.locked{background-image:repeating-linear-gradient(45deg,transparent 0 5px,var(--paper-3) 5px 6px)}
+.lane.hiddenTrack{opacity:.4}
+.lane.over{background:color-mix(in srgb,var(--ch) 12%,var(--paper))}
+.lane.drop,.clip.drop{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* --------------------------------------------------------------- clipes */
+.clip{
+  position:absolute;top:2px;bottom:2px;overflow:hidden;cursor:grab;user-select:none;
+  border:var(--line) solid var(--ink);background:var(--paper);display:flex;flex-direction:column;
+  box-sizing:border-box;
+}
+.tl-dragging .clip{cursor:grabbing}
+/* aba de canal na borda esquerda do clipe */
+.clip::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;z-index:1}
+.clip.ch-video{background:color-mix(in srgb,var(--ch-video) 13%,var(--paper))}
+.clip.ch-video::before{background:var(--ch-video)}
+.clip.ch-audio{background:color-mix(in srgb,var(--ch-audio) 13%,var(--paper))}
+.clip.ch-audio::before{background:var(--ch-audio)}
+.clip.ch-type{background:color-mix(in srgb,var(--ch-type) 13%,var(--paper))}
+.clip.ch-type::before{background:var(--ch-type)}
+.clip.ch-adjust{
+  background:repeating-linear-gradient(45deg,var(--paper-2) 0 6px,var(--paper-3) 6px 12px);
+}
+.clip.ch-adjust::before{background:var(--ink)}
+.clip.ch-comp{background:var(--paper-3)}
+.clip.ch-comp::before{background:var(--ink-2)}
+.clip.sel{outline:2px solid var(--accent);outline-offset:-1px;z-index:4;border-color:var(--ink)}
+.clip.off{opacity:.42}
+.clip.locked{cursor:not-allowed}
+.clip .clabel{
+  font-family:var(--mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 5px 2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  pointer-events:none;display:flex;align-items:center;gap:4px;position:relative;z-index:2;
+}
+.clip .clabel b{font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.clip .fl{
+  font-style:normal;font-size:7px;letter-spacing:.04em;border:var(--line) solid var(--ink-4);
+  padding:0 2px;color:var(--ink-2);flex:0 0 auto;line-height:1.5;
+}
+.clip .fl.fx{border-color:var(--ink);color:var(--ink)}
+.clip .fl.kf{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.clip .fl.no,.clip .fl.mu{border-color:var(--sys-orange);color:var(--sys-orange)}
+.clip .cbody{flex:1;position:relative;pointer-events:none;overflow:hidden;min-height:0}
+.clip .wavecv{position:absolute;inset:0;width:100%;height:100%}
+.clip .adjhatch{position:absolute;inset:0;border-top:var(--line) dashed var(--ink-3)}
+.clip .fade{position:absolute;top:0;bottom:0;background:var(--paper);opacity:.7;pointer-events:none}
+.clip .fade.in{left:0;border-right:var(--line) solid var(--ink)}
+.clip .fade.out{right:0;border-left:var(--line) solid var(--ink)}
+
+/* pegas de aparo (trim) */
+.chandle{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize;z-index:5}
+.chandle.l{left:0}
+.chandle.r{right:0}
+.chandle:hover{background:var(--accent)}
+.chandle.l:hover{cursor:w-resize}
+.chandle.r:hover{cursor:e-resize}
+
+/* transições nas bordas do clipe */
+.ctrans{
+  position:absolute;top:0;bottom:0;z-index:3;cursor:ew-resize;overflow:hidden;
+  background:repeating-linear-gradient(-45deg,transparent 0 3px,var(--ink) 3px 4px);
+  border:var(--line) solid var(--ink);opacity:.85;
+}
+.ctrans.in{left:0}
+.ctrans.out{right:0}
+.ctrans span{
+  position:absolute;left:0;right:0;bottom:1px;text-align:center;font-family:var(--mono);font-size:7px;
+  letter-spacing:.04em;text-transform:uppercase;background:var(--paper);color:var(--ink);
+  white-space:nowrap;overflow:hidden;
+}
+.ctrans:hover{opacity:1;background:var(--accent)}
+.ctrans .tgrip{position:absolute;top:0;bottom:0;width:4px;background:var(--ink)}
+.ctrans.in .tgrip{right:0}
+.ctrans.out .tgrip{left:0}
+
+/* keyframes */
+.kfdot{
+  position:absolute;bottom:2px;width:7px;height:7px;background:var(--paper);
+  border:var(--line) solid var(--ink);transform:translateX(-50%) rotate(45deg);
+  cursor:ew-resize;z-index:6;
+}
+.kfdot:hover{background:var(--accent)}
+.kfdot.focus{background:var(--ink);width:9px;height:9px;bottom:1px}
+.kfdot.focus:hover{background:var(--sys-orange);border-color:var(--sys-orange)}
+.kfgraph{position:absolute;left:0;right:0;top:12px;bottom:10px;width:100%;pointer-events:none;z-index:2}
+.kfgraph polyline{fill:none;stroke:var(--ink);stroke-width:1.2;vector-effect:non-scaling-stroke}
+
+/* cursor de reprodução */
+.playhead{position:absolute;top:0;bottom:0;width:1px;background:var(--ink);z-index:8;pointer-events:none;left:0}
+.ph-head{position:absolute;top:0;left:-6px;width:13px;height:13px;background:var(--ch);
+  clip-path:polygon(0 0,100% 0,50% 100%)}
+.ph-tc{
+  position:absolute;top:0;left:8px;font-family:var(--mono);font-size:8px;letter-spacing:.06em;
+  background:var(--ch);color:var(--on-ch);padding:1px 4px;white-space:nowrap;
+}
+:root[data-lab="home"] .ph-head,:root[data-lab="home"] .ph-tc{background:var(--ink);color:var(--paper)}
+
+/* laço de seleção e leitura flutuante */
+.tl-marquee{
+  position:absolute;border:var(--line) dashed var(--ink);background:color-mix(in srgb,var(--ch) 12%,transparent);
+  z-index:7;pointer-events:none;
+}
+.tl-hud{
+  position:absolute;right:10px;bottom:8px;z-index:12;background:var(--ink);color:var(--paper);
+  font-family:var(--mono);font-size:var(--t-label);letter-spacing:.08em;padding:4px 9px;
+  pointer-events:none;text-transform:uppercase;
+}
+
+/* menu de contexto da linha do tempo */
+.ctxmenu{
+  position:fixed;z-index:300;background:var(--paper);border:var(--line) solid var(--ink);
+  box-shadow:4px 4px 0 var(--ink);min-width:210px;max-height:70vh;overflow-y:auto;
+}
+.ctxmenu button{
+  display:flex;width:100%;align-items:center;gap:10px;padding:5px 10px;font-family:var(--mono);
+  font-size:var(--t-label);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);
+  border-bottom:var(--line) solid var(--rule);
+}
+.ctxmenu button i{margin-left:auto;font-style:normal;font-size:8px;color:var(--ink-4)}
+.ctxmenu button:hover:not([disabled]){background:var(--ch);color:var(--on-ch)}
+.ctxmenu button:hover:not([disabled]) i{color:var(--on-ch)}
+.ctxmenu button[disabled]{color:var(--ink-4);cursor:default;background:var(--paper-2);letter-spacing:.14em}
+.ctxsep{height:2px;background:var(--rule-2)}
+
+/* ============================================================ 04 AUDIO LAB */
+.audio-main{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--paper)}
+.wave-wrap{
+  flex:0 0 auto;position:relative;border-bottom:var(--line) solid var(--rule);background:var(--paper);
+  margin:0;
+}
+.wave-wrap canvas{display:block;width:100%;height:186px;cursor:text}
+.wave-play{position:absolute;top:0;bottom:0;width:2px;background:var(--ch-audio);pointer-events:none}
+.wave-sel{position:absolute;top:0;bottom:0;background:var(--accent);opacity:.22;pointer-events:none}
+.wave-meta{position:absolute;top:6px;left:8px;display:flex;gap:6px}
+.rack{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:0;align-content:start}
+.module{border-right:var(--line) solid var(--rule);border-bottom:var(--line) solid var(--rule);display:flex;flex-direction:column}
+.module-h{
+  display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:var(--line) solid var(--rule);
+  background:var(--paper-2);
+}
+.module-h .mno{font-family:var(--mono);font-size:8px;color:var(--ink-4)}
+.module-h .mnm{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.14em;text-transform:uppercase;flex:1}
+.module-h .mtog{
+  width:26px;height:13px;border:var(--line) solid var(--ink);position:relative;flex:0 0 26px;background:var(--paper);
+}
+.module-h .mtog::after{content:"";position:absolute;top:1px;left:1px;width:10px;height:9px;background:var(--ink-4)}
+.module-h .mtog.on{background:var(--ch-audio)}
+.module-h .mtog.on::after{left:auto;right:1px;background:var(--paper)}
+.module-b{padding:5px 0 8px}
+.analyser{height:52px;border-bottom:var(--line) solid var(--rule);background:var(--paper);position:relative}
+.analyser canvas{width:100%;height:100%;display:block}
+
+/* ---- barra do rack: busca, mutação e semente -------------------------
+   O rack passou de doze para vinte e seis módulos. Sem filtro e busca a
+   lista deixa de ser navegável; com eles, continua sendo o mesmo rack. */
+.rack-bar{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:0 10px;height:36px;
+  border-bottom:var(--line) solid var(--rule);background:var(--paper);
+}
+/* A busca é um CAMPO, e tem de parecer um. Antes ela era transparente e
+   podia encolher a zero quando a barra apertava — sumia da tela. */
+.rack-bar .cat-search{
+  flex:0 0 auto;width:230px;padding:0 8px;height:24px;
+  border:var(--line) solid var(--rule-2);background:var(--paper-2);
+}
+.rack-bar .cat-search:focus-within{background:var(--paper);border-color:var(--ch)}
+.rack-bar .cat-search input{font-size:var(--t-label);min-width:0}
+.rack-bar .cat-search .micro{color:var(--ch);font-weight:700}
+.rack-bar .micro{color:var(--ink-3)}
+.rack-bar .tbtn{padding:3px 9px}
+.rack-bar .field.num{height:22px}
+
+/* ---- etiquetas de família do rack ----------------------------------
+   O rack ocupa a largura toda, então as onze etiquetas cabem em uma ou
+   duas fileiras. Herdar o "duas por linha" da coluna estreita do LAB 01
+   as empilhava em seis fileiras dentro de uma caixa de 52 px: sobrava
+   uma tira em que quase nada era legível.                             */
+.audio-main .chips{flex:0 0 auto;padding:5px 8px;gap:4px;background:var(--paper-2)}
+.audio-main .chips .fam-chip{
+  flex:0 0 auto;font-size:9px;letter-spacing:.12em;padding:5px 9px 5px 7px;
+  border:var(--line) solid var(--rule);border-left-width:3px;
+}
+.audio-main .chips .fam-chip .chip-n{margin-left:7px;font-size:9px}
+.audio-main .chips .fam-chip.on{border-color:var(--ch);border-left-color:var(--ch)}
+
+/* ---- ferramentas do cabeçalho de cada módulo ---- */
+.module-h .mops{display:flex;gap:1px}
+.module-h .mops button{
+  width:14px;height:14px;font-family:var(--mono);font-size:8px;line-height:1;color:var(--ink-4);
+  border:var(--line) solid transparent;display:flex;align-items:center;justify-content:center;
+}
+.module-h .mops button:hover{color:var(--ink);border-color:var(--rule);background:var(--paper)}
+.mlock{
+  width:14px;height:14px;font-size:7px;line-height:1;color:var(--ink-4);
+  border:var(--line) solid var(--rule);display:flex;align-items:center;justify-content:center;
+}
+.mlock:hover{color:var(--ink)}
+.mlock.on{background:var(--accent);color:var(--on-accent);border-color:var(--ink)}
+.module-pisca{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* ---- a cadeia, na coluna da esquerda ----
+   O bloco CADEIA existia vazio. Agora mostra o caminho do sinal na
+   ordem real, e clicar num passo leva ao módulo no rack.            */
+.chain{padding:6px 8px 8px;display:flex;flex-direction:column;gap:0}
+.chain-step{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 6px;border:var(--line) solid var(--rule);background:var(--paper);
+  display:flex;align-items:center;gap:5px;position:relative;color:var(--ink-2);cursor:pointer;
+}
+.chain-step + .chain-step{margin-top:9px}
+.chain-step + .chain-step::before{
+  content:"";position:absolute;left:12px;top:-9px;width:var(--line);height:9px;background:var(--ink-4);
+}
+.chain-step:hover{background:var(--ch-audio);color:var(--on-ch);border-color:var(--ch-audio)}
+.chain-src,.chain-out{background:var(--ink);color:var(--paper);border-color:var(--ink);cursor:default}
+.chain-src:hover,.chain-out:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chain-k{width:5px;height:5px;flex:0 0 5px;display:block;border:var(--line) solid currentColor}
+.chain-buffer{background:currentColor}
+.chain-grafo{background:transparent}
+
+/* =============================================================== 05 TYPE LAB */
+.type-main{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--paper-2)}
+.type-stage{
+  flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%) 0 0/16px 16px,
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%) 8px 8px/16px 16px,
+    var(--paper-2);
+}
+.type-stage canvas{max-width:100%;max-height:100%;border:var(--line) solid var(--ink);cursor:crosshair}
+.type-input{
+  flex:0 0 auto;display:flex;align-items:stretch;border-top:var(--line) solid var(--rule);
+  border-bottom:var(--line) solid var(--rule);background:var(--paper);
+}
+.type-input textarea{
+  flex:1;font-family:var(--grotesk);font-size:22px;padding:10px 12px;resize:none;height:64px;
+  border:none;background:none;letter-spacing:-.01em;
+}
+.type-input textarea:focus{outline:none;background:var(--paper-2)}
+.type-tools{display:flex;flex-direction:column;border-left:var(--line) solid var(--rule)}
+.letters{
+  display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;border-bottom:var(--line) solid var(--rule);
+  max-height:74px;overflow-y:auto;background:var(--paper);
+}
+.letter{
+  min-width:19px;height:19px;border:var(--line) solid var(--rule);font-family:var(--mono);font-size:10px;
+  display:flex;align-items:center;justify-content:center;padding:0 2px;
+}
+.letter:hover{border-color:var(--ink)}
+.letter.mod{border-color:var(--ch-type)}
+.letter.on{background:var(--ch-type);color:var(--on-ch);border-color:var(--ch-type)}
+
+/* ============================================================ 06 WEBCAM */
+.cam-wrap{position:relative;border:var(--line) solid var(--ink);background:var(--ink);margin:8px}
+.cam-wrap video{display:block;width:100%;background:#000}
+.cam-off{padding:22px 10px;text-align:center}
+
+/* ============================================================ 07 UTILIDADES */
+.pad{padding:8px 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.stack{display:flex;flex-direction:column;gap:5px}
+.rowline{display:flex;align-items:center;gap:6px}
+.scrolly{overflow-y:auto;min-height:0;flex:1}
+
+/* ============================================================ 08 RESPONSIVO */
+@media (max-width:1180px){
+  :root{--side-w:172px;--insp-w:238px}
+  .lab-nm{font-size:31px}
+}
+/* Abaixo de 1000px o cabeçalho não cabia e empurrava a página inteira para
+   fora — dava rolagem horizontal em qualquer vista. O relógio e o rótulo
+   MODO são os primeiros a sair: não se perde função nenhuma.            */
+@media (max-width:1000px){
+  .hdr-clock{display:none}
+  .hdr-right > .micro{display:none}
+  .hdr-tag{display:none}
+}
+@media (max-width:900px){
+  :root{--side-w:0px}
+  .side,.vsplit{display:none}
+  .labs{grid-template-columns:1fr}
+  .lab-card{min-height:150px;border-right:none}
+  .home-strip{grid-template-columns:1fr 1fr}
+  .home-hero{grid-template-columns:1fr}
+  .home-specs{text-align:left}
+}
+
+/* ================================================ 09 CANAIS NOS LABORATÓRIOS
+   Cada mesa de trabalho é fechada por um filete do seu canal. É a leitura
+   periférica: sem ler nenhum rótulo, a borda já diz onde você está.       */
+.vp{border-left:var(--ch-w) solid var(--ch-video)}
+.audio-main{border-left:var(--ch-w) solid var(--ch-audio)}
+.type-main{border-left:var(--ch-w) solid var(--ch-type)}
+
+/* a barra superior de cada laboratório repete o filete */
+#viewVideo > .vp-bar{border-left:var(--ch-w) solid var(--ch-video)}
+#viewAudio > .vp-bar{border-left:var(--ch-w) solid var(--ch-audio)}
+#viewType  > .vp-bar{border-left:var(--ch-w) solid var(--ch-type)}
+.transport{border-left:var(--ch-w) solid var(--ch)}
+.timeline{border-left:var(--ch-w) solid var(--ch-video)}
+
+/* onda de áudio: o traçado é do canal verde (desenhado no js/audio.js) */
+.analyser{border-left:var(--ch-w) solid var(--ch-audio)}
+.wave-wrap{border-left:var(--ch-w) solid var(--ch-audio)}
+.rack{border-left:var(--ch-w) solid var(--ch-audio)}
+
+/* mesa tipográfica */
+.type-stage canvas{border-color:var(--ch-type)}
+.type-input{border-left:var(--ch-w) solid var(--ch-type)}
+.letters{border-left:var(--ch-w) solid var(--ch-type)}
+
+/* seleção de texto dentro de cada laboratório usa o canal */
+:root[data-lab="video"] ::selection{background:var(--ch-video);color:var(--on-ch)}
+:root[data-lab="audio"] ::selection{background:var(--ch-audio);color:var(--on-ch)}
+:root[data-lab="type"]  ::selection{background:var(--ch-type); color:var(--on-ch)}
+
+/* ============================================ 10 MOTION / EFFECT CONTROLS
+   O inspetor de um clipe. Cada propriedade é uma linha com cronômetro,
+   navegação de keyframes, valor numérico e trilho — na mesma gramática
+   das fichas técnicas do resto do sistema.                              */
+
+.mprop{border-bottom:var(--line) solid var(--rule);padding:4px 10px 6px}
+.mprop.focus{background:color-mix(in srgb,var(--ch) 7%,var(--paper))}
+.mprop-h{display:flex;align-items:center;gap:6px}
+.mprop-h > label{
+  font-family:var(--mono);font-size:var(--t-label);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;
+}
+.mprop.focus .mprop-h > label{color:var(--ink)}
+.mprop-h > label:hover{color:var(--ch)}
+.mval{width:64px;flex:0 0 64px;text-align:right}
+.munit{font-family:var(--mono);font-size:8px;color:var(--ink-4);width:16px;flex:0 0 16px;font-style:normal}
+.mrange{margin-top:2px}
+
+/* cronômetro: ligado = a propriedade está animada */
+.stopw{
+  width:15px;height:15px;flex:0 0 15px;border:var(--line) solid var(--rule);font-size:8px;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-4);font-family:var(--mono);
+}
+.stopw:hover{border-color:var(--ink);color:var(--ink)}
+.stopw.on{background:var(--accent);border-color:var(--ink);color:var(--on-accent)}
+/* espaco do cronometro num parametro que NAO se anima (uni:false):
+   guarda a coluna para o rotulo nao dancar de linha para linha. */
+.stopw-off{width:15px;height:15px;flex:0 0 15px;display:block}
+
+.kfnav{display:flex;gap:1px;flex:0 0 auto}
+.kfnav button{
+  width:14px;height:15px;border:var(--line) solid var(--rule);font-family:var(--mono);font-size:8px;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-3);
+}
+.kfnav button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.kfnav button.on{background:var(--accent);color:var(--on-accent);border-color:var(--ink)}
+
+/* ------------------------------------------------------ pilha de efeitos */
+.fxstack{border-top:var(--line) solid var(--rule)}
+.fxrow{
+  display:flex;align-items:center;gap:6px;padding:5px 10px;border-bottom:var(--line) solid var(--rule);
+  background:var(--paper);
+}
+.fxrow.open{background:var(--paper-2)}
+.fxrow.off{opacity:.45}
+.fxrow .fxno{font-family:var(--mono);font-size:8px;color:var(--ink-4);flex:0 0 16px}
+.fxrow .fxcat{width:8px;height:8px;flex:0 0 8px;border:var(--line) solid var(--ink)}
+.fxrow .fxname{
+  flex:1;text-align:left;font-family:var(--mono);font-size:var(--t-label);letter-spacing:.06em;
+  text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+}
+.fxrow .fxname:hover{color:var(--ch)}
+.fxops{display:flex;gap:1px}
+.fxops button{
+  width:15px;height:15px;border:var(--line) solid var(--rule);font-family:var(--mono);font-size:8px;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-3);
+}
+.fxops button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.fxops button.on{color:var(--ch)}
+.fxbody{border-bottom:2px solid var(--rule-2);background:var(--paper)}
+.subhead{
+  font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+  padding:7px 10px 3px;border-top:var(--line) solid var(--rule);
+}
+
+/* -------------------------------------------------- keyframes e gráficos */
+.kplist{display:flex;flex-wrap:wrap;gap:2px;padding:6px 10px}
+.kprow{
+  display:flex;align-items:center;gap:5px;padding:2px 6px;border:var(--line) solid var(--rule);
+  font-family:var(--mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);
+}
+.kprow:hover{border-color:var(--ink)}
+.kprow.on{background:var(--ch);color:var(--on-ch);border-color:var(--ch)}
+.kprow i{font-style:normal;color:var(--ink-4)}
+.kprow.on i{color:var(--on-ch);opacity:.7}
+
+.kgraph{margin:4px 10px 8px;border:var(--line) solid var(--rule-2);background:var(--paper-2);position:relative}
+.kgraph svg{display:block;width:100%;height:104px}
+.kgraph .gl{fill:none;stroke:var(--ink);stroke-width:1.4;vector-effect:non-scaling-stroke}
+.kgraph .gz{stroke:var(--rule);stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:3 3}
+.kgraph .gp{stroke:var(--ch);stroke-width:1.4;vector-effect:non-scaling-stroke}
+.kgraph .gk{fill:var(--accent);stroke:var(--ink);stroke-width:.6;vector-effect:non-scaling-stroke;cursor:move}
+.kgraph .gk:hover{fill:var(--sys-orange)}
+.gmeta{
+  display:flex;justify-content:space-between;padding:2px 5px;border-top:var(--line) solid var(--rule);
+  font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;
+}
+
+
+
+/* ================================================ 12 MANUAL 01 · TUTORIAL
+   Página de leitura dentro do mesmo sistema gráfico: numeração à esquerda,
+   filete de 1px, medida de linha curta e os três canais como etiqueta de
+   "onde essa etapa acontece".                                            */
+.tut{flex:1;overflow-y:auto;background:var(--paper);position:relative}
+
+.tut-hero{
+  padding:34px 30px 26px;border-bottom:2px solid var(--rule-2);
+  display:grid;grid-template-columns:1fr auto;gap:28px;align-items:end;
+}
+.tut-title{
+  font-weight:700;font-size:clamp(30px,4.4vw,58px);letter-spacing:-.035em;line-height:.94;
+  margin-top:10px;
+}
+.tut-lead{
+  font-family:var(--mono);font-size:var(--t-body);line-height:1.85;color:var(--ink-2);
+  max-width:62ch;margin-top:16px;
+}
+.tut-meta{display:grid;gap:4px;text-align:right;align-content:end}
+
+/* separador de parte */
+.tut-part{
+  display:flex;align-items:center;gap:14px;padding:22px 30px;background:var(--ink);color:var(--paper);
+  font-family:var(--mono);font-size:var(--t-label);letter-spacing:.28em;text-transform:uppercase;
+}
+.tut-part i{flex:1;height:var(--line);background:var(--paper);opacity:.45}
+
+/* seção numerada */
+.tut-sec{
+  display:grid;grid-template-columns:96px minmax(0,1fr);gap:0;
+  border-bottom:var(--line) solid var(--rule);
+}
+.tut-num{
+  font-family:var(--mono);font-size:26px;letter-spacing:.02em;color:var(--ink-4);
+  padding:26px 0 0 30px;border-right:var(--line) solid var(--rule);
+}
+.tut-body{padding:24px 30px 34px;max-width:1000px}
+.tut-body h2{
+  font-weight:700;font-size:clamp(21px,2.4vw,30px);letter-spacing:-.02em;line-height:1.06;
+  margin-bottom:14px;
+}
+.tut-body h3{
+  font-family:var(--mono);font-size:var(--t-ui);letter-spacing:.06em;text-transform:uppercase;
+  font-weight:500;margin-bottom:6px;
+}
+.tut-body p{
+  font-family:var(--mono);font-size:var(--t-body);line-height:1.9;color:var(--ink-2);
+  max-width:70ch;margin-bottom:13px;
+}
+.tut-body p b{color:var(--ink);font-weight:500}
+.tut-body p i{font-style:italic;color:var(--ink)}
+.tut-strong{border-left:var(--ch-w) solid var(--ink);padding-left:14px}
+
+.tut-list{list-style:none;margin:0 0 14px;max-width:70ch}
+.tut-list li{
+  font-family:var(--mono);font-size:var(--t-body);line-height:1.8;color:var(--ink-2);
+  padding:7px 0 7px 22px;border-bottom:var(--line) solid var(--rule);position:relative;
+}
+.tut-list.tight li{padding:5px 0 5px 22px}
+.tut-list li::before{content:"—";position:absolute;left:0;color:var(--ink-4)}
+.tut-list li b{color:var(--ink);font-weight:500}
+
+.tut-do{
+  border:var(--line) solid var(--ink);padding:11px 13px;margin:16px 0 6px;max-width:70ch;
+  background:var(--paper-2);font-family:var(--mono);font-size:var(--t-body);line-height:1.85;color:var(--ink-2);
+}
+.tut-do b{color:var(--ink);font-weight:500}
+.tut-tag{
+  display:inline-block;background:var(--ink);color:var(--paper);font-family:var(--mono);
+  font-size:8px;letter-spacing:.16em;padding:2px 6px;margin-right:8px;vertical-align:1px;
+}
+
+.tut-grid3,.tut-grid4{display:grid;gap:0;margin:6px 0 16px;border-top:var(--line) solid var(--rule)}
+.tut-grid3{grid-template-columns:repeat(3,1fr)}
+.tut-grid4{grid-template-columns:repeat(4,1fr)}
+.tut-grid3 > div,.tut-grid4 > div{
+  padding:12px 14px;border-right:var(--line) solid var(--rule);border-bottom:var(--line) solid var(--rule);
+}
+.tut-grid3 > div:last-child,.tut-grid4 > div:last-child{border-right:none}
+.tut-grid3 p,.tut-grid4 p{font-size:var(--t-micro);line-height:1.75;margin:6px 0 0;text-transform:uppercase;letter-spacing:.04em}
+
+.tut-note{border:var(--line) solid var(--rule);padding:12px 14px;margin-top:18px;max-width:70ch}
+.tut-note p{font-size:var(--t-micro);margin:6px 0 0;text-transform:uppercase;letter-spacing:.04em;line-height:1.75}
+
+/* diagrama */
+/* ═══════════════════════════════════════════ O MAPA DO MÉTODO
+   Não é uma ilustração: é uma PRANCHA TÉCNICA. Marcas de registro nos
+   cantos, papel milimetrado por baixo, abas numeradas, filete de canal
+   em cada caixa e o cruzamento desenhado como cruzamento de verdade.
+   As setas se desenham sozinhas quando a seção entra na tela.        */
+.tut-diagram{
+  width:100%;max-width:100%;height:auto;margin:22px 0 10px;color:var(--ink);
+  background:var(--paper);border:var(--line) solid var(--rule);
+  display:block;
+}
+.tut-diagram-2{margin-top:-6px;border-top:none}
+
+/* --- papel milimetrado --- */
+.dg-grid{fill:url(#dgGrid);stroke:none;opacity:.5}
+#dgGrid circle{fill:var(--rule)}
+
+/* --- marcas de registro --- */
+.dg-reg path{fill:none;stroke:var(--ink);stroke-width:1.2;vector-effect:non-scaling-stroke}
+.dg-reg circle{fill:none;stroke:var(--ink-3);stroke-width:1;vector-effect:non-scaling-stroke}
+
+/* --- cabeçalho da prancha --- */
+.dg-code{font-family:var(--mono);font-size:11px;letter-spacing:.22em;fill:var(--ink-3);text-transform:uppercase}
+.dg-right{text-anchor:end}
+.dg-title{font-family:var(--mono);font-size:12.5px;letter-spacing:.3em;fill:var(--ink);text-transform:uppercase;font-weight:700}
+.dg-rule{stroke:var(--rule);stroke-width:1;vector-effect:non-scaling-stroke}
+.dg-ch-r{fill:var(--ch-type)}
+.dg-ch-g{fill:var(--ch-audio)}
+.dg-ch-b{fill:var(--ch-video)}
+
+/* --- caixas --- */
+.dg-box{fill:var(--paper);stroke:var(--ink);stroke-width:1.6;vector-effect:non-scaling-stroke}
+.dg-shadow{fill:var(--ink);opacity:.14}
+.dg-tab{fill:var(--paper);stroke:var(--ink);stroke-width:1.6;vector-effect:non-scaling-stroke}
+.dg-solid .dg-box,.dg-solid .dg-tab{fill:var(--ink);stroke:var(--ink)}
+.dg-band{stroke:none;fill:var(--ink)}
+.dg-node.dg-ch-blue .dg-box,.dg-node.dg-ch-blue .dg-tab,
+.dg-lab.dg-ch-blue .dg-box{stroke:var(--ch-video)}
+.dg-node.dg-ch-blue .dg-band,.dg-lab.dg-ch-blue .dg-band{fill:var(--ch-video)}
+.dg-node.dg-ch-red .dg-box,.dg-node.dg-ch-red .dg-tab,
+.dg-lab.dg-ch-red .dg-box{stroke:var(--ch-type)}
+.dg-node.dg-ch-red .dg-band,.dg-lab.dg-ch-red .dg-band{fill:var(--ch-type)}
+.dg-node.dg-ch-green .dg-box,.dg-lab.dg-ch-green .dg-box{stroke:var(--ch-audio)}
+.dg-node.dg-ch-green .dg-band,.dg-lab.dg-ch-green .dg-band{fill:var(--ch-audio)}
+
+/* --- tipografia do diagrama --- */
+.dg-h{font-family:var(--mono);font-size:18px;letter-spacing:.16em;fill:var(--ink);text-transform:uppercase;font-weight:700}
+.dg-h.dg-sm{font-size:13.5px;letter-spacing:.14em}
+.dg-t{font-family:var(--mono);font-size:14px;letter-spacing:.03em;fill:var(--ink-2)}
+.dg-t.dg-sm{font-size:12px}
+.dg-no{font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;fill:var(--ink);font-weight:700}
+.dg-note{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;fill:var(--ink-3);text-transform:uppercase}
+.dg-note.dg-mid{text-anchor:middle}
+.dg-dim{fill:var(--ink-4)}
+.dg-dim2{opacity:.62}
+.dg-on{fill:var(--paper)}
+.dg-hair{stroke:var(--ink-4);stroke-width:1;vector-effect:non-scaling-stroke}
+.dg-hair.dg-on{stroke:var(--paper);opacity:.35}
+.dg-on-r{fill:var(--ch-type)}
+.dg-on-g{fill:var(--ch-audio)}
+.dg-on-b{fill:var(--ch-video)}
+
+/* --- fluxos --- */
+.dg-arw{fill:none;stroke:var(--ink);stroke-width:1.6;vector-effect:non-scaling-stroke;color:var(--ink)}
+.dg-arw.dg-thick{stroke-width:2.6}
+.dg-cross{fill:none;stroke:var(--ink-3);stroke-width:1.4;stroke-dasharray:7 5;vector-effect:non-scaling-stroke}
+.dg-knot{fill:var(--sys-yellow);stroke:var(--ink);stroke-width:1.6;vector-effect:non-scaling-stroke}
+.dg-knot-o{fill:none;stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+
+/* --- as setas se desenham quando a seção aparece --- */
+@media (prefers-reduced-motion: no-preference){
+  .tut-diagram .dg-flow{
+    stroke-dasharray:520;stroke-dashoffset:520;
+    animation:dgDraw 1.5s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  .tut-diagram .dg-flow:nth-of-type(2){animation-delay:.12s}
+  .tut-diagram .dg-cross{
+    stroke-dashoffset:0;animation:dgSlide 9s linear infinite;
+  }
+  @keyframes dgDraw{to{stroke-dashoffset:0}}
+  @keyframes dgSlide{to{stroke-dashoffset:-120}}
+}
+
+/* passos práticos, com etiqueta do canal */
+.tut-steps{list-style:none;margin:16px 0 0;border-top:var(--line) solid var(--rule)}
+.tut-steps > li{
+  display:grid;grid-template-columns:56px minmax(0,1fr);gap:0;
+  border-bottom:var(--line) solid var(--rule);border-left:var(--ch-w) solid var(--rule);
+  padding:16px 0;
+}
+.tut-steps > li[data-ch="video"]{border-left-color:var(--ch-video)}
+.tut-steps > li[data-ch="audio"]{border-left-color:var(--ch-audio)}
+.tut-steps > li[data-ch="type"]{border-left-color:var(--ch-type)}
+.tut-steps .st-n{
+  font-family:var(--mono);font-size:var(--t-label);color:var(--ink-4);padding-left:16px;letter-spacing:.06em;
+}
+.tut-steps > li > div{padding-right:16px}
+.tut-steps p{margin-bottom:9px}
+.tut-steps p:last-child{margin-bottom:0}
+.kbd{
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;border:var(--line) solid var(--ink);
+  padding:1px 5px;white-space:nowrap;color:var(--ink);background:var(--paper);
+}
+
+/* roteiro de 60 segundos */
+.tut-timeline{border-top:var(--line) solid var(--rule);margin:10px 0 16px;max-width:78ch}
+.tut-timeline > div{
+  display:grid;grid-template-columns:132px 118px minmax(0,1fr);gap:12px;align-items:baseline;
+  padding:11px 0;border-bottom:var(--line) solid var(--rule);
+}
+.tt-t{font-family:var(--mono);font-size:var(--t-label);color:var(--ink);letter-spacing:.06em}
+.tt-d{
+  font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;
+  border:var(--line) solid var(--ink);padding:2px 5px;text-align:center;
+}
+.tut-timeline p{margin:0;font-size:var(--t-micro);line-height:1.75;text-transform:uppercase;letter-spacing:.04em}
+
+/* fecho */
+.tut-end{
+  padding:30px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;
+  background:var(--paper-2);border-top:2px solid var(--rule-2);
+}
+.tut-end p{font-family:var(--mono);font-size:var(--t-body);line-height:1.8;color:var(--ink-2);margin-top:8px;max-width:62ch}
+.tut-end-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* sumário lateral */
+.tut-toc{display:flex;flex-direction:column}
+.tocitem{
+  display:flex;gap:9px;align-items:baseline;padding:7px 10px;width:100%;
+  border-bottom:var(--line) solid var(--rule);
+}
+.tocitem:hover{background:var(--paper-2)}
+.tocitem.on{background:var(--ink);color:var(--paper)}
+.tocn{font-family:var(--mono);font-size:8px;color:var(--ink-4);flex:0 0 16px}
+.tocitem.on .tocn{color:var(--paper);opacity:.6}
+.tocl{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.08em;text-transform:uppercase}
+
+/* etiqueta de canal na ficha do tutorial */
+.prow.chline{grid-template-columns:auto minmax(0,1fr) !important}
+.chtag{width:9px;height:9px;flex:0 0 9px;display:inline-block}
+.chtag.v{background:var(--ch-video)}
+.chtag.a{background:var(--ch-audio)}
+.chtag.t{background:var(--ch-type)}
+
+@media (max-width:1180px){
+  .tut-sec{grid-template-columns:64px minmax(0,1fr)}
+  .tut-num{padding-left:16px;font-size:20px}
+  .tut-body{padding:20px 18px 28px}
+  .tut-grid4{grid-template-columns:1fr 1fr}
+  .tut-grid3{grid-template-columns:1fr}
+  .tut-timeline > div{grid-template-columns:1fr;gap:4px}
+  .tut-hero{grid-template-columns:1fr}
+  .tut-meta{text-align:left}
+  .tut-end{grid-template-columns:1fr}
+}
+
+/* ============================================ 13 ABAS DO CATÁLOGO (LAB 01)
+   A coluna da esquerda tem quatro catálogos: efeitos, filtros, estilos e
+   presets. Empilhados, eles se espremiam até uma seção colapsar e vazar
+   por cima da outra. Agora só uma fica aberta, com a altura toda que sobra
+   e rolagem própria — nada disputa espaço com nada.
+   ========================================================================= */
+
+/* a coluna do lab de vídeo é uma pilha rígida: FONTE fixo, abas fixas,
+   painel elástico. min-height:0 é o que impede o colapso de antes.        */
+#sideVideo{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+#sideVideo > .side-sec{flex:0 0 auto}
+
+.side-tabs{
+  display:grid;grid-template-columns:1fr 1fr;flex:0 0 auto;
+  border-bottom:var(--line) solid var(--rule-2);background:var(--paper-2);
+}
+.stab{
+  display:flex;align-items:center;gap:5px;padding:7px 8px;
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);border-right:var(--line) solid var(--rule);
+  border-bottom:var(--line) solid var(--rule);position:relative;min-width:0;
+}
+.stab:nth-child(2n){border-right:none}
+.stab:nth-child(n+3){border-bottom:none}
+.stab .stab-n{color:var(--ink-4);font-size:8px;flex:0 0 auto}
+.stab i{
+  margin-left:auto;font-style:normal;font-size:8px;color:var(--ink-4);
+  font-variant-numeric:tabular-nums;flex:0 0 auto;
+}
+.stab:hover{background:var(--paper);color:var(--ink)}
+.stab.on{background:var(--ch);color:var(--on-ch)}
+.stab.on .stab-n,.stab.on i{color:var(--on-ch);opacity:.7}
+/* filete do canal marcando a aba aberta */
+.stab.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--on-ch);opacity:.5}
+
+/* o painel ativo ocupa o resto da coluna */
+.side-tabbox{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.side-tabpane{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.side-tabpane.hidden{display:none !important}
+
+/* a lista de cada aba é o que rola */
+.side-tabpane .fxlist,
+.side-tabpane .stylelist,
+.side-tabpane .presetlist,
+.side-tabpane .filtergrid{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden}
+
+/* rodapé explicativo de cada aba */
+.tabfoot{
+  flex:0 0 auto;padding:6px 9px;border-top:var(--line) solid var(--rule);
+  background:var(--paper-2);color:var(--ink-4);line-height:1.55;
+}
+
+/* barra de comando dentro de uma aba */
+.filterbar{
+  flex:0 0 auto;display:flex;align-items:center;gap:6px;
+  border-bottom:var(--line) solid var(--rule);background:var(--paper);height:26px;
+}
+.filterbar .tbtn{height:100%;border-right:var(--line) solid var(--rule)}
+.filterbar .chk{padding:0 8px}
+.filterbar > .spacer{flex:1}
+
+/* chips (categorias e famílias) — quebram linha, nunca vazam */
+/* as cinco fileiras das oito famílias cabem inteiras — este seletor é
+   navegação principal, não pode depender de rolagem para ser visto   */
+.side-tabpane .chips{flex:0 0 auto;max-height:112px;overflow-y:auto}
+
+/* ------------------------------------------------ GALERIA DE FILTROS ---- */
+.filtergrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));
+  gap:0;align-content:start;
+}
+.filt{
+  position:relative;display:flex;flex-direction:column;padding:0;text-align:left;
+  border-right:var(--line) solid var(--rule);border-bottom:var(--line) solid var(--rule);
+  background:var(--paper);min-width:0;
+}
+.filt .fthumb{
+  display:block;width:100%;aspect-ratio:4/3;background:var(--paper-3);
+  object-fit:cover;border-bottom:var(--line) solid var(--rule);
+}
+/* legenda embaixo da imagem — nunca por cima dela */
+.filt .fcap{
+  display:flex;align-items:center;gap:4px;padding:3px 4px;min-width:0;
+}
+.filt .fcode{
+  font-family:var(--mono);font-size:7px;letter-spacing:.06em;color:var(--paper);
+  background:var(--ink-3);padding:1px 3px;flex:0 0 auto;
+}
+.filt .fname{
+  font-family:var(--mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+}
+.filt:hover{background:var(--paper-2)}
+.filt:hover .fcode{background:var(--ch)}
+.filt:hover .fname{color:var(--ink)}
+.filt:hover .fthumb{outline:2px solid var(--ch);outline-offset:-2px}
+/* o filtro que está aplicado no clipe selecionado */
+.filt.on .fcode{background:var(--ch);color:var(--on-ch)}
+.filt.on .fname{color:var(--ink)}
+.filt.on .fthumb{outline:2px solid var(--ch);outline-offset:-2px}
+.filt.on::after{
+  content:"APLICADO";position:absolute;left:0;top:0;background:var(--ch);color:var(--on-ch);
+  font-family:var(--mono);font-size:6px;letter-spacing:.1em;padding:1px 3px;
+}
+/* enquanto a prévia mostra o filtro sob o cursor */
+.filt.previewing .fthumb{outline-color:var(--accent)}
+
+/* -------------------------------------------------------- ESTILOS ------- */
+.stylelist{display:flex;flex-direction:column}
+.styleitem{
+  display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:7px;align-items:center;
+  width:100%;padding:7px 9px;border-bottom:var(--line) solid var(--rule);text-align:left;
+}
+.styleitem:hover{background:var(--ch);color:var(--on-ch)}
+.styleitem:hover .stno,.styleitem:hover .stds{color:var(--on-ch);opacity:.75}
+.styleitem .stno{font-family:var(--mono);font-size:8px;color:var(--ink-4)}
+.styleitem .sttxt{min-width:0}
+.styleitem .stnm{
+  display:block;font-family:var(--mono);font-size:var(--t-label);letter-spacing:.06em;
+  text-transform:uppercase;line-height:1.25;
+}
+.styleitem .stds{
+  display:block;font-family:var(--mono);font-size:8px;color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.04em;line-height:1.45;margin-top:2px;
+}
+.styleitem .stfx{
+  font-family:var(--mono);font-size:7px;border:var(--line) solid var(--ink-4);padding:1px 3px;
+  color:var(--ink-3);flex:0 0 auto;
+}
+.styleitem:hover .stfx{border-color:var(--on-ch)}
+
+/* em coluna estreita as abas viram uma por linha */
+@media (max-width:1180px){
+  .side-tabs{grid-template-columns:1fr 1fr}
+  .filtergrid{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}
+}
+
+/* ======================================== 14 COLUNA DO LAB 03 · TIPOGRAFIA
+   Mesma regra da coluna de vídeo: pilha rígida, uma lista elástica e o
+   rodapé preso. Com 21 ferramentas a lista media 809px numa coluna de 644 —
+   ela empurrava os presets para altura zero e os botões de saída para fora
+   da tela. Agora só FERRAMENTAS estica, e SAÍDA nunca sai do lugar.
+   ========================================================================= */
+#sideType{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+
+/* a lista de ferramentas é a única elástica — e é ela que rola */
+.ty-tools-sec{
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+}
+.ty-tools-sec .side-sec-h,
+.ty-tools-sec .cat-search{flex:0 0 auto}
+.tytools{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden}
+
+/* presets: altura limitada, rolagem própria, nunca colapsa */
+.ty-presets-sec{
+  flex:0 0 auto;display:flex;flex-direction:column;
+  max-height:170px;min-height:64px;overflow:hidden;
+}
+.ty-presets-sec .side-sec-h{flex:0 0 auto}
+.ty-presets-sec .scrolly{flex:1 1 auto;min-height:0;overflow-y:auto}
+
+/* SAÍDA — o rodapé fixo da coluna */
+.ty-out{
+  flex:0 0 auto;border-top:2px solid var(--rule-2);background:var(--paper);
+  border-bottom:none;
+}
+.ty-out .side-sec-h{background:var(--ch-type);color:var(--on-ch)}
+.ty-out .side-sec-h .lbl{color:var(--on-ch)}
+.ty-out .side-sec-h .micro{color:var(--on-ch);opacity:.75}
+.ty-out .side-sec-h .dot{background:var(--on-ch)}
+
+.out-group{padding:8px 10px;border-bottom:var(--line) solid var(--rule)}
+.out-group:last-child{border-bottom:none}
+.out-lbl{
+  display:block;color:var(--ink-3);letter-spacing:.16em;margin-bottom:5px;
+}
+.out-group .cmd{width:100%;justify-content:center}
+.out-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.out-btns .cmd{padding:5px 4px;font-size:8px;letter-spacing:.06em}
+.out-note{
+  display:block;color:var(--ink-4);line-height:1.55;margin-top:5px;letter-spacing:.05em;
+}
+
+/* separador de grupo dentro da lista de ferramentas */
+.tygroup{
+  display:flex;align-items:center;gap:7px;padding:7px 9px 5px;
+  background:var(--paper-2);border-bottom:var(--line) solid var(--rule);
+  font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);position:sticky;top:0;z-index:2;
+}
+.tygroup i{flex:1;height:var(--line);background:var(--rule);font-style:normal}
+
+/* ferramenta que precisa de família LAB fica marcada */
+.tytools .fxitem .fxreq{
+  font-family:var(--mono);font-size:7px;letter-spacing:.06em;border:var(--line) solid var(--ch-type);
+  color:var(--ch-type);padding:0 3px;flex:0 0 auto;
+}
+.tytools .fxitem:hover .fxreq{border-color:var(--on-accent);color:var(--on-accent)}
+
+/* ================================== 15 CARTÃO DO MANUAL NA COLUNA (ÍNDICE)
+   O tutorial saiu do corpo do índice — ele ocupava uma faixa inteira entre
+   as três mesas e a tira de informações, e apertava a página. Agora mora na
+   coluna da esquerda, embaixo das listas, e o corpo respira.
+   ========================================================================= */
+.side-manual{border-bottom:var(--line) solid var(--rule)}
+.man-card{
+  display:block;width:100%;text-align:left;position:relative;
+  padding:14px 14px 14px 26px;background:var(--paper);
+}
+.man-card:hover{background:var(--paper-2)}
+/* os três canais empilhados: a marca de que o manual atravessa os três labs */
+.man-bar{
+  position:absolute;left:0;top:0;bottom:0;width:10px;
+  background:linear-gradient(var(--ch-video) 0 33.33%,var(--ch-audio) 33.33% 66.66%,var(--ch-type) 66.66% 100%);
+}
+.man-card:hover .man-bar{width:14px}
+.man-t{
+  display:block;font-family:var(--grotesk);font-weight:700;font-size:19px;line-height:1.06;
+  letter-spacing:-.02em;color:var(--ink);
+}
+.man-d{
+  display:block;font-family:var(--mono);font-size:var(--t-micro);line-height:1.7;
+  color:var(--ink-3);margin-top:8px;text-transform:uppercase;letter-spacing:.05em;
+}
+.man-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:10px}
+.man-tags i{
+  font-family:var(--mono);font-size:7px;letter-spacing:.1em;font-style:normal;
+  text-transform:uppercase;border:var(--line) solid var(--rule-2);padding:2px 4px;color:var(--ink-2);
+}
+.man-card:hover .man-tags i{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.man-go{
+  position:absolute;right:12px;top:12px;font-family:var(--mono);font-size:14px;color:var(--ink-3);
+}
+.man-card:hover .man-go{color:var(--ink)}
+
+/* ---- com a faixa fora do caminho, a tira de informações ganha ar ---- */
+.home-strip > div{padding:22px 20px}
+.home-strip p{line-height:1.9;margin-top:9px}
+.home-foot{padding:20px 30px}
+
+/* enquanto a cadeia calcula: o laboratório fica marcado, não morto.
+   Espectral e granular custam segundos de verdade num arquivo longo. */
+.audio-main.processando .analyser::after{
+  content:"PROCESSANDO";position:absolute;right:8px;top:6px;
+  font-family:var(--mono);font-size:8px;letter-spacing:.16em;
+  color:var(--on-ch);background:var(--ch-audio);padding:2px 6px;
+}
+.audio-main.processando .rack{opacity:.55}
+
+/* ===================================================== COMPOSIÇÃO POR CAMADAS
+   O seletor de modo de mistura, a lista de máscaras e a barra da faixa de
+   mescla. Tudo dentro da coluna da direita, com a mesma gramática do resto:
+   filete de 1px, sem canto, sem sombra, e a cor do canal para o que está
+   escolhido.                                                              */
+.bmgrid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:3px;
+  padding:6px 8px 8px;border-bottom:var(--line) solid var(--rule-2);
+}
+.bmgrupo{
+  grid-column:1/-1;font:600 8px/1 var(--mono);letter-spacing:.16em;
+  color:var(--ink-3);padding:8px 0 2px 7px;border-left:3px solid var(--bmc,var(--rule));
+}
+.bmgrupo:first-child{padding-top:2px}
+.bmitem{
+  display:flex;align-items:center;gap:6px;padding:2px;cursor:pointer;text-align:left;
+  border:var(--line) solid var(--rule-2);background:var(--paper-2);color:var(--ink-2);
+}
+.bmitem img{display:block;flex:0 0 auto;image-rendering:auto}
+.bmitem span{font:400 9px/1.15 var(--mono);letter-spacing:.02em;overflow:hidden}
+.bmitem:hover{border-color:var(--ch);background:var(--paper)}
+.bmitem.on{border-color:var(--ch);background:var(--ch);color:var(--on-ch)}
+.bmitem.on img{outline:1px solid var(--on-ch);outline-offset:-1px}
+/* A faixa do modo escolhido. Ocupa a largura inteira porque a grade de
+   três colunas da ficha reserva 54px e 16px para número e losango — e o
+   botão de escolher não cabia ali, chegava cortado.                    */
+.bmopen{
+  display:flex;align-items:center;gap:8px;width:100%;padding:4px 6px;cursor:pointer;
+  border:var(--line) solid var(--ink);background:var(--paper-2);text-align:left;color:var(--ink);
+}
+.bmopen:hover{border-color:var(--ch);background:var(--paper)}
+.bmopen.on{background:var(--ch);color:var(--on-ch);border-color:var(--ch)}
+.bmopen img{display:block;flex:0 0 auto;outline:var(--line) solid var(--rule);outline-offset:-1px}
+.bmopen.on img{outline-color:var(--on-ch)}
+.bmtxt{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
+.bmtxt b{font:700 11px/1.15 var(--mono);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bmtxt i{font:400 8px/1 var(--mono);font-style:normal;letter-spacing:.14em;color:var(--ink-3)}
+.bmopen.on .bmtxt i{color:var(--on-ch);opacity:.78}
+.bmcta{flex:0 0 auto;font:700 9px/1 var(--mono);letter-spacing:.1em;color:var(--ch);white-space:nowrap}
+.bmopen.on .bmcta,.bmopen:hover .bmcta{color:inherit}
+
+.masklist{display:flex;flex-direction:column}
+.maskrow{
+  display:grid;grid-template-columns:22px 1fr auto 22px 22px;align-items:center;gap:4px;
+  padding:3px 8px;border-bottom:var(--line) solid var(--rule-2);
+}
+.maskrow.open{background:var(--paper-2);border-left:3px solid var(--ch)}
+.maskrow .mtog{
+  border:0;background:none;cursor:pointer;color:var(--ink-3);font-size:11px;line-height:1;padding:0;
+}
+.maskrow .mtog.on{color:var(--ch)}
+.maskrow .mname{
+  border:0;background:none;cursor:pointer;text-align:left;color:var(--ink);
+  font:400 10px/1.2 var(--mono);letter-spacing:.04em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+.maskrow .mmode{font:400 8px/1 var(--mono);letter-spacing:.1em;color:var(--ink-3)}
+.maskbody{padding:2px 0 6px;background:var(--paper-2);border-bottom:var(--line) solid var(--rule-2)}
+
+.ifbar{display:block;width:100%;height:22px;border:var(--line) solid var(--rule)}
+.ifline{fill:none;stroke:var(--ch);stroke-width:1.6;vector-effect:non-scaling-stroke;
+  paint-order:stroke;filter:drop-shadow(0 0 0 var(--paper))}
+
+
+/* ============================================================ GUIA (TUTORIAL)
+   A gaveta que desliza por cima do laboratório. Não é página, não é aba: o
+   trabalho continua atrás, e fechar devolve a pessoa exatamente onde estava.
+   Tudo pega a cor do canal — dentro do áudio o guia é verde, dentro do vídeo
+   é azul. É o mesmo laboratório, não um lugar novo.                        */
+/* O botão vive no cabeçalho, entre as abas e o seletor de modo. Ele só
+   existe dentro de um laboratório: no índice e no manual não há o que
+   ensinar ali, e um botão que abre nada é pior que botão nenhum.       */
+.guia-bt{
+  display:none;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.12em;
+  text-transform:uppercase;padding:3px 9px;cursor:pointer;
+  border:var(--line) solid var(--ch);background:transparent;color:var(--ch);font-weight:700;
+}
+:root[data-lab="video"] .guia-bt,
+:root[data-lab="audio"] .guia-bt,
+:root[data-lab="type"]  .guia-bt{ display:inline-flex }
+.guia-bt:hover{ background:var(--ch);color:var(--on-ch) }
+
+.guia{ position:fixed;inset:0;z-index:400;display:flex;justify-content:flex-end }
+.guia.hidden{ display:none }
+.guia-bg{ position:absolute;inset:0;background:rgba(10,10,8,.42);cursor:pointer }
+.guia-cx{
+  position:relative;display:flex;flex-direction:column;
+  width:min(430px, 92vw);height:100%;
+  background:var(--paper);border-left:2px solid var(--ink);
+  box-shadow:-1px 0 0 var(--ch);
+  animation:guiaEntra .18s ease-out;
+}
+@keyframes guiaEntra{ from{transform:translateX(18px);opacity:.4} to{transform:none;opacity:1} }
+
+.guia-h{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;
+  background:var(--ch);color:var(--on-ch);
+}
+.guia-h .lbl{ font:700 10px/1 var(--grotesk);letter-spacing:.09em;color:var(--on-ch) }
+.guia-h .l{ flex:1;height:1px;background:currentColor;opacity:.32 }
+.guia-h .micro{ color:var(--on-ch);opacity:.85;font-weight:700;letter-spacing:.1em }
+.guia-h .cmd{ border-color:var(--on-ch);color:var(--on-ch);background:transparent }
+.guia-h .cmd:hover{ background:var(--on-ch);color:var(--ch) }
+
+.guia-sub{
+  flex:0 0 auto;padding:6px 12px;font:400 10px/1.35 var(--mono);
+  color:var(--ink-2);background:var(--paper-2);
+  border-bottom:var(--line) solid var(--rule-2);
+}
+
+.guia-dots{
+  flex:0 0 auto;display:flex;flex-wrap:wrap;gap:3px;padding:7px 12px;
+  border-bottom:var(--line) solid var(--rule-2);
+}
+.gdot{
+  width:15px;height:5px;padding:0;cursor:pointer;
+  border:var(--line) solid var(--rule);background:transparent;
+}
+.gdot.feito{ background:var(--ink-4);border-color:var(--ink-4) }
+.gdot.on{ background:var(--ch);border-color:var(--ch);height:5px;box-shadow:0 0 0 1px var(--ch) }
+.gdot:hover{ border-color:var(--ch) }
+
+.guia-b{ flex:1 1 auto;overflow-y:auto;padding:14px 14px 20px }
+.gnum{
+  font:700 34px/1 var(--grotesk);letter-spacing:-.02em;
+  color:var(--ch);opacity:.22;margin-bottom:-8px;
+}
+.gt{
+  margin:0 0 10px;font:700 15px/1.2 var(--grotesk);letter-spacing:.02em;
+  color:var(--ink);text-transform:none;
+}
+.gp{ font:400 12.5px/1.62 var(--grotesk);color:var(--ink-2) }
+.gp b{ color:var(--ink);font-weight:700 }
+.gimg{
+  margin:0 0 12px;padding:8px;background:var(--paper-2);
+  border:var(--line) solid var(--rule-2);
+}
+.gimg svg{ display:block;width:100%;height:auto;color:var(--ink) }
+.gs-box{ fill:none;stroke:currentColor;stroke-width:1.2 }
+.gs-fill{ fill:var(--ch);opacity:.55 }
+.gs-fill2{ fill:var(--ink-4) }
+.gs-t{ font:700 8px var(--mono);fill:var(--ink);letter-spacing:.08em }
+.gs-t2{ font:700 8px var(--mono);fill:var(--ink-3);letter-spacing:.12em }
+.gs-play{ stroke:var(--ch);fill:var(--ch);stroke-width:1.6 }
+.gs-arrow{ stroke:var(--ink-3);fill:none;stroke-width:1.4 }
+.gs-wave{ fill:none;stroke:var(--ch);stroke-width:1.6 }
+.gs-head{ fill:none;stroke:currentColor;stroke-width:1.4 }
+.gs-dot{ fill:var(--ch) }
+.gs-dot2{ fill:var(--ink-4) }
+.gs-big{ font:700 30px var(--grotesk);fill:var(--ink);text-anchor:middle }
+.gs-guide{ stroke:var(--ch);stroke-width:.8;stroke-dasharray:3 3 }
+.gs-key{ fill:var(--paper-2);stroke:currentColor;stroke-width:1.4 }
+
+.gk{
+  display:inline-block;padding:1px 5px;margin:0 1px;
+  font:700 10px/1.3 var(--mono);letter-spacing:.06em;
+  border:var(--line) solid var(--ink);background:var(--paper-2);color:var(--ink);
+  box-shadow:1px 1px 0 var(--ink);
+}
+.gfaz{
+  margin-top:14px;padding:9px 10px;
+  border:var(--line) solid var(--ch);border-left-width:3px;background:var(--paper-2);
+  font:400 12px/1.5 var(--grotesk);color:var(--ink);
+}
+.gfaz span{
+  display:block;margin-bottom:4px;
+  font:700 8px/1 var(--mono);letter-spacing:.18em;color:var(--ch);
+}
+
+.guia-f{
+  flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 12px;
+  border-top:var(--line) solid var(--rule);background:var(--paper-2);
+}
+.guia-f .l{ flex:1 }
+.guia-f .cmd[disabled]{ opacity:.32;pointer-events:none }
+.guia-f .cmd-go{ background:var(--ch);color:var(--on-ch);border-color:var(--ch);font-weight:700 }
+.guia-f .cmd-go:hover{ background:var(--ink);border-color:var(--ink);color:var(--paper) }
+
+@media (max-width:640px){
+  .guia-cx{ width:100vw;border-left:0 }
+}
+
+/* ═════════════════════════════════════════════ SESSÃO GUARDADA ═══════
+   Faixa que desce quando existe uma sessão anterior no navegador. Não é
+   janela: não bloqueia nada, tem duas saídas e um × para decidir depois. */
+.autobar{
+  position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9000;
+  display:flex;align-items:center;gap:10px;max-width:min(92vw,860px);
+  background:var(--paper);border:2px solid var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.18);
+  padding:9px 10px 9px 12px;font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.04em;color:var(--ink);
+  animation:autobarDesce .22s ease-out;
+}
+@keyframes autobarDesce{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
+.autobar .ab-dot{
+  width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--sys-yellow);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--sys-yellow) 30%,transparent);
+}
+.autobar .ab-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
+.autobar .ab-txt b{font-weight:700}
+.autobar .ab-btn{
+  flex:0 0 auto;border:var(--line) solid var(--ink);background:var(--paper);color:var(--ink);
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.06em;padding:5px 9px;cursor:pointer;
+}
+.autobar .ab-btn:hover{background:var(--ink);color:var(--paper)}
+.autobar .ab-btn.ab-sim{background:var(--sys-yellow);border-color:var(--ink);font-weight:700}
+.autobar .ab-btn.ab-sim:hover{background:var(--ink);color:var(--sys-yellow)}
+.autobar .ab-x{
+  flex:0 0 auto;border:none;background:none;color:var(--ink-3);font-size:15px;
+  line-height:1;padding:0 2px;cursor:pointer;
+}
+.autobar .ab-x:hover{color:var(--ink)}
+
+/* selo na barra de estado — some quando ainda não gravou nada */
+.st-auto{color:var(--ink-3);font-weight:400;letter-spacing:.06em}
+.st-auto:empty{display:none}
+.st-auto.piscou{color:var(--sys-green);font-weight:700}
+
+/* ═════════════════════════════════════════════════ LEGENDAS ═══════════
+   O clipe de legenda mostra o TEXTO, não o nome — por isso ele precisa
+   de mais lugar para a palavra e menos peso de cor que um clipe comum. */
+.clip.ch-legenda{background:color-mix(in srgb,var(--sys-yellow) 16%,var(--paper))}
+.clip.ch-legenda::before{background:var(--sys-yellow)}
+.clip.ch-legenda .clabel{text-transform:none;letter-spacing:.02em}
+.clip.ch-legenda .clabel b{font-weight:600}
+/* a cabeça da pista de legenda ganha a mesma tarja amarela */
+.thead.leg::before{background:var(--sys-yellow)}
+.thead.leg{background:color-mix(in srgb,var(--sys-yellow) 6%,var(--paper))}
+.thead.leg .tno{color:color-mix(in srgb,var(--sys-yellow) 70%,var(--ink))}
+.lane.leg{background-image:linear-gradient(to bottom,color-mix(in srgb,var(--sys-yellow) 5%,transparent),transparent)}
+
+/* campo de texto da legenda na ficha: várias linhas, sem parecer código */
+.legtxt{
+  width:100%;min-height:56px;resize:vertical;box-sizing:border-box;
+  font-family:var(--sans,inherit);font-size:12px;line-height:1.35;
+  background:var(--paper);color:var(--ink);border:var(--line) solid var(--rule-2);
+  padding:6px 7px;outline:none;
+}
+.legtxt:focus{border-color:var(--accent)}
+.legcount{font-family:var(--mono);font-size:8px;color:var(--ink-3);letter-spacing:.06em}
+.legcount.longa{color:var(--sys-orange);font-weight:700}
+/* cadeado dentro da ficha do clipe: o mesmo desenho da pista, menor */
+.cmd.cmd-cad{padding:2px 6px;display:inline-flex;align-items:center}
+.cmd.cmd-cad .tsvg{width:12px;height:12px;display:block;pointer-events:none}
+.cmd.cmd-cad.active{background:var(--sys-red);border-color:var(--sys-red);color:#fff}
+
+/* ═════════════════════════════════════════════════════ TINTA ═══════════
+   A folha de escrever fica exatamente por cima do canvas do laboratório,
+   e é ela que recebe o ponteiro enquanto o modo está ligado.           */
+.type-stage{position:relative}
+.tinta-folha{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:5;cursor:crosshair;touch-action:none;
+  border:var(--line) solid var(--ch-type);
+  background:repeating-conic-gradient(var(--paper-2) 0% 25%, var(--paper) 0% 50%) 0 0/16px 16px;
+}
+body.tinta-on #tyCanvas{opacity:.28;filter:grayscale(1)}
+
+.tinta-bar{
+  position:absolute;right:10px;top:10px;z-index:6;width:236px;max-height:calc(100% - 20px);
+  display:flex;flex-direction:column;
+  background:var(--paper);border:2px solid var(--ink);box-shadow:5px 5px 0 rgba(0,0,0,.16);
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.04em;color:var(--ink);
+}
+.tinta-bar .ti-h{
+  display:flex;align-items:center;gap:6px;padding:6px 7px;border-bottom:var(--line) solid var(--rule-2);
+  background:var(--ch-type);color:var(--on-ch);
+}
+.tinta-bar .ti-h b{font-weight:700;flex:0 0 auto}
+.tinta-bar .ti-h span{flex:1;min-width:0;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tinta-bar .ti-h .cmd{background:transparent;border-color:currentColor;color:inherit;padding:2px 5px}
+.tinta-bar .ti-body{flex:1;overflow:auto;padding:6px 7px}
+.tinta-bar .ti-row{
+  display:grid;grid-template-columns:1fr 78px 34px;align-items:center;gap:5px;
+  padding:2px 0;color:var(--ink-2);
+}
+.tinta-bar .ti-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tinta-bar .ti-row b{font-weight:400;color:var(--ink-3);text-align:right;font-size:8px}
+.tinta-bar .ti-row input[type=range]{width:100%}
+.tinta-bar .ti-row input[type=color]{width:100%;height:16px;padding:0;border:var(--line) solid var(--rule)}
+.tinta-bar .ti-row input[type=checkbox]{justify-self:start}
+.tinta-bar .ti-sep{
+  margin:7px 0 3px;padding-top:5px;border-top:var(--line) solid var(--rule);
+  font-weight:700;color:var(--ink);letter-spacing:.08em;
+}
+.tinta-bar .ti-btns{display:flex;gap:3px;padding:5px 7px;border-top:var(--line) solid var(--rule-2);flex-wrap:wrap}
+.tinta-bar .ti-btns .cmd{flex:1 1 auto}
+
+/* ═════════════════════════════════════════ CANETA DE MÁSCARA ═══════════
+   A lista de vértices: número, coordenada, cronômetro e remover. Quem tem
+   keyframe fica amarelo — é o que se precisa ver de relance ao animar. */
+.ptlist{display:flex;flex-direction:column;gap:2px;margin:4px 0 6px;max-height:186px;overflow:auto}
+.ptrow{
+  display:grid;grid-template-columns:20px 1fr 20px 20px;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:8px;letter-spacing:.04em;color:var(--ink-2);
+  border:var(--line) solid var(--rule);padding:2px 4px;
+}
+.ptrow b{font-weight:700;color:var(--ink-3)}
+.ptrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptrow.anim{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.ptrow.anim b{color:var(--accent)}
+.ptrow .kf{width:16px;height:16px;font-size:8px}
+.st-auto.falhou{color:var(--sys-red);font-weight:700}
+/* linha de vértice: agora com o botão de curvar entre a coordenada e o
+   cronômetro — quatro colunas, não três */
+.ptrow{grid-template-columns:20px 1fr 18px 20px 20px}
+.ptrow.sel{border-color:var(--ch-audio);box-shadow:inset 0 0 0 1px var(--ch-audio)}
+.ptc{
+  width:18px;height:16px;border:var(--line) solid var(--rule);background:var(--paper);
+  color:var(--ink-3);font-size:9px;display:flex;align-items:center;justify-content:center;
+}
+.ptc:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ptc.on{background:var(--ch-audio);border-color:var(--ch-audio);color:var(--on-ch)}
+
+/* linha do cronômetro do CAMINHO — um losango grande, o rótulo, e a
+   navegação ‹ ◆ › entre poses, na ordem em que a mão procura */
+.cankey{
+  display:grid;grid-template-columns:26px 1fr 22px 26px 22px;align-items:center;gap:4px;
+  padding:3px 0 5px;
+}
+.cankey .cank-l{
+  font-family:var(--mono);font-size:8px;letter-spacing:.06em;color:var(--ink-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase;
+}
+.cankey .cmd{padding:2px 0;min-width:0}
+.cankey .cmd[disabled]{opacity:.35;pointer-events:none}
+.kf.big{width:24px;height:24px;font-size:13px}
+.kf.big.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+/* a lista de vértices perdeu o cronômetro: quatro colunas viram três */
+.ptrow{grid-template-columns:20px 1fr 18px 20px}
+
+/* ═════════════════════════════════ CONFERÊNCIA DA EXPORTAÇÃO ═══════════
+   O veredito sobre o arquivo que saiu. Verde quando bate, laranja quando
+   saiu curto — que é o caso em que a pessoa acha que perdeu o trabalho. */
+.exp-confere{
+  margin:8px 0;padding:7px 9px;border:var(--line) solid var(--rule-2);
+  font-family:var(--mono);font-size:9px;line-height:1.5;letter-spacing:.04em;
+  color:var(--ink-2);text-transform:none;
+}
+.exp-confere b{font-weight:700}
+.exp-confere.exp-ok{border-color:var(--sys-green);color:var(--sys-green)}
+.exp-confere.exp-curto{
+  border-color:var(--sys-orange);color:var(--sys-orange);
+  background:color-mix(in srgb,var(--sys-orange) 8%,transparent);
+}
+.exp-confere.exp-duvida{border-color:var(--sys-yellow);color:var(--ink-2)}
+
+/* ═══════════════════════════════════════ FERRAMENTAS DA LINHA DO TEMPO ══
+   A letra do atalho fica embaixo do desenho: é assim que a mão aprende. */
+.tgroup-ferr{gap:2px}
+.tbtn.ferr{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:26px;height:26px;padding:0;gap:0;
+}
+.tbtn.ferr svg{width:14px;height:14px;fill:currentColor;display:block}
+.tbtn.ferr i{
+  font-style:normal;font-family:var(--mono);font-size:6px;line-height:1;
+  letter-spacing:.06em;opacity:.6;margin-top:1px;
+}
+.tbtn.ferr.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tbtn.ferr.active i{opacity:.9}
+
+/* o cursor conta qual ferramenta está na mão */
+.tl-body.tool-corte .clip{cursor:crosshair}
+.tl-body.tool-mao .lane,.tl-body.tool-mao .clip{cursor:grab}
+.tl-body.tool-ondula .chandle{background:var(--sys-orange)}
+
+/* alça de aparar: 7 px era clicável e invisível. Agora ela se anuncia. */
+.chandle{width:10px}
+.chandle::after{
+  content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:2px;height:14px;background:var(--ink-3);opacity:0;transition:opacity .1s;
+}
+.clip:hover .chandle::after{opacity:.45}
+.chandle:hover::after{opacity:0}
+
+/* aviso de trecho marcado no painel de exportação */
+.exp-faixa{
+  margin-bottom:10px;padding:8px 10px;border:var(--line) solid var(--sys-yellow);
+  background:color-mix(in srgb,var(--sys-yellow) 12%,transparent);
+  font-family:var(--mono);font-size:9px;line-height:1.6;letter-spacing:.04em;color:var(--ink);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.exp-faixa b{font-weight:700}
+.exp-faixa .cmd{margin-left:auto}
+
+/* ═══════════════════════════════════════════ LETRAS RECORTADAS ═════════
+   A folha fica sobre o palco, como a da tinta, mas aqui ela recebe o
+   clique em cada LETRA — o cursor conta isso. */
+.recorte-folha{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:5;cursor:grab;touch-action:none;
+  border:var(--line) solid var(--ch-type);
+  background:repeating-conic-gradient(var(--paper-2) 0% 25%, var(--paper) 0% 50%) 0 0/16px 16px;
+}
+.recorte-folha:active{cursor:grabbing}
+body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
+.recorte-bar{width:252px}
+.recorte-bar .ti-row select{
+  width:100%;font-family:var(--mono);font-size:8px;background:var(--paper);
+  color:var(--ink);border:var(--line) solid var(--rule);
+}
+.tinta-bar .ti-nota{
+  padding:6px 8px;border-top:var(--line) solid var(--rule-2);
+  font-size:8px;line-height:1.5;color:var(--ink-3);letter-spacing:.03em;
+}
+.tinta-bar .ti-nota b{color:var(--ink-2);font-weight:700}
