@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-mode="paper" data-lab="home">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rgb_lab — Laboratório Audiovisual Experimental</title>
+<meta name="description" content="rgb_lab — laboratório audiovisual experimental: vídeo, áudio e tipografia processados no seu próprio computador.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23efede4'/><text x='16' y='18' font-family='monospace' font-size='12' font-weight='700' text-anchor='middle' fill='%2316150f'>rgb</text><rect x='7' y='22' width='18' height='3' fill='%2316150f'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@200;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/labs.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ 00 · TELA DE ENTRADA -->
+<div id="intro">
+  <canvas id="introCanvas"></canvas>
+  <div class="intro-veil"></div>
+  <div class="intro-frame"></div>
+
+  <div class="intro-meta tl">
+    RGB_LAB<br>
+    LABORATÓRIO AUDIOVISUAL<br>
+    <span id="introSig">SIG · ————</span>
+    <div class="intro-bars" id="introBars"></div>
+  </div>
+  <div class="intro-meta tr">
+    SYS 01 / BUILD 2411<br>
+    <span id="introClock">00:00:00</span><br>
+    MODO EXPERIMENTAL
+  </div>
+  <div class="intro-meta bl">
+    <span class="ch-legend"><i style="background:var(--ch-video)"></i>01 VÍDEO · BLUE</span><br>
+    <span class="ch-legend"><i style="background:var(--ch-audio)"></i>02 ÁUDIO · GREEN</span><br>
+    <span class="ch-legend"><i style="background:var(--ch-type)"></i>03 TIPOGRAFIA · RED</span><br>
+    PROCESSAMENTO LOCAL
+  </div>
+  <div class="intro-meta br">
+    <span id="introSrc">FONTE · RUÍDO PROCEDURAL</span><br>
+    <span id="introRes">MATRIZ · 000×000</span>
+  </div>
+
+  <div class="intro-ui">
+    <div class="intro-word brandmark center" role="img" aria-label="rgb_lab">rgb_lab</div>
+    <div class="intro-sub">Laboratório Audiovisual</div>
+    <button class="intro-enter" id="enterBtn">[ <span class="blinkc">▮</span> ENTRAR NO LABORATÓRIO ]</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ 00b · BOOT -->
+<div id="boot" class="hidden"><div id="bootLog"></div></div>
+
+<!-- ═══════════════════════════════════════════════════════════════ 01 · SHELL -->
+<div id="shell" class="hidden">
+
+  <!-- ────────────────────────────────────────────── CABEÇALHO -->
+  <header class="hdr">
+    <div class="hdr-id">
+      <div class="wordmark brandmark" role="img" aria-label="rgb_lab">rgb_lab</div>
+      <div class="hdr-tag">
+        <span class="micro">LABORATÓRIO AUDIOVISUAL</span>
+        <span class="micro">SYS 01 · BUILD 2411</span>
+      </div>
+    </div>
+    <nav class="hdr-nav" id="hdrNav">
+      <button data-view="home"><span class="idx">00</span> ÍNDICE</button>
+      <button data-view="video"><span class="idx">01</span> VÍDEO</button>
+      <button data-view="audio"><span class="idx">02</span> ÁUDIO</button>
+      <button data-view="type"><span class="idx">03</span> TIPOGRAFIA</button>
+    </nav>
+    <div class="hdr-right">
+      <!-- O guia do laboratório aberto. Um botão só: ele sabe em que
+           laboratório você está. Some no índice e no manual, que não têm
+           guia próprio — a regra está no CSS, sem JavaScript.        -->
+      <button class="guia-bt" data-guia="" title="Tutorial deste laboratório, do zero">? COMO USAR</button>
+      <span class="micro">MODO</span>
+      <div class="seg" id="modeSeg">
+        <button data-mode="paper" class="on" title="Papel — modo claro">CLARO</button>
+        <button data-mode="darkroom" title="Darkroom — modo noturno">NOTURNO</button>
+      </div>
+      <span class="hdr-clock" id="clock">00:00:00</span>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- ────────────────────────────────────────────── TRILHO -->
+    <div class="rail">
+      <div class="rail-txt">RGB-2411-LAB</div>
+      <div class="rail-punch"><i></i><i></i><i></i><i></i></div>
+      <div class="rail-txt" id="railView">SYS 001</div>
+    </div>
+
+    <!-- ────────────────────────────────────────────── BARRA LATERAL -->
+    <aside class="side" id="side">
+
+      <!-- catálogo geral (visível no índice) -->
+      <div class="side-pane" id="sideHome">
+        <div class="side-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">LABORATÓRIOS</span></div>
+          <button class="folder" data-lab="video" data-view="video"><span class="fno">01</span><span class="ftab"></span><span class="fnm">Vídeo</span></button>
+          <button class="folder" data-lab="audio" data-view="audio"><span class="fno">02</span><span class="ftab"></span><span class="fnm">Áudio</span></button>
+          <button class="folder" data-lab="type" data-view="type"><span class="fno">03</span><span class="ftab"></span><span class="fnm">Tipografia</span></button>
+        </div>
+        <div class="side-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">ARQUIVO</span></div>
+          <button class="folder" id="navProjects"><span class="fno">A1</span><span class="fnm">Projetos</span></button>
+          <button class="folder" id="navPresets"><span class="fno">A2</span><span class="fnm">Presets</span></button>
+          <button class="folder" id="navAbout"><span class="fno">A3</span><span class="fnm">Sobre</span></button>
+        </div>
+
+        <!-- MANUAL 01 — o tutorial mora aqui, não mais no corpo do índice -->
+        <div class="side-sec side-manual">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">MANUAL 01</span>
+            <span class="spacer"></span><span class="micro">MÉTODO</span></div>
+          <button class="man-card" data-view="tutorial">
+            <span class="man-bar"></span>
+            <span class="man-t">Como fazer<br>uma videoarte?</span>
+            <span class="man-d">Do tema à montagem: o método inteiro, e onde cada etapa acontece dentro do laboratório.</span>
+            <span class="man-tags"><i>CONCEITO</i><i>PRÁTICA</i><i>EXERCÍCIO DE 60S</i></span>
+            <span class="man-go">↗</span>
+          </button>
+        </div>
+
+        <div class="side-sec" style="flex:1"></div>
+        <div class="pad">
+          <div class="micro">PROCESSAMENTO LOCAL</div>
+          <div class="micro" style="color:var(--ink-4);margin-top:4px;line-height:1.6">SEUS ARQUIVOS NÃO SÃO ENVIADOS PARA NENHUM SERVIDOR</div>
+        </div>
+      </div>
+
+      <!-- sumário do tutorial -->
+      <div class="side-pane hidden" id="sideTutorial">
+        <div class="side-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">MANUAL 01</span></div>
+          <div class="tut-toc" id="tutToc"></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="pad">
+          <div class="micro">MÉTODO</div>
+          <div class="micro" style="color:var(--ink-4);margin-top:4px;line-height:1.6">
+            TEMA + REFERÊNCIAS + MATERIAL → POÉTICA → EDIÇÃO
+          </div>
+        </div>
+        <div class="pad" style="padding-top:0">
+          <button class="cmd cmd-solid" data-view="video" style="width:100%;justify-content:center">ABRIR O LABORATÓRIO</button>
+        </div>
+      </div>
+
+      <!-- laboratório de vídeo -->
+      <div class="side-pane hidden" id="sideVideo">
+        <div class="side-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">FONTE</span><span class="spacer"></span><span class="micro" id="srcCount">0</span></div>
+          <div class="srcgrid">
+            <button class="srcbtn" id="srcFile">
+              <svg viewBox="0 0 24 24"><path d="M4 5h7l2 3h7v11H4z"/><path d="M12 11v6M9 14h6"/></svg>
+              <span class="micro">ARQUIVO</span></button>
+            <button class="srcbtn" id="srcCam">
+              <svg viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="10"/><path d="M15 11l6-3v8l-6-3z"/></svg>
+              <span class="micro">WEBCAM</span></button>
+            <button class="srcbtn" id="srcImage">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><path d="M3 15l5-4 4 3 3-2 6 4"/></svg>
+              <span class="micro">IMAGEM</span></button>
+            <button class="srcbtn" id="srcType">
+              <svg viewBox="0 0 24 24"><path d="M5 7V5h14v2M12 5v14M9 19h6"/></svg>
+              <span class="micro">TEXTO</span></button>
+            <button class="srcbtn" id="srcLegenda"
+                    title="Legendas: escreve uma, cola um texto inteiro já cronometrado, ou abre um .srt">
+              <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 11h4M7 14h7M15 11h2"/></svg>
+              <span class="micro">LEGENDA</span></button>
+            <button class="srcbtn" id="srcAudio">
+              <svg viewBox="0 0 24 24"><path d="M4 12h2l3-6 3 12 3-9 2 3h3"/></svg>
+              <span class="micro">ÁUDIO</span></button>
+            <button class="srcbtn" id="srcTest">
+              <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/><path d="M4 10h16M10 4v16"/></svg>
+              <span class="micro">TESTE</span></button>
+            <button class="srcbtn srcbtn-hi" id="srcOver"
+                    title="Põe um vídeo ou imagem POR CIMA do que já está no cursor, na mesma duração, já em modo de mistura">
+              <svg viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="12"/><rect x="9" y="3" width="12" height="12"/></svg>
+              <span class="micro">SOBREPOR</span></button>
+          </div>
+        </div>
+
+        <!-- ABAS DO CATÁLOGO — só uma aberta por vez, com a altura toda -->
+        <div class="side-tabs" id="sideTabs" role="tablist">
+          <button class="stab on" data-tab="fx" role="tab"><span class="stab-n">01</span>EFEITOS<i id="fxCount">00</i></button>
+          <button class="stab" data-tab="filters" role="tab"><span class="stab-n">02</span>FILTROS<i id="filtCount">00</i></button>
+          <button class="stab" data-tab="styles" role="tab"><span class="stab-n">03</span>ESTILOS<i id="styleCount">00</i></button>
+          <button class="stab" data-tab="presets" role="tab"><span class="stab-n">04</span>PRESETS<i id="presetCount">00</i></button>
+        </div>
+
+        <div class="side-tabbox">
+
+          <!-- 01 · EFEITOS -->
+          <section class="side-tabpane" id="tabFx" data-pane="fx">
+            <div class="cat-search"><span class="micro">/</span><input id="fxSearch" placeholder="buscar efeito" spellcheck="false"></div>
+            <div class="chips" id="fxCats"></div>
+            <div class="fxlist" id="fxList"></div>
+            <div class="tabfoot micro">CLIQUE APLICA NO CLIPE SELECIONADO · SEM SELEÇÃO VIRA CAMADA DE AJUSTE</div>
+          </section>
+
+          <!-- 02 · GALERIA DE FILTROS -->
+          <section class="side-tabpane hidden" id="tabFilters" data-pane="filters">
+            <div class="filterbar">
+              <button class="tbtn" id="filterRefresh" title="Refazer as miniaturas com o quadro que está no cursor">↻ MINIATURAS</button>
+              <span class="spacer"></span>
+              <label class="chk" title="Passar o mouse mostra o filtro na prévia, sem aplicar">
+                <input type="checkbox" id="filterHover" checked> PRÉVIA
+              </label>
+            </div>
+            <div class="chips" id="filterFams"></div>
+            <div class="filtergrid" id="filterGrid"></div>
+            <div class="tabfoot micro" id="filterFoot">—</div>
+          </section>
+
+          <!-- 03 · ESTILOS PRONTOS -->
+          <section class="side-tabpane hidden" id="tabStyles" data-pane="styles">
+            <div class="cat-search"><span class="micro">/</span><input id="styleSearch" placeholder="buscar estilo" spellcheck="false"></div>
+            <div class="stylelist" id="styleList"></div>
+            <div class="tabfoot micro">UM ESTILO MONTA UMA CADEIA INTEIRA DE EFEITOS DE UMA VEZ</div>
+          </section>
+
+          <!-- 04 · PRESETS SALVOS -->
+          <section class="side-tabpane hidden" id="tabPresets" data-pane="presets">
+            <div class="filterbar">
+              <button class="tbtn" id="savePreset">+ SALVAR CADEIA</button>
+            </div>
+            <div class="presetlist" id="presetList"></div>
+            <div class="tabfoot micro">GUARDA A PILHA DE EFEITOS DO CLIPE SELECIONADO</div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- laboratório de áudio -->
+      <div class="side-pane hidden" id="sideAudio">
+        <div class="side-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">FONTE</span></div>
+          <div class="srcgrid">
+            <button class="srcbtn" id="auFile">
+              <svg viewBox="0 0 24 24"><path d="M4 5h7l2 3h7v11H4z"/></svg><span class="micro">ARQUIVO</span></button>
+            <button class="srcbtn" id="auMic">
+              <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 12a7 7 0 0 0 14 0M12 19v2"/></svg><span class="micro">MICROFONE</span></button>
+            <button class="srcbtn" id="auTone">
+              <svg viewBox="0 0 24 24"><path d="M3 12c3-9 6 9 9 0s6-9 9 0"/></svg><span class="micro">TOM TESTE</span></button>
+            <button class="srcbtn" id="auFromVideo">
+              <svg viewBox="0 0 24 24"><rect x="3" y="6" width="12" height="12"/><path d="M17 9v6"/></svg><span class="micro">DO VÍDEO</span></button>
+          </div>
+        </div>
+        <div class="side-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">CADEIA</span></div>
+          <div id="auChain"></div>
+        </div>
+        <div class="side-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">PRESETS</span></div>
+          <div id="auPresets"></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="pad"><button class="cmd cmd-solid" id="auExport" style="width:100%;justify-content:center">EXPORTAR WAV</button></div>
+      </div>
+
+      <!-- laboratório de tipografia -->
+      <div class="side-pane hidden" id="sideType">
+
+        <!-- FERRAMENTAS — a lista longa: é ela que rola -->
+        <div class="side-sec ty-tools-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">FERRAMENTAS</span>
+            <span class="spacer"></span><span class="micro" id="tyToolCount">00</span></div>
+          <div class="cat-search"><span class="micro">/</span><input id="tySearch" placeholder="buscar ferramenta" spellcheck="false"></div>
+          <div id="tyTools" class="tytools"></div>
+        </div>
+
+        <!-- PRESETS — altura limitada, rolagem própria -->
+        <div class="side-sec ty-presets-sec">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">PRESETS</span></div>
+          <div id="tyPresets" class="scrolly"></div>
+        </div>
+
+        <!-- SAÍDA — presa no rodapé, nunca sai da tela -->
+        <div class="side-sec ty-out">
+          <div class="side-sec-h"><span class="dot"></span><span class="lbl lbl-ink">SAÍDA</span>
+            <span class="spacer"></span><span class="micro">PNG COM ALPHA</span></div>
+
+          <div class="out-group">
+            <div class="out-lbl micro">PARA A COMPOSIÇÃO</div>
+            <button class="cmd cmd-solid" id="tyToTimeline" title="Vira um clipe TYPE_000 na linha do tempo do laboratório de vídeo, já com fundo transparente">ENVIAR PRA TIMELINE ↗</button>
+            <div class="out-note micro">ENTRA COMO CLIPE VERMELHO NO LAB 01, POR CIMA DO VÍDEO</div>
+          </div>
+
+          <div class="out-group">
+            <div class="out-lbl micro">SALVAR ARQUIVO</div>
+            <div class="out-btns">
+              <button class="cmd" id="tyPng" title="O quadro atual, em PNG com fundo transparente">PNG α</button>
+              <button class="cmd" id="tySeq" title="A animação inteira, um PNG por quadro, num .zip">SEQUÊNCIA α</button>
+              <button class="cmd" id="tySvg" title="Vetor — usa a fonte instalada na máquina de quem abrir">SVG</button>
+            </div>
+            <div class="out-note micro">O FUNDO DO PAINEL É SÓ PARA VER — NUNCA VAI JUNTO</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- divisor: catálogo ↔ área de trabalho -->
+    <div class="vsplit" id="splitLeft" data-var="--side-w" data-side="left" title="Arraste para redimensionar · clique duplo para voltar ao padrão"></div>
+
+    <!-- ────────────────────────────────────────────── ÁREA DE TRABALHO -->
+    <section class="work" id="work">
+
+      <!-- ······················· ÍNDICE (HOME) -->
+      <div class="home" id="viewHome">
+        <div class="home-hero">
+          <div>
+            <h1 class="home-title brandmark" role="img" aria-label="rgb_lab">rgb_lab</h1>
+            <div class="home-sub">Laboratório Audiovisual Experimental</div>
+          </div>
+          <div class="home-specs">
+            <div class="micro">SISTEMA <b class="lbl-ink">01</b></div>
+            <div class="micro">BUILD <b class="lbl-ink">2411</b></div>
+            <div class="micro">MOTOR <b class="lbl-ink">WEBGL2 / WEB AUDIO</b></div>
+            <div class="micro" id="homeGpu">GPU <b class="lbl-ink">—</b></div>
+          </div>
+        </div>
+
+        <div class="labs" id="labCards">
+          <button class="lab-card" data-lab="video" data-view="video">
+            <span class="lab-bar"></span><span class="lab-ch">CANAL BLUE</span><canvas></canvas>
+            <div class="lab-no">01 / LABORATÓRIO</div>
+            <div class="lab-nm">Vídeo</div>
+            <div class="lab-desc">Imagem em movimento: cor, tempo, espaço, glitch, pixel, pintura, percepção e instrumentos</div>
+            <div class="lab-tools"><i>TIMELINE</i><i>139 EFEITOS</i><i>8 FAMÍLIAS</i><i>MÁSCARAS</i><i>KEYFRAMES</i><i>WEBCAM</i><i>ALPHA</i></div>
+            <span class="lab-go">↗</span>
+          </button>
+          <button class="lab-card" data-lab="audio" data-view="audio">
+            <span class="lab-bar"></span><span class="lab-ch">CANAL GREEN</span><canvas></canvas>
+            <div class="lab-no">02 / LABORATÓRIO</div>
+            <div class="lab-nm">Áudio</div>
+            <div class="lab-desc">Onda, corte, distorção, bitcrush, atraso, reverberação, granular</div>
+            <div class="lab-tools"><i>WAVEFORM</i><i>12 MÓDULOS</i><i>WAV</i><i>REATIVO</i></div>
+            <span class="lab-go">↗</span>
+          </button>
+          <button class="lab-card" data-lab="type" data-view="type">
+            <span class="lab-bar"></span><span class="lab-ch">CANAL RED</span><canvas></canvas>
+            <div class="lab-no">03 / LABORATÓRIO</div>
+            <div class="lab-nm">Tipografia</div>
+            <div class="lab-desc">Letra a letra: entrada, laço e saída — 40 animações de texto e 12 famílias próprias</div>
+            <div class="lab-tools"><i>POR LETRA</i><i>40 ANIMAÇÕES</i><i>WARP</i><i>PNG ALPHA</i><i>SVG</i></div>
+            <span class="lab-go">↗</span>
+          </button>
+        </div>
+
+        <div class="home-strip">
+          <div>
+            <span class="lbl lbl-ink">01 · PROCESSAMENTO LOCAL</span>
+            <p>Nenhum arquivo sai do seu computador. Vídeo, áudio e imagem são lidos direto do disco e processados na GPU/CPU da máquina.</p>
+          </div>
+          <div>
+            <span class="lbl lbl-ink">02 · FORMATOS</span>
+            <p>Entrada MP4 / WEBM / MOV / JPG / PNG / WAV / MP3. Saída MP4, WEBM, PNG, PNG com alpha, sequência de frames, WAV, SVG.</p>
+          </div>
+          <div>
+            <span class="lbl lbl-ink">03 · LIMITES</span>
+            <p>Duração da composição definida por você — o padrão são 10 minutos e o campo aceita mais. Sem limite de camadas, efeitos ou keyframes além da sua placa de vídeo.</p>
+          </div>
+          <div>
+            <span class="lbl lbl-ink">04 · MÉTODO</span>
+            <p>A interface é parte do experimento: tudo é parâmetro, tudo é visível, tudo pode ser levado ao extremo.</p>
+          </div>
+        </div>
+
+        <div class="home-foot">
+          <span class="micro">/RGB_LAB.SYSTEM · ÍNDICE</span>
+          <span class="byline">
+            <i></i>
+            <span class="byline-k">ELABORADO E CRIADO POR</span>
+            <b>Bruno Cebriano Ramirez</b>
+          </span>
+          <span class="micro" id="homeStamp">—</span>
+        </div>
+      </div>
+
+      <!-- ······················· TUTORIAL · COMO FAZER UMA VIDEOARTE -->
+      <div class="hidden tut" id="viewTutorial">
+
+        <div class="tut-hero">
+          <div>
+            <div class="micro">MANUAL 01 · MÉTODO</div>
+            <h1 class="tut-title">Como fazer<br>uma videoarte?</h1>
+            <p class="tut-lead">
+              Não é um passo a passo de botão. É um método: de onde vem a ideia,
+              como o material se junta a ela, e por que a montagem é o momento em
+              que a obra decide o que quer dizer.
+            </p>
+          </div>
+          <div class="tut-meta">
+            <div class="micro">PARTE 1 <b class="lbl-ink">CONCEITO</b></div>
+            <div class="micro">PARTE 2 <b class="lbl-ink">PRÁTICA</b></div>
+            <div class="micro">LEITURA <b class="lbl-ink">±12 MIN</b></div>
+            <div class="micro">EXERCÍCIO <b class="lbl-ink">60 SEGUNDOS</b></div>
+          </div>
+        </div>
+
+        <!-- ============================ O DIAGRAMA ============================ -->
+        <section class="tut-sec" id="tut-mapa">
+          <div class="tut-num">00</div>
+          <div class="tut-body">
+            <h2>O mapa inteiro numa página</h2>
+            <p>
+              Três coisas entram: um <b>tema</b>, um conjunto de <b>referências externas</b>
+              e o <b>material</b> que você já tem ou vai captar. Elas se cruzam — e o que
+              sai desse cruzamento é a sua <b>poética</b>: a sua autoria somada às suas
+              referências. Depois disso vem a <b>edição</b>, que é onde a obra realmente
+              acontece.
+            </p>
+
+            <svg class="tut-diagram" viewBox="0 0 1000 640" role="img"
+                 aria-label="Mapa do método: um tema, referências externas e material se cruzam e produzem uma poética; a poética é montada na edição, que é onde o sentido é decidido">
+              <defs>
+                <marker id="arw" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="8" markerHeight="8" orient="auto">
+                  <path d="M0,0.5 L12,6 L0,11.5 z" fill="currentColor"/>
+                </marker>
+                <marker id="arwB" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="9" markerHeight="9" orient="auto">
+                  <path d="M0,0.5 L12,6 L0,11.5 z" fill="currentColor"/>
+                </marker>
+                <pattern id="dgGrid" width="16" height="16" patternUnits="userSpaceOnUse">
+                  <circle cx="0.9" cy="0.9" r="0.9"/>
+                </pattern>
+                <clipPath id="dgPlate"><rect x="0" y="0" width="1000" height="640"/></clipPath>
+              </defs>
+
+              <g clip-path="url(#dgPlate)">
+              <!-- ─────────────────────────── fundo: papel milimetrado discreto -->
+              <rect class="dg-grid" x="34" y="52" width="932" height="556"/>
+
+              <!-- ─────────────────────────── marcas de registro nos quatro cantos -->
+              <g class="dg-reg">
+                <path d="M14,34 H40 M14,34 V60"/><path d="M986,34 H960 M986,34 V60"/>
+                <path d="M14,626 H40 M14,626 V600"/><path d="M986,626 H960 M986,626 V600"/>
+                <circle cx="27" cy="47" r="3.2"/><circle cx="973" cy="47" r="3.2"/>
+                <circle cx="27" cy="613" r="3.2"/><circle cx="973" cy="613" r="3.2"/>
+              </g>
+
+              <!-- ─────────────────────────── cabeçalho da prancha -->
+              <g class="dg-plate">
+                <text class="dg-code" x="14" y="22">MAPA 01</text>
+                <text class="dg-title" x="86" y="22">DO TEMA À MONTAGEM</text>
+                <line class="dg-rule" x1="340" y1="17" x2="912" y2="17"/>
+                <text class="dg-code dg-right" x="986" y="22">RGB_LAB · MÉTODO</text>
+                <!-- filete de registro RGB, a marca da casa -->
+                <rect class="dg-ch-r" x="14" y="28" width="24" height="2.4"/>
+                <rect class="dg-ch-g" x="40" y="28.8" width="24" height="2.4"/>
+                <rect class="dg-ch-b" x="66" y="27.4" width="24" height="2.4"/>
+              </g>
+
+              <!-- ═══════════════════════════ 01 · TEMA ═══════════════════════ -->
+              <g class="dg-node dg-solid">
+                <rect class="dg-shadow" x="336" y="76" width="330" height="106"/>
+                <rect class="dg-box" x="330" y="70" width="330" height="106"/>
+                <rect class="dg-tab" x="330" y="52" width="52" height="20"/>
+                <text class="dg-no dg-on" x="342" y="66">01</text>
+                <text class="dg-h dg-on" x="348" y="104">TEMA</text>
+                <text class="dg-t dg-on" x="348" y="128">o que não te deixa em paz</text>
+                <line class="dg-hair dg-on" x1="348" y1="140" x2="642" y2="140"/>
+                <text class="dg-t dg-on dg-dim2" x="348" y="160">cotidiano · cidade · corpo · memória</text>
+                <text class="dg-t dg-on dg-dim2" x="348" y="174">gênero · trabalho · o que te aperta</text>
+              </g>
+
+              <!-- setas do tema para os dois lados -->
+              <path class="dg-arw dg-flow" d="M356,182 C280,214 214,214 190,252" marker-end="url(#arw)"/>
+              <path class="dg-arw dg-flow" d="M640,182 C716,214 782,214 806,252" marker-end="url(#arw)"/>
+              <text class="dg-note" x="238" y="222">busca</text>
+              <text class="dg-note" x="726" y="222">captação</text>
+
+              <!-- ═══════════════════════════ 02 · REFERÊNCIAS ════════════════ -->
+              <g class="dg-node dg-ch-blue">
+                <rect class="dg-box" x="52" y="256" width="286" height="188"/>
+                <rect class="dg-tab" x="52" y="238" width="52" height="20"/>
+                <text class="dg-no" x="64" y="252">02</text>
+                <rect class="dg-band" x="52" y="256" width="286" height="5"/>
+                <text class="dg-h" x="70" y="292">REFERÊNCIAS</text>
+                <text class="dg-h" x="70" y="312">EXTERNAS</text>
+                <line class="dg-hair" x1="70" y1="326" x2="320" y2="326"/>
+                <text class="dg-t" x="70" y="350">filmes e videoartes</text>
+                <text class="dg-t" x="70" y="372">músicas e ruído</text>
+                <text class="dg-t" x="70" y="394">livros e manifestos</text>
+                <text class="dg-t" x="70" y="416">imagens de arquivo</text>
+                <text class="dg-t dg-dim" x="70" y="436">+ tudo o que te formou</text>
+              </g>
+
+              <!-- ═══════════════════════════ 03 · MATERIAL ═══════════════════ -->
+              <g class="dg-node dg-ch-red">
+                <rect class="dg-box" x="662" y="256" width="286" height="188"/>
+                <rect class="dg-tab" x="662" y="238" width="52" height="20"/>
+                <text class="dg-no" x="674" y="252">03</text>
+                <rect class="dg-band" x="662" y="256" width="286" height="5"/>
+                <text class="dg-h" x="680" y="292">MATERIAL</text>
+                <text class="dg-h" x="680" y="312">SEU</text>
+                <line class="dg-hair" x1="680" y1="326" x2="930" y2="326"/>
+                <text class="dg-t" x="680" y="350">vídeos e planos soltos</text>
+                <text class="dg-t" x="680" y="372">fotos e digitalizações</text>
+                <text class="dg-t" x="680" y="394">áudios e gravações</text>
+                <text class="dg-t" x="680" y="416">escritos e cadernos</text>
+                <text class="dg-t dg-dim" x="680" y="436">já captado ou a captar</text>
+              </g>
+
+              <!-- ═══════════════════════════ O CRUZAMENTO ════════════════════
+                   As duas linhas se cruzam de propósito: referência e material
+                   não caminham em paralelo, eles se atravessam.               -->
+              <g class="dg-cross-g">
+                <path class="dg-cross" d="M338,398 C470,452 530,452 662,398"/>
+                <path class="dg-cross" d="M338,430 C470,376 530,376 662,430"/>
+                <circle class="dg-knot" cx="500" cy="414" r="7"/>
+                <circle class="dg-knot-o" cx="500" cy="414" r="14"/>
+                <text class="dg-note dg-mid" x="500" y="380">atrito</text>
+              </g>
+
+              <path class="dg-arw dg-flow" d="M195,448 C260,506 380,516 452,520" marker-end="url(#arw)"/>
+              <path class="dg-arw dg-flow" d="M805,448 C740,506 620,516 548,520" marker-end="url(#arw)"/>
+
+              <!-- ═══════════════════════════ 04 · POÉTICA ════════════════════ -->
+              <g class="dg-node dg-solid">
+                <rect class="dg-shadow" x="256" y="536" width="490" height="72"/>
+                <rect class="dg-box" x="250" y="530" width="490" height="72"/>
+                <rect class="dg-tab" x="250" y="512" width="52" height="20"/>
+                <text class="dg-no dg-on" x="262" y="526">04</text>
+                <text class="dg-h dg-on" x="272" y="562">PRODUZIR UMA POÉTICA</text>
+                <text class="dg-t dg-on dg-dim2" x="272" y="586">a sua autoria somada às suas referências</text>
+                <!-- os três canais como assinatura, dentro da caixa cheia -->
+                <rect class="dg-on-r" x="672" y="550" width="46" height="6"/>
+                <rect class="dg-on-g" x="672" y="562" width="46" height="6"/>
+                <rect class="dg-on-b" x="672" y="574" width="46" height="6"/>
+              </g>
+
+              <!-- ═══════════════════════════ 05 · EDIÇÃO ═════════════════════ -->
+              <path class="dg-arw dg-thick" d="M495,604 L495,632" marker-end="url(#arwB)"/>
+              </g>
+            </svg>
+
+            <svg class="tut-diagram tut-diagram-2" viewBox="0 0 1000 190" role="img"
+                 aria-label="A edição é onde o sentido é decidido: ela acontece no laboratório 01, com o áudio do 02 e a tipografia do 03">
+              <defs>
+                <marker id="arw2" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="8" markerHeight="8" orient="auto">
+                  <path d="M0,0.5 L12,6 L0,11.5 z" fill="currentColor"/>
+                </marker>
+              </defs>
+              <g class="dg-node dg-ch-green">
+                <rect class="dg-box" x="14" y="14" width="972" height="86"/>
+                <rect class="dg-band" x="14" y="14" width="972" height="5"/>
+                <text class="dg-no" x="32" y="46">05</text>
+                <text class="dg-h" x="70" y="46">EDIÇÃO — ONDE O SENTIDO É DECIDIDO</text>
+                <text class="dg-t" x="70" y="74">a ordem dos planos, a duração de cada um e o que fica de fora: é aí que a obra decide o que quer dizer</text>
+              </g>
+              <path class="dg-arw" d="M180,100 L180,126" marker-end="url(#arw2)"/>
+              <path class="dg-arw" d="M500,100 L500,126" marker-end="url(#arw2)"/>
+              <path class="dg-arw" d="M820,100 L820,126" marker-end="url(#arw2)"/>
+              <g class="dg-lab dg-ch-blue">
+                <rect class="dg-box" x="60" y="130" width="240" height="46"/>
+                <rect class="dg-band" x="60" y="130" width="240" height="4"/>
+                <text class="dg-h dg-sm" x="76" y="150">LAB 01 · VÍDEO</text>
+                <text class="dg-t dg-sm" x="76" y="167">linha do tempo, cor, efeitos</text>
+              </g>
+              <g class="dg-lab dg-ch-green">
+                <rect class="dg-box" x="380" y="130" width="240" height="46"/>
+                <rect class="dg-band" x="380" y="130" width="240" height="4"/>
+                <text class="dg-h dg-sm" x="396" y="150">LAB 02 · ÁUDIO</text>
+                <text class="dg-t dg-sm" x="396" y="167">onda, corte, textura</text>
+              </g>
+              <g class="dg-lab dg-ch-red">
+                <rect class="dg-box" x="700" y="130" width="240" height="46"/>
+                <rect class="dg-band" x="700" y="130" width="240" height="4"/>
+                <text class="dg-h dg-sm" x="716" y="150">LAB 03 · TIPOGRAFIA</text>
+                <text class="dg-t dg-sm" x="716" y="167">letra a letra, animação</text>
+              </g>
+            </svg>
+
+            <div class="tut-note">
+              <span class="lbl lbl-ink">COMO LER A PRANCHA</span>
+              <p>
+                O <b>tema</b> está no alto, em preto, porque é ele que manda: sai dele
+                a busca por referências, de um lado, e a captação de material, do outro.
+                As duas linhas pontilhadas no meio se cruzam de propósito — referência e
+                material não caminham em paralelo, eles se <b>atravessam</b>, e é desse
+                atrito (o nó amarelo) que sai alguma coisa que não estava em nenhum dos
+                dois. Só então vem a <b>poética</b>, e só depois dela a <b>edição</b>.
+              </p>
+              <p>
+                O esquema veio do desenho manuscrito que abre este manual; foi mantido
+                inteiro e ganhou os nomes de seção, os três canais do laboratório e o
+                caminho de execução — que lab faz o quê.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================ PARTE 1 · CONCEITO ==================== -->
+        <div class="tut-part"><span>PARTE 1</span><i></i><span>CONCEITO</span></div>
+
+        <section class="tut-sec" id="tut-tema">
+          <div class="tut-num">01</div>
+          <div class="tut-body">
+            <h2>Tema</h2>
+            <p>
+              Comece por um assunto que já te ocupa. Cotidiano, cidade, amor, gênero,
+              feminismo, trabalho, memória, corpo, fé, luto, internet — a lista é aberta
+              e o critério é único: <b>tem que te incomodar o suficiente para você voltar
+              nele durante semanas.</b>
+            </p>
+            <p>
+              Um erro comum é escolher um tema grande demais ("a condição humana") e ficar
+              sem chão. Aperte o foco até caber numa frase concreta:
+            </p>
+            <ul class="tut-list">
+              <li>não "a cidade" — <b>"o barulho que impede de dormir na minha rua"</b></li>
+              <li>não "amor" — <b>"as mensagens que a gente escreve e não manda"</b></li>
+              <li>não "feminismo" — <b>"as instruções que minha avó me deu sobre andar sozinha"</b></li>
+            </ul>
+            <p class="tut-do">
+              <span class="tut-tag">FAÇA AGORA</span>
+              Escreva o tema em uma frase de até 12 palavras. Se não couber, ainda está largo.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-ref">
+          <div class="tut-num">02</div>
+          <div class="tut-body">
+            <h2>Referências externas</h2>
+            <p>
+              Ninguém inventa do zero, e fingir que inventou é o caminho mais curto para
+              um trabalho fraco. Junte o que já existe e que conversa com o seu tema:
+              <b>filmes, músicas, livros, manifestos, videoartes</b>, uma conversa, uma
+              propaganda antiga, um vídeo de arquivo de família.
+            </p>
+            <p>
+              Referência não é para copiar: é para você entender <i>como</i> a pessoa
+              resolveu um problema parecido com o seu. Quando ver algo que funciona,
+              anote o mecanismo, não o resultado — "ela corta sempre no meio da fala",
+              "o som entra antes da imagem", "a cor só aparece no fim".
+            </p>
+            <p class="tut-do">
+              <span class="tut-tag">FAÇA AGORA</span>
+              Liste 5 referências e, ao lado de cada uma, <b>um mecanismo</b> que você
+              quer roubar — de técnica, não de conteúdo.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-material">
+          <div class="tut-num">03</div>
+          <div class="tut-body">
+            <h2>Material</h2>
+            <p>
+              Duas origens, e as duas valem: o que <b>você já tem</b> (arquivo do celular,
+              gravações antigas, fotos de família, prints, áudios de mensagem) e o que
+              você <b>ainda vai captar</b>.
+            </p>
+            <div class="tut-grid4">
+              <div><span class="lbl lbl-ink">VÍDEOS</span><p>o que se move. mesmo tremido, mesmo vertical, mesmo feio.</p></div>
+              <div><span class="lbl lbl-ink">FOTOS</span><p>o que fica parado tempo suficiente para você olhar.</p></div>
+              <div><span class="lbl lbl-ink">ÁUDIOS</span><p>vozes, ambiente, ruído. quase sempre o material mais forte.</p></div>
+              <div><span class="lbl lbl-ink">ESCRITOS</span><p>diários, mensagens, listas, legendas, cartazes.</p></div>
+            </div>
+            <p>
+              Capte <b>mais do que precisa</b> e capte coisas aparentemente inúteis: a mão
+              esperando, a rua vazia, o silêncio de cinco segundos antes da pessoa responder.
+              Esses são os pedaços que salvam uma montagem.
+            </p>
+            <p class="tut-do">
+              <span class="tut-tag">FAÇA AGORA</span>
+              Separe uma pasta só com o material do projeto. Nomeie os arquivos com
+              o que eles <b>são</b>, não com o que a câmera chamou.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-poetica">
+          <div class="tut-num">04</div>
+          <div class="tut-body">
+            <h2>O cruzamento: a poética</h2>
+            <p>
+              É aqui que o diagrama cruza as setas. A sua <b>poética</b> é o encontro entre
+              o que só você viveu e o que você aprendeu com os outros. Não é estilo visual —
+              é <b>a regra que você decide seguir</b> neste trabalho.
+            </p>
+            <p>
+              Uma poética costuma caber numa restrição. Alguns exemplos de regras que
+              geram trabalhos inteiros:
+            </p>
+            <ul class="tut-list">
+              <li>só imagens gravadas entre 23h e 5h</li>
+              <li>nenhum rosto aparece; só mãos e nucas</li>
+              <li>a voz nunca sincroniza com quem fala</li>
+              <li>a imagem só ganha cor quando o texto mente</li>
+              <li>tudo dura exatamente 4 segundos</li>
+            </ul>
+            <p class="tut-do">
+              <span class="tut-tag">FAÇA AGORA</span>
+              Escolha <b>uma</b> regra e escreva ela no topo da folha. Ela é a sua poética
+              até o fim deste trabalho. Se quebrar, quebre de propósito e uma vez só.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-edicao">
+          <div class="tut-num">05</div>
+          <div class="tut-body">
+            <h2>Edição</h2>
+            <p class="tut-strong">
+              Esta é a etapa fundamental: o seu material pode <b>mudar de significado</b>
+              de acordo com a montagem.
+            </p>
+            <p>
+              O mesmo plano de alguém olhando pela janela vira saudade, vigilância, tédio
+              ou medo — dependendo <b>apenas</b> do que vem antes e do que vem depois.
+              Nada disso está no plano; está no corte. Por isso a montagem não é o acabamento
+              do trabalho, é o trabalho.
+            </p>
+            <div class="tut-grid3">
+              <div><span class="lbl lbl-ink">ORDEM</span><p>trocar dois clipes de lugar muda a causa e o efeito da cena inteira.</p></div>
+              <div><span class="lbl lbl-ink">DURAÇÃO</span><p>o mesmo plano em 2s é informação; em 30s é sensação; em 3min é confronto.</p></div>
+              <div><span class="lbl lbl-ink">REPETIÇÃO</span><p>a terceira vez que algo volta já não significa o que significava na primeira.</p></div>
+            </div>
+            <p class="tut-do">
+              <span class="tut-tag">EXPERIMENTE</span>
+              Monte a mesma sequência de três jeitos diferentes e assista aos três seguidos.
+              Você vai escolher com muito mais clareza — e às vezes vai descobrir que o
+              trabalho era outro.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-lembrar">
+          <div class="tut-num">06</div>
+          <div class="tut-body">
+            <h2>Lembrar</h2>
+            <p>
+              Dos <b>silêncios</b>, dos <b>ruídos</b>, das <b>distorções</b> — de todos os
+              artifícios que sustentam a sua ideia. Numa videoarte eles não são defeito
+              nem enfeite: são argumento.
+            </p>
+            <div class="tut-grid4">
+              <div><span class="lbl lbl-ink">SILÊNCIO</span><p>tirar o som é o efeito mais violento que existe. use com intenção, não por falta de trilha.</p></div>
+              <div><span class="lbl lbl-ink">RUÍDO</span><p>chiado, vento no microfone, hum de geladeira. o ruído localiza — diz onde a gente está.</p></div>
+              <div><span class="lbl lbl-ink">DISTORÇÃO</span><p>estourar, atravessar, granular. quando a imagem se desfaz, ela fala do que não se sustenta.</p></div>
+              <div><span class="lbl lbl-ink">REPETIÇÃO</span><p>o loop transforma um gesto qualquer em ritual — ou em prisão.</p></div>
+            </div>
+            <p>
+              A pergunta que separa o artifício do enfeite é sempre a mesma:
+              <b>isto está aqui porque a ideia precisa, ou porque ficou bonito?</b>
+              Se for a segunda, tire.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-titulo">
+          <div class="tut-num">07</div>
+          <div class="tut-body">
+            <h2>Pensar no título</h2>
+            <p>
+              O título é a última peça de montagem, não uma etiqueta. Ele entra na obra:
+              muda o que a primeira imagem parece dizer.
+            </p>
+            <ul class="tut-list">
+              <li><b>descritivo</b> — diz o que se vê. seguro, raramente interessante.</li>
+              <li><b>deslocado</b> — vem de outro campo (uma instrução, uma receita, um verbete).</li>
+              <li><b>citação</b> — uma frase que aparece no próprio trabalho, tirada do contexto.</li>
+              <li><b>índice</b> — data, hora, coordenada, número de arquivo. combina com material de arquivo.</li>
+            </ul>
+            <p class="tut-do">
+              <span class="tut-tag">FAÇA AGORA</span>
+              Escreva 10 títulos ruins de propósito. O bom quase sempre está escondido
+              entre o sexto e o décimo.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-creditos">
+          <div class="tut-num">08</div>
+          <div class="tut-body">
+            <h2>Créditos e referências</h2>
+            <p>
+              <b>Coloque as referências nos créditos.</b> Isso não enfraquece o trabalho —
+              é o contrário: mostra de onde ele vem e onde ele se coloca. E resolve
+              a parte prática de citar o que não é seu.
+            </p>
+            <ul class="tut-list">
+              <li>música e trilha: título, artista, ano — e a licença, se houver</li>
+              <li>imagens de arquivo: acervo, ano, e quem cedeu</li>
+              <li>textos citados: autoria e obra</li>
+              <li>quem gravou, quem apareceu, quem ajudou a montar</li>
+            </ul>
+            <p>
+              Se usou material de terceiros sem licença, isso limita onde a obra pode
+              circular — festival e mostra costumam pedir declaração. Vale saber disso
+              antes de terminar, não depois.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============================ PARTE 2 · PRÁTICA ===================== -->
+        <div class="tut-part"><span>PARTE 2</span><i></i><span>PRÁTICA NO RGB_LAB</span></div>
+
+        <section class="tut-sec" id="tut-pratica">
+          <div class="tut-num">09</div>
+          <div class="tut-body">
+            <h2>O mesmo método, agora com as mãos</h2>
+            <p>
+              Cada etapa do diagrama tem um lugar exato dentro do laboratório.
+              A cor à esquerda diz em qual canal você vai estar.
+            </p>
+
+            <ol class="tut-steps">
+              <li data-ch="video">
+                <span class="st-n">01</span>
+                <div>
+                  <h3>Trazer o material</h3>
+                  <p>
+                    No <b>LAB 01 · VÍDEO</b>, use <span class="kbd">FONTE</span> na coluna da
+                    esquerda — ARQUIVO, IMAGEM, ÁUDIO, WEBCAM — ou simplesmente
+                    <b>arraste os arquivos para dentro da janela</b>. Cada arquivo entra
+                    como um clipe <b>no fim da pista</b>, um depois do outro. Vários vídeos
+                    na mesma pista é o comportamento normal, não uma pilha de camadas.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="video">
+                <span class="st-n">02</span>
+                <div>
+                  <h3>Definir o formato antes de montar</h3>
+                  <p>
+                    Na barra do viewport, <span class="kbd">TELA</span> escolhe a proporção:
+                    9:16 para Reels, 16:9 para tela cheia, 1:1 para grade. Decidir isso antes
+                    evita remontar tudo depois. O limite de duração da composição é <b>seu</b>: vem
+                    em 10 minutos e o campo <span class="kbd">LIMITE</span>, na ficha da
+                    composição, aceita o que você quiser.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="video">
+                <span class="st-n">03</span>
+                <div>
+                  <h3>Montar: cortar, mover, aparar</h3>
+                  <p>
+                    <span class="kbd">S</span> corta no cursor. Arraste o corpo do clipe para
+                    mover, arraste as <b>bordas</b> para aparar (trim). <span class="kbd">Alt</span>
+                    enquanto apara faz <i>ripple</i> — fecha o buraco. <span class="kbd">Del</span>
+                    apaga, <span class="kbd">Shift+Del</span> apaga e fecha.
+                    <span class="kbd">↑ ↓</span> pula de corte em corte.
+                  </p>
+                  <p>
+                    Precisa de mais camadas? <span class="kbd">+V</span> cria pista de vídeo,
+                    <span class="kbd">+A</span> de áudio. O que está mais em cima aparece na frente.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="audio">
+                <span class="st-n">04</span>
+                <div>
+                  <h3>Trabalhar o som</h3>
+                  <p>
+                    O <b>LAB 02 · ÁUDIO</b> tem 12 módulos: velocidade e tom, reverso, filtro,
+                    distorção, atraso, reverberação, granular. É onde nascem o ruído e a
+                    distorção que a Parte 1 pediu. Terminou? <span class="kbd">MANDAR PRA TIMELINE</span>
+                    devolve o áudio tratado como clipe.
+                  </p>
+                  <p>
+                    Na linha do tempo, cada clipe de som tem <b>volume com keyframes</b> e
+                    fades de entrada e saída. E lembre do silêncio: uma pista muda por
+                    quatro segundos é uma decisão, não um esquecimento.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="type">
+                <span class="st-n">05</span>
+                <div>
+                  <h3>Texto como imagem</h3>
+                  <p>
+                    O <b>LAB 03 · TIPOGRAFIA</b> trata cada letra como objeto. As famílias
+                    <b>LAB</b> são desenhadas por código: por isso conseguem ser
+                    <b>escritas à mão na tela</b> — a ferramenta ESCRITA À MÃO desenha o traço
+                    do começo ao fim, na frente de quem assiste.
+                  </p>
+                  <p>
+                    <span class="kbd">ENVIAR PRA TIMELINE</span> manda o texto como
+                    <b>PNG com fundo transparente</b>, então ele entra por cima do vídeo sem
+                    caixa branca atrás. Para usar fora daqui, <span class="kbd">PNG α</span> ou
+                    <span class="kbd">SEQUÊNCIA PNG α</span>.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="video">
+                <span class="st-n">06</span>
+                <div>
+                  <h3>Efeito no clipe × camada de ajuste</h3>
+                  <p>
+                    São duas coisas diferentes e a diferença importa:
+                  </p>
+                  <ul class="tut-list tight">
+                    <li><b>Efeito no clipe</b> — selecione o clipe e clique num efeito do catálogo. Vale só para aquele pedaço.</li>
+                    <li><b>Camada de ajuste</b> — o botão <span class="kbd">AJUSTE</span> na barra da linha do tempo. Ela afeta <b>tudo o que estiver abaixo</b>, no intervalo em que existir. Arraste as bordas dela para dizer de onde até onde o efeito vale.</li>
+                  </ul>
+                  <p>
+                    É assim que se faz "o ASCII começa em 00:12 e termina em 00:38" sem
+                    tocar em nenhum clipe.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="video">
+                <span class="st-n">07</span>
+                <div>
+                  <h3>Movimento e keyframes</h3>
+                  <p>
+                    Com o clipe selecionado, o painel <b>MOTION</b> abre posição, escala,
+                    rotação, âncora e opacidade. O botão <span class="kbd">◆</span> ao lado de
+                    cada propriedade é o cronômetro: ligado, qualquer mudança vira keyframe
+                    no instante do cursor.
+                  </p>
+                  <p>
+                    Os keyframes aparecem como losangos dentro do clipe e podem ser
+                    arrastados. Em <b>KEYFRAMES</b> você escolhe a curva de cada um —
+                    LINEAR, EASE IN, EASE OUT, EASE IN/OUT, BÉZIER, HOLD — e vê o
+                    gráfico de <b>valor</b> e de <b>velocidade</b>. Na prévia, a caixa
+                    em volta do clipe move, gira e redimensiona direto com o mouse.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="video">
+                <span class="st-n">08</span>
+                <div>
+                  <h3>Transições — inclusive as de movimento</h3>
+                  <p>
+                    Clique com o <b>botão direito</b> num clipe → transição na entrada ou na
+                    saída. Além de dissolver, cortina, deslizar, empurrar e zoom, existe a
+                    família <b>MOTION</b>: PULL, BLOCK, TRAVEL, SPIN, FLIP, SPRING, POP e FOLD,
+                    cada uma com parâmetros próprios. A duração se arrasta pela borda
+                    hachurada do clipe.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="video">
+                <span class="st-n">09</span>
+                <div>
+                  <h3>Cor e película</h3>
+                  <p>
+                    A <b>GALERIA DE FILTROS</b> na coluna da esquerda mostra 30 emulsões com
+                    miniatura do quadro que está no cursor. Um clique aplica no clipe
+                    selecionado — ou, sem seleção, cria uma camada de ajuste para a
+                    sequência inteira.
+                  </p>
+                  <p>
+                    Para envelhecer de verdade, o grupo <b>PELÍCULA</b> tem janela de câmera
+                    (8 mm, Super 8, 16 mm, 35 mm) com canto arredondado e perfuração,
+                    vazamento de luz, flash de rolo, grão por bitola, poeira, risco e
+                    tremor de janela. Os estilos prontos <b>8 MM CASEIRO</b>, <b>SUPER 8</b>,
+                    <b>16 MM</b>, <b>35 MM</b> e <b>PROJEÇÃO VELHA</b> montam a cadeia inteira
+                    de uma vez.
+                  </p>
+                </div>
+              </li>
+
+              <li data-ch="video">
+                <span class="st-n">10</span>
+                <div>
+                  <h3>Fechar: título, créditos e saída</h3>
+                  <p>
+                    O título e os créditos saem do LAB 03 como PNG com alpha e entram como
+                    clipes de tipografia — vermelho na linha do tempo, fáceis de achar.
+                    Deixe os créditos legíveis: se não dá para ler, não é crédito.
+                  </p>
+                  <p>
+                    <span class="kbd">EXPORTAR ↗</span> abre três modos: <b>tempo real</b>
+                    (com som), <b>frame a frame</b> (exato, sem som) e <b>sequência PNG</b>
+                    (com transparência de verdade). MP4 e WEBM não guardam alpha — para
+                    isso, sequência PNG.
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-exercicio">
+          <div class="tut-num">10</div>
+          <div class="tut-body">
+            <h2>Exercício: 60 segundos, hoje</h2>
+            <p>
+              Uma estrutura que funciona e cabe no limite de uma composição.
+              Faça uma vez seguindo à risca; depois quebre.
+            </p>
+            <div class="tut-timeline">
+              <div><span class="tt-t">00:00 — 00:08</span><span class="tt-d">ABERTURA</span><p>um único plano longo, som ambiente cru. estabelece o lugar e o silêncio.</p></div>
+              <div><span class="tt-t">00:08 — 00:12</span><span class="tt-d">TÍTULO</span><p>texto sobre preto ou sobre a imagem parada. tipografia escrita à mão entra bem aqui.</p></div>
+              <div><span class="tt-t">00:12 — 00:34</span><span class="tt-d">ACÚMULO</span><p>6 a 10 planos curtos que repetem um gesto. camada de ajuste com um efeito único cobrindo todo o trecho.</p></div>
+              <div><span class="tt-t">00:34 — 00:38</span><span class="tt-d">RUPTURA</span><p>corte seco para silêncio absoluto, ou distorção máxima. é o ponto que o resto sustenta.</p></div>
+              <div><span class="tt-t">00:38 — 00:52</span><span class="tt-d">RESPOSTA</span><p>volta do primeiro plano, agora com outro som — o mesmo material, outro sentido.</p></div>
+              <div><span class="tt-t">00:52 — 01:00</span><span class="tt-d">CRÉDITOS</span><p>autoria e referências. sem música nova.</p></div>
+            </div>
+            <p class="tut-do">
+              <span class="tut-tag">REGRA DO EXERCÍCIO</span>
+              Use no máximo <b>um</b> efeito de imagem no trabalho inteiro. A restrição
+              é o que obriga a montagem a resolver.
+            </p>
+          </div>
+        </section>
+
+        <section class="tut-sec" id="tut-erros">
+          <div class="tut-num">11</div>
+          <div class="tut-body">
+            <h2>Onde quase todo mundo tropeça</h2>
+            <div class="tut-grid3">
+              <div><span class="lbl lbl-ink">EFEITO NO LUGAR DE IDEIA</span><p>quando o trabalho depende do efeito para existir, tire o efeito e veja o que sobra. o que sobra é o trabalho.</p></div>
+              <div><span class="lbl lbl-ink">TUDO NA MESMA DURAÇÃO</span><p>planos com a mesma duração viram metrônomo. varie de propósito.</p></div>
+              <div><span class="lbl lbl-ink">SOM COMO TAPA-BURACO</span><p>música por cima para "unir" o que não está montado só adia o problema.</p></div>
+              <div><span class="lbl lbl-ink">MEDO DO SILÊNCIO</span><p>quatro segundos sem som parecem uma eternidade para quem monta e um respiro para quem assiste.</p></div>
+              <div><span class="lbl lbl-ink">EXPLICAR DEMAIS</span><p>se o texto já diz tudo, a imagem vira ilustração. deixe uma das duas coisas em falta.</p></div>
+              <div><span class="lbl lbl-ink">NÃO CREDITAR</span><p>além de justo, é o que permite a obra circular.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="tut-end">
+          <div>
+            <span class="lbl lbl-ink">FIM DO MANUAL 01</span>
+            <p>Agora abra o laboratório e monte a primeira versão ruim. É ela que ensina qual é a segunda.</p>
+          </div>
+          <div class="tut-end-btns">
+            <button class="cmd cmd-solid" data-view="video">IR PARA O LAB 01 · VÍDEO</button>
+            <button class="cmd" data-view="home">VOLTAR AO ÍNDICE</button>
+          </div>
+        </div>
+
+        <div class="tut-byline">
+          <span class="byline">
+            <i></i>
+            <span class="byline-k">ELABORADO E CRIADO POR</span>
+            <b>Bruno Cebriano Ramirez</b>
+          </span>
+        </div>
+      </div>
+
+      <!-- ······················· LABORATÓRIO 01 · VÍDEO -->
+      <div class="hidden" id="viewVideo" style="flex:1;display:flex;flex-direction:column;min-height:0">
+
+        <div class="vp-bar">
+          <div><span class="micro">ZOOM</span></div>
+          <button class="zbtn" id="zFit">FIT</button>
+          <button class="zbtn" id="z100">100%</button>
+          <button class="zbtn" id="z200">200%</button>
+          <button class="zbtn" id="z400">400%</button>
+          <button class="zbtn" id="zOut">−</button>
+          <button class="zbtn" id="zIn">+</button>
+          <div><input class="field num" id="zoomVal" style="width:58px" value="100"><span class="micro">%</span></div>
+          <button class="zbtn" id="fitW">LARG</button>
+          <button class="zbtn" id="fitH">ALT</button>
+          <button class="zbtn" id="zCenter">CENTRO</button>
+          <div><span class="micro">TELA</span>
+            <select class="field" id="canvasPreset" style="width:104px">
+              <option value="src">FONTE</option>
+              <option value="16:9">16:9 · 1920×1080</option>
+              <option value="9:16">9:16 · 1080×1920</option>
+              <option value="1:1">1:1 · 1080×1080</option>
+              <option value="4:5">4:5 · 1080×1350</option>
+              <option value="4:3">4:3 · 1440×1080</option>
+              <option value="21:9">21:9 · 2560×1080</option>
+            </select></div>
+          <button class="zbtn" id="pxToggle" title="Pixels sem suavização">PX</button>
+          <div><label class="chk" title="Caixa de transformação sobre o clipe selecionado"><input type="checkbox" id="xformChk" checked> CAIXA</label></div>
+          <div class="spacer"></div>
+          <div><span class="micro">QUALIDADE</span>
+            <select class="field" id="quality" style="width:74px">
+              <option value="1">100%</option>
+              <option value="0.66" selected>66%</option>
+              <option value="0.5">50%</option>
+              <option value="0.33">33%</option>
+            </select></div>
+          <button class="zbtn" id="bypassBtn" title="Segure para ver o original">ORIGINAL</button>
+          <button class="zbtn" id="snapBtn">PNG</button>
+          <button class="zbtn hot" id="exportBtn">EXPORTAR ↗</button>
+        </div>
+
+        <div class="vp" id="vp">
+          <div class="vp-stage" id="vpStage">
+            <canvas id="gl"></canvas>
+            <div class="vp-frame"></div>
+            <svg class="vp-mask" id="xformOverlay"></svg>
+            <svg class="vp-mask" id="maskOverlay"></svg>
+          </div>
+          <div class="vp-ruler x"><canvas id="vpRulerX"></canvas></div>
+          <div class="vp-ruler y"><canvas id="vpRulerY"></canvas></div>
+          <div class="vp-meta tl" id="vpMetaTL">—</div>
+          <div class="vp-meta tr" id="vpMetaTR">—</div>
+          <div class="vp-meta bl" id="vpMetaBL">—</div>
+          <div class="vp-meta br" id="vpMetaBR">—</div>
+        </div>
+
+        <div class="transport">
+          <div>
+            <button class="tp" id="goStart" title="Início (Home)">⏮</button>
+            <button class="tp" id="stepBack" title="Frame anterior (←)">◀</button>
+            <button class="tp play" id="playBtn" title="Tocar (Espaço)">▶</button>
+            <button class="tp" id="stepFwd" title="Próximo frame (→)">▶</button>
+            <button class="tp" id="goEnd" title="Fim (End)">⏭</button>
+          </div>
+          <div class="tc" id="timecode">00:00.00 <i>/</i> <span id="tcTotal">00:00.00</span></div>
+          <div><label class="chk"><input type="checkbox" id="loopChk" checked> LOOP</label></div>
+          <div><span class="micro">VOL</span><input type="range" id="volume" min="0" max="1" step="0.01" value="1" style="width:62px"></div>
+          <div class="spacer"></div>
+          <div><span class="micro">CAM</span><span class="dot" id="camDot"></span><button class="tp" id="camToggle">ABRIR</button><button class="tp" id="camGrab">FRAME</button><button class="tp" id="camRec">GRAVAR</button></div>
+          <div><span class="micro" id="fpsBadge">— FPS</span></div>
+        </div>
+
+        <!-- ══════════════════════════ LINHA DO TEMPO · edição não linear -->
+        <section class="timeline" id="timeline">
+          <div class="tl-resize" id="tlResize"></div>
+
+          <div class="tl-toolbar">
+            <div><span class="lbl lbl-ink">LINHA DO TEMPO</span></div>
+
+            <!-- FERRAMENTAS: as mesmas letras de toda ilha de edição -->
+            <div class="tgroup tgroup-ferr">
+              <button class="tbtn ferr active" data-ferr="sel" title="Seleção — mover, aparar, escolher (V)">
+                <svg viewBox="0 0 16 16"><path d="M3.5 2.2l8.6 5.3-3.7.7 2.1 3.9-1.6.9-2.1-3.9-2.4 2.8z"/></svg><i>V</i></button>
+              <button class="tbtn ferr" data-ferr="corte" title="Tesoura — clique num clipe para cortar ali (C)">
+                <svg viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="4" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><path d="M5.4 10.6L12.5 2M10.6 10.6L3.5 2"/></g></svg><i>C</i></button>
+              <button class="tbtn ferr" data-ferr="ondula" title="Ondulação — apara fechando o vão (B)">
+                <svg viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 8h5M9 8h5"/><path d="M4 5.5L1.5 8 4 10.5M12 5.5L14.5 8 12 10.5"/></g></svg><i>B</i></button>
+              <button class="tbtn ferr" data-ferr="mao" title="Mão — arrasta a linha do tempo (H)">
+                <svg viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5.5 8V3.6a1 1 0 0 1 2 0V7M7.5 7V2.8a1 1 0 0 1 2 0V7M9.5 7.2V3.8a1 1 0 0 1 2 0V9c0 3-1.8 4.6-4 4.6S3.5 12 3.5 9.6V6.6a1 1 0 0 1 2 0z"/></g></svg><i>H</i></button>
+            </div>
+
+            <div class="tgroup">
+              <button class="tbtn" id="addVBtn" title="Nova pista de vídeo">+V</button>
+              <button class="tbtn" id="addABtn" title="Nova pista de áudio">+A</button>
+              <button class="tbtn" id="addFxBtn" title="Nova pista de efeitos">+FX</button>
+            </div>
+
+            <div class="tgroup">
+              <button class="tbtn" id="adjBtn" title="Nova camada de ajuste — afeta tudo abaixo dela">AJUSTE</button>
+            </div>
+
+            <div class="tgroup">
+              <button class="tbtn" id="splitBtn" title="Cortar no cursor (S)">CORTAR</button>
+              <button class="tbtn" id="dupBtn" title="Duplicar (Ctrl+D)">DUPLICAR</button>
+              <button class="tbtn" id="delBtn" title="Apagar (Del)">APAGAR</button>
+              <button class="tbtn" id="rippleBtn" title="Apagar e fechar o buraco (Shift+Del)">RIPPLE</button>
+            </div>
+
+            <div class="tgroup">
+              <button class="tbtn" id="markBtn" title="Marcador no cursor (M)">MARCA</button>
+              <button class="tbtn" id="inBtn" title="Marcar entrada (I)">I</button>
+              <button class="tbtn" id="outBtn" title="Marcar saída (O)">O</button>
+              <button class="tbtn" id="clearIOBtn" title="Limpar entrada/saída">×</button>
+            </div>
+
+            <div class="tgroup">
+              <button class="tbtn on" id="snapBtn" title="Ímã (alinhamento automático)">ÍMÃ</button>
+              <button class="tbtn" id="tcBtn" title="Formato do timecode">TC</button>
+            </div>
+
+            <div class="spacer"></div>
+            <div><span class="micro" id="tlSel">—</span></div>
+            <div><span class="micro">DUR</span><span class="micro" id="tlDur">00:00:00:00</span></div>
+            <div class="tgroup">
+              <button class="tbtn" id="zoomOutBtn" title="Afastar">−</button>
+              <input type="range" id="zoomRange" min="6" max="2400" step="1" value="120" style="width:88px">
+              <button class="tbtn" id="zoomInBtn" title="Aproximar">+</button>
+              <button class="tbtn" id="fitSeqBtn" title="Enquadrar a sequência">FIT</button>
+              <span class="micro" id="tlZoomLbl">120 PX/S</span>
+            </div>
+          </div>
+
+          <div class="tl-body">
+            <div class="tl-heads" id="tlHeads"></div>
+            <div class="tl-scroll" id="tlScroll">
+              <div class="tl-content" id="tlContent">
+                <div class="tl-ruler" id="tlRuler"></div>
+                <div class="tl-lanes" id="tlLanes"></div>
+                <div class="tl-marquee hidden" id="tlMarquee"></div>
+                <div class="playhead" id="playhead">
+                  <div class="ph-head"></div>
+                  <div class="ph-tc">00:00:00:00</div>
+                </div>
+              </div>
+            </div>
+            <div class="tl-hud hidden" id="tlHud"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ······················· LABORATÓRIO 02 · ÁUDIO -->
+      <div class="hidden audio-main" id="viewAudio">
+        <div class="vp-bar">
+          <div><span class="lbl lbl-ink">02 · LABORATÓRIO DE ÁUDIO</span></div>
+          <div><span class="micro" id="auName">SEM ARQUIVO</span></div>
+          <div class="spacer"></div>
+          <div><span class="micro" id="auInfo">—</span></div>
+        </div>
+        <div class="wave-wrap" id="auWaveWrap">
+          <canvas id="auWave"></canvas>
+          <div class="wave-sel hidden" id="auSel"></div>
+          <div class="wave-play" id="auPlay" style="left:0"></div>
+          <div class="wave-meta">
+            <span class="box" id="auTime">00:00.00</span>
+            <span class="box" id="auRange">SEL —</span>
+          </div>
+        </div>
+        <div class="transport">
+          <div>
+            <button class="tp" id="auStart">⏮</button>
+            <button class="tp play" id="auPlayBtn">▶</button>
+            <button class="tp" id="auStop">■</button>
+          </div>
+          <div><label class="chk"><input type="checkbox" id="auLoop" checked> LOOP</label></div>
+          <div><button class="tp" id="auTrim">CORTAR NA SELEÇÃO</button><button class="tp" id="auClearSel">LIMPAR</button></div>
+          <div><span class="micro">GANHO</span><input type="range" id="auGain" min="0" max="2" step="0.01" value="1" style="width:70px"></div>
+          <!-- A/B: ouvir o original contra o processado, sem perder a cadeia -->
+          <div>
+            <span class="micro">ESCUTA</span>
+            <button class="tp" id="auListenA" title="A — o áudio como entrou">A</button>
+            <button class="tp on" id="auListenB" title="B — o áudio depois da cadeia">B</button>
+          </div>
+          <div class="spacer"></div>
+          <div>
+            <span class="micro">ANALISADOR</span>
+            <select class="field" id="auVis" style="width:120px">
+              <option value="spectrum">ESPECTRO</option>
+              <option value="spectrogram">ESPECTROGRAMA</option>
+              <option value="meters">MEDIDORES</option>
+              <option value="scope">OSCILOSCÓPIO</option>
+            </select>
+          </div>
+        </div>
+        <div class="analyser"><canvas id="auAnalyser"></canvas></div>
+
+        <!-- barra do rack: filtro por família, busca e mutação.
+             Continua sendo O MESMO rack — isto só o torna navegável. -->
+        <div class="rack-bar">
+          <div class="cat-search"><span class="micro">/</span>
+            <input id="auSearch" placeholder="buscar módulo" spellcheck="false"></div>
+          <div class="spacer"></div>
+          <span class="micro">MUTAR</span>
+          <button class="tbtn" data-mut="0.15" title="Variação pequena dos parâmetros destravados">SUTIL</button>
+          <button class="tbtn" data-mut="0.4" title="Variação média">MÉDIO</button>
+          <button class="tbtn" data-mut="0.9" title="Variação extrema">EXTREMO</button>
+          <button class="tbtn" id="auUndoMut" title="Desfazer a última mutação">↶</button>
+          <span class="micro">SEMENTE</span>
+          <input class="field num" id="auSeed" value="7" style="width:52px">
+        </div>
+        <div class="chips" id="auFams"></div>
+        <div class="rack" id="auRack"></div>
+      </div>
+
+      <!-- ······················· LABORATÓRIO 03 · TIPOGRAFIA -->
+      <div class="hidden type-main" id="viewType">
+        <div class="vp-bar">
+          <div><span class="lbl lbl-ink">03 · LABORATÓRIO DE TIPOGRAFIA</span></div>
+          <div><span class="micro">TELA</span>
+            <select class="field" id="tySize" style="width:112px">
+              <option value="1080x1080">1080 × 1080</option>
+              <option value="1920x1080">1920 × 1080</option>
+              <option value="1080x1920">1080 × 1920</option>
+              <option value="2000x1000">2000 × 1000</option>
+            </select></div>
+          <div><label class="chk"><input type="checkbox" id="tyAlpha"> FUNDO TRANSPARENTE</label></div>
+          <div><label class="chk"><input type="checkbox" id="tyAnim" checked> ANIMAR</label></div>
+          <div class="spacer"></div>
+          <div><span class="micro" id="tyInfo">—</span></div>
+        </div>
+        <div class="type-stage" id="tyStage"><canvas id="tyCanvas"></canvas></div>
+        <div class="type-input">
+          <textarea id="tyText" spellcheck="false">rgb_lab</textarea>
+          <div class="type-tools">
+            <button class="cmd" id="tyRecorte" style="border:none;border-bottom:var(--line) solid var(--rule)"
+                    title="Letras recortadas de jornal e revista — cada letra é um pedaço de papel diferente, e dá para arrastar cada uma">✂ LETRAS RECORTADAS</button>
+            <button class="cmd" id="tyTinta" style="border:none;border-bottom:var(--line) solid var(--rule)"
+                    title="Escreva com o mouse, a caneta ou o dedo — a animação de escrita desenha o seu traço de volta">✎ ESCREVER À MÃO</button>
+            <button class="cmd" id="tyExplode" style="border:none;border-bottom:var(--line) solid var(--rule)">EXPLODIR LETRAS</button>
+            <button class="cmd" id="tyReset" style="border:none;border-bottom:var(--line) solid var(--rule)">ZERAR</button>
+            <button class="cmd" id="tyRandom" style="border:none">ALEATÓRIO</button>
+          </div>
+        </div>
+        <div class="letters" id="tyLetters"></div>
+      </div>
+    </section>
+
+    <!-- divisor: área de trabalho ↔ inspetor -->
+    <div class="vsplit" id="splitRight" data-var="--insp-w" data-side="right" title="Arraste para redimensionar · clique duplo para voltar ao padrão"></div>
+
+    <!-- ────────────────────────────────────────────── INSPETOR -->
+    <aside class="insp" id="insp">
+      <div class="insp-h">
+        <span class="dot"></span>
+        <span class="lbl lbl-ink" id="inspTitle">FICHA TÉCNICA</span>
+        <span class="spacer"></span>
+        <button class="fold-all" id="inspFoldAll" title="Recolher todos os blocos">⌃</button>
+        <button class="fold-all" id="inspOpenAll" title="Abrir todos os blocos">⌄</button>
+        <span class="micro" id="inspId">—</span>
+      </div>
+      <div class="insp-body" id="props">
+        <div class="insp-empty">Nenhum objeto selecionado.<br><br>Escolha um clipe na linha do tempo ou um efeito no catálogo.</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ────────────────────────────────────────────── STATUS -->
+  <footer class="status">
+    <div><span class="dot dot-live"></span><b id="stState">PRONTO</b></div>
+    <div>LAB <b id="stLab">—</b></div>
+    <div>FONTE <b id="stSrc">—</b></div>
+    <div>TELA <b id="stRes">—</b></div>
+    <div>FPS <b id="stFps">—</b></div>
+    <div>CAMADAS <b id="stLayers">0</b></div>
+    <div>EFEITOS <b id="stFx">0</b></div>
+    <!-- sessão guardada sozinha no navegador: aparece quando grava -->
+    <div><b id="stAuto" class="st-auto"></b></div>
+    <div class="spacer" style="border-right:none"></div>
+    <div class="st-btn" id="stUndo">↶ DESFAZER</div>
+    <div class="st-btn" id="stRedo">↷ REFAZER</div>
+    <div class="st-btn" id="stSave" title="Salva a edição E os arquivos num .rgblab — abre depois em qualquer máquina">SALVAR PROJETO</div>
+    <div class="st-btn" id="stOpen" title="Abre .rgblab (completo) ou .json (só a edição)">ABRIR</div>
+    <div><span class="dot"></span>PROCESSAMENTO LOCAL</div>
+    <!-- AUTORIA — presente em todas as vistas, do índice aos três laboratórios -->
+    <div class="st-credit" title="Elaborado e criado por Bruno Cebriano Ramirez">
+      <span class="dot dot-ch"></span>ELABORADO E CRIADO POR <b>BRUNO CEBRIANO RAMIREZ</b>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ EXPORTAÇÃO -->
+<div class="modal hidden" id="exportModal">
+  <div class="modal-card">
+    <div class="modal-h"><span class="dot"></span><h3>EXPORTAR COMPOSIÇÃO</h3><button class="cmd cmd-sm" id="expClose">FECHAR</button></div>
+    <div class="modal-b">
+      <div class="exp-faixa hidden" id="expFaixa"></div>
+      <div class="frow"><span class="lbl">MODO</span>
+        <select class="field" id="expMode">
+          <option value="realtime">TEMPO REAL · COM ÁUDIO</option>
+          <option value="precise">FRAME A FRAME · EXATO</option>
+          <option value="frames">SEQUÊNCIA PNG · COM ALPHA</option>
+        </select></div>
+      <p class="fhint" id="modeHint">Toca a composição do início ao fim gravando a saída. Mantém o áudio.</p>
+      <div class="frow"><span class="lbl">FORMATO</span><select class="field" id="expFormat"></select></div>
+      <div class="frow"><span class="lbl">RESOLUÇÃO</span>
+        <select class="field" id="expRes"><option value="1">100% · ORIGINAL</option><option value="0.75">75%</option><option value="0.5">50%</option></select></div>
+      <div class="frow"><span class="lbl">FPS</span>
+        <select class="field" id="expFps"><option>24</option><option selected>30</option><option>60</option></select></div>
+      <div class="frow"><span class="lbl">TAXA</span>
+        <select class="field" id="expBitrate">
+          <option value="4000000">4 MBPS</option><option value="8000000" selected>8 MBPS</option>
+          <option value="16000000">16 MBPS</option><option value="30000000">30 MBPS</option></select></div>
+      <div class="frow"><span class="lbl">FUNDO</span>
+        <select class="field" id="expBg">
+          <option value="keep">MANTER ALPHA (SE HOUVER)</option>
+          <option value="#000000">PRETO</option><option value="#ffffff">BRANCO</option>
+          <option value="#efede4">PAPEL</option></select></div>
+      <p class="fhint">MP4 e WEBM não guardam transparência. Para alpha real use SEQUÊNCIA PNG ou PNG do frame.</p>
+      <div class="bar hidden" id="expBar"><i id="expFill"></i><span id="expPct">0%</span></div>
+      <div class="micro" id="expStatus" style="min-height:14px;letter-spacing:.06em"></div>
+      <div class="expresult hidden" id="expResult"></div>
+    </div>
+    <div class="modal-f">
+      <button class="cmd" id="expCancel">CANCELAR</button>
+      <button class="cmd cmd-solid" id="expStart">INICIAR</button>
+    </div>
+  </div>
+</div>
+
+<div id="cursor" class="hidden"><div class="ch"></div><div class="co"><span id="curTxt">X:000 Y:000</span></div></div>
+<div id="toast"></div>
+
+<input type="file" id="fileInput" accept="video/*" hidden>
+<input type="file" id="imgInput" accept="image/*" hidden>
+<input type="file" id="overInput" accept="video/*,image/*" hidden>
+<input type="file" id="audioInput" accept="audio/*" hidden>
+<input type="file" id="projInput" accept=".rgblab,.json,application/json" hidden>
+<video id="video" playsinline crossorigin="anonymous" style="display:none"></video>
+<video id="camVideo" playsinline autoplay muted style="display:none"></video>
+
+<script src="js/brand.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/fx2.js"></script>
+<script src="js/fx3.js"></script>
+<script src="js/fx4.js"></script>
+<script src="js/fx5.js"></script>
+<script src="js/fx7.js"></script>
+<script src="js/fx8.js"></script>
+<script src="js/fx9.js"></script>
+<script src="js/fx10.js"></script>
+<script src="js/fx11.js"></script>
+<script src="js/color/profiles.js"></script>
+<script src="js/color/engine.js"></script>
+<script src="js/color/looks.js"></script>
+<script src="js/color/lut.js"></script>
+<script src="js/color/validate.js"></script>
+<script src="js/fx6.js"></script>
+<script src="js/fxfam.js"></script>
+<script src="js/transitions.js"></script>
+<script src="js/typefaces.js"></script>
+<script src="js/comp.js"></script>
+<script src="js/compgl.js"></script>
+<script src="js/gl.js"></script>
+<script src="js/state.js"></script>
+<script src="js/stab.js"></script>
+<script src="js/presets.js"></script>
+<script src="js/media.js"></script>
+<script src="js/autosave.js"></script>
+<script src="js/projfile.js"></script>
+<script src="js/view.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/motion.js"></script>
+<script src="js/compui.js"></script>
+<script src="js/guia.js"></script>
+<script src="js/filters.js"></script>
+<script src="js/exporter.js"></script>
+<script src="js/audiodsp.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/audiofx.js"></script>
+<script src="js/audiovoz.js"></script>
+<script src="js/audiopresets.js"></script>
+<script src="js/reactmap.js"></script>
+<script src="js/legendas.js"></script>
+<script src="js/tinta.js"></script>
+<script src="js/tintaui.js"></script>
+<script src="js/recorte.js"></script>
+<script src="js/recorteui.js"></script>
+<script src="js/type.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

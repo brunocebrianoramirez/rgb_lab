@@ -1,0 +1,1382 @@
+{
+  "projeto": "rgb_lab",
+  "gerado": "2026-08-22T18:17:24.010Z",
+  "descricao": "Laboratório audiovisual experimental em HTML/CSS/JS puro (WebGL2 + Web Audio), sem dependências e sem servidor. Três mesas: vídeo, áudio, tipografia.",
+  "autoria": "Elaborado e criado por Bruno Cebriano Ramirez",
+  "laboratorios": [
+    "01 VÍDEO",
+    "02 ÁUDIO",
+    "03 TIPOGRAFIA"
+  ],
+  "canais": {
+    "azul": "vídeo",
+    "verde": "áudio",
+    "vermelho": "tipografia"
+  },
+  "contagens": {
+    "modulosJs": 51,
+    "linhasJs": 30375,
+    "efeitos": 144,
+    "familias": 8,
+    "conjuntosDeEmoji": 8,
+    "formasDeMascara": 8,
+    "modosDeMistura": 0
+  },
+  "formasDeMascara": [
+    "RETÂNGULO",
+    "ELIPSE",
+    "POLÍGONO",
+    "FAIXA H",
+    "FAIXA V",
+    "RAMPA",
+    "RAMPA RADIAL",
+    "CANETA"
+  ],
+  "modosDeMascara": [
+    "SOMAR",
+    "SUBTRAIR",
+    "INTERSECTAR",
+    "DIFERENÇA"
+  ],
+  "familias": [
+    {
+      "id": "cor",
+      "label": "01 COR",
+      "nome": "cor / matéria",
+      "nota": "película, halação, canais, cor seletiva, memória de cor, estrelas de luz, colorizar"
+    },
+    {
+      "id": "tempo",
+      "label": "02 TEMPO",
+      "nome": "tempo",
+      "nota": "eco, acúmulo, borrão entre quadros, deslocamento temporal, estabilizador"
+    },
+    {
+      "id": "espaco",
+      "label": "03 ESPAÇO",
+      "nome": "espaço / distorção",
+      "nota": "polar, esfera, túnel, dobra, Möbius, líquido, turbulência, lente"
+    },
+    {
+      "id": "glitch",
+      "label": "04 GLITCH",
+      "nome": "glitch",
+      "nota": "cubik, compressão, macrobloco, fita, trilha, rasgo, perda de sinal"
+    },
+    {
+      "id": "pixel",
+      "label": "05 PIXEL",
+      "nome": "pixel / digital",
+      "nota": "mosaico, bits, ordenação de pixels, ascii, celular"
+    },
+    {
+      "id": "pintura",
+      "label": "06 PINTURA",
+      "nome": "pintura / materialidade",
+      "nota": "aquarela, nanquim, carvão, lápis, guache, riso, serigrafia"
+    },
+    {
+      "id": "percepcao",
+      "label": "07 PERCEPÇÃO",
+      "nome": "realidade / percepção",
+      "nota": "borda, relevo, térmico, raio-x, falsa cor, profundidade"
+    },
+    {
+      "id": "instrumento",
+      "label": "08 MÁQUINAS",
+      "nome": "instrumentos de videoarte",
+      "nota": "realimentação, erosão, campo de movimento, pintura por fluxo, imagem textual"
+    }
+  ],
+  "efeitosPorFamilia": {
+    "cor": 37,
+    "tempo": 13,
+    "espaco": 23,
+    "glitch": 16,
+    "pixel": 15,
+    "pintura": 16,
+    "percepcao": 13,
+    "instrumento": 11
+  },
+  "efeitos": [
+    {
+      "id": "color",
+      "nome": "Correção de cor",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "hue",
+      "nome": "Matiz & temperatura",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "duotone",
+      "nome": "Duotone",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "gradmap",
+      "nome": "Mapa de gradiente",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "posterize",
+      "nome": "Posterizar",
+      "familia": "pintura",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "threshold",
+      "nome": "Preto e branco duro",
+      "familia": "percepcao",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "invert",
+      "nome": "Negativo",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "vhs",
+      "nome": "VHS",
+      "familia": "glitch",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "film",
+      "nome": "Filme antigo",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "bloom",
+      "nome": "Brilho / Neon glow",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "blur",
+      "nome": "Desfoque",
+      "familia": "espaco",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "sharpen",
+      "nome": "Nitidez",
+      "familia": "percepcao",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "vignette",
+      "nome": "Vinheta",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "halftone",
+      "nome": "Meio-tom (bolinhas)",
+      "familia": "pintura",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "dither",
+      "nome": "Dither / 8-bit",
+      "familia": "pixel",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "edge",
+      "nome": "Contorno (Sobel)",
+      "familia": "percepcao",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "flash",
+      "nome": "Flash / Strobe",
+      "familia": "cor",
+      "arquivo": "js/fx.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "aquarela",
+      "nome": "Aquarela",
+      "familia": "pintura",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "tintaneg",
+      "nome": "Nanquim",
+      "familia": "pintura",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "carvao",
+      "nome": "Carvão",
+      "familia": "pintura",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "lapis",
+      "nome": "Lápis",
+      "familia": "pintura",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "guache",
+      "nome": "Guache",
+      "familia": "pintura",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "pastel",
+      "nome": "Pastel seco",
+      "familia": "pintura",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "colagem",
+      "nome": "Colagem",
+      "familia": "pintura",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "realimenta",
+      "nome": "Motor de realimentação",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "realimentacaleido",
+      "nome": "Caleidoscópio realimentado",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "erosao",
+      "nome": "Erosão de matéria",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "campomov",
+      "nome": "Campo de movimento",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "pinturafluxo",
+      "nome": "Pintura por fluxo",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "imagemtexto",
+      "nome": "Imagem textual",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "ruidogerativo",
+      "nome": "Ruído generativo",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "tipodesl",
+      "nome": "Tipografia como matéria",
+      "familia": "instrumento",
+      "arquivo": "js/fx10.js",
+      "catNoCodigo": "instrumento"
+    },
+    {
+      "id": "vidro",
+      "nome": "VIDRO",
+      "familia": "espaco",
+      "arquivo": "js/fx11.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "vidrochanfro",
+      "nome": "VIDRO CHANFRADO",
+      "familia": "espaco",
+      "arquivo": "js/fx11.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "raioxglow",
+      "nome": "RAIO-X",
+      "familia": "percepcao",
+      "arquivo": "js/fx11.js",
+      "catNoCodigo": "percepcao"
+    },
+    {
+      "id": "tiras",
+      "nome": "TIRAS DE PAPEL",
+      "familia": "tempo",
+      "arquivo": "js/fx11.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "rgbsplit",
+      "nome": "RGB Split",
+      "familia": "glitch",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "wave",
+      "nome": "Onda / Ondulação",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "twirl",
+      "nome": "Redemoinho",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "fisheye",
+      "nome": "Olho de peixe / Barril",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "pixelate",
+      "nome": "Pixelar / Mosaico",
+      "familia": "pixel",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "kaleido",
+      "nome": "Caleidoscópio",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "noisedisp",
+      "nome": "Deslocamento por ruído",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "mirror",
+      "nome": "Espelho",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "slice",
+      "nome": "Fatias deslizantes",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "distorcao"
+    },
+    {
+      "id": "glitch",
+      "nome": "Glitch digital",
+      "familia": "glitch",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "datamosh",
+      "nome": "Datamosh",
+      "familia": "glitch",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "crt",
+      "nome": "CRT / Tubão",
+      "familia": "glitch",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "zoomblur",
+      "nome": "Desfoque radial / zoom",
+      "familia": "espaco",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "echo",
+      "nome": "Rastro / Eco",
+      "familia": "tempo",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "shake",
+      "nome": "Tremor de câmera",
+      "familia": "tempo",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "ascii",
+      "nome": "ASCII ART",
+      "familia": "pixel",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "ascii"
+    },
+    {
+      "id": "emoji",
+      "nome": "MOSAICO DE EMOJI",
+      "familia": "pixel",
+      "arquivo": "js/fx2.js",
+      "catNoCodigo": "ascii"
+    },
+    {
+      "id": "removewhite",
+      "nome": "Remover fundo (alpha)",
+      "familia": "instrumento",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "alpha"
+    },
+    {
+      "id": "alphaboard",
+      "nome": "Fundo sólido",
+      "familia": "instrumento",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "alpha"
+    },
+    {
+      "id": "paperink",
+      "nome": "Tinta sobre papel",
+      "familia": "pintura",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "stipple",
+      "nome": "Pontilhado (stipple)",
+      "familia": "pintura",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "blob",
+      "nome": "Trama que funde",
+      "familia": "pixel",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "dotmatrix",
+      "nome": "Matriz de pontos",
+      "familia": "pixel",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "bitmap",
+      "nome": "Bitmap 1-bit",
+      "familia": "pixel",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "pixelsort",
+      "nome": "Pixel sort",
+      "familia": "pixel",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "thermal",
+      "nome": "Térmico",
+      "familia": "percepcao",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "nightvision",
+      "nome": "Visão noturna",
+      "familia": "percepcao",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "scanlines",
+      "nome": "Broadcast / Scanlines",
+      "familia": "glitch",
+      "arquivo": "js/fx3.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "lego",
+      "nome": "Blocos de brinquedo",
+      "familia": "pixel",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "engrave",
+      "nome": "Gravura / Hachura",
+      "familia": "pintura",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "cyanotype",
+      "nome": "Cianotipia",
+      "familia": "cor",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "gauss",
+      "nome": "Desfoque gaussiano",
+      "familia": "espaco",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "motionblur",
+      "nome": "Desfoque de movimento",
+      "familia": "tempo",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "smoke",
+      "nome": "Fumaça / Dissolução",
+      "familia": "tempo",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "xerox",
+      "nome": "Fotocópia / Scanner",
+      "familia": "pintura",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "impressao"
+    },
+    {
+      "id": "palette",
+      "nome": "Paleta retrô",
+      "familia": "cor",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "kuwahara",
+      "nome": "Pintura a óleo",
+      "familia": "pintura",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "smudge",
+      "nome": "Borrão / Esfumaçado",
+      "familia": "tempo",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "flowfield",
+      "nome": "Campo de fluxo",
+      "familia": "instrumento",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "contour",
+      "nome": "Curvas de nível",
+      "familia": "percepcao",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "glowstreak",
+      "nome": "Brilho anamórfico",
+      "familia": "cor",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "luz"
+    },
+    {
+      "id": "mono",
+      "nome": "Monocromo neon",
+      "familia": "cor",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "tv80",
+      "nome": "TV anos 80",
+      "familia": "glitch",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "grade",
+      "nome": "Correção cinematográfica",
+      "familia": "cor",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "colourpop",
+      "nome": "Colour pop",
+      "familia": "cor",
+      "arquivo": "js/fx4.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "filmgate",
+      "nome": "Janela da câmera (8/16/35mm)",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "pelicula"
+    },
+    {
+      "id": "lightleak",
+      "nome": "Vazamento de luz (overlay)",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "pelicula"
+    },
+    {
+      "id": "filmflash",
+      "nome": "Flash de rolo",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "pelicula"
+    },
+    {
+      "id": "filmgrain",
+      "nome": "Grão por bitola",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "pelicula"
+    },
+    {
+      "id": "dustscratch",
+      "nome": "Poeira e riscos",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "pelicula"
+    },
+    {
+      "id": "halation",
+      "nome": "Halação",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "pelicula"
+    },
+    {
+      "id": "gateweave",
+      "nome": "Tremor de janela",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "pelicula"
+    },
+    {
+      "id": "filmstock",
+      "nome": "Filtro de cor (galeria)",
+      "familia": "cor",
+      "arquivo": "js/fx5.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "labgrade",
+      "nome": "Look de cor (engine)",
+      "familia": "cor",
+      "arquivo": "js/fx6.js",
+      "catNoCodigo": "look"
+    },
+    {
+      "id": "kirakira",
+      "nome": "Estrelas de luz (kira kira)",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "colorize",
+      "nome": "Colorizar (P&B → cor)",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "colormem",
+      "nome": "Memória de cor",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "spectral",
+      "nome": "Deslocamento espectral",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "bleach",
+      "nome": "Bypass de branqueamento",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "crossproc",
+      "nome": "Processo cruzado",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "solariza",
+      "nome": "Solarização (Sabattier)",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "chanmix",
+      "nome": "Mesa de canais",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "falsecolor",
+      "nome": "Falsa cor (zonas)",
+      "familia": "percepcao",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "percepcao"
+    },
+    {
+      "id": "seletiva",
+      "nome": "Cor seletiva (HSL)",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "monoesp",
+      "nome": "P&B espectral",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "aerocromo",
+      "nome": "Infravermelho falsa-cor",
+      "familia": "percepcao",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "percepcao"
+    },
+    {
+      "id": "registro",
+      "nome": "Registro fora de esquadro",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "riso",
+      "nome": "Risografia",
+      "familia": "pintura",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "serigrafia",
+      "nome": "Serigrafia",
+      "familia": "pintura",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "pintura"
+    },
+    {
+      "id": "flicker",
+      "nome": "Cintilância de exposição",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "queima",
+      "nome": "Queima de película",
+      "familia": "cor",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "cor"
+    },
+    {
+      "id": "relevo",
+      "nome": "Relevo com luz",
+      "familia": "percepcao",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "percepcao"
+    },
+    {
+      "id": "campoborda",
+      "nome": "Campo de bordas",
+      "familia": "percepcao",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "percepcao"
+    },
+    {
+      "id": "lumadesl",
+      "nome": "Deslocamento por luminância",
+      "familia": "percepcao",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "percepcao"
+    },
+    {
+      "id": "profundidade",
+      "nome": "Profundidade falsa",
+      "familia": "percepcao",
+      "arquivo": "js/fx7.js",
+      "catNoCodigo": "percepcao"
+    },
+    {
+      "id": "ecotemporal",
+      "nome": "Eco temporal",
+      "familia": "tempo",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "acumulo",
+      "nome": "Acúmulo de quadros",
+      "familia": "tempo",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "borratempo",
+      "nome": "Borrão temporal",
+      "familia": "tempo",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "tempodesl",
+      "nome": "Deslocamento temporal",
+      "familia": "tempo",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "sangriatempo",
+      "nome": "Sangria de tempo",
+      "familia": "tempo",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "congelaparcial",
+      "nome": "Congelamento parcial",
+      "familia": "tempo",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "estabilizador",
+      "nome": "Estabilizador de vídeo",
+      "familia": "tempo",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "tempo"
+    },
+    {
+      "id": "liquido",
+      "nome": "Líquido",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "calor",
+      "nome": "Distorção de calor",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "turbulencia",
+      "nome": "Turbulência",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "polar",
+      "nome": "Polar ↔ cartesiano",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "esfera",
+      "nome": "Esfera",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "tunel",
+      "nome": "Túnel",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "dobra",
+      "nome": "Dobra",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "mobius",
+      "nome": "Möbius",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "lente",
+      "nome": "Lente (barril · almofada)",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "mapadesl",
+      "nome": "Mapa de deslocamento",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "caleidolab",
+      "nome": "Caleidoscópio de laboratório",
+      "familia": "espaco",
+      "arquivo": "js/fx8.js",
+      "catNoCodigo": "espaco"
+    },
+    {
+      "id": "cubik",
+      "nome": "Cubik (retalho)",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "bitcrush",
+      "nome": "Esmagamento de bits",
+      "familia": "pixel",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "pixel"
+    },
+    {
+      "id": "bitplane",
+      "nome": "Plano de bits",
+      "familia": "pixel",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "pixel"
+    },
+    {
+      "id": "compressao",
+      "nome": "Colapso de compressão",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "macrobloco",
+      "nome": "Macrobloco preso",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "fitaestica",
+      "nome": "Fita esticada",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "headswitch",
+      "nome": "Chaveamento de cabeça",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "sangriacroma",
+      "nome": "Sangria de croma",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "perdasinal",
+      "nome": "Perda de sinal",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "rasgo",
+      "nome": "Rasgo horizontal",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "tracking",
+      "nome": "Erro de trilha",
+      "familia": "glitch",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "glitch"
+    },
+    {
+      "id": "pixelforma",
+      "nome": "Pixel com forma",
+      "familia": "pixel",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "pixel"
+    },
+    {
+      "id": "pixelsortlab",
+      "nome": "Ordenação de pixels",
+      "familia": "pixel",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "pixel"
+    },
+    {
+      "id": "celular",
+      "nome": "Mosaico celular",
+      "familia": "pixel",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "pixel"
+    },
+    {
+      "id": "bitshift",
+      "nome": "Deslocamento de bits",
+      "familia": "pixel",
+      "arquivo": "js/fx9.js",
+      "catNoCodigo": "pixel"
+    }
+  ],
+  "modulos": [
+    {
+      "arquivo": "js/brand.js",
+      "linhas": 16,
+      "resumo": "rgb_lab — identidade A marca em si é um PNG embutido em css/system.css (.brandmark), preto sobre transparência, invertido no modo noturno. Aqui ficam só o nome e as etiquetas usadas em texto e arquivos."
+    },
+    {
+      "arquivo": "js/fx.js",
+      "linhas": 682,
+      "resumo": "rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades."
+    },
+    {
+      "arquivo": "js/fx2.js",
+      "linhas": 851,
+      "resumo": "rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art)"
+    },
+    {
+      "arquivo": "js/fx3.js",
+      "linhas": 409,
+      "resumo": "rgb_lab — efeitos parte 3 Transparência (alpha), tinta sobre papel, trama e sistemas de imagem. Efeitos marcados com alpha:true implementam vec4 fx4(vec2 uv) e podem alterar o canal alpha."
+    },
+    {
+      "arquivo": "js/fx4.js",
+      "linhas": 846,
+      "resumo": "rgb_lab — efeitos parte 4 Família construída a partir das referências da pasta EFEITOS: brinquedo, gravura, cianotipia, fotocópia, paleta retrô, pintura, brilho anamórfico, monocromo neon, tv 80, fumaça, desfoques e arte generativa."
+    },
+    {
+      "arquivo": "js/fx5.js",
+      "linhas": 493,
+      "resumo": "rgb_lab — PELÍCULA O pacote de câmera antiga: a JANELA (o formato do quadro, com o canto arredondado que a chapa deixa), os VAZAMENTOS DE LUZ, o FLASH de começo de rolo, o GRÃO por bitola, a SUJEIRA e o TREMOR DA JANELA. Nota honesta sobre bitolas: 32mm não ex"
+    },
+    {
+      "arquivo": "js/fx7.js",
+      "linhas": 1031,
+      "resumo": "rgb_lab — FAMÍLIA 01 · COR / MATÉRIA   e   FAMÍLIA 07 · PERCEPÇÃO Aqui a cor deixa de ser \"filtro\" e vira matéria manipulável: o que se preserva, o que se destrói, o que se separa em canais, o que se desloca por comprimento de onda. Três destes são FERRAMENTAS"
+    },
+    {
+      "arquivo": "js/fx8.js",
+      "linhas": 791,
+      "resumo": "rgb_lab — FAMÍLIA 02 · TEMPO   e   FAMÍLIA 03 · ESPAÇO / DISTORÇÃO TEMPO aqui não é \"câmera lenta\". É manipulação temporal como linguagem: o quadro deixa de ser um instante e passa a ser uma janela sobre vários instantes ao mesmo tempo. Isto só existe porque o"
+    },
+    {
+      "arquivo": "js/fx9.js",
+      "linhas": 711,
+      "resumo": "rgb_lab — FAMÍLIA 04 · GLITCH   e   FAMÍLIA 05 · PIXEL / DIGITAL O glitch genérico — separar RGB, riscar a tela e jogar ruído — é fácil e cansa rápido. Aqui cada efeito imita um MECANISMO real de falha, e todos os parâmetros do mecanismo ficam na mão: digital "
+    },
+    {
+      "arquivo": "js/fx10.js",
+      "linhas": 746,
+      "resumo": "rgb_lab — FAMÍLIA 06 · PINTURA / MATERIALIDADE FAMÍLIA 08 · INSTRUMENTOS DE VIDEOARTE PINTURA não é \"filtro de pintura a óleo\". Cada um destes imita um COMPORTAMENTO de matéria: o pigmento que sangra na fibra do papel, o carvão que agarra na textura, a tinta q"
+    },
+    {
+      "arquivo": "js/fx11.js",
+      "linhas": 461,
+      "resumo": "rgb_lab — efeitos parte 11: VIDRO e RADIOGRAFIA Três instrumentos que faltavam, e que têm em comum o fato de a imagem passar POR ALGUMA COISA em vez de ser tratada: vidro          canelado, martelado, chuva, bolha — a imagem vista através de um relevo transpar"
+    },
+    {
+      "arquivo": "js/color/profiles.js",
+      "linhas": 365,
+      "resumo": "rgb_lab — COLOR ENGINE · PERFIS DE ENTRADA Um PERFIL DE ENTRADA não é um look. Ele responde a uma única pergunta: \"o que estes números significam?\" — e transforma o sinal que chegou num espaço de trabalho linear e conhecido. SINAL DA CÂMERA ↓  função de transf"
+    },
+    {
+      "arquivo": "js/color/engine.js",
+      "linhas": 394,
+      "resumo": "rgb_lab — COLOR ENGINE · NÚCLEO Implementação de REFERÊNCIA em JS de toda a cadeia criativa. O shader em js/fx6.js é o gêmeo dela em GLSL; js/color/validate.js mede a diferença entre os dois e falha se passar de 1 ΔE2000. Por que existir duas vezes: · o shader"
+    },
+    {
+      "arquivo": "js/color/looks.js",
+      "linhas": 253,
+      "resumo": "rgb_lab — COLOR ENGINE · LOOKS Cinco looks reconstruídos. Cada um é SÓ UM CONJUNTO DE PARÂMETROS: nenhuma matemática mora aqui. Isso é o que permite acrescentar um look novo sem tocar no motor, e é o que faz a força do look interpolar de verdade (engine.js · m"
+    },
+    {
+      "arquivo": "js/color/lut.js",
+      "linhas": 159,
+      "resumo": "rgb_lab — COLOR ENGINE · LUT 3D Gera o LUT do LOOK, não da cadeia inteira. É a diferença que a spec pede em §16: PERFIL DE ENTRADA → ESPAÇO DE TRABALHO → [ LUT ] → SAÍDA e nunca VÍDEO → LUT direto, porque um .cube não sabe o que os números que recebe significa"
+    },
+    {
+      "arquivo": "js/color/validate.js",
+      "linhas": 290,
+      "resumo": "rgb_lab — COLOR ENGINE · MEDIÇÃO O QUE ESTES NÚMEROS SÃO — e o que eles não são. Não existe imagem oficial de referência contra a qual comparar. Portanto NENHUMA medida aqui prova equivalência com produto nenhum, e a classificação dos cinco looks continua send"
+    },
+    {
+      "arquivo": "js/fx6.js",
+      "linhas": 400,
+      "resumo": "rgb_lab — COLOR ENGINE · IMPLEMENTAÇÃO EM GPU O gêmeo em GLSL de js/color/engine.js. Uma passada de fragment por look — decode, espaço de trabalho, look criativo, transform de saída, tudo no mesmo shader. As TABELAS de look e de perfil são GERADAS a partir dos"
+    },
+    {
+      "arquivo": "js/fxfam.js",
+      "linhas": 133,
+      "resumo": "rgb_lab — AS OITO FAMÍLIAS O catálogo cresceu demais para viver em seis categorias soltas (cor · luz · distorção · glitch · ascii · tempo). A partir daqui o laboratório é dividido em OITO FAMÍLIAS, e cada família é uma maneira diferente de tratar a imagem: 01 "
+    },
+    {
+      "arquivo": "js/transitions.js",
+      "linhas": 503,
+      "resumo": "rgb_lab — interpolação, curvas e transições Duas coisas moram aqui: 1. VE.EASE — as curvas de aceleração dos keyframes. LINEAR / EASE IN / EASE OUT / EASE IN-OUT / BÉZIER / HOLD. 2. VE.TRANSITIONS — o catálogo de transições. Cada transição é uma FUNÇÃO PURA qu"
+    },
+    {
+      "arquivo": "js/typefaces.js",
+      "linhas": 458,
+      "resumo": "rgb_lab — TIPOS DO LABORATÓRIO Estas letras não são um arquivo de fonte: são DESENHADAS POR CÓDIGO. Cada glifo é um esqueleto — um caminho de traço, não um contorno — e a família nasce de PARÂMETROS aplicados sobre esse esqueleto: peso · largura · inclinação ·"
+    },
+    {
+      "arquivo": "js/comp.js",
+      "linhas": 582,
+      "resumo": "rgb_lab — MODELO DE COMPOSIÇÃO POR CAMADAS Este arquivo não desenha nada. Ele descreve O QUE uma camada é, para que o motor (compgl.js + gl.js) e a ficha da direita (compui.js) falem a mesma língua e ninguém precise adivinhar. Um CLIPE de vídeo passou a ser um"
+    },
+    {
+      "arquivo": "js/compgl.js",
+      "linhas": 530,
+      "resumo": "rgb_lab — GLSL DA COMPOSIÇÃO Os três shaders que fazem uma camada virar composição. Ficam aqui, longe do motor, porque são MATEMÁTICA e a matemática precisa poder ser lida sem o barulho do WebGL em volta. Convenções, válidas para o arquivo inteiro: · alfa DIRE"
+    },
+    {
+      "arquivo": "js/gl.js",
+      "linhas": 1289,
+      "resumo": "rgb_lab — motor de renderização WebGL2 [camadas de mídia] → composição → [efeitos] → tela Suporta canal alpha do início ao fim."
+    },
+    {
+      "arquivo": "js/state.js",
+      "linhas": 1339,
+      "resumo": "rgb_lab — estado do projeto  ·  MODELO DE EDIÇÃO NÃO LINEAR A composição deixou de ser \"uma pilha de camadas\" e virou uma SEQUÊNCIA com pistas, como numa mesa de edição de verdade. Sequence → tracks[] Track    → clips[]                (vários clipes por pista)"
+    },
+    {
+      "arquivo": "js/stab.js",
+      "linhas": 165,
+      "resumo": "rgb_lab — ANALISADOR DO ESTABILIZADOR O shader `estabilizador` só APLICA a correção. Quem mede o tremor é este arquivo. Como funciona 1. O quadro pronto é reduzido a uma grade de 64×64 e lido de volta para a CPU (uma leitura de 16 KB por quadro — só quando o e"
+    },
+    {
+      "arquivo": "js/presets.js",
+      "linhas": 128,
+      "resumo": "rgb_lab — presets (efeito, cadeia, áudio, tipografia) Guardados no navegador; exportáveis como .json"
+    },
+    {
+      "arquivo": "js/media.js",
+      "linhas": 560,
+      "resumo": "rgb_lab — fontes de mídia e composição de camadas Uma fonte (source) é um arquivo/dispositivo carregado. Uma camada (media layer) usa uma fonte dentro do tempo."
+    },
+    {
+      "arquivo": "js/autosave.js",
+      "linhas": 393,
+      "resumo": "rgb_lab — SESSÃO GUARDADA (o F5 sem querer) Por que NÃO é localStorage: O localStorage guarda texto e tem uns 5 MB. O projeto em JSON até caberia; os VÍDEOS não. E sem os vídeos o projeto volta vazio, porque `VE.deserialize` já joga fora todo clipe cuja fonte "
+    },
+    {
+      "arquivo": "js/projfile.js",
+      "linhas": 214,
+      "resumo": "rgb_lab — ARQUIVO DE PROJETO Existiam dois jeitos de guardar, e nenhum servia para \"salvo aqui, abro amanhã naquela outra máquina\": · SALVAR PROJETO (.json)  guarda a EDIÇÃO — cortes, efeitos, máscaras, keyframes, legendas, traçados. Não guarda os vídeos. Abri"
+    },
+    {
+      "arquivo": "js/view.js",
+      "linhas": 192,
+      "resumo": "rgb_lab — viewport: zoom, pan, fit O canvas é exibido em pixels do projeto (100% = 1:1) e o palco é transladado/escalado. Vertical 1080×1920 cabe inteiro."
+    },
+    {
+      "arquivo": "js/timeline.js",
+      "linhas": 1065,
+      "resumo": "rgb_lab — LINHA DO TEMPO Uma mesa de edição não linear de verdade: · pistas V / A / FX, cada uma com vários clipes lado a lado · arrastar, mover entre pistas, aparar as bordas (trim) · cortar no cursor, ripple, apagar trecho · camadas de ajuste que alcançam tu"
+    },
+    {
+      "arquivo": "js/panels.js",
+      "linhas": 1177,
+      "resumo": "rgb_lab — catálogo de efeitos, ficha técnica (inspetor) e edição da máscara direto na prévia"
+    },
+    {
+      "arquivo": "js/motion.js",
+      "linhas": 1054,
+      "resumo": "rgb_lab — MOTION · CONTROLES DE EFEITO · KEYFRAMES Este é o painel que fica à direita quando um clipe está selecionado. Ele é o equivalente ao \"Effect Controls\": mostra o clipe inteiro como uma pilha de propriedades animáveis. TEMPO       início, duração, entr"
+    },
+    {
+      "arquivo": "js/compui.js",
+      "linhas": 923,
+      "resumo": "rgb_lab — A FICHA DA COMPOSIÇÃO As seções que a coluna da direita ganha quando um clipe de vídeo está selecionado. Elas moram aqui e não em `motion.js` porque motion.js já carrega tempo, movimento, transições, pilha de efeitos, áudio reativo e keyframes — e um"
+    },
+    {
+      "arquivo": "js/guia.js",
+      "linhas": 595,
+      "resumo": "rgb_lab — GUIA DE CADA LABORATÓRIO Um tutorial dentro de cada laboratório, escrito para quem nunca abriu um editor na vida. Ele mora numa gaveta que desliza por cima da ferramenta — não é outra página, não tira você de onde estava, e fecha no ESC. COMO ACRESCE"
+    },
+    {
+      "arquivo": "js/filters.js",
+      "linhas": 561,
+      "resumo": "rgb_lab — GALERIA DE FILTROS Uma prateleira de emulsões. Cada filtro é um conjunto de valores do efeito `filmstock` — nenhum deles copia curva de produto nenhum: são construídos aqui, com nome e código de arquivo. A galeria mostra MINIATURAS AO VIVO: o quadro "
+    },
+    {
+      "arquivo": "js/exporter.js",
+      "linhas": 522,
+      "resumo": "rgb_lab — exportação tempo real (com áudio) · frame a frame (exato) · sequência PNG (única saída com alpha real)"
+    },
+    {
+      "arquivo": "js/audiodsp.js",
+      "linhas": 691,
+      "resumo": "rgb_lab — BIBLIOTECA DE PROCESSAMENTO DE ÁUDIO Funções puras que operam sobre AudioBuffer. Nada aqui desenha, nada aqui conhece a interface: só matemática de sinal. Existe para que os MÓDULOS do rack de áudio (js/audiofx.js) sejam declarações curtas, e para qu"
+    },
+    {
+      "arquivo": "js/audio.js",
+      "linhas": 1405,
+      "resumo": "rgb_lab — LABORATÓRIO 02 · ÁUDIO Buffer original → transformações → grafo offline → buffer final O mesmo caminho serve para tocar, exportar e mandar pra timeline."
+    },
+    {
+      "arquivo": "js/audiofx.js",
+      "linhas": 873,
+      "resumo": "rgb_lab — MÓDULOS NOVOS DO RACK DE ÁUDIO Este arquivo NÃO cria um segundo laboratório de áudio. Ele acrescenta módulos ao rack que já existe, pelo mesmo registro que os doze originais usam (`VE.audio.register`), com os mesmos tipos de parâmetro e a mesma rende"
+    },
+    {
+      "arquivo": "js/audiovoz.js",
+      "linhas": 823,
+      "resumo": "rgb_lab — A FAMÍLIA VOZ (módulos do MESMO rack de áudio) Este arquivo NÃO cria um segundo laboratório nem um segundo rack. Ele acrescenta uma família ao rack que já existe, pelo mesmo `VE.audio.register` dos vinte e seis anteriores, com os mesmos tipos de parâ"
+    },
+    {
+      "arquivo": "js/audiopresets.js",
+      "linhas": 133,
+      "resumo": "rgb_lab — PRESETS ARTÍSTICOS DO RACK DE ÁUDIO Cada preset é uma CADEIA: quais módulos, em que ordem e com que valores. Nenhum deles inventa processamento — todos usam os módulos que existem no rack, e depois de aplicar tudo continua aberto para você mexer. Apa"
+    },
+    {
+      "arquivo": "js/reactmap.js",
+      "linhas": 145,
+      "resumo": "rgb_lab — ÁUDIO REATIVO O som do laboratório 02 mexendo na imagem do laboratório 01. Não é um módulo novo nem uma janela: é uma camada de leitura. Um mapeamento diz \"grave → escala deste clipe\", e o valor é SOMADO à propriedade no momento em que ela é lida (`V"
+    },
+    {
+      "arquivo": "js/legendas.js",
+      "linhas": 811,
+      "resumo": "rgb_lab — LEGENDAS COMO OS OUTROS FAZEM, e o que vale a pena copiar: · Premiere — a legenda NÃO é um gráfico. É uma faixa própria (C1), acima do vídeo, e cada legenda é um segmento com entrada, saída e texto. Um ESTILO DE FAIXA vale para todas de uma vez: muda"
+    },
+    {
+      "arquivo": "js/tinta.js",
+      "linhas": 446,
+      "resumo": "rgb_lab — TINTA: escrever com a mão As famílias LAB são traço, não contorno — cada glifo é um caminho com comprimento conhecido, e é por isso que a ESCRITA À MÃO existe no laboratório de tipografia: dá para revelar o traço aos poucos. Aqui a ideia é a mesma, c"
+    },
+    {
+      "arquivo": "js/tintaui.js",
+      "linhas": 261,
+      "resumo": "rgb_lab — TINTA: a interface, dentro do laboratório de tipografia Mesma separação de comp.js / compui.js: o modelo e o desenho ficam em `tinta.js`, a mão na massa fica aqui. Sem janela nova e sem página nova: o palco que já existe ganha uma folha por cima. Enq"
+    },
+    {
+      "arquivo": "js/recorte.js",
+      "linhas": 480,
+      "resumo": "rgb_lab — LETRAS RECORTADAS Aquela mensagem montada com letras cortadas de jornal e revista. A ideia inteira está numa frase: CADA LETRA É UM PEDAÇO DE PAPEL DIFERENTE. Não é uma fonte — é um sorteio por letra, e é por isso que oito \"A\" seguidos saem oito veze"
+    },
+    {
+      "arquivo": "js/recorteui.js",
+      "linhas": 343,
+      "resumo": "rgb_lab — LETRAS RECORTADAS: a interface Vive dentro do laboratório de tipografia, como a tinta: uma folha por cima do palco, uma barra de controles ao lado, e o texto vem do campo que já existe. Nada de página nova. O gesto que manda: CLICAR NUMA LETRA E ARRA"
+    },
+    {
+      "arquivo": "js/type.js",
+      "linhas": 1155,
+      "resumo": "rgb_lab — LABORATÓRIO 03 · TIPOGRAFIA Cada letra é um objeto com transformação própria. Ferramentas nomeadas alteram o conjunto; o inspetor abre o detalhe."
+    },
+    {
+      "arquivo": "js/shell.js",
+      "linhas": 549,
+      "resumo": "rgb_lab — casca do sistema entrada em ascii → boot → índice → laboratórios"
+    },
+    {
+      "arquivo": "js/app.js",
+      "linhas": 979,
+      "resumo": "rgb_lab — aplicação"
+    }
+  ],
+  "comandos": {
+    "abrir": "node server.js            (porta 5173)",
+    "arquivoUnico": "node build-arquivo-unico.js",
+    "dossie": "node dossie.js"
+  },
+  "armadilhasCriticas": [
+    "js/fxfam.js tem de ser o ÚLTIMO dos fx*.js: ele varre VE.FX para reetiquetar.",
+    "O índice em clip.blend É a posição em VE.BLENDS — mexer na ordem quebra projeto salvo.",
+    "pow() com base zero devolve NaN nesta GPU (Intel UHD/ANGLE) e apaga o quadro inteiro.",
+    "mod(x, n) devolve n quando x é múltiplo exato: usar celulaAtlas() do PRELUDE.",
+    "Campo que aparece no inspetor não é campo que funciona — escrever pela interface e ler o modelo.",
+    "input type=color precisa gravar no input E no change.",
+    "O arquivo único (rgb_lab-arquivo-unico.html) NUNCA se edita à mão."
+  ]
+}
