@@ -198,7 +198,36 @@
   /* O tamanho do pedaço sai da letra DE VERDADE, medida na fonte
      sorteada — acento incluído. Medir por altura fixa cortaria o til do
      Ã e deixaria o "o" nadando num papelão.                          */
+  /* ---------------------------------------------- A MEDIDA GUARDADA ----
+     Medir custa trocar a fonte do contexto e pedir `measureText`, e a mesma
+     letra era medida QUATRO vezes por quadro: no auto-ajuste, na montagem,
+     no desenho e no teste de clique. Duas sumiram por estrutura (ver
+     `R.desenhar`); esta tabela cuida das que sobraram e da repetição entre
+     um quadro e o seguinte.
+
+     A medida é função PURA de (semente, letra, corpo) e dos quatro ajustes
+     que o sorteio lê. Quando um desses quatro muda, a tabela some inteira —
+     é mais barato que conferir entrada por entrada, e só acontece enquanto
+     o trilho está sendo arrastado.
+
+     O que volta daqui é COMPARTILHADO: ninguém pode escrever no objeto da
+     medida. Quem precisar mudar alguma coisa, tira uma cópia.        */
+  var CACHE = new Map(), CACHE_ASSIN = null, CACHE_MAX = 4096;
+
+  function assinatura(P) {
+    return [P.maiusculas, P.varTam, P.varGiro, P.varAltura].join('|');
+  }
+
+  R.limparMedidas = function () { CACHE.clear(); CACHE_ASSIN = null; };
+  R.medidasGuardadas = function () { return CACHE.size; };
+
   R.medir = function (cx, p, P, corpo) {
+    var assin = assinatura(P);
+    if (assin !== CACHE_ASSIN) { CACHE.clear(); CACHE_ASSIN = assin; }
+    var chave = p.semente + '|' + p.ch + '|' + corpo;
+    var guardada = CACHE.get(chave);
+    if (guardada) return guardada;
+
     var s = R.sortear(p, P);
     var ch = s.maiuscula ? p.ch.toUpperCase() : p.ch;
     var tam = corpo * s.escala;
@@ -209,18 +238,24 @@
     var acima = (m.actualBoundingBoxAscent !== undefined) ? m.actualBoundingBoxAscent : tam * 0.72;
     var abaixo = (m.actualBoundingBoxDescent !== undefined) ? m.actualBoundingBoxDescent : tam * 0.22;
     var alturaGlifo = Math.max(4, acima + abaixo);
-    return {
+    var m = {
       s: s, ch: ch, tam: tam,
       glifoW: largura, glifoH: alturaGlifo, acima: acima, abaixo: abaixo,
       w: largura + tam * s.sobraX * 2,
       h: alturaGlifo + tam * s.sobraY * 2
     };
+    /* o corpo muda a cada letra digitada (o auto-ajuste encolhe), então a
+       tabela cresce enquanto se escreve; um teto simples segura isso */
+    if (CACHE.size >= CACHE_MAX) CACHE.clear();
+    CACHE.set(chave, m);
+    return m;
   };
 
   /* Desenha UM pedaço com o centro em (x, y). `tremor` é o deslocamento
-     da animação, que não entra no sorteio — assim tremer não re-sorteia. */
-  R.desenharPedaco = function (cx, p, P, corpo, x, y, tremor) {
-    var m = R.medir(cx, p, P, corpo);
+     da animação, que não entra no sorteio — assim tremer não re-sorteia.
+     `medida` é a que a montagem já fez: quem tem, não manda medir de novo. */
+  R.desenharPedaco = function (cx, p, P, corpo, x, y, tremor, medida) {
+    var m = medida || R.medir(cx, p, P, corpo);
     var s = m.s;
     var tr = tremor || { dx: 0, dy: 0, rot: 0, esc: 1 };
 
@@ -361,6 +396,9 @@
         idx++;
       });
     });
+    /* o corpo vai junto: quem desenha precisa dele e não deve refazer o
+       auto-ajuste — era daí que vinha uma das quatro medições */
+    itens.corpo = corpo;
     return itens;
   };
 
@@ -490,12 +528,14 @@
     cx.setTransform(1, 0, 0, 1, 0, 0);
     cx.clearRect(0, 0, W, H);
     if (P.fundoOn) { cx.fillStyle = P.fundo; cx.fillRect(0, 0, W, H); }
-    var corpo = R.corpoQueCabe(cx, texto, P, W, H);
     var itens = R.montar(cx, texto, P, W, H);
+    var corpo = itens.corpo;
     itens.forEach(function (it, i) {
       var pt = R.pedacoNoTempo(P, it.p, tempo || 0, i);
       var tr = R.tremorDe(P, tempo || 0, i, it.p);
-      R.desenharPedaco(cx, pt, P, corpo, it.x, it.y, tr);
+      /* quando o estilo TROCA o recorte, o pedaço desenhado tem outra
+         semente e outra medida; só a mesma pode reaproveitar a da montagem */
+      R.desenharPedaco(cx, pt, P, corpo, it.x, it.y, tr, pt === it.p ? it.m : null);
     });
     return itens;
   };

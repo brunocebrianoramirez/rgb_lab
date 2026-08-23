@@ -13,12 +13,11 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Guardar a medida da letra (hoje mede 4× por quadro) | 4u |
-| 3 | Worker para as cadeias longas de áudio — ESPECTRAL, GRANULAR e a família VOZ | 4v e 7 |
-| 4 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
-| 5 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
-| 6 | Alça de Bézier na máscara de EFEITO | 4l |
-| 7 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 2 | Worker para as cadeias longas de áudio — ESPECTRAL, GRANULAR e a família VOZ | 4v e 7 |
+| 3 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
+| 4 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
+| 5 | Alça de Bézier na máscara de EFEITO | 4l |
+| 6 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -29,8 +28,10 @@ sete módulos, medidos por espectro.
 **Fechado na décima quarta passada (4w):** as LETRAS RECORTADAS ganharam a
 escolha que faltava — dois relógios separados (troca e tremor), os dois em
 passos por segundo escritos na tela, e o estilo **LISO**, que desliza em vez de
-saltar. De quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo
-dele promete.
+saltar. E a medida da letra passou a ser guardada: de quatro medições por letra
+por quadro para zero nos quadros parados, com a saída idêntica byte a byte. De
+quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo dele
+promete.
 
 ---
 
@@ -2830,10 +2831,56 @@ O liso calcula dois sorteios por letra em vez de um, e isso **não aparece**: a
 diferença entre duas rodadas do mesmo estilo é maior que a diferença entre os
 estilos. O que dá para afirmar é que nenhum passa de 5 ms.
 
+### A MEDIDA DA LETRA, guardada (o item 3 da seção 14)
+
+Cada letra era medida **quatro vezes por quadro** — 80 chamadas a
+`measureText` para 20 letras, 800 em dez quadros. Duas delas eram desperdício
+puro de estrutura: `R.desenhar` chamava o auto-ajuste e depois `R.montar`
+chamava o auto-ajuste **outra vez**, e `desenharPedaco` remedia o que a
+montagem tinha acabado de medir. Agora `montar` devolve o corpo que usou
+(`itens.corpo`) e a medida da montagem viaja até o desenho.
+
+As duas que sobraram — o auto-ajuste mede no corpo base, a montagem no corpo já
+encolhido — passaram a ser guardadas. A medida é função PURA de (semente, letra,
+corpo) e dos quatro ajustes que o sorteio lê (`maiusculas`, `varTam`,
+`varGiro`, `varAltura`); quando um desses quatro muda, a tabela some inteira.
+
+```
+                                        antes    agora
+primeiro quadro, 20 letras ...........    80       40
+dez quadros parados ..................   800        0
+ao mexer num ajuste do sorteio .......    80       40
+dez quadros com troca a 2 por segundo    800       20
+```
+
+**A saída é a MESMA, byte a byte.** Conferido contra a versão anterior carregada
+lado a lado no mesmo navegador — cinco casos (texto curto, com troca de recorte,
+frase longa com auto-ajuste, acentos em duas linhas, e variação no talo) em
+quatro instantes cada: **0 bytes diferentes**, com 64 mil a 107 mil pixels de
+tinta em cada comparação (comparar dois quadros vazios não prova nada).
+
+O tempo de quadro, medido em pares alternados para o ruído não escolher o
+vencedor — 23 letras em 1080×1080, três rodadas de 60 quadros:
+
+```
+STOP MOTION   3,93 → 3,00   2,63 → 2,01   3,97 → 2,78 ms
+CAOS          5,09 → 3,49   3,05 → 1,50   3,92 → 1,66 ms
+```
+
+Os seis pares vão para o mesmo lado, o que a 4v não conseguiu dizer das TIRAS:
+aqui a diferença é real, entre um quarto e a metade do tempo de quadro.
+
+O teto da tabela é de 4.096 medidas. Medido no navegador, cada entrada custa
+**696 bytes** — o pior caso são 2,8 MB, e ele só acontece com texto muito longo
+sendo digitado letra a letra (cada corpo novo do auto-ajuste é uma entrada).
+
+De quebra, o teste de clique deixou de re-sortear a letra para descobrir o giro:
+ele já está na medida guardada. Conferido pela interface, com eventos sintéticos
+de ponteiro: o clique achou a terceira letra, o arrasto moveu **40 e 30 pixels
+exatos**, ela ficou presa e as outras seis não se mexeram.
+
 ### O que NÃO foi feito aqui
 
-- **A medida da letra continua sendo feita quatro vezes por quadro** (item 3 da
-  seção 14). Segue de pé, e agora custa a mesma coisa que antes.
 - **Nada foi VISTO em movimento por mim.** O painel destas sessões não compõe
   quadros — não há screenshot. A prova é por pixel lido e por folha de contato:
   seis quadros seguidos a 60 fps dentro de um passo, e a fila do STOP MOTION sai
@@ -2861,8 +2908,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
 2. ~~Letras recortadas: estilo LISO, velocidade em passos por segundo, e tremor
    separado da troca~~ — **feito na 4w.** Duas taxas independentes, medidas; a
    unidade escrita na tela; LISO e CAOS LISO no fim da lista de estilos. *(seção 4w)*
-3. **Guardar a medida da letra** por (semente, corpo) — de quatro medições por
-   letra por quadro para uma. *(seção 4u)*
+3. ~~Guardar a medida da letra por (semente, corpo)~~ — **feito na 4w.** De
+   quatro medições por letra por quadro para duas no primeiro quadro e zero
+   nos seguintes; saída idêntica byte a byte. *(seção 4w)*
 4. **Worker para as cadeias longas de áudio.** ESPECTRAL, GRANULAR e agora a
    família VOZ passam de 100 ms por segundo de áudio; num arquivo de três
    minutos a aba trava. É o mesmo pedido de três passadas atrás e o custo só

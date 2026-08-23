@@ -91,8 +91,10 @@
       var it = itens[i];
       var x = it.x + it.p.dx, y = it.y + it.p.dy;
       var hw = it.m.w / 2 + 2, hh = it.m.h / 2 + 2;
-      /* desfaz o giro antes de testar, senão letra torta erra o alvo */
-      var a = -(R.sortear(it.p, P).giro + it.p.giroMao) * Math.PI / 180;
+      /* desfaz o giro antes de testar, senão letra torta erra o alvo.
+         O giro já veio no sorteio que a medida guardou — sortear de novo
+         aqui era a quarta medição por letra. */
+      var a = -(it.m.s.giro + it.p.giroMao) * Math.PI / 180;
       var dx = px - x, dy = py - y;
       var rx = dx * Math.cos(a) - dy * Math.sin(a);
       var ry = dx * Math.sin(a) + dy * Math.cos(a);
