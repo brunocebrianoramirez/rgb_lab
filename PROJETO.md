@@ -1,6 +1,6 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **22/08/2026** (décima nona passada).
+> Documento de continuidade. Última sessão: **23/08/2026** (décima quarta passada).
 > O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi decidido,
 > o que está pronto, o que não foi verificado e o que vem depois.
 
@@ -12,18 +12,25 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 
 | # | o que | onde está explicado |
 |---|---|---|
-| 1 | **Anel da fonte com mais vagas em meia resolução** — conserta o travamento das TIRAS | 4u |
-| 2 | **Letras recortadas: estilo LISO** + velocidade em passos por segundo + tremor separado da troca | 4u |
-| 3 | Guardar a medida da letra (hoje mede 4× por quadro) | 4u |
-| 4 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
-| 5 | Família VOZ no rack de áudio | 12 |
+| 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
+| 2 | Guardar a medida da letra (hoje mede 4× por quadro) | 4u |
+| 3 | Worker para as cadeias longas de áudio — ESPECTRAL, GRANULAR e a família VOZ | 4v e 7 |
+| 4 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
+| 5 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
 | 6 | Alça de Bézier na máscara de EFEITO | 4l |
 | 7 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
-**Os dois travamentos não são o mesmo problema.** As tiras travam por
-aritmética do anel de quatro vagas (3 trocas por segundo com passo 13, medido);
-as letras "travam" porque stop motion é 12 passos por segundo de propósito.
-Otimizar não conserta nenhum dos dois.
+**Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
+destravadas — o anel da fonte vive em meia resolução, a distância de leitura
+saiu de dentro do intervalo de guarda, e o padrão novo dá 15 trocas por segundo
+onde dava 4,7, pelos mesmos 32 MB. E a **família VOZ** entrou no rack de áudio,
+sete módulos, medidos por espectro.
+
+**Fechado na décima quarta passada (4w):** as LETRAS RECORTADAS ganharam a
+escolha que faltava — dois relógios separados (troca e tremor), os dois em
+passos por segundo escritos na tela, e o estilo **LISO**, que desliza em vez de
+saltar. De quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo
+dele promete.
 
 ---
 
@@ -2705,6 +2712,140 @@ volta a ser só o envelope da voz.
 
 ---
 
+## 4w. AS LETRAS RECORTADAS GANHARAM ESCOLHA (décima quarta passada)
+
+A 4u tinha diagnosticado e não consertado: as letras **não estavam travadas**,
+estavam em stop motion a 12 passos por segundo — de propósito. O que faltava
+eram as três escolhas que ela listou, e as três entraram por dentro do mesmo
+painel, sem tela nova.
+
+### 1. Dois relógios, porque papel animado tem dois
+
+Havia UM número, `velocidade`, multiplicado por 12 na conta. Quem quisesse
+trocar o recorte três vezes por segundo era obrigado a tremer três vezes
+também — e o que o animador de papel faz é justamente o contrário: **tremer
+depressa e trocar devagar**. Agora são duas taxas independentes:
+
+```
+passosTroca    quantas vezes por segundo a letra vira OUTRO recorte
+passosTremor   quantas vezes por segundo ela se remexe
+```
+
+Medido no modelo, amostrando a 240 Hz durante um segundo, com troca pedida em 3
+e tremor em 30:
+
+```
+                        trocas/s   valores de tremor/s
+CAOS                       3              30
+STOP MOTION                –              30
+PULSO                      3               –
+PARADO                     –               –
+```
+
+As duas taxas andam sozinhas, e o que se pede é o que se mede.
+
+### 2. Velocidade em passos por segundo, escrita na tela
+
+Os dois trilhos mostram `12/s` ao lado do número. A unidade não é enfeite: com
+"velocidade 1" ninguém adivinhava que aquilo eram doze passos por segundo, que
+é a cadência clássica do papel feito à mão.
+
+### 3. O estilo LISO — o tremor caminhado, não saltado
+
+Dois estilos novos **no fim da lista** (a posição É o número que vai guardado no
+clipe que já está na linha do tempo; acrescentar no meio quebraria projeto
+aberto):
+
+```
+4  LISO        só desliza
+5  CAOS LISO   troca o recorte — que só pode saltar, é papel — e desliza
+```
+
+O sorteio é o MESMO de sempre; o que muda é que o valor do passo seguinte é
+alcançado caminhando, com entrada e saída suaves (`f²(3−2f)`). Nos passos
+inteiros o liso passa exatamente pelos valores do saltado — conferido, diferença
+0 em seis passos seguidos. Não é outra animação: é a mesma, sem o salto.
+
+**Medido lendo o quadro desenhado** (`getImageData`, 420×220, seis letras, taxas
+em 6 por segundo, dois instantes a 4 ms de distância — dentro de um passo):
+
+```
+                     pixels que mudaram em 4 ms   em 167 ms (um passo)
+STOP MOTION                     0                      10.881
+CAOS                            0                      11.645
+LISO                        4.381                      10.611
+CAOS LISO                   5.316                      11.645
+PARADO                          0                           0
+```
+
+Zero dentro do passo é a definição de stop motion; quatro mil pixels em 4 ms é a
+definição de deslizar. E o clipe **na linha do tempo** faz o mesmo: enviado com
+LISO, a fonte desenha 60.704 pixels diferentes a 4 ms de distância, com
+`animado` verdadeiro.
+
+### O PULSO era o CAOS com outro nome
+
+Achado de passagem, e é a armadilha de sempre: **o estilo aparecia e não fazia**.
+`pedacoNoTempo` trocava o recorte em CAOS e em PULSO, e `tremorDe` tremia em
+tudo que não fosse PARADO — ou seja, PULSO e CAOS eram o mesmo estilo. O rótulo
+prometia "troca no tempo". Agora as quatro combinações são ortogonais de
+verdade, e o rótulo virou **PULSO (só troca)**.
+
+Quem estivesse com PULSO escolhido nesta sessão vai ver a letra parar de tremer.
+É a correção, não uma perda: o ajuste do recorte não é guardado entre sessões
+(vive em memória; o que vai para a linha do tempo é uma cópia própria).
+
+### O trilho que não vale fica apagado
+
+Duas taxas na tela e nem sempre as duas valem: em STOP MOTION não há troca, em
+PULSO não há tremor, em PARADO não há nada. A linha ganha `.off` e o campo fica
+`disabled` — controle aceso que não faz nada é a armadilha que já mordeu este
+projeto quatro vezes. Conferido pela interface, estilo a estilo.
+
+### Escrito pela interface, lido no motor
+
+O caminho inteiro foi exercitado com eventos sintéticos, que é a única prova que
+vale: arrastar o trilho para 4/s e 48/s grava `passosTroca: 4` e
+`passosTremor: 48`, a tela mostra `4/s` e `48/s`, e `R.passosDe` devolve 4 e 48
+ao motor.
+
+### Compatibilidade
+
+Um ajuste antigo, só com `velocidade`, continua funcionando: `R.passosDe` cai
+para `velocidade × 12` quando as taxas novas não existem. Conferido contra a
+fórmula anterior em 500 instantes — **500 de 500 passos idênticos**.
+
+### O custo, lido com honestidade
+
+23 letras em 1080×1080, três rodadas por estilo, 60 quadros cada:
+
+```
+CAOS         4,17 · 3,81 · 4,19 ms
+STOP MOTION  4,91 · 4,04 · 4,18 ms
+LISO         3,46 · 4,85 · 2,95 ms
+CAOS LISO    3,84 · 3,43 · 3,87 ms
+```
+
+O liso calcula dois sorteios por letra em vez de um, e isso **não aparece**: a
+diferença entre duas rodadas do mesmo estilo é maior que a diferença entre os
+estilos. O que dá para afirmar é que nenhum passa de 5 ms.
+
+### O que NÃO foi feito aqui
+
+- **A medida da letra continua sendo feita quatro vezes por quadro** (item 3 da
+  seção 14). Segue de pé, e agora custa a mesma coisa que antes.
+- **Nada foi VISTO em movimento por mim.** O painel destas sessões não compõe
+  quadros — não há screenshot. A prova é por pixel lido e por folha de contato:
+  seis quadros seguidos a 60 fps dentro de um passo, e a fila do STOP MOTION sai
+  com seis quadros idênticos enquanto a do LISO caminha. Se o deslizar ficou
+  bonito ou parece manteiga, é olho, e o olho é seu.
+- **A taxa é a mesma para todas as letras.** `Dessincronizar` dá fase própria a
+  cada uma (medido: 1,84 passos diferentes entre oito letras, contra 1,00
+  desligado), mas não velocidade própria. Se um dia isso for pedido, o lugar é
+  `R.faseDe`.
+
+---
+
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -2717,9 +2858,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
    `D.esticarVoz` / `D.tomVoz`, em `js/audiovoz.js`. Trocar é uma linha em cada
    um; o que segura é que o som dos presets muda, e essa decisão é sua.
    *(seção 4v)*
-2. **Letras recortadas: estilo LISO, velocidade em passos por segundo, e tremor
-   separado da troca.** Continua de pé — não está travada, está em stop motion a
-   12 passos por segundo, e falta a ESCOLHA. *(seção 4u)*
+2. ~~Letras recortadas: estilo LISO, velocidade em passos por segundo, e tremor
+   separado da troca~~ — **feito na 4w.** Duas taxas independentes, medidas; a
+   unidade escrita na tela; LISO e CAOS LISO no fim da lista de estilos. *(seção 4w)*
 3. **Guardar a medida da letra** por (semente, corpo) — de quatro medições por
    letra por quadro para uma. *(seção 4u)*
 4. **Worker para as cadeias longas de áudio.** ESPECTRAL, GRANULAR e agora a

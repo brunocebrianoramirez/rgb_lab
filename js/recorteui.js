@@ -159,14 +159,38 @@
   }
 
   /* ---------------- a barra ---------------- */
-  function trilho(k, rot, min, max, passo) {
-    return '<label class="ti-row"><span>' + rot + '</span>' +
+  /* `suf` é a unidade escrita ao lado do número. Sem ela, "velocidade 1"
+     não dizia a ninguém que aquilo eram doze passos por segundo.     */
+  function trilho(k, rot, min, max, passo, suf) {
+    var u = suf || '';
+    return '<label class="ti-row" data-recrow="' + k + '"><span>' + rot + '</span>' +
       '<input type="range" data-rec="' + k + '" min="' + min + '" max="' + max +
-      '" step="' + passo + '" value="' + P[k] + '"><b data-recv="' + k + '">' + P[k] + '</b></label>';
+      '" step="' + passo + '" value="' + P[k] + '"><b data-recv="' + k + '" data-recsuf="' + u + '">' +
+      P[k] + u + '</b></label>';
   }
   function marca(k, rot) {
-    return '<label class="ti-row"><span>' + rot + '</span>' +
+    return '<label class="ti-row" data-recrow="' + k + '"><span>' + rot + '</span>' +
       '<input type="checkbox" data-recchk="' + k + '"><b></b></label>';
+  }
+
+  /* Duas taxas na tela e nem sempre as duas valem: no STOP MOTION não há
+     troca, no PULSO não há tremor, no PARADO não há nada. Deixar o trilho
+     aceso mentindo é a armadilha do controle que aparece e não faz.   */
+  function linhasDoEstilo() {
+    if (!barra) return;
+    var vale = {
+      passosTroca: R.troca(P),
+      passosTremor: R.treme(P),
+      tremor: R.treme(P),
+      dessinc: R.animado(P)
+    };
+    Object.keys(vale).forEach(function (k) {
+      var lin = barra.querySelector('[data-recrow="' + k + '"]');
+      if (!lin) return;
+      lin.classList.toggle('off', !vale[k]);
+      var ent = lin.querySelector('input');
+      if (ent) ent.disabled = !vale[k];
+    });
   }
 
   function montarBarra() {
@@ -195,8 +219,9 @@
       '<select data-recsel="estilo">' + R.ESTILOS.map(function (n, i) {
         return '<option value="' + i + '"' + (P.estilo === i ? ' selected' : '') + '>' + n + '</option>';
       }).join('') + '</select><b></b></label>' +
-      trilho('velocidade', 'Velocidade', 0.1, 6, 0.1) +
-      trilho('tremor', 'Tremor (px)', 0, 20, 0.5) +
+      trilho('passosTroca', 'Troca o recorte', 1, 30, 1, '/s') +
+      trilho('passosTremor', 'Treme', 1, 60, 1, '/s') +
+      trilho('tremor', 'Tamanho do tremor (px)', 0, 20, 0.5) +
       marca('dessinc', 'Dessincronizar') +
       '</div>' +
       '<div class="ti-btns">' +
@@ -216,7 +241,7 @@
       el.addEventListener('input', function () {
         P[el.dataset.rec] = parseFloat(el.value);
         var b = barra.querySelector('[data-recv="' + el.dataset.rec + '"]');
-        if (b) b.textContent = el.value;
+        if (b) b.textContent = el.value + (b.dataset.recsuf || '');
         pintar();
       });
     });
@@ -227,13 +252,17 @@
       });
     });
     barra.querySelectorAll('[data-recsel]').forEach(function (el) {
-      el.addEventListener('change', function () { P[el.dataset.recsel] = +el.value; pintar(); });
+      el.addEventListener('change', function () {
+        P[el.dataset.recsel] = +el.value; linhasDoEstilo(); pintar();
+      });
     });
     barra.querySelectorAll('[data-reccor]').forEach(function (el) {
       var poe = function () { P[el.dataset.reccor] = el.value; pintar(); };
       el.addEventListener('input', poe);
       el.addEventListener('change', poe);
     });
+
+    linhasDoEstilo();
 
     barra.querySelector('#recSair').addEventListener('click', function () { U.desligar(); });
     barra.querySelector('#recDado').addEventListener('click', function () {
@@ -287,7 +316,7 @@
     var id = VE.media.registerTypeSource(cv, 'RECORTE · ' + txt.slice(0, 12), function (local) {
       R.desenhar(c2, txt, meu, W, H, local);
     });
-    VE.sources[id].animado = (meu.estilo !== 3);
+    VE.sources[id].animado = R.animado(meu);
     var n = VE.allClips().filter(function (x) { return (x.name || '').indexOf('RECORTE') === 0; }).length + 1;
     var c = VE.addMedia({
       kind: 'type', name: 'RECORTE_' + String(n).padStart(3, '0'), src: id,
@@ -295,7 +324,7 @@
     });
     VE.pushHistory(); VE.emit('project');
     VE.app.toast('recorte na linha do tempo — ' + txt.length + ' letra(s)' +
-      (meu.estilo === 3 ? '' : ', animando'), 'ok');
+      (R.animado(meu) ? ', animando' : ''), 'ok');
     return c;
   }
   U.paraTimeline = paraTimeline;

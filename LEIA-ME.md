@@ -892,6 +892,53 @@ separação RGB, sombra, três modos de cor e fundo transparente.
 Desfoque e giro de matiz por letra usam o filtro do canvas. Onde ele não
 existir, as animações continuam funcionando — só sem esses dois.
 
+### LETRAS RECORTADAS — cada letra é um pedaço de papel
+
+O botão **RECORTE** põe uma folha por cima do palco. Não é uma fonte: cada letra
+sorteia o próprio tipo, papel, tinta, textura, tamanho, giro e o corte da borda,
+a partir de uma semente que fica guardada. Dois "A" na mesma palavra saem
+diferentes, e é isso que faz parecer revista cortada com tesoura.
+
+O gesto que manda é **clicar numa letra e arrastar**. Quem foi movido fica
+preso, e o botão SORTEAR não o joga de volta para a linha. **Shift** arrastando
+gira; **duplo clique** re-sorteia só aquela letra; **ENDIREITAR** devolve todas.
+
+**A animação tem dois relógios, e eles são separados.** Um animador de papel
+treme depressa e troca o recorte devagar — se os dois andassem no mesmo número,
+isso seria impossível:
+
+* **Troca o recorte** — quantas vezes por segundo a letra vira outro pedaço de
+  papel. É o que dá o pisca do stop motion.
+* **Treme** — quantas vezes por segundo ela se remexe. Junto vem **o tamanho do
+  tremor**, em pixels.
+
+Os dois números estão escritos na tela em **passos por segundo**, que é a
+unidade que o olho entende: 12/s é a cadência clássica da animação de papel
+feita à mão, 24/s ou mais já parece vídeo, 3/s é aquele pisca duro de colagem.
+
+**Seis estilos**, que são combinações dessas duas colunas:
+
+| estilo | troca | treme | como se lê |
+|---|:--:|:--:|---|
+| **CAOS** | · | · | salta nos dois — a colagem inquieta |
+| **STOP MOTION** | | · | o recorte fica, a letra se remexe |
+| **PULSO** | · | | troca sem tremer |
+| **PARADO** | | | fica quieta |
+| **LISO** | | · | **desliza** — o mesmo tremor, caminhado entre um passo e o seguinte em vez de saltado |
+| **CAOS LISO** | · | · | troca o recorte (papel só pode saltar) e desliza |
+
+**LISO é para quem espera movimento de vídeo.** Stop motion continua sendo o
+padrão, porque é o que o material pede; o que faltava era poder escolher.
+
+**Dessincronizar** dá a cada letra um relógio próprio. Em compasso parece
+máquina; fora de compasso parece mão.
+
+O trilho que o estilo escolhido não usa fica **apagado e desligado** — em PULSO
+não há tremor para ajustar, em STOP MOTION não há troca.
+
+**ANIMAR** mostra o resultado na folha; **ENVIAR PRA TIMELINE** leva uma cópia
+própria dos ajustes, então mexer no laboratório depois não muda o que já foi.
+
 ### Saída — no rodapé da coluna, sempre visível
 
 O bloco **SAÍDA** fica preso no pé da coluna da esquerda, com a barra vermelha do

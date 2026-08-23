@@ -377,24 +377,74 @@
   };
 
   /* ============================================== ANIMAÇÃO ==============
-     Dois estilos, os mesmos que se vê em stop motion de papel:
+     Papel animado tem DOIS relógios, e juntar os dois num número só foi o
+     erro da primeira versão: quem quisesse trocar o recorte seis vezes por
+     segundo era obrigado a tremer seis vezes também. O que o animador de
+     papel faz de verdade é o contrário — tremer depressa e trocar devagar.
+     São duas taxas, e as duas escritas na tela em passos POR SEGUNDO: o
+     número abstrato de antes ("velocidade 1") não deixava ninguém adivinhar
+     que eram doze.
 
-       CAOS        a letra TROCA de recorte e treme
-       STOP MOTION só treme, o recorte fica
+       TROCA    quantas vezes por segundo a letra vira OUTRO recorte
+       TREMOR   quantas vezes por segundo ela se remexe
+
+     Seis estilos, e cada um é uma combinação das duas colunas:
+
+                     troca   treme
+       CAOS            ·       ·     salta nos dois
+       STOP MOTION             ·     o recorte fica, a letra se remexe
+       PULSO           ·             troca sem tremer
+       PARADO                        nada se mexe
+       LISO                    ·     DESLIZA — o tremor é caminhado entre um
+                                     passo e o seguinte, não saltado
+       CAOS LISO       ·       ·     troca (que só pode saltar: é papel)
+                                     e desliza
+
+     Stop motion continua sendo o padrão — 12 passos por segundo é a cadência
+     de animação de papel feita à mão, e é de propósito. O que faltava era a
+     ESCOLHA, para quem espera movimento de vídeo.
+
+     A posição na lista É o número que vai guardado no clipe que já foi para
+     a linha do tempo. Acrescentar só no FIM.
 
      DESSINCRONIZAR dá a cada letra um relógio próprio. Com tudo no mesmo
      compasso parece máquina; fora de compasso parece mão.            */
-  R.ESTILOS = ['CAOS (troca + treme)', 'STOP MOTION (só treme)', 'PULSO (troca no tempo)', 'PARADO'];
+  R.ESTILOS = [
+    'CAOS (troca + treme)',
+    'STOP MOTION (só treme)',
+    'PULSO (só troca)',
+    'PARADO',
+    'LISO (só desliza)',
+    'CAOS LISO (troca + desliza)'
+  ];
 
-  R.quadroDe = function (P, tempo, i) {
-    var passo = Math.max(0.02, 1 / Math.max(0.5, P.velocidade * 12));
-    var fase = P.dessinc ? (i * 0.37) % 1 : 0;
-    return Math.floor(tempo / passo + fase);
+  R.troca   = function (P) { return P.estilo === 0 || P.estilo === 2 || P.estilo === 5; };
+  R.treme   = function (P) { return P.estilo !== 2 && P.estilo !== 3; };
+  R.ehLiso  = function (P) { return P.estilo === 4 || P.estilo === 5; };
+  R.animado = function (P) { return P.estilo !== 3; };
+
+  /* Um ajuste feito antes das duas taxas trazia `velocidade`, que valia doze
+     passos por segundo quando era 1. Continua funcionando.            */
+  R.passosDe = function (P, qual) {
+    var v = P[qual];
+    if (v == null) v = (P.velocidade != null ? P.velocidade * 12 : 12);
+    return Math.max(0.5, Math.min(60, v));
   };
 
-  R.tremorDe = function (P, tempo, i, p) {
-    if (P.estilo === 3) return { dx: 0, dy: 0, rot: 0, esc: 1 };
-    var q = R.quadroDe(P, tempo, i);
+  /* Em que passo este instante caiu, e quanto já se andou DENTRO dele (0..1).
+     Quem salta usa só o passo; quem desliza usa os dois.              */
+  R.faseDe = function (P, tempo, i, pps) {
+    var fase = P.dessinc ? (i * 0.37) % 1 : 0;
+    var x = (tempo || 0) * Math.max(0.5, pps) + fase;
+    var q = Math.floor(x);
+    return { q: q, f: x - q };
+  };
+
+  R.quadroDe = function (P, tempo, i) {
+    return R.faseDe(P, tempo, i, R.passosDe(P, 'passosTroca')).q;
+  };
+
+  function tremorNoPasso(P, p, q) {
     var r = rng((p.semente ^ (q * 2246822519)) >>> 0);
     var amp = P.tremor;
     return {
@@ -403,13 +453,30 @@
       rot: (r() - 0.5) * 2 * amp * 0.35,
       esc: 1 + (r() - 0.5) * 2 * amp * 0.008
     };
+  }
+
+  R.tremorDe = function (P, tempo, i, p) {
+    if (!R.treme(P)) return { dx: 0, dy: 0, rot: 0, esc: 1 };
+    var e = R.faseDe(P, tempo, i, R.passosDe(P, 'passosTremor'));
+    var a = tremorNoPasso(P, p, e.q);
+    if (!R.ehLiso(P)) return a;
+    /* o MESMO sorteio de sempre, só que caminhado até o próximo em vez de
+       saltado — com entrada e saída suaves, senão a virada vira bico */
+    var b = tremorNoPasso(P, p, e.q + 1);
+    var t = e.f * e.f * (3 - 2 * e.f);
+    return {
+      dx: a.dx + (b.dx - a.dx) * t,
+      dy: a.dy + (b.dy - a.dy) * t,
+      rot: a.rot + (b.rot - a.rot) * t,
+      esc: a.esc + (b.esc - a.esc) * t
+    };
   };
 
-  /* No CAOS e no PULSO a semente do sorteio muda com o quadro — é isso
-     que TROCA o recorte. A semente da mão (`p.semente`) fica intacta,
-     então voltar para PARADO devolve o recorte original.            */
+  /* Onde há TROCA, a semente do sorteio muda com o passo — é isso que troca
+     o recorte. A semente da mão (`p.semente`) fica intacta, então voltar
+     para PARADO devolve o recorte original.                          */
   R.pedacoNoTempo = function (P, p, tempo, i) {
-    if (P.estilo === 0 || P.estilo === 2) {
+    if (R.troca(P)) {
       var q = R.quadroDe(P, tempo, i);
       return {
         ch: p.ch, dx: p.dx, dy: p.dy, giroMao: p.giroMao, preso: p.preso,
@@ -451,7 +518,8 @@
       fundoOn: 0, fundo: '#efede4',
       /* animação */
       estilo: 0,
-      velocidade: 1,
+      passosTroca: 12,       /* trocas de recorte por segundo */
+      passosTremor: 12,      /* tremores por segundo — separado da troca */
       tremor: 3,
       dessinc: 0,
       semente: (Math.random() * 4294967296) >>> 0,

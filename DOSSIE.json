@@ -1,6 +1,6 @@
 {
   "projeto": "rgb_lab",
-  "gerado": "2026-08-22T18:17:24.010Z",
+  "gerado": "2026-08-23T23:02:34.876Z",
   "descricao": "Laboratório audiovisual experimental em HTML/CSS/JS puro (WebGL2 + Web Audio), sem dependências e sem servidor. Três mesas: vídeo, áudio, tipografia.",
   "autoria": "Elaborado e criado por Bruno Cebriano Ramirez",
   "laboratorios": [
@@ -15,7 +15,7 @@
   },
   "contagens": {
     "modulosJs": 51,
-    "linhasJs": 30375,
+    "linhasJs": 30472,
     "efeitos": 144,
     "familias": 8,
     "conjuntosDeEmoji": 8,
@@ -1341,12 +1341,12 @@
     },
     {
       "arquivo": "js/recorte.js",
-      "linhas": 480,
+      "linhas": 548,
       "resumo": "rgb_lab — LETRAS RECORTADAS Aquela mensagem montada com letras cortadas de jornal e revista. A ideia inteira está numa frase: CADA LETRA É UM PEDAÇO DE PAPEL DIFERENTE. Não é uma fonte — é um sorteio por letra, e é por isso que oito \"A\" seguidos saem oito veze"
     },
     {
       "arquivo": "js/recorteui.js",
-      "linhas": 343,
+      "linhas": 372,
       "resumo": "rgb_lab — LETRAS RECORTADAS: a interface Vive dentro do laboratório de tipografia, como a tinta: uma folha por cima do palco, uma barra de controles ao lado, e o texto vem do campo que já existe. Nada de página nova. O gesto que manda: CLICAR NUMA LETRA E ARRA"
     },
     {

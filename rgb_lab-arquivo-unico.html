@@ -2164,6 +2164,10 @@ body.tinta-on #tyCanvas{opacity:.28;filter:grayscale(1)}
 .tinta-bar .ti-row input[type=range]{width:100%}
 .tinta-bar .ti-row input[type=color]{width:100%;height:16px;padding:0;border:var(--line) solid var(--rule)}
 .tinta-bar .ti-row input[type=checkbox]{justify-self:start}
+/* linha que o estilo escolhido não usa: apagada e desligada, para não ficar
+   um trilho aceso prometendo o que não acontece */
+.tinta-bar .ti-row.off{opacity:.32}
+.tinta-bar .ti-row.off input{pointer-events:none}
 .tinta-bar .ti-sep{
   margin:7px 0 3px;padding-top:5px;border-top:var(--line) solid var(--rule);
   font-weight:700;color:var(--ink);letter-spacing:.08em;
@@ -30961,24 +30965,74 @@ window.VE = window.VE || {};
   };
 
   /* ============================================== ANIMAÇÃO ==============
-     Dois estilos, os mesmos que se vê em stop motion de papel:
+     Papel animado tem DOIS relógios, e juntar os dois num número só foi o
+     erro da primeira versão: quem quisesse trocar o recorte seis vezes por
+     segundo era obrigado a tremer seis vezes também. O que o animador de
+     papel faz de verdade é o contrário — tremer depressa e trocar devagar.
+     São duas taxas, e as duas escritas na tela em passos POR SEGUNDO: o
+     número abstrato de antes ("velocidade 1") não deixava ninguém adivinhar
+     que eram doze.
 
-       CAOS        a letra TROCA de recorte e treme
-       STOP MOTION só treme, o recorte fica
+       TROCA    quantas vezes por segundo a letra vira OUTRO recorte
+       TREMOR   quantas vezes por segundo ela se remexe
+
+     Seis estilos, e cada um é uma combinação das duas colunas:
+
+                     troca   treme
+       CAOS            ·       ·     salta nos dois
+       STOP MOTION             ·     o recorte fica, a letra se remexe
+       PULSO           ·             troca sem tremer
+       PARADO                        nada se mexe
+       LISO                    ·     DESLIZA — o tremor é caminhado entre um
+                                     passo e o seguinte, não saltado
+       CAOS LISO       ·       ·     troca (que só pode saltar: é papel)
+                                     e desliza
+
+     Stop motion continua sendo o padrão — 12 passos por segundo é a cadência
+     de animação de papel feita à mão, e é de propósito. O que faltava era a
+     ESCOLHA, para quem espera movimento de vídeo.
+
+     A posição na lista É o número que vai guardado no clipe que já foi para
+     a linha do tempo. Acrescentar só no FIM.
 
      DESSINCRONIZAR dá a cada letra um relógio próprio. Com tudo no mesmo
      compasso parece máquina; fora de compasso parece mão.            */
-  R.ESTILOS = ['CAOS (troca + treme)', 'STOP MOTION (só treme)', 'PULSO (troca no tempo)', 'PARADO'];
+  R.ESTILOS = [
+    'CAOS (troca + treme)',
+    'STOP MOTION (só treme)',
+    'PULSO (só troca)',
+    'PARADO',
+    'LISO (só desliza)',
+    'CAOS LISO (troca + desliza)'
+  ];
 
-  R.quadroDe = function (P, tempo, i) {
-    var passo = Math.max(0.02, 1 / Math.max(0.5, P.velocidade * 12));
-    var fase = P.dessinc ? (i * 0.37) % 1 : 0;
-    return Math.floor(tempo / passo + fase);
+  R.troca   = function (P) { return P.estilo === 0 || P.estilo === 2 || P.estilo === 5; };
+  R.treme   = function (P) { return P.estilo !== 2 && P.estilo !== 3; };
+  R.ehLiso  = function (P) { return P.estilo === 4 || P.estilo === 5; };
+  R.animado = function (P) { return P.estilo !== 3; };
+
+  /* Um ajuste feito antes das duas taxas trazia `velocidade`, que valia doze
+     passos por segundo quando era 1. Continua funcionando.            */
+  R.passosDe = function (P, qual) {
+    var v = P[qual];
+    if (v == null) v = (P.velocidade != null ? P.velocidade * 12 : 12);
+    return Math.max(0.5, Math.min(60, v));
   };
 
-  R.tremorDe = function (P, tempo, i, p) {
-    if (P.estilo === 3) return { dx: 0, dy: 0, rot: 0, esc: 1 };
-    var q = R.quadroDe(P, tempo, i);
+  /* Em que passo este instante caiu, e quanto já se andou DENTRO dele (0..1).
+     Quem salta usa só o passo; quem desliza usa os dois.              */
+  R.faseDe = function (P, tempo, i, pps) {
+    var fase = P.dessinc ? (i * 0.37) % 1 : 0;
+    var x = (tempo || 0) * Math.max(0.5, pps) + fase;
+    var q = Math.floor(x);
+    return { q: q, f: x - q };
+  };
+
+  R.quadroDe = function (P, tempo, i) {
+    return R.faseDe(P, tempo, i, R.passosDe(P, 'passosTroca')).q;
+  };
+
+  function tremorNoPasso(P, p, q) {
     var r = rng((p.semente ^ (q * 2246822519)) >>> 0);
     var amp = P.tremor;
     return {
@@ -30987,13 +31041,30 @@ window.VE = window.VE || {};
       rot: (r() - 0.5) * 2 * amp * 0.35,
       esc: 1 + (r() - 0.5) * 2 * amp * 0.008
     };
+  }
+
+  R.tremorDe = function (P, tempo, i, p) {
+    if (!R.treme(P)) return { dx: 0, dy: 0, rot: 0, esc: 1 };
+    var e = R.faseDe(P, tempo, i, R.passosDe(P, 'passosTremor'));
+    var a = tremorNoPasso(P, p, e.q);
+    if (!R.ehLiso(P)) return a;
+    /* o MESMO sorteio de sempre, só que caminhado até o próximo em vez de
+       saltado — com entrada e saída suaves, senão a virada vira bico */
+    var b = tremorNoPasso(P, p, e.q + 1);
+    var t = e.f * e.f * (3 - 2 * e.f);
+    return {
+      dx: a.dx + (b.dx - a.dx) * t,
+      dy: a.dy + (b.dy - a.dy) * t,
+      rot: a.rot + (b.rot - a.rot) * t,
+      esc: a.esc + (b.esc - a.esc) * t
+    };
   };
 
-  /* No CAOS e no PULSO a semente do sorteio muda com o quadro — é isso
-     que TROCA o recorte. A semente da mão (`p.semente`) fica intacta,
-     então voltar para PARADO devolve o recorte original.            */
+  /* Onde há TROCA, a semente do sorteio muda com o passo — é isso que troca
+     o recorte. A semente da mão (`p.semente`) fica intacta, então voltar
+     para PARADO devolve o recorte original.                          */
   R.pedacoNoTempo = function (P, p, tempo, i) {
-    if (P.estilo === 0 || P.estilo === 2) {
+    if (R.troca(P)) {
       var q = R.quadroDe(P, tempo, i);
       return {
         ch: p.ch, dx: p.dx, dy: p.dy, giroMao: p.giroMao, preso: p.preso,
@@ -31035,7 +31106,8 @@ window.VE = window.VE || {};
       fundoOn: 0, fundo: '#efede4',
       /* animação */
       estilo: 0,
-      velocidade: 1,
+      passosTroca: 12,       /* trocas de recorte por segundo */
+      passosTremor: 12,      /* tremores por segundo — separado da troca */
       tremor: 3,
       dessinc: 0,
       semente: (Math.random() * 4294967296) >>> 0,
@@ -31224,14 +31296,38 @@ window.VE = window.VE || {};
   }
 
   /* ---------------- a barra ---------------- */
-  function trilho(k, rot, min, max, passo) {
-    return '<label class="ti-row"><span>' + rot + '</span>' +
+  /* `suf` é a unidade escrita ao lado do número. Sem ela, "velocidade 1"
+     não dizia a ninguém que aquilo eram doze passos por segundo.     */
+  function trilho(k, rot, min, max, passo, suf) {
+    var u = suf || '';
+    return '<label class="ti-row" data-recrow="' + k + '"><span>' + rot + '</span>' +
       '<input type="range" data-rec="' + k + '" min="' + min + '" max="' + max +
-      '" step="' + passo + '" value="' + P[k] + '"><b data-recv="' + k + '">' + P[k] + '</b></label>';
+      '" step="' + passo + '" value="' + P[k] + '"><b data-recv="' + k + '" data-recsuf="' + u + '">' +
+      P[k] + u + '</b></label>';
   }
   function marca(k, rot) {
-    return '<label class="ti-row"><span>' + rot + '</span>' +
+    return '<label class="ti-row" data-recrow="' + k + '"><span>' + rot + '</span>' +
       '<input type="checkbox" data-recchk="' + k + '"><b></b></label>';
+  }
+
+  /* Duas taxas na tela e nem sempre as duas valem: no STOP MOTION não há
+     troca, no PULSO não há tremor, no PARADO não há nada. Deixar o trilho
+     aceso mentindo é a armadilha do controle que aparece e não faz.   */
+  function linhasDoEstilo() {
+    if (!barra) return;
+    var vale = {
+      passosTroca: R.troca(P),
+      passosTremor: R.treme(P),
+      tremor: R.treme(P),
+      dessinc: R.animado(P)
+    };
+    Object.keys(vale).forEach(function (k) {
+      var lin = barra.querySelector('[data-recrow="' + k + '"]');
+      if (!lin) return;
+      lin.classList.toggle('off', !vale[k]);
+      var ent = lin.querySelector('input');
+      if (ent) ent.disabled = !vale[k];
+    });
   }
 
   function montarBarra() {
@@ -31260,8 +31356,9 @@ window.VE = window.VE || {};
       '<select data-recsel="estilo">' + R.ESTILOS.map(function (n, i) {
         return '<option value="' + i + '"' + (P.estilo === i ? ' selected' : '') + '>' + n + '</option>';
       }).join('') + '</select><b></b></label>' +
-      trilho('velocidade', 'Velocidade', 0.1, 6, 0.1) +
-      trilho('tremor', 'Tremor (px)', 0, 20, 0.5) +
+      trilho('passosTroca', 'Troca o recorte', 1, 30, 1, '/s') +
+      trilho('passosTremor', 'Treme', 1, 60, 1, '/s') +
+      trilho('tremor', 'Tamanho do tremor (px)', 0, 20, 0.5) +
       marca('dessinc', 'Dessincronizar') +
       '</div>' +
       '<div class="ti-btns">' +
@@ -31281,7 +31378,7 @@ window.VE = window.VE || {};
       el.addEventListener('input', function () {
         P[el.dataset.rec] = parseFloat(el.value);
         var b = barra.querySelector('[data-recv="' + el.dataset.rec + '"]');
-        if (b) b.textContent = el.value;
+        if (b) b.textContent = el.value + (b.dataset.recsuf || '');
         pintar();
       });
     });
@@ -31292,13 +31389,17 @@ window.VE = window.VE || {};
       });
     });
     barra.querySelectorAll('[data-recsel]').forEach(function (el) {
-      el.addEventListener('change', function () { P[el.dataset.recsel] = +el.value; pintar(); });
+      el.addEventListener('change', function () {
+        P[el.dataset.recsel] = +el.value; linhasDoEstilo(); pintar();
+      });
     });
     barra.querySelectorAll('[data-reccor]').forEach(function (el) {
       var poe = function () { P[el.dataset.reccor] = el.value; pintar(); };
       el.addEventListener('input', poe);
       el.addEventListener('change', poe);
     });
+
+    linhasDoEstilo();
 
     barra.querySelector('#recSair').addEventListener('click', function () { U.desligar(); });
     barra.querySelector('#recDado').addEventListener('click', function () {
@@ -31352,7 +31453,7 @@ window.VE = window.VE || {};
     var id = VE.media.registerTypeSource(cv, 'RECORTE · ' + txt.slice(0, 12), function (local) {
       R.desenhar(c2, txt, meu, W, H, local);
     });
-    VE.sources[id].animado = (meu.estilo !== 3);
+    VE.sources[id].animado = R.animado(meu);
     var n = VE.allClips().filter(function (x) { return (x.name || '').indexOf('RECORTE') === 0; }).length + 1;
     var c = VE.addMedia({
       kind: 'type', name: 'RECORTE_' + String(n).padStart(3, '0'), src: id,
@@ -31360,7 +31461,7 @@ window.VE = window.VE || {};
     });
     VE.pushHistory(); VE.emit('project');
     VE.app.toast('recorte na linha do tempo — ' + txt.length + ' letra(s)' +
-      (meu.estilo === 3 ? '' : ', animando'), 'ok');
+      (R.animado(meu) ? ', animando' : ''), 'ok');
     return c;
   }
   U.paraTimeline = paraTimeline;
