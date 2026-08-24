@@ -600,7 +600,7 @@
        à máscara de efeito, como era.                                 */
     if (VE.compui && VE.compui.canetaEdit && desenhaCaneta(svg)) return;
     var foc = VE.motion && VE.motion.focusEffect ? VE.motion.focusEffect() : null;
-    if (!foc || !foc.effect.mask || !foc.effect.mask.shape) {
+    if (!foc || !foc.effect.mask || !foc.effect.mask.shape || (foc.effect.mask.shape | 0) === 5) {
       svg.innerHTML = ''; svg.classList.remove('active'); return;
     }
     var clip = foc.clip, eff = foc.effect;

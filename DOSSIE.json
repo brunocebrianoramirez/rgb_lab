@@ -1,6 +1,6 @@
 {
   "projeto": "rgb_lab",
-  "gerado": "2026-08-24T04:05:31.989Z",
+  "gerado": "2026-08-24T04:20:05.778Z",
   "descricao": "Laboratório audiovisual experimental em HTML/CSS/JS puro (WebGL2 + Web Audio), sem dependências e sem servidor. Três mesas: vídeo, áudio, tipografia.",
   "autoria": "Elaborado e criado por Bruno Cebriano Ramirez",
   "laboratorios": [
@@ -15,7 +15,7 @@
   },
   "contagens": {
     "modulosJs": 52,
-    "linhasJs": 31300,
+    "linhasJs": 31435,
     "efeitos": 144,
     "familias": 8,
     "conjuntosDeEmoji": 8,
@@ -1116,7 +1116,7 @@
     },
     {
       "arquivo": "js/fx.js",
-      "linhas": 978,
+      "linhas": 1013,
       "resumo": "rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades."
     },
     {
@@ -1211,7 +1211,7 @@
     },
     {
       "arquivo": "js/comp.js",
-      "linhas": 582,
+      "linhas": 597,
       "resumo": "rgb_lab — MODELO DE COMPOSIÇÃO POR CAMADAS Este arquivo não desenha nada. Ele descreve O QUE uma camada é, para que o motor (compgl.js + gl.js) e a ficha da direita (compui.js) falem a mesma língua e ninguém precise adivinhar. Um CLIPE de vídeo passou a ser um"
     },
     {
@@ -1221,12 +1221,12 @@
     },
     {
       "arquivo": "js/gl.js",
-      "linhas": 1289,
+      "linhas": 1316,
       "resumo": "rgb_lab — motor de renderização WebGL2 [camadas de mídia] → composição → [efeitos] → tela Suporta canal alpha do início ao fim."
     },
     {
       "arquivo": "js/state.js",
-      "linhas": 1339,
+      "linhas": 1357,
       "resumo": "rgb_lab — estado do projeto  ·  MODELO DE EDIÇÃO NÃO LINEAR A composição deixou de ser \"uma pilha de camadas\" e virou uma SEQUÊNCIA com pistas, como numa mesa de edição de verdade. Sequence → tracks[] Track    → clips[]                (vários clipes por pista)"
     },
     {
@@ -1271,7 +1271,7 @@
     },
     {
       "arquivo": "js/motion.js",
-      "linhas": 1054,
+      "linhas": 1094,
       "resumo": "rgb_lab — MOTION · CONTROLES DE EFEITO · KEYFRAMES Este é o painel que fica à direita quando um clipe está selecionado. Ele é o equivalente ao \"Effect Controls\": mostra o clipe inteiro como uma pilha de propriedades animáveis. TEMPO       início, duração, entr"
     },
     {

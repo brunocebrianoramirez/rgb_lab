@@ -292,6 +292,32 @@
 
   /* Ponto velho, salvo antes das alças existirem, não tem os campos.
      Completa em silêncio em vez de espalhar `|| 0` pelo código todo. */
+  /* ---------------------------------------------- VÉRTICES ANIMADOS
+     Os vértices de um traçado, cada um passado por `valueAt`: um ponto
+     com keyframe anda e os outros ficam parados, que é como rotoscopia
+     de verdade funciona.
+
+     As ALÇAS passam pelo mesmo caminho. Sem isso, animar um traçado
+     curvo moveria os vértices e deixaria as curvas para trás — o
+     contorno se deformaria sozinho no meio da cena.
+
+     Mora aqui, e não dentro do resolvedor da camada, porque a REGIÃO DO
+     EFEITO lê o mesmo traçado: um lugar só decide o que é o contorno. */
+  VE.maskPtsAnimados = function (clip, pre, m, lt) {
+    if (!VE.ehCaneta(m)) return null;
+    VE.maskPtsOk(m);
+    var v = VE.valueAt;
+    var pts = (m.pts || []).slice(0, VE.MASK_MAX_PTS).map(function (p, j) {
+      var q = pre + 'pts.' + j + '.';
+      return {
+        x: v(clip, q + 'x', lt, p.x), y: v(clip, q + 'y', lt, p.y),
+        hix: v(clip, q + 'hix', lt, p.hix || 0), hiy: v(clip, q + 'hiy', lt, p.hiy || 0),
+        hox: v(clip, q + 'hox', lt, p.hox || 0), hoy: v(clip, q + 'hoy', lt, p.hoy || 0)
+      };
+    });
+    return pts.length >= 3 ? pts : null;
+  };
+
   VE.maskPtsOk = function (m) {
     if (!VE.ehCaneta(m) || !m.pts) return;
     m.pts.forEach(function (p) {
@@ -506,19 +532,8 @@
            por `valueAt`, então um ponto com keyframe anda e os outros
            ficam parados — que é como se rotoscopia de verdade.      */
         if (VE.ehCaneta(m)) {
-          VE.maskPtsOk(m);
-          /* As ALÇAS também passam por `valueAt`: sem isso, animar um
-             traçado curvo moveria os vértices e deixaria as curvas para
-             trás — o contorno se deformaria sozinho no meio da cena. */
-          o.pts = (m.pts || []).slice(0, VE.MASK_MAX_PTS).map(function (p, j) {
-            var q = pre + 'pts.' + j + '.';
-            return {
-              x: v(clip, q + 'x', lt, p.x), y: v(clip, q + 'y', lt, p.y),
-              hix: v(clip, q + 'hix', lt, p.hix || 0), hiy: v(clip, q + 'hiy', lt, p.hiy || 0),
-              hox: v(clip, q + 'hox', lt, p.hox || 0), hoy: v(clip, q + 'hoy', lt, p.hoy || 0)
-            };
-          });
-          if (o.pts.length < 3) return null;       /* menos que isso não fecha */
+          o.pts = VE.maskPtsAnimados(clip, pre, m, lt);
+          if (!o.pts) return null;                 /* menos de três não fecha */
         }
         return o;
       }).filter(Boolean).slice(0, 8);   /* o shader carrega oito; além disso é ilusão */

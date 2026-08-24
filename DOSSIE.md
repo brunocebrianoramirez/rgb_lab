@@ -1,6 +1,6 @@
 # rgb_lab — DOSSIÊ DO PROJETO
 
-> Arquivo único de entrada. Gerado por `node dossie.js` em 24/08/2026, 01:05:31.
+> Arquivo único de entrada. Gerado por `node dossie.js` em 24/08/2026, 01:20:05.
 > Contém as **diretrizes**, o **histórico de decisões**, o **manual de uso**, o
 > **motor de cor** e um **inventário lido do código** neste momento.
 >
@@ -27,7 +27,7 @@ Autoria: Elaborado e criado por Bruno Cebriano Ramirez.
 
 ```
 módulos js .......... 52
-linhas de js ........ 31.300
+linhas de js ........ 31.435
 efeitos ............. 144
 famílias de efeito .. 8
 formas de máscara ... 8
@@ -68,7 +68,7 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | # | arquivo | linhas | o que faz |
 |---|---|---|---|
 | 01 | `js/brand.js` | 16 | rgb_lab — identidade A marca em si é um PNG embutido em css/system.css (.brandmark), preto sobre transparência, invertido no modo noturno. Aqui ficam só o nome e as etiquetas usadas em texto e arquivos. |
-| 02 | `js/fx.js` | 978 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
+| 02 | `js/fx.js` | 1013 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
 | 03 | `js/fx2.js` | 862 | rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art) |
 | 04 | `js/fx3.js` | 409 | rgb_lab — efeitos parte 3 Transparência (alpha), tinta sobre papel, trama e sistemas de imagem. Efeitos marcados com alpha:true implementam vec4 fx4(vec2 uv) e podem alterar o canal alpha. |
 | 05 | `js/fx4.js` | 846 | rgb_lab — efeitos parte 4 Família construída a partir das referências da pasta EFEITOS: brinquedo, gravura, cianotipia, fotocópia, paleta retrô, pintura, brilho anamórfico, monocromo neon, tv 80, fumaça, desfoques e arte generativa. |
@@ -87,10 +87,10 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | 18 | `js/fxfam.js` | 133 | rgb_lab — AS OITO FAMÍLIAS O catálogo cresceu demais para viver em seis categorias soltas (cor · luz · distorção · glitch · ascii · tempo). A partir daqui o laboratório é dividido em OITO FAMÍLIAS, e cada família é uma maneira diferente de tratar a imagem: 01  |
 | 19 | `js/transitions.js` | 503 | rgb_lab — interpolação, curvas e transições Duas coisas moram aqui: 1. VE.EASE — as curvas de aceleração dos keyframes. LINEAR / EASE IN / EASE OUT / EASE IN-OUT / BÉZIER / HOLD. 2. VE.TRANSITIONS — o catálogo de transições. Cada transição é uma FUNÇÃO PURA qu |
 | 20 | `js/typefaces.js` | 458 | rgb_lab — TIPOS DO LABORATÓRIO Estas letras não são um arquivo de fonte: são DESENHADAS POR CÓDIGO. Cada glifo é um esqueleto — um caminho de traço, não um contorno — e a família nasce de PARÂMETROS aplicados sobre esse esqueleto: peso · largura · inclinação · |
-| 21 | `js/comp.js` | 582 | rgb_lab — MODELO DE COMPOSIÇÃO POR CAMADAS Este arquivo não desenha nada. Ele descreve O QUE uma camada é, para que o motor (compgl.js + gl.js) e a ficha da direita (compui.js) falem a mesma língua e ninguém precise adivinhar. Um CLIPE de vídeo passou a ser um |
+| 21 | `js/comp.js` | 597 | rgb_lab — MODELO DE COMPOSIÇÃO POR CAMADAS Este arquivo não desenha nada. Ele descreve O QUE uma camada é, para que o motor (compgl.js + gl.js) e a ficha da direita (compui.js) falem a mesma língua e ninguém precise adivinhar. Um CLIPE de vídeo passou a ser um |
 | 22 | `js/compgl.js` | 530 | rgb_lab — GLSL DA COMPOSIÇÃO Os três shaders que fazem uma camada virar composição. Ficam aqui, longe do motor, porque são MATEMÁTICA e a matemática precisa poder ser lida sem o barulho do WebGL em volta. Convenções, válidas para o arquivo inteiro: · alfa DIRE |
-| 23 | `js/gl.js` | 1289 | rgb_lab — motor de renderização WebGL2 [camadas de mídia] → composição → [efeitos] → tela Suporta canal alpha do início ao fim. |
-| 24 | `js/state.js` | 1339 | rgb_lab — estado do projeto  ·  MODELO DE EDIÇÃO NÃO LINEAR A composição deixou de ser "uma pilha de camadas" e virou uma SEQUÊNCIA com pistas, como numa mesa de edição de verdade. Sequence → tracks[] Track    → clips[]                (vários clipes por pista) |
+| 23 | `js/gl.js` | 1316 | rgb_lab — motor de renderização WebGL2 [camadas de mídia] → composição → [efeitos] → tela Suporta canal alpha do início ao fim. |
+| 24 | `js/state.js` | 1357 | rgb_lab — estado do projeto  ·  MODELO DE EDIÇÃO NÃO LINEAR A composição deixou de ser "uma pilha de camadas" e virou uma SEQUÊNCIA com pistas, como numa mesa de edição de verdade. Sequence → tracks[] Track    → clips[]                (vários clipes por pista) |
 | 25 | `js/stab.js` | 165 | rgb_lab — ANALISADOR DO ESTABILIZADOR O shader `estabilizador` só APLICA a correção. Quem mede o tremor é este arquivo. Como funciona 1. O quadro pronto é reduzido a uma grade de 64×64 e lido de volta para a CPU (uma leitura de 16 KB por quadro — só quando o e |
 | 26 | `js/presets.js` | 128 | rgb_lab — presets (efeito, cadeia, áudio, tipografia) Guardados no navegador; exportáveis como .json |
 | 27 | `js/media.js` | 560 | rgb_lab — fontes de mídia e composição de camadas Uma fonte (source) é um arquivo/dispositivo carregado. Uma camada (media layer) usa uma fonte dentro do tempo. |
@@ -99,7 +99,7 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | 30 | `js/view.js` | 192 | rgb_lab — viewport: zoom, pan, fit O canvas é exibido em pixels do projeto (100% = 1:1) e o palco é transladado/escalado. Vertical 1080×1920 cabe inteiro. |
 | 31 | `js/timeline.js` | 1065 | rgb_lab — LINHA DO TEMPO Uma mesa de edição não linear de verdade: · pistas V / A / FX, cada uma com vários clipes lado a lado · arrastar, mover entre pistas, aparar as bordas (trim) · cortar no cursor, ripple, apagar trecho · camadas de ajuste que alcançam tu |
 | 32 | `js/panels.js` | 1177 | rgb_lab — catálogo de efeitos, ficha técnica (inspetor) e edição da máscara direto na prévia |
-| 33 | `js/motion.js` | 1054 | rgb_lab — MOTION · CONTROLES DE EFEITO · KEYFRAMES Este é o painel que fica à direita quando um clipe está selecionado. Ele é o equivalente ao "Effect Controls": mostra o clipe inteiro como uma pilha de propriedades animáveis. TEMPO       início, duração, entr |
+| 33 | `js/motion.js` | 1094 | rgb_lab — MOTION · CONTROLES DE EFEITO · KEYFRAMES Este é o painel que fica à direita quando um clipe está selecionado. Ele é o equivalente ao "Effect Controls": mostra o clipe inteiro como uma pilha de propriedades animáveis. TEMPO       início, duração, entr |
 | 34 | `js/compui.js` | 923 | rgb_lab — A FICHA DA COMPOSIÇÃO As seções que a coluna da direita ganha quando um clipe de vídeo está selecionado. Elas moram aqui e não em `motion.js` porque motion.js já carrega tempo, movimento, transições, pilha de efeitos, áudio reativo e keyframes — e um |
 | 35 | `js/guia.js` | 595 | rgb_lab — GUIA DE CADA LABORATÓRIO Um tutorial dentro de cada laboratório, escrito para quem nunca abriu um editor na vida. Ele mora numa gaveta que desliza por cima da ferramenta — não é outra página, não tira você de onde estava, e fecha no ESC. COMO ACRESCE |
 | 36 | `js/filters.js` | 561 | rgb_lab — GALERIA DE FILTROS Uma prateleira de emulsões. Cada filtro é um conjunto de valores do efeito `filmstock` — nenhum deles copia curva de produto nenhum: são construídos aqui, com nome e código de arquivo. A galeria mostra MINIATURAS AO VIVO: o quadro  |
@@ -151,8 +151,7 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Alça de Bézier na máscara de EFEITO | 4l |
-| 3 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 2 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -3577,6 +3576,83 @@ banda que os controles sempre prometeram.
 
 ---
 
+### 5a. A REGIÃO DO EFEITO GANHOU TRAÇADO (décima sétima passada)
+
+A região de um efeito eram quatro formas paramétricas — retângulo, elipse e as
+duas faixas. O pedido da lista era "alça de Bézier por vértice na máscara de
+EFEITO (a de camada já tem)", e a primeira coisa a decidir foi o que NÃO fazer:
+uma segunda caneta, com um segundo editor na prévia, uma segunda animação de
+vértice e uma segunda picagem de curva. Seriam quatrocentas linhas duplicadas
+para dar ao efeito o que a camada já sabe fazer.
+
+**A região do efeito APONTA para um traçado do clipe.** Uma forma nova,
+TRAÇADO, e um campo `path` que diz qual. As alças, a animação por vértice, o
+editor de caneta na prévia e a picagem da curva continuam existindo em um lugar
+só — e agora servem aos dois. Um contorno é desenhado uma vez e vale para
+recortar a camada, para limitar um efeito, ou para os dois.
+
+#### O que foi preciso ligar
+
+```
+comp.js    VE.maskPtsAnimados — os vértices já passados por valueAt viraram
+           função, porque agora quem lê o traçado são DOIS caminhos
+state.js   a região resolve o traçado apontado e leva os vértices no op
+fx.js      maskValue ganhou a forma 5: distância ao polígono já picado,
+           lida de uma textura de ponto flutuante (unidade 8, que estava
+           livre desde a sétima passada)
+gl.js      pica a curva uma vez por efeito — não uma por passada — e sobe
+           para a MESMA textura de pontos da máscara de camada
+motion.js  o botão TRAÇADO, o seletor de qual, e o botão que cria um e já
+           abre a caneta na prévia
+```
+
+Na forma TRAÇADO os campos mudam de nome porque mudam de significado:
+**Deslocar X/Y, Escala, Rotação e Borda** — a mesma convenção da caneta da
+camada, onde `h` não é usada. E os cinco continuam animáveis, como sempre.
+
+#### Medido
+
+Efeito INVERTER sobre um azul chapado, num quadro de 400×300 (120.000 pixels),
+com um quadrado de vértices cobrindo 30% × 40% do quadro:
+
+```
+sem região .................... 120.000 pixels invertidos
+com o traçado ................. 14.400   — que é exatamente 0,3 × 0,4
+   dentro do contorno ......... (221,187,51)  o azul invertido
+   fora ....................... (34,68,204)   o azul intacto
+invertendo a região ........... 105.600  = 120.000 − 14.400
+o MESMO quadrado suavizado
+com as alças da caneta ........ 19.512   — a curva abaúla, e é a alça que faz
+escala 0,5 .................... 3.600    = 14.400 / 4
+escala 1,5 .................... 32.400   = 14.400 × 2,25
+```
+
+**O modelo também foi conferido, não só o motor:** um clipe de verdade com
+traçado e efeito devolve a região com os quatro vértices no lugar; um keyframe
+em `masks.0.pts.0.x` move o contorno do efeito no tempo (0,200 no começo,
+0,900 no fim); e apontar para um traçado que não existe mais faz a região
+voltar a ser **TUDO** em vez de recortar errado.
+
+**Pela interface**, que é onde campo que aparece costuma não funcionar: os seis
+botões de REGIÃO aparecem, clicar em TRAÇADO grava 5 no modelo, o seletor lista
+os traçados do clipe, e o botão DESENHAR UM TRAÇADO cria a máscara, aponta o
+efeito para ela e entra no modo caneta. **O traçado criado assim nasce sem
+cortar a camada** (`on = 0`) — quem pediu foi a região do efeito, e cortar a
+camada inteira seria surpresa.
+
+E os 144 efeitos continuam compilando: o PRELUDE mudou para todos eles.
+
+#### O que NÃO foi feito
+
+- **Não há caneta própria do efeito.** Se o clipe não tem traçado, o painel
+  oferece criar um — e o que se edita é uma máscara de camada, na aba dela.
+- **Um traçado por efeito.** Combinar dois contornos (somar, subtrair) é o que
+  a máscara de camada faz com `modo`; aqui a região é uma só.
+- **Nada foi visto por mim em movimento.** A área está medida em pixels; se o
+  contorno acompanha bem uma coisa que anda na cena, é olhando.
+
+---
+
 ### 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3609,8 +3685,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
    medidos um a um, mais a banda de luz e de cor, o atraso da cor, a franja, o
    realce do deck e a geração da cópia: vinte controles, três passadas, e os
    sete parâmetros antigos com as mesmas chaves. *(seção 4y)*
-7. **Alça de Bézier por vértice na máscara de EFEITO** (a de camada já tem).
-   *(seção 4l)*
+7. ~~Alça de Bézier por vértice na máscara de EFEITO~~ — **feito na 5a.** A
+   região do efeito aponta para um traçado do clipe e herda as alças, a
+   animação por vértice e o editor da caneta. *(seção 5a)*
 8. **Botão SEGUIR na máscara de caneta** — MediaPipe `InteractiveSegmenter`
    empurrando os vértices do traçado que já existe. *(seção 13)*
 
@@ -4181,6 +4258,25 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 
 Dois pontos de partida na galeria de filtros: **VHS 1994** e **FITA RUIM** —
 o segundo é a fita judiada de uma vez só, com o rasgo e os riscos no alto.
+
+#### A região de um efeito pode ser um traçado
+
+Todo efeito tem uma **REGIÃO**: onde ele acontece. Além de retângulo, elipse e
+as duas faixas, existe **TRAÇADO** — o efeito só age dentro de um contorno
+desenhado com a caneta, **com as alças de Bézier e tudo**.
+
+Não é uma segunda caneta: a região aponta para um traçado que já existe no
+clipe (os mesmos da máscara de camada). Se o clipe ainda não tem nenhum, o
+botão **DESENHAR UM TRAÇADO** cria um e já abre a caneta na prévia — e ele
+nasce **sem cortar a camada**, porque quem pediu foi o efeito.
+
+Como o contorno é o mesmo, tudo o que vale para ele vale aqui: **arrastar as
+alças curva a borda da região**, e um keyframe num vértice faz o recorte do
+efeito acompanhar uma coisa que anda na cena.
+
+Na forma TRAÇADO os controles passam a ser **Deslocar X/Y**, **Escala**,
+**Rotação** e **Borda** — e os cinco são animáveis. Apagar o traçado apontado
+não quebra nada: a região volta a ser o quadro inteiro.
 
 #### Película: 8 mm, Super 8, 16 mm, 35 mm
 

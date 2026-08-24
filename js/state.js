@@ -297,8 +297,17 @@
     return { x: 0, y: 0, scale: 1, sx: 1, sy: 1, rot: 0, ax: 0, ay: 0, opacity: 1 };
   };
 
+  /* A REGIÃO de um efeito. Quatro formas paramétricas e, na quinta, o
+     TRAÇADO: em vez de uma caneta própria, ela APONTA (`path`) para um
+     traçado que já existe no clipe. As alças de Bézier, a animação por
+     vértice e o editor da prévia são os mesmos da máscara de camada —
+     um contorno é desenhado uma vez e serve para o que for.
+
+     Na forma TRAÇADO, `x`,`y` deslocam o contorno, `w` escala e `ang`
+     gira, exatamente como na caneta da camada. `h` não é usada.      */
+  VE.MASK_FX_PATH = 5;
   VE.newMask = function () {
-    return { shape: 0, x: 0.5, y: 0.5, w: 0.5, h: 0.5, ang: 0, feather: 0.12, invert: false };
+    return { shape: 0, x: 0.5, y: 0.5, w: 0.5, h: 0.5, ang: 0, feather: 0.12, invert: false, path: 0 };
   };
 
   /* um clipe de mídia, de tipografia, de áudio ou de ajuste */
@@ -976,10 +985,19 @@
         params[pr.k] = v;
       });
       var m = e.mask || VE.newMask();
+      /* TRAÇADO: os vértices do traçado apontado viajam junto, já
+         animados. Se ele não existe mais (a pessoa apagou a máscara), a
+         região volta a ser TUDO em vez de recortar errado.          */
+      var fxPts = null, fxShape = m.shape;
+      if ((m.shape | 0) === VE.MASK_FX_PATH) {
+        var alvo = (clip.masks || [])[m.path | 0];
+        fxPts = alvo ? VE.maskPtsAnimados(clip, 'masks.' + (m.path | 0) + '.', alvo, local) : null;
+        if (!fxPts) fxShape = 0;
+      }
       out.push({
         id: e.fx, effId: e.id, params: params, amount: Math.min(1, amt), local: local,
         mask: {
-          shape: m.shape,
+          shape: fxShape, pts: fxPts,
           x: VE.valueAt(clip, 'fx.' + e.id + '.mask.x', local),
           y: VE.valueAt(clip, 'fx.' + e.id + '.mask.y', local),
           w: VE.valueAt(clip, 'fx.' + e.id + '.mask.w', local),

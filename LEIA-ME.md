@@ -525,6 +525,25 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 Dois pontos de partida na galeria de filtros: **VHS 1994** e **FITA RUIM** —
 o segundo é a fita judiada de uma vez só, com o rasgo e os riscos no alto.
 
+### A região de um efeito pode ser um traçado
+
+Todo efeito tem uma **REGIÃO**: onde ele acontece. Além de retângulo, elipse e
+as duas faixas, existe **TRAÇADO** — o efeito só age dentro de um contorno
+desenhado com a caneta, **com as alças de Bézier e tudo**.
+
+Não é uma segunda caneta: a região aponta para um traçado que já existe no
+clipe (os mesmos da máscara de camada). Se o clipe ainda não tem nenhum, o
+botão **DESENHAR UM TRAÇADO** cria um e já abre a caneta na prévia — e ele
+nasce **sem cortar a camada**, porque quem pediu foi o efeito.
+
+Como o contorno é o mesmo, tudo o que vale para ele vale aqui: **arrastar as
+alças curva a borda da região**, e um keyframe num vértice faz o recorte do
+efeito acompanhar uma coisa que anda na cena.
+
+Na forma TRAÇADO os controles passam a ser **Deslocar X/Y**, **Escala**,
+**Rotação** e **Borda** — e os cinco são animáveis. Apagar o traçado apontado
+não quebra nada: a região volta a ser o quadro inteiro.
+
 ### Película: 8 mm, Super 8, 16 mm, 35 mm
 
 O grupo `película` reconstrói a câmera antiga inteira:

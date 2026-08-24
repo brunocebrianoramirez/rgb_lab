@@ -76,6 +76,11 @@ window.VE = window.VE || {};
     'uniform float uAspect;',
     'uniform vec4  uMaskA;',   // cx, cy, w, h
     'uniform vec4  uMaskB;',   // ang(rad), feather, invert, shape
+    /* REGIÃO POR TRAÇADO: os vértices já picados em segmentos chegam numa
+       textura de ponto flutuante (a mesma da máscara de camada), e uMaskC
+       diz onde a fatia deste efeito começa e quantos pontos tem.       */
+    'uniform highp sampler2D uMaskPts;',
+    'uniform vec4  uMaskC;',   // início, nº de pontos, —, —
     'uniform vec4  uAtlasInfo;', // count, cols, rows, altura total do atlas
     /* Tabela de cor → figura. Um cubo 16×16×16 achatado em 256×16: dado
        um RGB, uma leitura devolve QUAL figura do atlas é a mais parecida.
@@ -210,6 +215,26 @@ window.VE = window.VE || {};
     '  for(int i=0;i<5;i++){ s += a*vnoise(p + t*float(i+1)*0.13); p = p*2.03 + 11.7; a *= 0.5; }',
     '  return s;',
     '}',
+    /* distância com sinal ao traçado, medida no polígono já picado —
+       o mesmo caminho da máscara de camada: curva na CPU, polígono na
+       GPU. `texelFetch` lê o texel exato, sem filtro nem borda.      */
+    'vec2 lePtFx(int i){ return texelFetch(uMaskPts, ivec2(i, 0), 0).xy; }',
+    'float sdTracado(vec2 p, int ini, int n){',
+    '  float d = 1e9, s = 1.0;',
+    '  vec2 b = lePtFx(ini + n - 1) - vec2(0.5); b.x *= uAspect;',
+    '  for(int k = 0; k < 256; k++){',
+    '    if(k >= n) break;',
+    '    vec2 a = lePtFx(ini + k) - vec2(0.5); a.x *= uAspect;',
+    '    vec2 e = b - a, w = p - a;',
+    '    float t = clamp(dot(w, e)/max(dot(e, e), 1e-9), 0.0, 1.0);',
+    '    vec2 q = w - e*t;',
+    '    d = min(d, dot(q, q));',
+    '    bvec3 c = bvec3(p.y >= a.y, p.y < b.y, e.x*w.y > e.y*w.x);',
+    '    if(all(c) || all(not(c))) s = -s;',
+    '    b = a;',
+    '  }',
+    '  return s*sqrt(d);',
+    '}',
     'float maskValue(vec2 uv){',
     '  float shape = uMaskB.w;',
     '  if(shape < 0.5) return 1.0;',
@@ -220,6 +245,16 @@ window.VE = window.VE || {};
     '  p = rot2(p, -uMaskB.x);',
     '  vec2 sc = vec2(s.x*uAspect, s.y)*0.5;',
     '  float d;',
+    '  if(shape > 4.5){',
+    /* a escala vive em uMaskA.z: divide o ponto e multiplica a distância
+       de volta, senão a suavização encolheria junto com o contorno */
+    '    float esc = max(uMaskA.z, 1e-4);',
+    '    float sd = sdTracado(p/esc, int(uMaskC.x + 0.5), int(uMaskC.y + 0.5))*esc;',
+    '    float ff = max(f, 0.0005)*0.5;',
+    '    float mt = 1.0 - smoothstep(-ff, ff, sd);',
+    '    if(uMaskB.z > 0.5) mt = 1.0 - mt;',
+    '    return clamp(mt, 0.0, 1.0);',
+    '  }',
     '  if(shape < 1.5)      { vec2 q = abs(p)/sc; d = max(q.x, q.y); }',
     '  else if(shape < 2.5) { d = length(p/sc); }',
     '  else if(shape < 3.5) { d = abs(p.y)/sc.y; }',

@@ -13,8 +13,7 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Alça de Bézier na máscara de EFEITO | 4l |
-| 3 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 2 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -3439,6 +3438,83 @@ banda que os controles sempre prometeram.
 
 ---
 
+## 5a. A REGIÃO DO EFEITO GANHOU TRAÇADO (décima sétima passada)
+
+A região de um efeito eram quatro formas paramétricas — retângulo, elipse e as
+duas faixas. O pedido da lista era "alça de Bézier por vértice na máscara de
+EFEITO (a de camada já tem)", e a primeira coisa a decidir foi o que NÃO fazer:
+uma segunda caneta, com um segundo editor na prévia, uma segunda animação de
+vértice e uma segunda picagem de curva. Seriam quatrocentas linhas duplicadas
+para dar ao efeito o que a camada já sabe fazer.
+
+**A região do efeito APONTA para um traçado do clipe.** Uma forma nova,
+TRAÇADO, e um campo `path` que diz qual. As alças, a animação por vértice, o
+editor de caneta na prévia e a picagem da curva continuam existindo em um lugar
+só — e agora servem aos dois. Um contorno é desenhado uma vez e vale para
+recortar a camada, para limitar um efeito, ou para os dois.
+
+### O que foi preciso ligar
+
+```
+comp.js    VE.maskPtsAnimados — os vértices já passados por valueAt viraram
+           função, porque agora quem lê o traçado são DOIS caminhos
+state.js   a região resolve o traçado apontado e leva os vértices no op
+fx.js      maskValue ganhou a forma 5: distância ao polígono já picado,
+           lida de uma textura de ponto flutuante (unidade 8, que estava
+           livre desde a sétima passada)
+gl.js      pica a curva uma vez por efeito — não uma por passada — e sobe
+           para a MESMA textura de pontos da máscara de camada
+motion.js  o botão TRAÇADO, o seletor de qual, e o botão que cria um e já
+           abre a caneta na prévia
+```
+
+Na forma TRAÇADO os campos mudam de nome porque mudam de significado:
+**Deslocar X/Y, Escala, Rotação e Borda** — a mesma convenção da caneta da
+camada, onde `h` não é usada. E os cinco continuam animáveis, como sempre.
+
+### Medido
+
+Efeito INVERTER sobre um azul chapado, num quadro de 400×300 (120.000 pixels),
+com um quadrado de vértices cobrindo 30% × 40% do quadro:
+
+```
+sem região .................... 120.000 pixels invertidos
+com o traçado ................. 14.400   — que é exatamente 0,3 × 0,4
+   dentro do contorno ......... (221,187,51)  o azul invertido
+   fora ....................... (34,68,204)   o azul intacto
+invertendo a região ........... 105.600  = 120.000 − 14.400
+o MESMO quadrado suavizado
+com as alças da caneta ........ 19.512   — a curva abaúla, e é a alça que faz
+escala 0,5 .................... 3.600    = 14.400 / 4
+escala 1,5 .................... 32.400   = 14.400 × 2,25
+```
+
+**O modelo também foi conferido, não só o motor:** um clipe de verdade com
+traçado e efeito devolve a região com os quatro vértices no lugar; um keyframe
+em `masks.0.pts.0.x` move o contorno do efeito no tempo (0,200 no começo,
+0,900 no fim); e apontar para um traçado que não existe mais faz a região
+voltar a ser **TUDO** em vez de recortar errado.
+
+**Pela interface**, que é onde campo que aparece costuma não funcionar: os seis
+botões de REGIÃO aparecem, clicar em TRAÇADO grava 5 no modelo, o seletor lista
+os traçados do clipe, e o botão DESENHAR UM TRAÇADO cria a máscara, aponta o
+efeito para ela e entra no modo caneta. **O traçado criado assim nasce sem
+cortar a camada** (`on = 0`) — quem pediu foi a região do efeito, e cortar a
+camada inteira seria surpresa.
+
+E os 144 efeitos continuam compilando: o PRELUDE mudou para todos eles.
+
+### O que NÃO foi feito
+
+- **Não há caneta própria do efeito.** Se o clipe não tem traçado, o painel
+  oferece criar um — e o que se edita é uma máscara de camada, na aba dela.
+- **Um traçado por efeito.** Combinar dois contornos (somar, subtrair) é o que
+  a máscara de camada faz com `modo`; aqui a região é uma só.
+- **Nada foi visto por mim em movimento.** A área está medida em pixels; se o
+  contorno acompanha bem uma coisa que anda na cena, é olhando.
+
+---
+
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3471,8 +3547,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
    medidos um a um, mais a banda de luz e de cor, o atraso da cor, a franja, o
    realce do deck e a geração da cópia: vinte controles, três passadas, e os
    sete parâmetros antigos com as mesmas chaves. *(seção 4y)*
-7. **Alça de Bézier por vértice na máscara de EFEITO** (a de camada já tem).
-   *(seção 4l)*
+7. ~~Alça de Bézier por vértice na máscara de EFEITO~~ — **feito na 5a.** A
+   região do efeito aponta para um traçado do clipe e herda as alças, a
+   animação por vértice e o editor da caneta. *(seção 5a)*
 8. **Botão SEGUIR na máscara de caneta** — MediaPipe `InteractiveSegmenter`
    empurrando os vértices do traçado que já existe. *(seção 13)*
 

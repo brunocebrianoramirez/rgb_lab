@@ -391,18 +391,42 @@
         h += effProp(clip, e, pr, false);
       });
       /* região (máscara) do efeito */
-      var shapes = ['TUDO', 'RETÂNGULO', 'ELIPSE', 'FAIXA H', 'FAIXA V'];
+      var shapes = ['TUDO', 'RETÂNGULO', 'ELIPSE', 'FAIXA H', 'FAIXA V', 'TRAÇADO'];
       h += '<div class="subhead">REGIÃO</div><div class="pbtns">' + shapes.map(function (sh, si) {
         return '<button class="cmd cmd-sm' + (e.mask.shape === si ? ' active' : '') + '" data-shape="' + si + '">' + sh + '</button>';
       }).join('') + '</div>';
+      /* TRAÇADO: a região aponta para um contorno da caneta que já existe
+         no clipe. Não há uma segunda caneta aqui — as alças, a animação e
+         o editor são os mesmos da máscara de camada.                  */
+      if ((e.mask.shape | 0) === 5) {
+        var tracados = (clip.masks || []).map(function (m, mi) {
+          return VE.ehCaneta(m) ? { i: mi, nome: 'TRAÇADO ' + (mi + 1) + (m.aberta ? ' (aberto)' : '') } : null;
+        }).filter(Boolean);
+        if (!tracados.length) {
+          h += '<div class="pnote">nenhum traçado neste clipe ainda — o botão abaixo cria um e abre a caneta na prévia</div>' +
+            '<div class="pbtns"><button class="cmd cmd-sm" data-fxnovotracado="' + e.id + '">DESENHAR UM TRAÇADO</button></div>';
+        } else {
+          h += '<div class="prow"><label>Qual traçado</label>' +
+            '<select class="field" data-fxpath="' + e.id + '" style="grid-column:2/4">' +
+            tracados.map(function (t) {
+              return '<option value="' + t.i + '"' + ((e.mask.path | 0) === t.i ? ' selected' : '') + '>' + t.nome + '</option>';
+            }).join('') + '</select></div>' +
+            '<div class="pnote">o contorno é o mesmo da máscara de camada: as alças e os keyframes dos vértices valem aqui também</div>';
+        }
+      }
       if (e.mask.shape > 0) {
         h += '<div class="prow"><label>Inverter (efeito fora)</label><input type="checkbox" data-maskinv' + (e.mask.invert ? ' checked' : '') + '><span></span></div>';
-        ['x', 'y', 'w', 'h', 'ang', 'feather'].forEach(function (k) {
-          var labels = { x: 'Centro X', y: 'Centro Y', w: 'Largura', h: 'Altura', ang: 'Rotação (°)', feather: 'Borda' };
+        var campos = ((e.mask.shape | 0) === 5) ? ['x', 'y', 'w', 'ang', 'feather'] : ['x', 'y', 'w', 'h', 'ang', 'feather'];
+        campos.forEach(function (k) {
+          var labels = ((e.mask.shape | 0) === 5)
+            ? { x: 'Deslocar X', y: 'Deslocar Y', w: 'Escala', ang: 'Rotação (°)', feather: 'Borda' }
+            : { x: 'Centro X', y: 'Centro Y', w: 'Largura', h: 'Altura', ang: 'Rotação (°)', feather: 'Borda' };
           var lim = { x: [-0.2, 1.2, 0.001], y: [-0.2, 1.2, 0.001], w: [0.01, 2, 0.001], h: [0.01, 2, 0.001], ang: [-180, 180, 1], feather: [0.001, 1, 0.001] }[k];
           h += VE.panels.ui.rowNum('fx.' + e.id + '.mask.' + k, labels[k], e.mask[k], lim[0], lim[1], lim[2], false);
         });
-        h += '<div class="pnote">arraste na prévia: centro move · canto redimensiona · alça de cima gira</div>';
+        if ((e.mask.shape | 0) !== 5) {
+          h += '<div class="pnote">arraste na prévia: centro move · canto redimensiona · alça de cima gira</div>';
+        }
       }
       h += '<div class="pbtns"><button class="cmd cmd-sm" data-ea2="reset">ZERAR PARÂMETROS</button>' +
         '<button class="cmd cmd-sm" data-ea2="savefx">SALVAR PRESET</button></div>';
@@ -891,6 +915,22 @@
     });
     var mi = box.querySelector('[data-maskinv]');
     if (mi) mi.addEventListener('change', function () { eff.mask.invert = mi.checked; commit(); });
+    var fp = box.querySelector('[data-fxpath]');
+    if (fp) fp.addEventListener('change', function () { eff.mask.path = +fp.value | 0; commit(); VE.panels.renderProps(); });
+    var nt = box.querySelector('[data-fxnovotracado]');
+    if (nt) nt.addEventListener('click', function () {
+      clip.masks = clip.masks || [];
+      clip.masks.push(VE.newLayerMask(VE.MASK_CANETA));
+      eff.mask.path = clip.masks.length - 1;
+      /* o traçado nasce SEM cortar a camada: quem pediu foi a região do
+         efeito, e cortar a camada inteira seria surpresa. */
+      clip.masks[eff.mask.path].on = 0;
+      VE.compui.canetaEdit = { clipId: clip.id, mi: eff.mask.path };
+      if (VE.compui.canetaSelNada) VE.compui.canetaSelNada();
+      commit(); VE.panels.renderProps();
+      VE.app.toast('clique na prévia para pôr os pontos · ARRASTE ao clicar e o trecho já sai curvo · ' +
+        'clique no ponto verde ou Enter para fechar', 'ok');
+    });
     box.querySelectorAll('[data-ea2]').forEach(function (b) {
       b.addEventListener('click', function () {
         if (b.dataset.ea2 === 'reset') { eff.params = VE.defaults(eff.fx); eff.amount = 1; }

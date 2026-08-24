@@ -3756,6 +3756,11 @@ window.VE = window.VE || {};
     'uniform float uAspect;',
     'uniform vec4  uMaskA;',   // cx, cy, w, h
     'uniform vec4  uMaskB;',   // ang(rad), feather, invert, shape
+    /* REGIÃO POR TRAÇADO: os vértices já picados em segmentos chegam numa
+       textura de ponto flutuante (a mesma da máscara de camada), e uMaskC
+       diz onde a fatia deste efeito começa e quantos pontos tem.       */
+    'uniform highp sampler2D uMaskPts;',
+    'uniform vec4  uMaskC;',   // início, nº de pontos, —, —
     'uniform vec4  uAtlasInfo;', // count, cols, rows, altura total do atlas
     /* Tabela de cor → figura. Um cubo 16×16×16 achatado em 256×16: dado
        um RGB, uma leitura devolve QUAL figura do atlas é a mais parecida.
@@ -3890,6 +3895,26 @@ window.VE = window.VE || {};
     '  for(int i=0;i<5;i++){ s += a*vnoise(p + t*float(i+1)*0.13); p = p*2.03 + 11.7; a *= 0.5; }',
     '  return s;',
     '}',
+    /* distância com sinal ao traçado, medida no polígono já picado —
+       o mesmo caminho da máscara de camada: curva na CPU, polígono na
+       GPU. `texelFetch` lê o texel exato, sem filtro nem borda.      */
+    'vec2 lePtFx(int i){ return texelFetch(uMaskPts, ivec2(i, 0), 0).xy; }',
+    'float sdTracado(vec2 p, int ini, int n){',
+    '  float d = 1e9, s = 1.0;',
+    '  vec2 b = lePtFx(ini + n - 1) - vec2(0.5); b.x *= uAspect;',
+    '  for(int k = 0; k < 256; k++){',
+    '    if(k >= n) break;',
+    '    vec2 a = lePtFx(ini + k) - vec2(0.5); a.x *= uAspect;',
+    '    vec2 e = b - a, w = p - a;',
+    '    float t = clamp(dot(w, e)/max(dot(e, e), 1e-9), 0.0, 1.0);',
+    '    vec2 q = w - e*t;',
+    '    d = min(d, dot(q, q));',
+    '    bvec3 c = bvec3(p.y >= a.y, p.y < b.y, e.x*w.y > e.y*w.x);',
+    '    if(all(c) || all(not(c))) s = -s;',
+    '    b = a;',
+    '  }',
+    '  return s*sqrt(d);',
+    '}',
     'float maskValue(vec2 uv){',
     '  float shape = uMaskB.w;',
     '  if(shape < 0.5) return 1.0;',
@@ -3900,6 +3925,16 @@ window.VE = window.VE || {};
     '  p = rot2(p, -uMaskB.x);',
     '  vec2 sc = vec2(s.x*uAspect, s.y)*0.5;',
     '  float d;',
+    '  if(shape > 4.5){',
+    /* a escala vive em uMaskA.z: divide o ponto e multiplica a distância
+       de volta, senão a suavização encolheria junto com o contorno */
+    '    float esc = max(uMaskA.z, 1e-4);',
+    '    float sd = sdTracado(p/esc, int(uMaskC.x + 0.5), int(uMaskC.y + 0.5))*esc;',
+    '    float ff = max(f, 0.0005)*0.5;',
+    '    float mt = 1.0 - smoothstep(-ff, ff, sd);',
+    '    if(uMaskB.z > 0.5) mt = 1.0 - mt;',
+    '    return clamp(mt, 0.0, 1.0);',
+    '  }',
     '  if(shape < 1.5)      { vec2 q = abs(p)/sc; d = max(q.x, q.y); }',
     '  else if(shape < 2.5) { d = length(p/sc); }',
     '  else if(shape < 3.5) { d = abs(p.y)/sc.y; }',
@@ -14274,6 +14309,32 @@ window.VE = window.VE || {};
 
   /* Ponto velho, salvo antes das alças existirem, não tem os campos.
      Completa em silêncio em vez de espalhar `|| 0` pelo código todo. */
+  /* ---------------------------------------------- VÉRTICES ANIMADOS
+     Os vértices de um traçado, cada um passado por `valueAt`: um ponto
+     com keyframe anda e os outros ficam parados, que é como rotoscopia
+     de verdade funciona.
+
+     As ALÇAS passam pelo mesmo caminho. Sem isso, animar um traçado
+     curvo moveria os vértices e deixaria as curvas para trás — o
+     contorno se deformaria sozinho no meio da cena.
+
+     Mora aqui, e não dentro do resolvedor da camada, porque a REGIÃO DO
+     EFEITO lê o mesmo traçado: um lugar só decide o que é o contorno. */
+  VE.maskPtsAnimados = function (clip, pre, m, lt) {
+    if (!VE.ehCaneta(m)) return null;
+    VE.maskPtsOk(m);
+    var v = VE.valueAt;
+    var pts = (m.pts || []).slice(0, VE.MASK_MAX_PTS).map(function (p, j) {
+      var q = pre + 'pts.' + j + '.';
+      return {
+        x: v(clip, q + 'x', lt, p.x), y: v(clip, q + 'y', lt, p.y),
+        hix: v(clip, q + 'hix', lt, p.hix || 0), hiy: v(clip, q + 'hiy', lt, p.hiy || 0),
+        hox: v(clip, q + 'hox', lt, p.hox || 0), hoy: v(clip, q + 'hoy', lt, p.hoy || 0)
+      };
+    });
+    return pts.length >= 3 ? pts : null;
+  };
+
   VE.maskPtsOk = function (m) {
     if (!VE.ehCaneta(m) || !m.pts) return;
     m.pts.forEach(function (p) {
@@ -14488,19 +14549,8 @@ window.VE = window.VE || {};
            por `valueAt`, então um ponto com keyframe anda e os outros
            ficam parados — que é como se rotoscopia de verdade.      */
         if (VE.ehCaneta(m)) {
-          VE.maskPtsOk(m);
-          /* As ALÇAS também passam por `valueAt`: sem isso, animar um
-             traçado curvo moveria os vértices e deixaria as curvas para
-             trás — o contorno se deformaria sozinho no meio da cena. */
-          o.pts = (m.pts || []).slice(0, VE.MASK_MAX_PTS).map(function (p, j) {
-            var q = pre + 'pts.' + j + '.';
-            return {
-              x: v(clip, q + 'x', lt, p.x), y: v(clip, q + 'y', lt, p.y),
-              hix: v(clip, q + 'hix', lt, p.hix || 0), hiy: v(clip, q + 'hiy', lt, p.hiy || 0),
-              hox: v(clip, q + 'hox', lt, p.hox || 0), hoy: v(clip, q + 'hoy', lt, p.hoy || 0)
-            };
-          });
-          if (o.pts.length < 3) return null;       /* menos que isso não fecha */
+          o.pts = VE.maskPtsAnimados(clip, pre, m, lt);
+          if (!o.pts) return null;                 /* menos de três não fecha */
         }
         return o;
       }).filter(Boolean).slice(0, 8);   /* o shader carrega oito; além disso é ilusão */
@@ -15911,6 +15961,27 @@ window.VE = window.VE || {};
     var daFonte = !!def.histFonte;
     if (daFonte) this.pushHistFonte(inTex, this.marcaQuadro || 0);
 
+    /* REGIÃO POR TRAÇADO: o contorno chega em vértices com alça, é picado
+       em segmentos aqui (uma vez por efeito, não uma por passada) e sobe
+       para a MESMA textura de pontos que a máscara de camada usa. Se não
+       couber ou não fechar, a região volta a ser TUDO — melhor efeito no
+       quadro inteiro que recorte errado.                              */
+    var POOL = (VE.MASK_POOL_PTS || 256);
+    var mk = fxDef.mask || {}, ptsFx = null, nPtsFx = 0;
+    if ((mk.shape | 0) === (VE.MASK_FX_PATH || 5) && mk.pts && mk.pts.length >= 3) {
+      var achatadoFx = VE.maskTesselar(mk.pts, aspect, POOL);
+      var cabeFx = achatadoFx.length >> 1;
+      if (cabeFx >= 3) {
+        ptsFx = new Float32Array(POOL * 4);
+        for (var kf = 0; kf < cabeFx; kf++) {
+          ptsFx[kf * 4] = achatadoFx[kf * 2];
+          ptsFx[kf * 4 + 1] = achatadoFx[kf * 2 + 1];
+        }
+        nPtsFx = cabeFx;
+      }
+    }
+    var formaFx = ((mk.shape | 0) === (VE.MASK_FX_PATH || 5) && !nPtsFx) ? 0 : (mk.shape || 0);
+
     /* uma passada do efeito. `src` é o que ele lê, `orig` é sempre a imagem
        que entrou na cadeia — nas passadas intermediárias de um efeito de
        várias passadas, `src` já é um buffer de trabalho e não a imagem.  */
@@ -15932,7 +16003,13 @@ window.VE = window.VE || {};
         if (p.u.uMaskA) gl.uniform4f(p.u.uMaskA, m.x != null ? m.x : 0.5, m.y != null ? m.y : 0.5,
           m.w != null ? m.w : 0.5, m.h != null ? m.h : 0.5);
         if (p.u.uMaskB) gl.uniform4f(p.u.uMaskB, (m.ang || 0) * Math.PI / 180,
-          m.feather != null ? m.feather : 0.1, m.invert ? 1 : 0, m.shape || 0);
+          m.feather != null ? m.feather : 0.1, m.invert ? 1 : 0, formaFx);
+        if (nPtsFx && p.u.uMaskPts) {
+          gl.activeTexture(gl.TEXTURE8);
+          gl.bindTexture(gl.TEXTURE_2D, self.texPontos(ptsFx, POOL));
+          gl.uniform1i(p.u.uMaskPts, 8);
+          if (p.u.uMaskC) gl.uniform4f(p.u.uMaskC, 0, nPtsFx, 0, 0);
+        }
         self.bindHistory(p, daFonte);
         if (atlas && p.u.uAtlas) {
           gl.activeTexture(gl.TEXTURE2);
@@ -16683,8 +16760,17 @@ window.VE = window.VE || {};
     return { x: 0, y: 0, scale: 1, sx: 1, sy: 1, rot: 0, ax: 0, ay: 0, opacity: 1 };
   };
 
+  /* A REGIÃO de um efeito. Quatro formas paramétricas e, na quinta, o
+     TRAÇADO: em vez de uma caneta própria, ela APONTA (`path`) para um
+     traçado que já existe no clipe. As alças de Bézier, a animação por
+     vértice e o editor da prévia são os mesmos da máscara de camada —
+     um contorno é desenhado uma vez e serve para o que for.
+
+     Na forma TRAÇADO, `x`,`y` deslocam o contorno, `w` escala e `ang`
+     gira, exatamente como na caneta da camada. `h` não é usada.      */
+  VE.MASK_FX_PATH = 5;
   VE.newMask = function () {
-    return { shape: 0, x: 0.5, y: 0.5, w: 0.5, h: 0.5, ang: 0, feather: 0.12, invert: false };
+    return { shape: 0, x: 0.5, y: 0.5, w: 0.5, h: 0.5, ang: 0, feather: 0.12, invert: false, path: 0 };
   };
 
   /* um clipe de mídia, de tipografia, de áudio ou de ajuste */
@@ -17362,10 +17448,19 @@ window.VE = window.VE || {};
         params[pr.k] = v;
       });
       var m = e.mask || VE.newMask();
+      /* TRAÇADO: os vértices do traçado apontado viajam junto, já
+         animados. Se ele não existe mais (a pessoa apagou a máscara), a
+         região volta a ser TUDO em vez de recortar errado.          */
+      var fxPts = null, fxShape = m.shape;
+      if ((m.shape | 0) === VE.MASK_FX_PATH) {
+        var alvo = (clip.masks || [])[m.path | 0];
+        fxPts = alvo ? VE.maskPtsAnimados(clip, 'masks.' + (m.path | 0) + '.', alvo, local) : null;
+        if (!fxPts) fxShape = 0;
+      }
       out.push({
         id: e.fx, effId: e.id, params: params, amount: Math.min(1, amt), local: local,
         mask: {
-          shape: m.shape,
+          shape: fxShape, pts: fxPts,
           x: VE.valueAt(clip, 'fx.' + e.id + '.mask.x', local),
           y: VE.valueAt(clip, 'fx.' + e.id + '.mask.y', local),
           w: VE.valueAt(clip, 'fx.' + e.id + '.mask.w', local),
@@ -21050,7 +21145,7 @@ window.VE = window.VE || {};
        à máscara de efeito, como era.                                 */
     if (VE.compui && VE.compui.canetaEdit && desenhaCaneta(svg)) return;
     var foc = VE.motion && VE.motion.focusEffect ? VE.motion.focusEffect() : null;
-    if (!foc || !foc.effect.mask || !foc.effect.mask.shape) {
+    if (!foc || !foc.effect.mask || !foc.effect.mask.shape || (foc.effect.mask.shape | 0) === 5) {
       svg.innerHTML = ''; svg.classList.remove('active'); return;
     }
     var clip = foc.clip, eff = foc.effect;
@@ -22019,18 +22114,42 @@ window.VE = window.VE || {};
         h += effProp(clip, e, pr, false);
       });
       /* região (máscara) do efeito */
-      var shapes = ['TUDO', 'RETÂNGULO', 'ELIPSE', 'FAIXA H', 'FAIXA V'];
+      var shapes = ['TUDO', 'RETÂNGULO', 'ELIPSE', 'FAIXA H', 'FAIXA V', 'TRAÇADO'];
       h += '<div class="subhead">REGIÃO</div><div class="pbtns">' + shapes.map(function (sh, si) {
         return '<button class="cmd cmd-sm' + (e.mask.shape === si ? ' active' : '') + '" data-shape="' + si + '">' + sh + '</button>';
       }).join('') + '</div>';
+      /* TRAÇADO: a região aponta para um contorno da caneta que já existe
+         no clipe. Não há uma segunda caneta aqui — as alças, a animação e
+         o editor são os mesmos da máscara de camada.                  */
+      if ((e.mask.shape | 0) === 5) {
+        var tracados = (clip.masks || []).map(function (m, mi) {
+          return VE.ehCaneta(m) ? { i: mi, nome: 'TRAÇADO ' + (mi + 1) + (m.aberta ? ' (aberto)' : '') } : null;
+        }).filter(Boolean);
+        if (!tracados.length) {
+          h += '<div class="pnote">nenhum traçado neste clipe ainda — o botão abaixo cria um e abre a caneta na prévia</div>' +
+            '<div class="pbtns"><button class="cmd cmd-sm" data-fxnovotracado="' + e.id + '">DESENHAR UM TRAÇADO</button></div>';
+        } else {
+          h += '<div class="prow"><label>Qual traçado</label>' +
+            '<select class="field" data-fxpath="' + e.id + '" style="grid-column:2/4">' +
+            tracados.map(function (t) {
+              return '<option value="' + t.i + '"' + ((e.mask.path | 0) === t.i ? ' selected' : '') + '>' + t.nome + '</option>';
+            }).join('') + '</select></div>' +
+            '<div class="pnote">o contorno é o mesmo da máscara de camada: as alças e os keyframes dos vértices valem aqui também</div>';
+        }
+      }
       if (e.mask.shape > 0) {
         h += '<div class="prow"><label>Inverter (efeito fora)</label><input type="checkbox" data-maskinv' + (e.mask.invert ? ' checked' : '') + '><span></span></div>';
-        ['x', 'y', 'w', 'h', 'ang', 'feather'].forEach(function (k) {
-          var labels = { x: 'Centro X', y: 'Centro Y', w: 'Largura', h: 'Altura', ang: 'Rotação (°)', feather: 'Borda' };
+        var campos = ((e.mask.shape | 0) === 5) ? ['x', 'y', 'w', 'ang', 'feather'] : ['x', 'y', 'w', 'h', 'ang', 'feather'];
+        campos.forEach(function (k) {
+          var labels = ((e.mask.shape | 0) === 5)
+            ? { x: 'Deslocar X', y: 'Deslocar Y', w: 'Escala', ang: 'Rotação (°)', feather: 'Borda' }
+            : { x: 'Centro X', y: 'Centro Y', w: 'Largura', h: 'Altura', ang: 'Rotação (°)', feather: 'Borda' };
           var lim = { x: [-0.2, 1.2, 0.001], y: [-0.2, 1.2, 0.001], w: [0.01, 2, 0.001], h: [0.01, 2, 0.001], ang: [-180, 180, 1], feather: [0.001, 1, 0.001] }[k];
           h += VE.panels.ui.rowNum('fx.' + e.id + '.mask.' + k, labels[k], e.mask[k], lim[0], lim[1], lim[2], false);
         });
-        h += '<div class="pnote">arraste na prévia: centro move · canto redimensiona · alça de cima gira</div>';
+        if ((e.mask.shape | 0) !== 5) {
+          h += '<div class="pnote">arraste na prévia: centro move · canto redimensiona · alça de cima gira</div>';
+        }
       }
       h += '<div class="pbtns"><button class="cmd cmd-sm" data-ea2="reset">ZERAR PARÂMETROS</button>' +
         '<button class="cmd cmd-sm" data-ea2="savefx">SALVAR PRESET</button></div>';
@@ -22519,6 +22638,22 @@ window.VE = window.VE || {};
     });
     var mi = box.querySelector('[data-maskinv]');
     if (mi) mi.addEventListener('change', function () { eff.mask.invert = mi.checked; commit(); });
+    var fp = box.querySelector('[data-fxpath]');
+    if (fp) fp.addEventListener('change', function () { eff.mask.path = +fp.value | 0; commit(); VE.panels.renderProps(); });
+    var nt = box.querySelector('[data-fxnovotracado]');
+    if (nt) nt.addEventListener('click', function () {
+      clip.masks = clip.masks || [];
+      clip.masks.push(VE.newLayerMask(VE.MASK_CANETA));
+      eff.mask.path = clip.masks.length - 1;
+      /* o traçado nasce SEM cortar a camada: quem pediu foi a região do
+         efeito, e cortar a camada inteira seria surpresa. */
+      clip.masks[eff.mask.path].on = 0;
+      VE.compui.canetaEdit = { clipId: clip.id, mi: eff.mask.path };
+      if (VE.compui.canetaSelNada) VE.compui.canetaSelNada();
+      commit(); VE.panels.renderProps();
+      VE.app.toast('clique na prévia para pôr os pontos · ARRASTE ao clicar e o trecho já sai curvo · ' +
+        'clique no ponto verde ou Enter para fechar', 'ok');
+    });
     box.querySelectorAll('[data-ea2]').forEach(function (b) {
       b.addEventListener('click', function () {
         if (b.dataset.ea2 === 'reset') { eff.params = VE.defaults(eff.fx); eff.amount = 1; }

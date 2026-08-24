@@ -815,6 +815,27 @@
     var daFonte = !!def.histFonte;
     if (daFonte) this.pushHistFonte(inTex, this.marcaQuadro || 0);
 
+    /* REGIÃO POR TRAÇADO: o contorno chega em vértices com alça, é picado
+       em segmentos aqui (uma vez por efeito, não uma por passada) e sobe
+       para a MESMA textura de pontos que a máscara de camada usa. Se não
+       couber ou não fechar, a região volta a ser TUDO — melhor efeito no
+       quadro inteiro que recorte errado.                              */
+    var POOL = (VE.MASK_POOL_PTS || 256);
+    var mk = fxDef.mask || {}, ptsFx = null, nPtsFx = 0;
+    if ((mk.shape | 0) === (VE.MASK_FX_PATH || 5) && mk.pts && mk.pts.length >= 3) {
+      var achatadoFx = VE.maskTesselar(mk.pts, aspect, POOL);
+      var cabeFx = achatadoFx.length >> 1;
+      if (cabeFx >= 3) {
+        ptsFx = new Float32Array(POOL * 4);
+        for (var kf = 0; kf < cabeFx; kf++) {
+          ptsFx[kf * 4] = achatadoFx[kf * 2];
+          ptsFx[kf * 4 + 1] = achatadoFx[kf * 2 + 1];
+        }
+        nPtsFx = cabeFx;
+      }
+    }
+    var formaFx = ((mk.shape | 0) === (VE.MASK_FX_PATH || 5) && !nPtsFx) ? 0 : (mk.shape || 0);
+
     /* uma passada do efeito. `src` é o que ele lê, `orig` é sempre a imagem
        que entrou na cadeia — nas passadas intermediárias de um efeito de
        várias passadas, `src` já é um buffer de trabalho e não a imagem.  */
@@ -836,7 +857,13 @@
         if (p.u.uMaskA) gl.uniform4f(p.u.uMaskA, m.x != null ? m.x : 0.5, m.y != null ? m.y : 0.5,
           m.w != null ? m.w : 0.5, m.h != null ? m.h : 0.5);
         if (p.u.uMaskB) gl.uniform4f(p.u.uMaskB, (m.ang || 0) * Math.PI / 180,
-          m.feather != null ? m.feather : 0.1, m.invert ? 1 : 0, m.shape || 0);
+          m.feather != null ? m.feather : 0.1, m.invert ? 1 : 0, formaFx);
+        if (nPtsFx && p.u.uMaskPts) {
+          gl.activeTexture(gl.TEXTURE8);
+          gl.bindTexture(gl.TEXTURE_2D, self.texPontos(ptsFx, POOL));
+          gl.uniform1i(p.u.uMaskPts, 8);
+          if (p.u.uMaskC) gl.uniform4f(p.u.uMaskC, 0, nPtsFx, 0, 0);
+        }
         self.bindHistory(p, daFonte);
         if (atlas && p.u.uAtlas) {
           gl.activeTexture(gl.TEXTURE2);
