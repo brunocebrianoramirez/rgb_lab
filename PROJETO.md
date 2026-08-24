@@ -1256,6 +1256,14 @@ Construir `<div class="plate">` à mão deixa o bloco sem a setinha de recolher.
 
 ## 9. Armadilhas que já me morderam
 
+**Efeito que não compila vira PASSA-TUDO silencioso.** Não dá erro na tela,
+não pinta preto, não avisa: o motor simplesmente pula o efeito e o quadro sai
+igual ao original. Aconteceu ao pôr uma função GLSL dentro de outra (o que a
+linguagem não aceita). Todo teste de efeito começa por `R.progFor(id)` e por
+comparar o quadro COM efeito contra o quadro SEM efeito — medir proxies antes
+disso é medir o nada.
+
+
 **Propriedade com CONVERSÃO tem um dono só.** `motion.opacity` é GUARDADA em
 0..1 e MOSTRADA em 0..100 % — a tabela `CONV` de `motion.js` faz a tradução, e o
 ouvinte compartilhado de `[data-mrange]` aplica `cv.from(v)` na escrita. A ficha
@@ -3303,6 +3311,53 @@ trilhos continuam indo até onde iam; o que mudou foi onde o efeito NASCE.
 um controle faz o que promete, e não prova que o conjunto está certo. Os vinte
 e dois controles estavam certos um a um — e o desenho estava errado. Foi VER
 que consertou, e ver só foi possível porque ele abriu o painel.
+
+### QUARTA VOLTA: dois defeitos que ele pegou usando
+
+Ele exportou um quadro do rgb_lab e apontou duas coisas — as duas certas, e
+as duas de DESENHO outra vez:
+
+**1. "A borda rasgada deveria ter espaçamento vertical entre os rasgos."**
+Estava certo: toda linha tinha dente, e uma beira mordida em toda linha não é
+dente, é uma coluna de ruído. Agora o dente vem em GRUPO de linhas com VÃO
+entre os grupos — a fita morde em pedaços.
+
+**2. "A perda de fita está muito espalhada; elas ficam mais juntas,
+coloridas e em forma de faixa."** Também certo, e a causa é física: o defeito
+é uma REGIÃO da fita — uma dobra, um pedaço de óxido que soltou —, então os
+riscos saem em cacho, não sorteados linha a linha pelo quadro inteiro. Três
+faixas por quadro, cada uma com centro e altura própria, e o risco deixou de
+ser branco chapado: a cabeça perde o sinal e o que sobra tem cor.
+
+```
+Medido em três instantes, quadro de 960×540, rasgo 1,3 e perda 1,2
+
+DENTES DA BEIRA        grupos   tamanho médio   vão médio   maior vão
+  instante 1 .......... 64        3,5 linhas     4,8         20
+  instante 2 .......... 76        3,7            3,4         24
+  instante 3 .......... 67        2,4            5,7         38
+
+RISCOS                 linhas   em cacho (vizinho a ≤15 linhas)
+  instante 1 .......... 13       13 de 13
+  instante 2 .......... 17       17 de 17
+  instante 3 ..........  9        9 de 9
+  cor .................. maioria colorida (490/305, 957/53, 543/174)
+```
+
+**E uma armadilha que me mordeu no meio disto, que vale mais que os números
+acima:** ao acrescentar a função da faixa, ela foi parar DENTRO do corpo de
+`vhsFim` — GLSL não aceita função dentro de função. O shader não compilou, o
+motor pulou o efeito e o quadro saiu **igualzinho ao original**. E eu não
+percebi na hora porque estava medindo PROXIES (quantos pixels claros, quantas
+linhas mudaram) em vez de perguntar as duas coisas simples:
+
+```
+1. R.progFor('vhs') devolveu um programa?
+2. o quadro com efeito difere do quadro sem efeito?
+```
+
+Um efeito que não compila vira passa-tudo silencioso — não dá erro, não pinta
+preto, não avisa. **Todo teste de efeito começa por essas duas perguntas.**
 
 ### O que NÃO foi feito
 - **Nada foi VISTO em movimento por mim.** As medidas provam que cada

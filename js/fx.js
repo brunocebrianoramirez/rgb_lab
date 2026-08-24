@@ -578,8 +578,16 @@ window.VE = window.VE || {};
          tremer para a borda existir. Na fita são duas coisas separadas: o
          quadro fica firme e a beira é que é irregular.                 */
       'float vhsBeiraLarg(float lin, float fr, float lado){',
-      '  float u = hash21(vec2(lin*1.7 + lado*311.0, fr*2.3));',
-      '  return (0.004 + pow(u, 3.0)*0.085)*clamp(u_tear, 0.0, 2.0);',
+      /* Os dentes vêm em GRUPOS de linhas, com VÃO entre eles. Um sorteio
+         por linha dá uma coluna de ruído — que foi o que ele viu na
+         exportação; a fita morde em pedaços, não linha a linha.        */
+      '  float tam = 4.0 + floor(hash21(vec2(floor(lin/48.0), lado*7.0 + fr*0.7))*13.0);',
+      '  float g = floor(lin/tam);',
+      '  float existe = step(0.62, hash21(vec2(g*1.3 + lado*97.0, fr*2.1)));',
+      '  float u = hash21(vec2(g*1.7 + lado*311.0, fr*2.3));',
+      '  float larg = (0.004 + pow(u, 3.0)*0.085)*clamp(u_tear, 0.0, 2.0)*existe;',
+      /* uma variação pequena DENTRO do grupo, senão o dente é um retângulo */
+      '  return larg*(0.72 + 0.28*hash21(vec2(lin, fr*5.0)));',
       '}',
       'vec3 vhsBeira(float px, float lin, float fr){',
       '  float r = hash21(vec2(floor(px*VHS_AMOSTRAS), lin + fr*3.0));',
@@ -630,6 +638,24 @@ window.VE = window.VE || {};
       '  return vec4(y, iq, 1.0);',
       '}',
       /* ===================================== PASSADA 2 · o acabamento */
+      /* A PERDA DE FITA VEM EM FAIXA. O defeito é uma região da fita — uma
+         dobra, um pedaço de óxido que soltou —, então os riscos aparecem
+         juntos, numa faixa de algumas dezenas de linhas, e não espalhados
+         pelo quadro inteiro. Três faixas por quadro, cada uma com centro e
+         altura próprios.
+
+         (`d*d` e não `pow(d, 2.0)`: base negativa em pow devolve NaN nesta
+         GPU, e um NaN apaga o quadro inteiro.)                          */
+      'float vhsFaixaPerda(float lf, float fr){',
+      '  float peso = 0.0;',
+      '  for(int i=0;i<3;i++){',
+      '    float c = hash21(vec2(float(i)*13.0 + 1.0, fr))*VHS_LINHAS;',
+      '    float h = 3.0 + hash21(vec2(float(i)*29.0 + 2.0, fr*1.7))*9.0;',
+      '    float d = (lf - c)/h;',
+      '    peso = max(peso, exp(-d*d*2.5));',
+      '  }',
+      '  return peso;',
+      '}',
       'vec3 vhsFim(vec2 uv){',
       '  float fr = vhsQuadro();',
       '  float ger = vhsGer();',
@@ -674,14 +700,24 @@ window.VE = window.VE || {};
       '  iq += (hash22(floor(uv*vec2(180.0, 240.0)) + fr*29.0) - 0.5)*ruido*0.18;',
       /* perda de fita: risco claro e curto, de UMA linha de fita */
       '  float lf = floor(uv.y*VHS_LINHAS);',
+      '  float faixa = vhsFaixaPerda(lf, fr);',
       '  float ds = hash21(vec2(lf, fr*3.7));',
-      '  float lim = 1.0 - clamp(u_drop, 0.0, 2.0)*(1.0 + ger*0.8)*0.05;',
+      '  float lim = 1.0 - clamp(u_drop, 0.0, 2.0)*(1.0 + ger*0.8)*0.38*faixa;',
       '  if(ds > lim){',
-      '    float x0 = hash11(ds*57.3 + 1.0);',
-      '    float len = 0.006 + hash11(ds*91.7 + 2.0)*0.10;',
-      '    float dentro = step(x0, uv.x)*step(uv.x, x0 + len);',
-      '    Y = mix(Y, 1.0, dentro*0.92);',
-      '    iq = mix(iq, vec2(0.0), dentro*0.88);',
+      /* dois riscos na mesma linha: na fita eles vêm em cacho */
+      '    for(int k=0;k<2;k++){',
+      '      float sk = hash21(vec2(lf + float(k)*7.0, fr*3.7 + 5.0));',
+      '      if(k == 1 && sk < 0.45) continue;',
+      '      float x0 = hash11(ds*57.3 + 1.0 + float(k)*3.0);',
+      '      float len = 0.006 + hash11(ds*91.7 + 2.0 + float(k)*3.0)*0.08;',
+      '      float dentro = step(x0, uv.x)*step(uv.x, x0 + len);',
+      /* o risco não é branco chapado: a cabeça perde o sinal e o que sobra
+         tem cor — por isso ele aparece rosa, verde ou azul na fita */
+      '      float br = 0.82 + hash11(sk*23.0)*0.18;',
+      '      vec2 cor = vec2(hash11(sk*41.0) - 0.5, hash11(sk*67.0) - 0.5)*1.3;',
+      '      Y = mix(Y, br, dentro*0.92);',
+      '      iq = mix(iq, cor, dentro*0.75);',
+      '    }',
       '  }',
       /* tracking: dentro da faixa o sinal vira ruído e a cor some */
       '  float db = uv.y - vhsBanda();',

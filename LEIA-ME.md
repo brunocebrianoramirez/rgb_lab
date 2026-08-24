@@ -514,7 +514,9 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 
 **A sujeira**
 
-* **Perda de fita** — os riscos claros e curtos onde a fita perdeu contato.
+* **Perda de fita** — os riscos curtos onde a fita perdeu contato. Eles não
+  caem espalhados: saem em **faixa**, porque o defeito é uma região da fita, e
+  saem **coloridos**, porque o que a cabeça recupera ali não é branco.
 * **Chuvisco**, **Cintilação** e **Linhas de varredura**.
 * **Geração da cópia** — de 0 (a fita original) a 3 (a cópia da cópia da
   cópia): perde resolução, ganha ruído e riscos, e a cor vaza mais. Um

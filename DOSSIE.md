@@ -1,6 +1,6 @@
 # rgb_lab — DOSSIÊ DO PROJETO
 
-> Arquivo único de entrada. Gerado por `node dossie.js` em 23/08/2026, 23:17:24.
+> Arquivo único de entrada. Gerado por `node dossie.js` em 24/08/2026, 00:48:08.
 > Contém as **diretrizes**, o **histórico de decisões**, o **manual de uso**, o
 > **motor de cor** e um **inventário lido do código** neste momento.
 >
@@ -27,7 +27,7 @@ Autoria: Elaborado e criado por Bruno Cebriano Ramirez.
 
 ```
 módulos js .......... 52
-linhas de js ........ 31.162
+linhas de js ........ 31.198
 efeitos ............. 144
 famílias de efeito .. 8
 formas de máscara ... 8
@@ -68,7 +68,7 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | # | arquivo | linhas | o que faz |
 |---|---|---|---|
 | 01 | `js/brand.js` | 16 | rgb_lab — identidade A marca em si é um PNG embutido em css/system.css (.brandmark), preto sobre transparência, invertido no modo noturno. Aqui ficam só o nome e as etiquetas usadas em texto e arquivos. |
-| 02 | `js/fx.js` | 942 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
+| 02 | `js/fx.js` | 978 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
 | 03 | `js/fx2.js` | 862 | rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art) |
 | 04 | `js/fx3.js` | 409 | rgb_lab — efeitos parte 3 Transparência (alpha), tinta sobre papel, trama e sistemas de imagem. Efeitos marcados com alpha:true implementam vec4 fx4(vec2 uv) e podem alterar o canal alpha. |
 | 05 | `js/fx4.js` | 846 | rgb_lab — efeitos parte 4 Família construída a partir das referências da pasta EFEITOS: brinquedo, gravura, cianotipia, fotocópia, paleta retrô, pintura, brilho anamórfico, monocromo neon, tv 80, fumaça, desfoques e arte generativa. |
@@ -1393,6 +1393,14 @@ Construir `<div class="plate">` à mão deixa o bloco sem a setinha de recolher.
 ---
 
 ### 9. Armadilhas que já me morderam
+
+**Efeito que não compila vira PASSA-TUDO silencioso.** Não dá erro na tela,
+não pinta preto, não avisa: o motor simplesmente pula o efeito e o quadro sai
+igual ao original. Aconteceu ao pôr uma função GLSL dentro de outra (o que a
+linguagem não aceita). Todo teste de efeito começa por `R.progFor(id)` e por
+comparar o quadro COM efeito contra o quadro SEM efeito — medir proxies antes
+disso é medir o nada.
+
 
 **Propriedade com CONVERSÃO tem um dono só.** `motion.opacity` é GUARDADA em
 0..1 e MOSTRADA em 0..100 % — a tabela `CONV` de `motion.js` faz a tradução, e o
@@ -3442,6 +3450,53 @@ um controle faz o que promete, e não prova que o conjunto está certo. Os vinte
 e dois controles estavam certos um a um — e o desenho estava errado. Foi VER
 que consertou, e ver só foi possível porque ele abriu o painel.
 
+#### QUARTA VOLTA: dois defeitos que ele pegou usando
+
+Ele exportou um quadro do rgb_lab e apontou duas coisas — as duas certas, e
+as duas de DESENHO outra vez:
+
+**1. "A borda rasgada deveria ter espaçamento vertical entre os rasgos."**
+Estava certo: toda linha tinha dente, e uma beira mordida em toda linha não é
+dente, é uma coluna de ruído. Agora o dente vem em GRUPO de linhas com VÃO
+entre os grupos — a fita morde em pedaços.
+
+**2. "A perda de fita está muito espalhada; elas ficam mais juntas,
+coloridas e em forma de faixa."** Também certo, e a causa é física: o defeito
+é uma REGIÃO da fita — uma dobra, um pedaço de óxido que soltou —, então os
+riscos saem em cacho, não sorteados linha a linha pelo quadro inteiro. Três
+faixas por quadro, cada uma com centro e altura própria, e o risco deixou de
+ser branco chapado: a cabeça perde o sinal e o que sobra tem cor.
+
+```
+Medido em três instantes, quadro de 960×540, rasgo 1,3 e perda 1,2
+
+DENTES DA BEIRA        grupos   tamanho médio   vão médio   maior vão
+  instante 1 .......... 64        3,5 linhas     4,8         20
+  instante 2 .......... 76        3,7            3,4         24
+  instante 3 .......... 67        2,4            5,7         38
+
+RISCOS                 linhas   em cacho (vizinho a ≤15 linhas)
+  instante 1 .......... 13       13 de 13
+  instante 2 .......... 17       17 de 17
+  instante 3 ..........  9        9 de 9
+  cor .................. maioria colorida (490/305, 957/53, 543/174)
+```
+
+**E uma armadilha que me mordeu no meio disto, que vale mais que os números
+acima:** ao acrescentar a função da faixa, ela foi parar DENTRO do corpo de
+`vhsFim` — GLSL não aceita função dentro de função. O shader não compilou, o
+motor pulou o efeito e o quadro saiu **igualzinho ao original**. E eu não
+percebi na hora porque estava medindo PROXIES (quantos pixels claros, quantas
+linhas mudaram) em vez de perguntar as duas coisas simples:
+
+```
+1. R.progFor('vhs') devolveu um programa?
+2. o quadro com efeito difere do quadro sem efeito?
+```
+
+Um efeito que não compila vira passa-tudo silencioso — não dá erro, não pinta
+preto, não avisa. **Todo teste de efeito começa por essas duas perguntas.**
+
 #### O que NÃO foi feito
 - **Nada foi VISTO em movimento por mim.** As medidas provam que cada
   controle faz o que promete; a folha de contato mostra quadros parados.
@@ -4049,7 +4104,9 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 
 **A sujeira**
 
-* **Perda de fita** — os riscos claros e curtos onde a fita perdeu contato.
+* **Perda de fita** — os riscos curtos onde a fita perdeu contato. Eles não
+  caem espalhados: saem em **faixa**, porque o defeito é uma região da fita, e
+  saem **coloridos**, porque o que a cabeça recupera ali não é branco.
 * **Chuvisco**, **Cintilação** e **Linhas de varredura**.
 * **Geração da cópia** — de 0 (a fita original) a 3 (a cópia da cópia da
   cópia): perde resolução, ganha ruído e riscos, e a cor vaza mais. Um
