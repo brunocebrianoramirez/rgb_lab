@@ -732,7 +732,9 @@
       id: 'vhs94', name: 'VHS 1994', desc: 'fita gasta, cor sangrando e tracking',
       fx: [
         ['color', { con: 0.15, sat: 0.35, gam: 1.05 }],
-        ['vhs', { bleed: 1.4, track: 0.45, wob: 0.9, noise: 0.22, scan: 0.35 }],
+        ['vhs', { res: 200, bleed: 1.1, track: 0.45, wob: 0.9, noise: 0.16, scan: 0.35,
+                  cdelay: 8, fring: 0.9, crease: 0.6, drop: 0.7, head: 0.8, gen: 0.8,
+                  sharp: 0.5, soft: 0.9, tbe: 0.8 }],
         ['vignette', { size: 0.42, int: 0.6 }]
       ]
     },

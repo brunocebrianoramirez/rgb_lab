@@ -461,6 +461,53 @@ Os cinco são uma **reconstrução independente**, classificada como
 `RECONSTRUCTED`: nenhum parâmetro veio de software de terceiros. Detalhes,
 tabelas e medições em [COLOR-ENGINE.md](COLOR-ENGINE.md).
 
+### VHS — a fita, não o filtro de fita
+
+O **VHS** não é um filtro de aparência: é a cadeia de uma gravação em fita,
+escrita a partir do que o formato faz de errado. São vinte controles, em
+quatro grupos.
+
+**A imagem que a fita consegue guardar**
+
+* **Resolução (linhas)** — quanto detalhe horizontal sobrevive. VHS real fica
+  perto de **240**; abaixo de 120 o texto some, que é o que acontece na fita.
+* **Suavidade** — a fita também é macia no vertical.
+* **Realce do deck** — o aparelho tentava devolver a nitidez perdida e criava
+  o **halo claro** na borda. É a assinatura do VHS, e é o controle que faz a
+  imagem "parecer VHS" antes de qualquer sujeira.
+
+**A cor, que é gravada à parte**
+
+* **Atraso da cor (px)** — a cor chega DEPOIS da luz e por isso **escorre
+  para a direita**. É o artefato mais característico do formato.
+* **Sangramento da cor** — a cor tem muito menos banda que a luz: um vermelho
+  saturado vaza por dezenas de pixels.
+* **Franja de cor** — o halo colorido na borda entre duas cores.
+* **Desvio de matiz** — o erro de fase, que gira a cor inteira.
+* **Saturação**.
+
+**A mecânica errando**
+
+* **Erro de base de tempo** — cada linha entra num instante ligeiramente
+  errado: a imagem treme **linha a linha**.
+* **Ondulação** e **Frequência da onda** — a onda lenta ao longo da altura.
+  Não confundir com a de cima: uma é áspera, a outra é lisa.
+* **Salto vertical** — o quadro inteiro deslizando.
+* **Vinco da fita** — a faixa estreita que empurra e clareia, de uma dobra.
+* **Tracking (barras)** — a faixa que perde o sincronismo e vira ruído.
+* **Troca de cabeça** — o rabo bagunçado nas últimas linhas, na base do
+  quadro. Todo VHS tem, e é o detalhe que mais entrega o formato.
+
+**A sujeira**
+
+* **Perda de fita** — os riscos claros e curtos onde a fita perdeu contato.
+* **Chuvisco**, **Cintilação** e **Linhas de varredura**.
+* **Geração da cópia** — de 0 (a fita original) a 3 (a cópia da cópia da
+  cópia): perde resolução, ganha ruído e riscos, e a cor vaza mais. Um
+  controle só que envelhece o conjunto inteiro.
+
+O preset **VHS 1994**, na galeria de filtros, é um ponto de partida ajustado.
+
 ### Película: 8 mm, Super 8, 16 mm, 35 mm
 
 O grupo `película` reconstrói a câmera antiga inteira:

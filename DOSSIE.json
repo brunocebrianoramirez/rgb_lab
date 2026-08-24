@@ -1,6 +1,6 @@
 {
   "projeto": "rgb_lab",
-  "gerado": "2026-08-24T00:29:50.848Z",
+  "gerado": "2026-08-24T00:57:44.994Z",
   "descricao": "Laboratório audiovisual experimental em HTML/CSS/JS puro (WebGL2 + Web Audio), sem dependências e sem servidor. Três mesas: vídeo, áudio, tipografia.",
   "autoria": "Elaborado e criado por Bruno Cebriano Ramirez",
   "laboratorios": [
@@ -15,7 +15,7 @@
   },
   "contagens": {
     "modulosJs": 52,
-    "linhasJs": 30891,
+    "linhasJs": 31091,
     "efeitos": 144,
     "familias": 8,
     "conjuntosDeEmoji": 8,
@@ -1116,12 +1116,12 @@
     },
     {
       "arquivo": "js/fx.js",
-      "linhas": 682,
+      "linhas": 880,
       "resumo": "rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades."
     },
     {
       "arquivo": "js/fx2.js",
-      "linhas": 851,
+      "linhas": 853,
       "resumo": "rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art)"
     },
     {

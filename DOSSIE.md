@@ -1,6 +1,6 @@
 # rgb_lab — DOSSIÊ DO PROJETO
 
-> Arquivo único de entrada. Gerado por `node dossie.js` em 23/08/2026, 21:29:50.
+> Arquivo único de entrada. Gerado por `node dossie.js` em 23/08/2026, 21:57:44.
 > Contém as **diretrizes**, o **histórico de decisões**, o **manual de uso**, o
 > **motor de cor** e um **inventário lido do código** neste momento.
 >
@@ -27,7 +27,7 @@ Autoria: Elaborado e criado por Bruno Cebriano Ramirez.
 
 ```
 módulos js .......... 52
-linhas de js ........ 30.891
+linhas de js ........ 31.091
 efeitos ............. 144
 famílias de efeito .. 8
 formas de máscara ... 8
@@ -68,8 +68,8 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | # | arquivo | linhas | o que faz |
 |---|---|---|---|
 | 01 | `js/brand.js` | 16 | rgb_lab — identidade A marca em si é um PNG embutido em css/system.css (.brandmark), preto sobre transparência, invertido no modo noturno. Aqui ficam só o nome e as etiquetas usadas em texto e arquivos. |
-| 02 | `js/fx.js` | 682 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
-| 03 | `js/fx2.js` | 851 | rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art) |
+| 02 | `js/fx.js` | 880 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
+| 03 | `js/fx2.js` | 853 | rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art) |
 | 04 | `js/fx3.js` | 409 | rgb_lab — efeitos parte 3 Transparência (alpha), tinta sobre papel, trama e sistemas de imagem. Efeitos marcados com alpha:true implementam vec4 fx4(vec2 uv) e podem alterar o canal alpha. |
 | 05 | `js/fx4.js` | 846 | rgb_lab — efeitos parte 4 Família construída a partir das referências da pasta EFEITOS: brinquedo, gravura, cianotipia, fotocópia, paleta retrô, pintura, brilho anamórfico, monocromo neon, tv 80, fumaça, desfoques e arte generativa. |
 | 06 | `js/fx5.js` | 493 | rgb_lab — PELÍCULA O pacote de câmera antiga: a JANELA (o formato do quadro, com o canto arredondado que a chapa deixa), os VAZAMENTOS DE LUZ, o FLASH de começo de rolo, o GRÃO por bitola, a SUJEIRA e o TREMOR DA JANELA. Nota honesta sobre bitolas: 32mm não ex |
@@ -152,9 +152,8 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
 | 2 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
-| 3 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
-| 4 | Alça de Bézier na máscara de EFEITO | 4l |
-| 5 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 3 | Alça de Bézier na máscara de EFEITO | 4l |
+| 4 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -169,6 +168,10 @@ saltar. E a medida da letra passou a ser guardada: de quatro medições por letr
 por quadro para zero nos quadros parados, com a saída idêntica byte a byte. De
 quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo dele
 promete.
+
+**E o VHS foi reconstruído pela cadeia de sinal (4y):** vinte controles, três
+passadas, YIQ entre elas, cada artefato medido por leitura de pixel — e os sete
+parâmetros antigos com as mesmas chaves.
 
 **E o áudio pesado saiu da linha principal (4x):** os vinte módulos de buffer
 rodam num Worker montado com o texto da própria biblioteca — som idêntico
@@ -3167,6 +3170,171 @@ ainda sem passar).
 
 ---
 
+### 4y. O VHS PELO MÉRITO (décima quinta passada)
+
+O pedido estava na lista desde a nona passada, e o que existia era um filtro
+de aparência: deslocamento de RGB, uma barra descendo, chuvisco e listras.
+Sete controles, nenhum deles ligado ao que uma fita realmente faz.
+
+O Bruno mandou o **effect.app** como referência e pediu engenharia reversa.
+O que foi feito, e o que NÃO foi feito, é importante estar escrito:
+
+- **não** foi lido, baixado nem copiado o código deles;
+- foi lida a **lista de controles** que a interface deles mostra — que é o
+  vocabulário do efeito, não a implementação — e usada como mapa do que uma
+  fita precisa ter;
+- o efeito foi escrito daqui, **a partir da cadeia de sinal do formato**.
+
+Isso não é escrúpulo inútil: é o caminho mais curto para o resultado. Os
+dezesseis controles deles são dezesseis ARTEFATOS conhecidos, e cada artefato
+tem uma causa física que se escreve em três linhas de shader.
+
+#### A fita, na ordem em que ela estraga
+
+```
+1 · a MECÂNICA erra          a linha inteira anda para o lado
+    erro de base de tempo      ruído rápido, linha a linha
+    ondulação                  onda lenta ao longo da altura
+    vinco da fita              uma faixa que empurra e clareia
+    tracking                   a faixa que perde o sincronismo
+    troca de cabeça            as últimas linhas do quadro
+    salto vertical             o quadro inteiro pula
+2 · a LUZ perde banda        VHS resolve ~240 linhas na horizontal
+3 · a COR perde MUITO mais   cerca de sete vezes mais borrada que a luz
+4 · a COR chega ATRASADA     é por isso que ela escorre para a direita
+5 · o DECK realça a borda    o halo claro que todo VHS tem
+6 · a FITA suja              chuvisco, perda de fita, cintilação
+```
+
+**Vinte controles**, e os SETE antigos ficaram com as mesmas chaves
+(`bleed`, `track`, `wob`, `lines`, `noise`, `scan`, `sat`): um projeto
+salvo continua achando o efeito e os seus valores. O que ele vai ver é a fita
+melhor. O preset **VHS 1994** foi reajustado para a cadeia nova.
+
+#### Três passadas, e por quê
+
+Borrão largo com poucas amostras deixa buraco — a armadilha da 5ª passada.
+Então:
+
+```
+passada 0   mecânica + banda de luz    lê a imagem que entrou
+passada 1   banda de cor               lê a passada 0
+passada 2   atraso, franja, realce,    compõe sobre a imagem original
+            sujeira, varredura
+```
+
+Entre as passadas o sinal viaja em **YIQ** — luz num canal, cor em dois —
+porque é assim que a fita guarda, e é o que permite borrar a cor sem borrar a
+luz. O quadro de trabalho é de 8 bits, então I e Q vão deslocados para 0..1 e
+voltam na última passada.
+
+#### Medido, controle por controle
+
+Tudo abaixo é leitura de pixel do quadro renderizado, com os outros
+dezenove controles em zero — cada número isola UMA coisa.
+
+```
+RESOLUÇÃO · contraste de barras verticais de 2 px
+  640 linhas .... 223      160 linhas .... 127
+  320 linhas .... 191       80 linhas ....   0   (some, como tem de sumir)
+
+SUAVIDADE · linhas de transição numa borda horizontal
+  0 → 0 linhas · 1 → 2 · 2 → 4 · 3 → 6
+
+REALCE DO DECK · sobressinal numa borda de cinza 60→190
+  0 ...... nenhum (−1 e +1, que é o ruído da conta)
+  0,5 .... +45 acima do claro e −47 abaixo do escuro
+  1,5 .... +65 e −60
+
+ATRASO DA COR · onde a transição de cor cai (a de luz fica em x=160)
+  0 px → 160 · 6 px → 166 · 12 px → 172 · 20 px → 180
+
+SANGRAMENTO · largura da transição de cor, em pixels
+  0 → 2 · 0,5 → 4 · 1 → 8 · 2 → 16 · 3 → 22
+
+FRANJA · pico na borda de cor (o chapado ao lado fica em 70)
+  0 → 70 (nenhum) · 1 → 117 · 3 → 183
+
+SATURAÇÃO ·  −1 → cinza (0) · 0 → ±138/70 · 1 → o dobro · 2 → satura
+
+DESVIO DE MATIZ · o vermelho (199,61,60) vira
+  0,25 → (188,40,195)      0,5 → (126,56,255)
+```
+
+**As duas trepidações são coisas diferentes, e a medida separa as duas.**
+Medindo em que x caiu a borda vertical, linha a linha:
+
+```
+                    desvio    aspereza entre linhas vizinhas
+erro de base de tempo 1 ....  0,45 px          0,31    ← pula linha a linha
+erro de base de tempo 3 ....  1,17 px          1,18
+ondulação 1 ...............  1,10 px          0,11    ← anda liso na altura
+ondulação 3 ...............  3,03 px          0,32
+```
+
+```
+SALTO VERTICAL · linha da borda horizontal em oito instantes
+  desligado ... 120 120 120 120 120 120 120 120
+  no máximo ... 121 121 120 119 118 118 118 118
+
+VINCO ......... 9 linhas afetadas, entre 203 e 211 — uma faixa estreita
+TRACKING ...... 21 linhas, entre 131 e 151 — outra faixa, em outro lugar
+TROCA DE CABEÇA . 68,5 de diferença nas 10 ÚLTIMAS linhas da tela,
+                  0,0 no meio e 0,0 no topo
+PERDA DE FITA ... 0 riscos desligada · 8 linhas com 72 pixels claros no
+                  máximo (riscos curtos, de 9 px em média)
+CHUVISCO ........ desvio-padrão 0 → 19,2 → 63,8
+CINTILAÇÃO ...... média do quadro 119 fixa; ligada, 115·125·153·76·153·110
+GERAÇÃO DA CÓPIA  desvio 11,5 → 27,1 → 42,8 e riscos 0 → 2 → 10
+```
+
+**O rodapé foi MEDIDO, não suposto.** A troca de cabeça acontece na base do
+quadro. Com o teste escrito para "y perto de 1", a sujeira caiu nas dez
+PRIMEIRAS linhas da tela — ou seja, neste motor y = 0 é a base. Está
+comentado no shader, porque é o tipo de coisa que se erra de novo.
+
+**Neutro é neutro:** com os vinte controles em zero (e a resolução no
+máximo), a diferença média para a imagem original é de **0,84 em 255** — o
+que sobra é a ida e volta por YIQ em 8 bits.
+
+**Máscara e intensidade continuam valendo** — o que é o risco de todo efeito
+de várias passadas, porque as passadas de trabalho não podem respeitá-las:
+intensidade 0 muda 0,0; 0,5 muda 16,6; 1 muda 30,4. Com máscara na metade
+esquerda: 11,8 de mudança à esquerda e **0,0 à direita**.
+
+#### O custo
+
+```
+1920×1080, com readPixels forçando a GPU a terminar
+  sem efeito .................. 15,0 ms   (a régua: já inclui a espera)
+  um efeito de uma passada .... 13,9 ms
+  VHS (três passadas) ......... 22,0 ms
+  VHS com tudo no talo ........ 23,3 ms   (os laços são fixos)
+  kirakira (cinco passadas) ... 53,3 ms
+```
+
+**O instrumento mentiu primeiro.** Medindo com `gl.finish()`, o mesmo VHS
+dava 0,18 ms — com o painel escondido a chamada volta sem esperar nada. Só
+com `readPixels` os números viraram físicos. É a terceira vez neste projeto
+que o medidor precisou ser validado antes do código.
+
+#### O que NÃO foi feito
+
+- **O rabo de luz (streaking)** — o borrão claro que um objeto brilhante
+  deixa à direita, do amplificador da cabeça. É o artefato mais reconhecível
+  que ficou de fora: não está na lista da §14 nem entre os dezesseis
+  controles da referência, e entraria como o vigésimo primeiro controle.
+  Se for pedido, o lugar é a passada 2, com seis amostras à esquerda e peso
+  exponencial.
+- **Nada foi VISTO em movimento por mim.** As medidas provam que cada
+  controle faz o que promete; a folha de contato mostra quatro quadros
+  parados. Fita é tempo — o julgamento de como isso se comporta rodando é
+  seu.
+- **A imagem com alfa não acompanha a mecânica.** O deslocamento move a cor,
+  não o alfa, como já era no efeito antigo.
+
+---
+
 ### 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3196,13 +3364,10 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
 
 #### Pedidos ainda não atendidos
 
-6. **VHS pelo mérito.** Perda de fita (dropout) em risco horizontal, erro de
-   croma que atrasa a cor em relação à luz, tracking instável na base do quadro,
-   head-switching na última linha, e o ruído que aumenta na terceira cópia.
-   As telas do nandomp4 que o Bruno mandou mostram a INTERFACE dele — cinco
-   controles, quatro filtros de cor e quatro texturas de VHS em MP4 sobrepostas.
-   Confirmam que a barra é baixa e que o caminho dele é decalque (vídeo de fita
-   real por cima), não simulação. Nenhum dos artefatos da lista acima está lá.
+6. ~~VHS pelo mérito~~ — **feito na 4y.** Os cinco artefatos pedidos estão lá,
+   medidos um a um, mais a banda de luz e de cor, o atraso da cor, a franja, o
+   realce do deck e a geração da cópia: vinte controles, três passadas, e os
+   sete parâmetros antigos com as mesmas chaves. *(seção 4y)*
 7. **Alça de Bézier por vértice na máscara de EFEITO** (a de camada já tem).
    *(seção 4l)*
 8. **Botão SEGUIR na máscara de caneta** — MediaPipe `InteractiveSegmenter`
@@ -3711,6 +3876,53 @@ propósito — são ferramentas separadas.
 Os cinco são uma **reconstrução independente**, classificada como
 `RECONSTRUCTED`: nenhum parâmetro veio de software de terceiros. Detalhes,
 tabelas e medições em [COLOR-ENGINE.md](COLOR-ENGINE.md).
+
+#### VHS — a fita, não o filtro de fita
+
+O **VHS** não é um filtro de aparência: é a cadeia de uma gravação em fita,
+escrita a partir do que o formato faz de errado. São vinte controles, em
+quatro grupos.
+
+**A imagem que a fita consegue guardar**
+
+* **Resolução (linhas)** — quanto detalhe horizontal sobrevive. VHS real fica
+  perto de **240**; abaixo de 120 o texto some, que é o que acontece na fita.
+* **Suavidade** — a fita também é macia no vertical.
+* **Realce do deck** — o aparelho tentava devolver a nitidez perdida e criava
+  o **halo claro** na borda. É a assinatura do VHS, e é o controle que faz a
+  imagem "parecer VHS" antes de qualquer sujeira.
+
+**A cor, que é gravada à parte**
+
+* **Atraso da cor (px)** — a cor chega DEPOIS da luz e por isso **escorre
+  para a direita**. É o artefato mais característico do formato.
+* **Sangramento da cor** — a cor tem muito menos banda que a luz: um vermelho
+  saturado vaza por dezenas de pixels.
+* **Franja de cor** — o halo colorido na borda entre duas cores.
+* **Desvio de matiz** — o erro de fase, que gira a cor inteira.
+* **Saturação**.
+
+**A mecânica errando**
+
+* **Erro de base de tempo** — cada linha entra num instante ligeiramente
+  errado: a imagem treme **linha a linha**.
+* **Ondulação** e **Frequência da onda** — a onda lenta ao longo da altura.
+  Não confundir com a de cima: uma é áspera, a outra é lisa.
+* **Salto vertical** — o quadro inteiro deslizando.
+* **Vinco da fita** — a faixa estreita que empurra e clareia, de uma dobra.
+* **Tracking (barras)** — a faixa que perde o sincronismo e vira ruído.
+* **Troca de cabeça** — o rabo bagunçado nas últimas linhas, na base do
+  quadro. Todo VHS tem, e é o detalhe que mais entrega o formato.
+
+**A sujeira**
+
+* **Perda de fita** — os riscos claros e curtos onde a fita perdeu contato.
+* **Chuvisco**, **Cintilação** e **Linhas de varredura**.
+* **Geração da cópia** — de 0 (a fita original) a 3 (a cópia da cópia da
+  cópia): perde resolução, ganha ruído e riscos, e a cor vaza mais. Um
+  controle só que envelhece o conjunto inteiro.
+
+O preset **VHS 1994**, na galeria de filtros, é um ponto de partida ajustado.
 
 #### Película: 8 mm, Super 8, 16 mm, 35 mm
 
