@@ -1,6 +1,6 @@
 {
   "projeto": "rgb_lab",
-  "gerado": "2026-08-23T23:39:32.997Z",
+  "gerado": "2026-08-24T00:29:50.848Z",
   "descricao": "Laboratório audiovisual experimental em HTML/CSS/JS puro (WebGL2 + Web Audio), sem dependências e sem servidor. Três mesas: vídeo, áudio, tipografia.",
   "autoria": "Elaborado e criado por Bruno Cebriano Ramirez",
   "laboratorios": [
@@ -14,8 +14,8 @@
     "vermelho": "tipografia"
   },
   "contagens": {
-    "modulosJs": 51,
-    "linhasJs": 30514,
+    "modulosJs": 52,
+    "linhasJs": 30891,
     "efeitos": 144,
     "familias": 8,
     "conjuntosDeEmoji": 8,
@@ -1301,7 +1301,7 @@
     },
     {
       "arquivo": "js/audio.js",
-      "linhas": 1405,
+      "linhas": 1462,
       "resumo": "rgb_lab — LABORATÓRIO 02 · ÁUDIO Buffer original → transformações → grafo offline → buffer final O mesmo caminho serve para tocar, exportar e mandar pra timeline."
     },
     {
@@ -1318,6 +1318,11 @@
       "arquivo": "js/audiopresets.js",
       "linhas": 133,
       "resumo": "rgb_lab — PRESETS ARTÍSTICOS DO RACK DE ÁUDIO Cada preset é uma CADEIA: quais módulos, em que ordem e com que valores. Nenhum deles inventa processamento — todos usam os módulos que existem no rack, e depois de aplicar tudo continua aberto para você mexer. Apa"
+    },
+    {
+      "arquivo": "js/audiotrab.js",
+      "linhas": 320,
+      "resumo": "rgb_lab — O TRABALHADOR DO ÁUDIO ESPECTRAL, GRANULAR e a família VOZ custam de 100 a 500 ms por segundo de áudio. Num arquivo de três minutos isso é mais de um minuto de conta — e, feita na linha principal, é um minuto com a aba dura: o aviso PROCESSANDO apare"
     },
     {
       "arquivo": "js/reactmap.js",

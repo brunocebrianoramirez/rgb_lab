@@ -13,11 +13,10 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Worker para as cadeias longas de áudio — ESPECTRAL, GRANULAR e a família VOZ | 4v e 7 |
-| 3 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
-| 4 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
-| 5 | Alça de Bézier na máscara de EFEITO | 4l |
-| 6 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 2 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
+| 3 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
+| 4 | Alça de Bézier na máscara de EFEITO | 4l |
+| 5 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -32,6 +31,11 @@ saltar. E a medida da letra passou a ser guardada: de quatro medições por letr
 por quadro para zero nos quadros parados, com a saída idêntica byte a byte. De
 quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo dele
 promete.
+
+**E o áudio pesado saiu da linha principal (4x):** os vinte módulos de buffer
+rodam num Worker montado com o texto da própria biblioteca — som idêntico
+amostra a amostra, maior espera da página de 2.607 ms para 30 ms, e mexer num
+controle no meio da conta desiste do cálculo velho em vez de esperar por ele.
 
 ---
 
@@ -192,6 +196,9 @@ js/audiofx.js   ← NOVO   os 14 módulos novos do MESMO rack: atmosfera, deform
                          glitch, matéria, espacial, psicoacústica, granular,
                          espectral, generativo
 js/audiopresets.js ← NOVO as 23 cadeias artísticas prontas
+js/audiotrab.js ← NOVO   o TRABALHADOR: monta um Worker com o texto de
+                         audiodsp/audiofx/audiovoz e roda a cadeia fora
+                         da linha principal (§4x)
 js/reactmap.js  ← NOVO   ÁUDIO REATIVO: o som mexendo na imagem do LAB 01,
                          somado na leitura de VE.valueAt
 js/type.js               LAB 03 — motor letra a letra + ENTRADA/LAÇO/SAÍDA
@@ -506,6 +513,7 @@ js/audiodsp.js     biblioteca de sinal: FFT radix-2, STFT (duas variantes),
                    sorteio por semente. Funções puras sobre AudioBuffer.
 js/audiofx.js      os catorze módulos novos, cada um uma declaração curta
 js/audiopresets.js as 23 cadeias artísticas prontas
+js/audiotrab.js    o trabalhador: a mesma biblioteca, fora da linha principal
 js/reactmap.js     áudio reativo: o som mexendo na imagem do LAB 01
 ```
 
@@ -2893,6 +2901,134 @@ exatos**, ela ficou presa e as outras seis não se mexeram.
 
 ---
 
+## 4x. O TRABALHADOR DO ÁUDIO (ainda a décima quarta passada)
+
+O pedido estava aberto desde a sexta passada e o custo só crescia: ESPECTRAL,
+GRANULAR e, desde a 4v, a família VOZ passam de 100 ms por segundo de áudio.
+Num arquivo de três minutos isso é mais de um minuto de conta — e, feita na
+linha principal, é um minuto com **a aba dura**: o aviso PROCESSANDO aparece e
+mais nada responde.
+
+### O que NÃO foi feito: uma segunda biblioteca
+
+A tentação óbvia era escrever uma versão dos efeitos pesados para dentro do
+Worker. Seriam duas cópias de cada algoritmo, e a segunda começaria a mentir no
+dia seguinte. O que se fez foi olhar o que, na biblioteca inteira, dependia da
+página. É **uma linha**:
+
+```
+D.make  →  VE.audio.context().createBuffer(ch, len, sr)
+```
+
+Todo o resto — `audiodsp.js`, `audiofx.js`, `audiovoz.js`, os vinte módulos de
+buffer — usa de um AudioBuffer só `numberOfChannels`, `length`, `sampleRate`,
+`duration` e `getChannelData`. Então o trabalhador recebe **o texto dos três
+arquivos, sem uma vírgula mudada**, e um contexto de mentira de dez linhas que
+devolve um objeto com essas cinco coisas. Mexer num módulo muda os dois lados
+no mesmo instante, porque só existe um lado.
+
+### De onde sai o texto dos três arquivos
+
+- **no site:** `fetch` dos próprios `js/*.js` (mesma origem);
+- **no arquivo único:** cortando o script embutido pelos marcadores
+  `/* ===== nome.js ===== */` que o `build-arquivo-unico.js` já escrevia antes
+  de cada arquivo — eles deixaram de ser enfeite e viraram estrutura.
+
+O marcador é montado por expressão dentro do `audiotrab.js`, e não escrito à
+mão, senão o próprio arquivo viraria um falso marcador quando estivesse dentro
+do arquivo único.
+
+### E quando não dá
+
+file:// sem servidor, CSP que barre Worker de blob, navegador velho: o
+laboratório calcula na linha principal, exatamente como antes. **O trabalhador
+é uma aceleração, nunca uma dependência** — e isso é medido, não prometido (ver
+o teste do trabalhador quebrado, abaixo).
+
+### A cadeia continua sendo a cadeia
+
+O trabalhador não conhece os cinco processadores que moram dentro do
+`audio.js` (reverso, bitcrush, granular da base, gagueira, ruído). Então a
+corrida de módulos é quebrada em pedaços do que ele sabe e do que fica aqui,
+**na ordem** — reordenar mudaria o som. Medido numa cadeia misturada de
+propósito:
+
+```
+reverse (aqui) → spectral (lá) → voztom (lá) → out (aqui)
+```
+
+### Medido
+
+**1 · O som é o MESMO.** Os vinte módulos de buffer, um a um, com dois segundos
+de voz sintética, comparando a saída do trabalhador com a da linha principal
+amostra a amostra:
+
+```
+20 de 20 módulos ......... maior diferença 0,0
+                           mesmo comprimento em todos
+                           picos de 0,43 a 2,15 (não são silêncios comparados)
+```
+
+E uma cadeia de seis módulos numa viagem só (voztom → telefone → spectral →
+granlab → material → vozradio): **maior diferença 0,0**, mesmo comprimento,
+886 ms aqui contra 906 ms lá.
+
+**2 · A aba deixa de travar.** O medidor teve de ser trocado antes de acusar
+nada: `setInterval` é estrangulado para um tique por segundo em aba escondida.
+O que serve é medir o tempo de ida e volta de uma mensagem, que é o que "a aba
+responde" quer dizer. Validado primeiro contra um travamento de 800 ms feito de
+propósito — acusou 802 ms.
+
+```
+CORO DE UM SÓ, 1 s de áudio
+                       conta       maior espera da página
+na linha principal ... 2.607 ms          2.607 ms   (parou tudo)
+no trabalhador ....... 2.311 ms             30 ms   (128.298 idas e voltas)
+```
+
+**3 · Desistir na hora.** Mexer num controle enquanto um cálculo longo corre
+não espera mais o cálculo velho: o trabalhador é encerrado e outro é montado
+(40 ms, porque o texto fica guardado). Medido com o VOZ · MULTIPLICAR em quatro
+segundos de áudio: a promessa antiga soltou em **0 ms**, sem aviso de erro na
+tela, e o resultado do cálculo novo saiu **idêntico à referência** (soma
+37.315,534 e pico 0,99 nos dois).
+
+**4 · O aviso passou a dizer o que está sendo feito**, porque agora dá para
+desenhar durante a conta:
+
+```
+PROCESSANDO A CADEIA…
+PROCESSANDO · ESPECTRAL (1 de 2)
+PROCESSANDO · VOZ · TOM E CORPO (2 de 2)
+2 CANAIS · 48000 HZ · 4.00S → 4.00S     ← e a linha volta ao que era
+```
+
+**5 · Quebrando o trabalhador de propósito** no meio do trabalho: o pedaço
+volta para a linha principal, o resultado sai **idêntico** (soma 19.507,929 nos
+dois) e o console diz por quê.
+
+**6 · O preço da viagem.** Três minutos de áudio estéreo (66 MB de amostras):
+ida e volta custa **106 ms** fora a conta — os canais vão como cópia doada,
+porque o buffer da página não pode ser esvaziado. O pico de memória sobe cerca
+de uma cópia do áudio enquanto o trabalho corre (74 MB → 204 MB, com o coletor
+ainda sem passar).
+
+### O que NÃO ficou resolvido
+
+- **Os cinco processadores do `audio.js`** continuam na linha principal. São
+  baratos (reverso, bitcrush, gagueira, ruído), e movê-los pedia tirá-los de
+  dentro do arquivo do laboratório — mudança de estrutura sem ganho medido.
+- **Um trabalhador só.** Uma cadeia com dois módulos pesados os calcula em
+  sequência. Vários trabalhadores dividiriam por canal ou por trecho, e isso é
+  outra passada — e só vale a pena depois de alguém reclamar do tempo, não do
+  travamento, que era o problema real.
+- **O trecho de grafo (nós do Web Audio) continua onde estava**, porque
+  `OfflineAudioContext` não existe dentro de um Worker. São os módulos baratos.
+- **Nada foi OUVIDO.** A prova é de identidade amostra a amostra: o áudio que
+  sai do trabalhador é o mesmo bit a bit. Se soa bem continua sendo ouvido seu.
+
+---
+
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -2911,10 +3047,10 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
 3. ~~Guardar a medida da letra por (semente, corpo)~~ — **feito na 4w.** De
    quatro medições por letra por quadro para duas no primeiro quadro e zero
    nos seguintes; saída idêntica byte a byte. *(seção 4w)*
-4. **Worker para as cadeias longas de áudio.** ESPECTRAL, GRANULAR e agora a
-   família VOZ passam de 100 ms por segundo de áudio; num arquivo de três
-   minutos a aba trava. É o mesmo pedido de três passadas atrás e o custo só
-   cresceu. *(seções 4v e 7)*
+4. ~~Worker para as cadeias longas de áudio~~ — **feito na 4x.** Os vinte
+   módulos de buffer rodam fora da linha principal, com o mesmo texto da
+   biblioteca; saída idêntica amostra a amostra, e a maior espera da página
+   caiu de 2.607 ms para 30 ms. *(seção 4x)*
 5. **Filtro de segunda ordem no `D`.** Só há passa-baixa e passa-alta de um
    polo, e é por isso que o TELEFONE ainda deixa 30% da energia fora da banda.
    Um biquad genérico serve a ele, ao RÁDIO e a qualquer módulo futuro.

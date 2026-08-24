@@ -1,6 +1,6 @@
 # rgb_lab — DOSSIÊ DO PROJETO
 
-> Arquivo único de entrada. Gerado por `node dossie.js` em 23/08/2026, 20:39:33.
+> Arquivo único de entrada. Gerado por `node dossie.js` em 23/08/2026, 21:29:50.
 > Contém as **diretrizes**, o **histórico de decisões**, o **manual de uso**, o
 > **motor de cor** e um **inventário lido do código** neste momento.
 >
@@ -26,8 +26,8 @@
 Autoria: Elaborado e criado por Bruno Cebriano Ramirez.
 
 ```
-módulos js .......... 51
-linhas de js ........ 30.514
+módulos js .......... 52
+linhas de js ........ 30.891
 efeitos ............. 144
 famílias de efeito .. 8
 formas de máscara ... 8
@@ -105,19 +105,20 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | 36 | `js/filters.js` | 561 | rgb_lab — GALERIA DE FILTROS Uma prateleira de emulsões. Cada filtro é um conjunto de valores do efeito `filmstock` — nenhum deles copia curva de produto nenhum: são construídos aqui, com nome e código de arquivo. A galeria mostra MINIATURAS AO VIVO: o quadro  |
 | 37 | `js/exporter.js` | 522 | rgb_lab — exportação tempo real (com áudio) · frame a frame (exato) · sequência PNG (única saída com alpha real) |
 | 38 | `js/audiodsp.js` | 691 | rgb_lab — BIBLIOTECA DE PROCESSAMENTO DE ÁUDIO Funções puras que operam sobre AudioBuffer. Nada aqui desenha, nada aqui conhece a interface: só matemática de sinal. Existe para que os MÓDULOS do rack de áudio (js/audiofx.js) sejam declarações curtas, e para qu |
-| 39 | `js/audio.js` | 1405 | rgb_lab — LABORATÓRIO 02 · ÁUDIO Buffer original → transformações → grafo offline → buffer final O mesmo caminho serve para tocar, exportar e mandar pra timeline. |
+| 39 | `js/audio.js` | 1462 | rgb_lab — LABORATÓRIO 02 · ÁUDIO Buffer original → transformações → grafo offline → buffer final O mesmo caminho serve para tocar, exportar e mandar pra timeline. |
 | 40 | `js/audiofx.js` | 873 | rgb_lab — MÓDULOS NOVOS DO RACK DE ÁUDIO Este arquivo NÃO cria um segundo laboratório de áudio. Ele acrescenta módulos ao rack que já existe, pelo mesmo registro que os doze originais usam (`VE.audio.register`), com os mesmos tipos de parâmetro e a mesma rende |
 | 41 | `js/audiovoz.js` | 823 | rgb_lab — A FAMÍLIA VOZ (módulos do MESMO rack de áudio) Este arquivo NÃO cria um segundo laboratório nem um segundo rack. Ele acrescenta uma família ao rack que já existe, pelo mesmo `VE.audio.register` dos vinte e seis anteriores, com os mesmos tipos de parâ |
 | 42 | `js/audiopresets.js` | 133 | rgb_lab — PRESETS ARTÍSTICOS DO RACK DE ÁUDIO Cada preset é uma CADEIA: quais módulos, em que ordem e com que valores. Nenhum deles inventa processamento — todos usam os módulos que existem no rack, e depois de aplicar tudo continua aberto para você mexer. Apa |
-| 43 | `js/reactmap.js` | 145 | rgb_lab — ÁUDIO REATIVO O som do laboratório 02 mexendo na imagem do laboratório 01. Não é um módulo novo nem uma janela: é uma camada de leitura. Um mapeamento diz "grave → escala deste clipe", e o valor é SOMADO à propriedade no momento em que ela é lida (`V |
-| 44 | `js/legendas.js` | 811 | rgb_lab — LEGENDAS COMO OS OUTROS FAZEM, e o que vale a pena copiar: · Premiere — a legenda NÃO é um gráfico. É uma faixa própria (C1), acima do vídeo, e cada legenda é um segmento com entrada, saída e texto. Um ESTILO DE FAIXA vale para todas de uma vez: muda |
-| 45 | `js/tinta.js` | 446 | rgb_lab — TINTA: escrever com a mão As famílias LAB são traço, não contorno — cada glifo é um caminho com comprimento conhecido, e é por isso que a ESCRITA À MÃO existe no laboratório de tipografia: dá para revelar o traço aos poucos. Aqui a ideia é a mesma, c |
-| 46 | `js/tintaui.js` | 261 | rgb_lab — TINTA: a interface, dentro do laboratório de tipografia Mesma separação de comp.js / compui.js: o modelo e o desenho ficam em `tinta.js`, a mão na massa fica aqui. Sem janela nova e sem página nova: o palco que já existe ganha uma folha por cima. Enq |
-| 47 | `js/recorte.js` | 588 | rgb_lab — LETRAS RECORTADAS Aquela mensagem montada com letras cortadas de jornal e revista. A ideia inteira está numa frase: CADA LETRA É UM PEDAÇO DE PAPEL DIFERENTE. Não é uma fonte — é um sorteio por letra, e é por isso que oito "A" seguidos saem oito veze |
-| 48 | `js/recorteui.js` | 374 | rgb_lab — LETRAS RECORTADAS: a interface Vive dentro do laboratório de tipografia, como a tinta: uma folha por cima do palco, uma barra de controles ao lado, e o texto vem do campo que já existe. Nada de página nova. O gesto que manda: CLICAR NUMA LETRA E ARRA |
-| 49 | `js/type.js` | 1155 | rgb_lab — LABORATÓRIO 03 · TIPOGRAFIA Cada letra é um objeto com transformação própria. Ferramentas nomeadas alteram o conjunto; o inspetor abre o detalhe. |
-| 50 | `js/shell.js` | 549 | rgb_lab — casca do sistema entrada em ascii → boot → índice → laboratórios |
-| 51 | `js/app.js` | 979 | rgb_lab — aplicação |
+| 43 | `js/audiotrab.js` | 320 | rgb_lab — O TRABALHADOR DO ÁUDIO ESPECTRAL, GRANULAR e a família VOZ custam de 100 a 500 ms por segundo de áudio. Num arquivo de três minutos isso é mais de um minuto de conta — e, feita na linha principal, é um minuto com a aba dura: o aviso PROCESSANDO apare |
+| 44 | `js/reactmap.js` | 145 | rgb_lab — ÁUDIO REATIVO O som do laboratório 02 mexendo na imagem do laboratório 01. Não é um módulo novo nem uma janela: é uma camada de leitura. Um mapeamento diz "grave → escala deste clipe", e o valor é SOMADO à propriedade no momento em que ela é lida (`V |
+| 45 | `js/legendas.js` | 811 | rgb_lab — LEGENDAS COMO OS OUTROS FAZEM, e o que vale a pena copiar: · Premiere — a legenda NÃO é um gráfico. É uma faixa própria (C1), acima do vídeo, e cada legenda é um segmento com entrada, saída e texto. Um ESTILO DE FAIXA vale para todas de uma vez: muda |
+| 46 | `js/tinta.js` | 446 | rgb_lab — TINTA: escrever com a mão As famílias LAB são traço, não contorno — cada glifo é um caminho com comprimento conhecido, e é por isso que a ESCRITA À MÃO existe no laboratório de tipografia: dá para revelar o traço aos poucos. Aqui a ideia é a mesma, c |
+| 47 | `js/tintaui.js` | 261 | rgb_lab — TINTA: a interface, dentro do laboratório de tipografia Mesma separação de comp.js / compui.js: o modelo e o desenho ficam em `tinta.js`, a mão na massa fica aqui. Sem janela nova e sem página nova: o palco que já existe ganha uma folha por cima. Enq |
+| 48 | `js/recorte.js` | 588 | rgb_lab — LETRAS RECORTADAS Aquela mensagem montada com letras cortadas de jornal e revista. A ideia inteira está numa frase: CADA LETRA É UM PEDAÇO DE PAPEL DIFERENTE. Não é uma fonte — é um sorteio por letra, e é por isso que oito "A" seguidos saem oito veze |
+| 49 | `js/recorteui.js` | 374 | rgb_lab — LETRAS RECORTADAS: a interface Vive dentro do laboratório de tipografia, como a tinta: uma folha por cima do palco, uma barra de controles ao lado, e o texto vem do campo que já existe. Nada de página nova. O gesto que manda: CLICAR NUMA LETRA E ARRA |
+| 50 | `js/type.js` | 1155 | rgb_lab — LABORATÓRIO 03 · TIPOGRAFIA Cada letra é um objeto com transformação própria. Ferramentas nomeadas alteram o conjunto; o inspetor abre o detalhe. |
+| 51 | `js/shell.js` | 549 | rgb_lab — casca do sistema entrada em ascii → boot → índice → laboratórios |
+| 52 | `js/app.js` | 979 | rgb_lab — aplicação |
 
 ### Armadilhas que já custaram caro
 
@@ -150,11 +151,10 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Worker para as cadeias longas de áudio — ESPECTRAL, GRANULAR e a família VOZ | 4v e 7 |
-| 3 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
-| 4 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
-| 5 | Alça de Bézier na máscara de EFEITO | 4l |
-| 6 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 2 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
+| 3 | VHS pelo mérito: dropout, erro de croma, tracking, head-switching | 14 |
+| 4 | Alça de Bézier na máscara de EFEITO | 4l |
+| 5 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -169,6 +169,11 @@ saltar. E a medida da letra passou a ser guardada: de quatro medições por letr
 por quadro para zero nos quadros parados, com a saída idêntica byte a byte. De
 quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo dele
 promete.
+
+**E o áudio pesado saiu da linha principal (4x):** os vinte módulos de buffer
+rodam num Worker montado com o texto da própria biblioteca — som idêntico
+amostra a amostra, maior espera da página de 2.607 ms para 30 ms, e mexer num
+controle no meio da conta desiste do cálculo velho em vez de esperar por ele.
 
 ---
 
@@ -329,6 +334,9 @@ js/audiofx.js   ← NOVO   os 14 módulos novos do MESMO rack: atmosfera, deform
                          glitch, matéria, espacial, psicoacústica, granular,
                          espectral, generativo
 js/audiopresets.js ← NOVO as 23 cadeias artísticas prontas
+js/audiotrab.js ← NOVO   o TRABALHADOR: monta um Worker com o texto de
+                         audiodsp/audiofx/audiovoz e roda a cadeia fora
+                         da linha principal (§4x)
 js/reactmap.js  ← NOVO   ÁUDIO REATIVO: o som mexendo na imagem do LAB 01,
                          somado na leitura de VE.valueAt
 js/type.js               LAB 03 — motor letra a letra + ENTRADA/LAÇO/SAÍDA
@@ -643,6 +651,7 @@ js/audiodsp.js     biblioteca de sinal: FFT radix-2, STFT (duas variantes),
                    sorteio por semente. Funções puras sobre AudioBuffer.
 js/audiofx.js      os catorze módulos novos, cada um uma declaração curta
 js/audiopresets.js as 23 cadeias artísticas prontas
+js/audiotrab.js    o trabalhador: a mesma biblioteca, fora da linha principal
 js/reactmap.js     áudio reativo: o som mexendo na imagem do LAB 01
 ```
 
@@ -3030,6 +3039,134 @@ exatos**, ela ficou presa e as outras seis não se mexeram.
 
 ---
 
+### 4x. O TRABALHADOR DO ÁUDIO (ainda a décima quarta passada)
+
+O pedido estava aberto desde a sexta passada e o custo só crescia: ESPECTRAL,
+GRANULAR e, desde a 4v, a família VOZ passam de 100 ms por segundo de áudio.
+Num arquivo de três minutos isso é mais de um minuto de conta — e, feita na
+linha principal, é um minuto com **a aba dura**: o aviso PROCESSANDO aparece e
+mais nada responde.
+
+#### O que NÃO foi feito: uma segunda biblioteca
+
+A tentação óbvia era escrever uma versão dos efeitos pesados para dentro do
+Worker. Seriam duas cópias de cada algoritmo, e a segunda começaria a mentir no
+dia seguinte. O que se fez foi olhar o que, na biblioteca inteira, dependia da
+página. É **uma linha**:
+
+```
+D.make  →  VE.audio.context().createBuffer(ch, len, sr)
+```
+
+Todo o resto — `audiodsp.js`, `audiofx.js`, `audiovoz.js`, os vinte módulos de
+buffer — usa de um AudioBuffer só `numberOfChannels`, `length`, `sampleRate`,
+`duration` e `getChannelData`. Então o trabalhador recebe **o texto dos três
+arquivos, sem uma vírgula mudada**, e um contexto de mentira de dez linhas que
+devolve um objeto com essas cinco coisas. Mexer num módulo muda os dois lados
+no mesmo instante, porque só existe um lado.
+
+#### De onde sai o texto dos três arquivos
+
+- **no site:** `fetch` dos próprios `js/*.js` (mesma origem);
+- **no arquivo único:** cortando o script embutido pelos marcadores
+  `/* ===== nome.js ===== */` que o `build-arquivo-unico.js` já escrevia antes
+  de cada arquivo — eles deixaram de ser enfeite e viraram estrutura.
+
+O marcador é montado por expressão dentro do `audiotrab.js`, e não escrito à
+mão, senão o próprio arquivo viraria um falso marcador quando estivesse dentro
+do arquivo único.
+
+#### E quando não dá
+
+file:// sem servidor, CSP que barre Worker de blob, navegador velho: o
+laboratório calcula na linha principal, exatamente como antes. **O trabalhador
+é uma aceleração, nunca uma dependência** — e isso é medido, não prometido (ver
+o teste do trabalhador quebrado, abaixo).
+
+#### A cadeia continua sendo a cadeia
+
+O trabalhador não conhece os cinco processadores que moram dentro do
+`audio.js` (reverso, bitcrush, granular da base, gagueira, ruído). Então a
+corrida de módulos é quebrada em pedaços do que ele sabe e do que fica aqui,
+**na ordem** — reordenar mudaria o som. Medido numa cadeia misturada de
+propósito:
+
+```
+reverse (aqui) → spectral (lá) → voztom (lá) → out (aqui)
+```
+
+#### Medido
+
+**1 · O som é o MESMO.** Os vinte módulos de buffer, um a um, com dois segundos
+de voz sintética, comparando a saída do trabalhador com a da linha principal
+amostra a amostra:
+
+```
+20 de 20 módulos ......... maior diferença 0,0
+                           mesmo comprimento em todos
+                           picos de 0,43 a 2,15 (não são silêncios comparados)
+```
+
+E uma cadeia de seis módulos numa viagem só (voztom → telefone → spectral →
+granlab → material → vozradio): **maior diferença 0,0**, mesmo comprimento,
+886 ms aqui contra 906 ms lá.
+
+**2 · A aba deixa de travar.** O medidor teve de ser trocado antes de acusar
+nada: `setInterval` é estrangulado para um tique por segundo em aba escondida.
+O que serve é medir o tempo de ida e volta de uma mensagem, que é o que "a aba
+responde" quer dizer. Validado primeiro contra um travamento de 800 ms feito de
+propósito — acusou 802 ms.
+
+```
+CORO DE UM SÓ, 1 s de áudio
+                       conta       maior espera da página
+na linha principal ... 2.607 ms          2.607 ms   (parou tudo)
+no trabalhador ....... 2.311 ms             30 ms   (128.298 idas e voltas)
+```
+
+**3 · Desistir na hora.** Mexer num controle enquanto um cálculo longo corre
+não espera mais o cálculo velho: o trabalhador é encerrado e outro é montado
+(40 ms, porque o texto fica guardado). Medido com o VOZ · MULTIPLICAR em quatro
+segundos de áudio: a promessa antiga soltou em **0 ms**, sem aviso de erro na
+tela, e o resultado do cálculo novo saiu **idêntico à referência** (soma
+37.315,534 e pico 0,99 nos dois).
+
+**4 · O aviso passou a dizer o que está sendo feito**, porque agora dá para
+desenhar durante a conta:
+
+```
+PROCESSANDO A CADEIA…
+PROCESSANDO · ESPECTRAL (1 de 2)
+PROCESSANDO · VOZ · TOM E CORPO (2 de 2)
+2 CANAIS · 48000 HZ · 4.00S → 4.00S     ← e a linha volta ao que era
+```
+
+**5 · Quebrando o trabalhador de propósito** no meio do trabalho: o pedaço
+volta para a linha principal, o resultado sai **idêntico** (soma 19.507,929 nos
+dois) e o console diz por quê.
+
+**6 · O preço da viagem.** Três minutos de áudio estéreo (66 MB de amostras):
+ida e volta custa **106 ms** fora a conta — os canais vão como cópia doada,
+porque o buffer da página não pode ser esvaziado. O pico de memória sobe cerca
+de uma cópia do áudio enquanto o trabalho corre (74 MB → 204 MB, com o coletor
+ainda sem passar).
+
+#### O que NÃO ficou resolvido
+
+- **Os cinco processadores do `audio.js`** continuam na linha principal. São
+  baratos (reverso, bitcrush, gagueira, ruído), e movê-los pedia tirá-los de
+  dentro do arquivo do laboratório — mudança de estrutura sem ganho medido.
+- **Um trabalhador só.** Uma cadeia com dois módulos pesados os calcula em
+  sequência. Vários trabalhadores dividiriam por canal ou por trecho, e isso é
+  outra passada — e só vale a pena depois de alguém reclamar do tempo, não do
+  travamento, que era o problema real.
+- **O trecho de grafo (nós do Web Audio) continua onde estava**, porque
+  `OfflineAudioContext` não existe dentro de um Worker. São os módulos baratos.
+- **Nada foi OUVIDO.** A prova é de identidade amostra a amostra: o áudio que
+  sai do trabalhador é o mesmo bit a bit. Se soa bem continua sendo ouvido seu.
+
+---
+
 ### 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3048,10 +3185,10 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
 3. ~~Guardar a medida da letra por (semente, corpo)~~ — **feito na 4w.** De
    quatro medições por letra por quadro para duas no primeiro quadro e zero
    nos seguintes; saída idêntica byte a byte. *(seção 4w)*
-4. **Worker para as cadeias longas de áudio.** ESPECTRAL, GRANULAR e agora a
-   família VOZ passam de 100 ms por segundo de áudio; num arquivo de três
-   minutos a aba trava. É o mesmo pedido de três passadas atrás e o custo só
-   cresceu. *(seções 4v e 7)*
+4. ~~Worker para as cadeias longas de áudio~~ — **feito na 4x.** Os vinte
+   módulos de buffer rodam fora da linha principal, com o mesmo texto da
+   biblioteca; saída idêntica amostra a amostra, e a maior espera da página
+   caiu de 2.607 ms para 30 ms. *(seção 4x)*
 5. **Filtro de segunda ordem no `D`.** Só há passa-baixa e passa-alta de um
    polo, e é por isso que o TELEFONE ainda deixa 30% da energia fora da banda.
    Um biquad genérico serve a ele, ao RÁDIO e a qualquer módulo futuro.
@@ -3774,6 +3911,26 @@ tom são os mais caros do rack junto com o ESPECTRAL. Numa frase de dez segundos
 espera passa de um minuto — o aviso PROCESSANDO aparece, mas vale cortar o
 trecho antes de experimentar.
 
+#### A conta pesada acontece fora da linha principal
+
+ESPECTRAL, GRANULAR e os sete módulos de VOZ custam caro: num arquivo de três
+minutos são dezenas de segundos de conta. Isso é calculado **fora** da página,
+num trabalhador — e a diferença aparece de duas formas:
+
+* **a aba continua respondendo.** Você pode rolar o rack, abrir outro módulo,
+  ler a onda. Medido: a maior espera da página caiu de 2,6 segundos para
+  30 milésimos num CORO DE UM SÓ.
+* **mexer num controle no meio da conta não espera o cálculo velho.** Ele é
+  jogado fora na hora e o novo começa.
+
+Enquanto calcula, a linha de informação diz em que módulo está —
+`PROCESSANDO · ESPECTRAL (1 de 2)` — e volta ao normal no fim.
+
+O som é exatamente o mesmo: é a mesma biblioteca, o mesmo código, só que
+rodando ao lado. Se o navegador não deixar (abrir o arquivo direto do disco,
+sem servidor, por exemplo), o laboratório calcula do jeito antigo, na página, e
+nada muda a não ser a espera.
+
 #### A ordem do rack é a ordem da cadeia
 
 Antes a ordem de processamento estava escrita no código: reverso, depois
@@ -4144,6 +4301,7 @@ js/filters.js                 galeria de filtros com miniatura ao vivo
 js/presets.js                 presets
 js/exporter.js                exportação (vídeo, sequência PNG, zip)
 js/audio.js                   laboratório de áudio
+js/audiotrab.js               o trabalhador: a cadeia calculada fora da linha principal
 js/type.js                    laboratório de tipografia
 js/shell.js                   entrada ascii, boot, roteamento, cursor, status
 js/app.js                     controlador do laboratório de vídeo

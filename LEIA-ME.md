@@ -660,6 +660,26 @@ tom são os mais caros do rack junto com o ESPECTRAL. Numa frase de dez segundos
 espera passa de um minuto — o aviso PROCESSANDO aparece, mas vale cortar o
 trecho antes de experimentar.
 
+### A conta pesada acontece fora da linha principal
+
+ESPECTRAL, GRANULAR e os sete módulos de VOZ custam caro: num arquivo de três
+minutos são dezenas de segundos de conta. Isso é calculado **fora** da página,
+num trabalhador — e a diferença aparece de duas formas:
+
+* **a aba continua respondendo.** Você pode rolar o rack, abrir outro módulo,
+  ler a onda. Medido: a maior espera da página caiu de 2,6 segundos para
+  30 milésimos num CORO DE UM SÓ.
+* **mexer num controle no meio da conta não espera o cálculo velho.** Ele é
+  jogado fora na hora e o novo começa.
+
+Enquanto calcula, a linha de informação diz em que módulo está —
+`PROCESSANDO · ESPECTRAL (1 de 2)` — e volta ao normal no fim.
+
+O som é exatamente o mesmo: é a mesma biblioteca, o mesmo código, só que
+rodando ao lado. Se o navegador não deixar (abrir o arquivo direto do disco,
+sem servidor, por exemplo), o laboratório calcula do jeito antigo, na página, e
+nada muda a não ser a espera.
+
 ### A ordem do rack é a ordem da cadeia
 
 Antes a ordem de processamento estava escrita no código: reverso, depois
@@ -1030,6 +1050,7 @@ js/filters.js                 galeria de filtros com miniatura ao vivo
 js/presets.js                 presets
 js/exporter.js                exportação (vídeo, sequência PNG, zip)
 js/audio.js                   laboratório de áudio
+js/audiotrab.js               o trabalhador: a cadeia calculada fora da linha principal
 js/type.js                    laboratório de tipografia
 js/shell.js                   entrada ascii, boot, roteamento, cursor, status
 js/app.js                     controlador do laboratório de vídeo

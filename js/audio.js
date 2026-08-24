@@ -229,6 +229,7 @@
   A.micRecording = function () { return !!micRec; };
 
   function setBuffer(b, n) {
+    if (A.trab) A.trab.ligar();
     srcBuf = b; outBuf = b; name = n || 'ÁUDIO';
     sel.a = null; sel.b = null;
     stop();
@@ -546,32 +547,76 @@
   /* teto de duração: um esticador em 8× num arquivo longo geraria um
      buffer de minutos e travaria a aba. O teto é o MESMO limite de
      composição que você define no laboratório de vídeo.              */
+  function avisarAparado() {
+    if (avisarAparado.avisou) return;
+    avisarAparado.avisou = true;
+    VE.app.toast('a cadeia passou de ' + VE.limitLabel() + ' e foi aparada — o limite é o mesmo da composição', 'err');
+    setTimeout(function () { avisarAparado.avisou = false; }, 4000);
+  }
+
   function aparar(b) {
     var teto = Math.max(2, VE.MAXDUR || 600) * b.sampleRate;
     if (b.length <= teto) return b;
-    if (!aparar.avisou) {
-      aparar.avisou = true;
-      VE.app.toast('a cadeia passou de ' + VE.limitLabel() + ' e foi aparada — o limite é o mesmo da composição', 'err');
-      setTimeout(function () { aparar.avisou = false; }, 4000);
-    }
+    avisarAparado();
     return sliceBuffer(b, 0, teto / b.sampleRate);
   }
 
-  /* processa um módulo por vez, devolvendo o passo ao navegador entre
+  /* processa um módulo por vez AQUI, devolvendo o passo ao navegador entre
      eles: sem isso o aviso PROCESSANDO nunca chega a ser desenhado.  */
-  function renderTrechoBuf(b, mods) {
+  function renderTrechoBufAqui(b, mods) {
     var i = 0;
     function passo() {
       if (i >= mods.length) return Promise.resolve(b);
       var m = mods[i++];
       var p = PROC[m.id];
       if (p && p.buf) {
+        marcarProcessando(true, (m.name || m.id) + ' (' + i + ' de ' + mods.length + ')');
         try { b = aparar(p.buf(b, m.values, m) || b); }
         catch (e) { console.error('módulo ' + m.id + ': ' + e.message); }
       }
       return new Promise(function (r) { setTimeout(r, 0); }).then(passo);
     }
     return passo();
+  }
+
+  /* O TRABALHADOR (js/audiotrab.js) roda a MESMA biblioteca fora da linha
+     principal. Ele não conhece os cinco processadores que moram aqui dentro
+     — reverso, bitcrush, granular da base, gagueira e ruído —, e por isso a
+     corrida é quebrada em pedaços do que ele sabe e do que fica aqui, NA
+     ORDEM: a cadeia é a da pessoa e não pode ser reordenada.
+
+     Se o trabalhador não existir, ou falhar no meio, o pedaço é calculado
+     aqui como sempre foi. Ele acelera; não é dependência.            */
+  function renderTrechoBuf(b, mods) {
+    var T = A.trab;
+    if (!T || !T.podeTentar()) return renderTrechoBufAqui(b, mods);
+    return T.ligar().then(function (ok) {
+      if (!ok) return renderTrechoBufAqui(b, mods);
+      var partes = [], atual = null;
+      mods.forEach(function (m) {
+        var la = T.faz(m.id);
+        if (!atual || atual.la !== la) { atual = { la: la, mods: [] }; partes.push(atual); }
+        atual.mods.push(m);
+      });
+      var passo = Promise.resolve(b);
+      partes.forEach(function (pt) {
+        passo = passo.then(function (cur) {
+          if (!pt.la) return renderTrechoBufAqui(cur, pt.mods);
+          return T.processar(cur, pt.mods, function (a) {
+            marcarProcessando(true, a.nome + ' (' + (a.i + 1) + ' de ' + a.n + ')');
+          }).then(function (r) {
+            if (r.cortou) avisarAparado();
+            (r.erros || []).forEach(function (msg) { console.error('módulo ' + msg); });
+            return r.buffer;
+          }).catch(function (e) {
+            if (e && e.cancelado) throw e;
+            console.error('trabalhador: ' + e.message + ' — este pedaço volta para a linha principal');
+            return renderTrechoBufAqui(cur, pt.mods);
+          });
+        });
+      });
+      return passo;
+    });
   }
 
   /* a cadeia ativa, na ordem do rack, quebrada em trechos de mesmo tipo */
@@ -625,6 +670,8 @@
     }).catch(function (e) {
       rendering = false;
       marcarProcessando(false);
+      /* desistir de um cálculo velho não é falha: é o que se pediu */
+      if (e && e.cancelado) { if (dirty) A.rerender(); return outBuf; }
       console.error(e);
       VE.app.toast('falha ao processar: ' + e.message, 'err');
       return outBuf;
@@ -633,18 +680,28 @@
 
   /* aviso de que a cadeia está sendo calculada. Espectral e granular são
      caros de verdade; sem aviso, a espera parece travamento.          */
-  function marcarProcessando(on) {
+  function marcarProcessando(on, detalhe) {
     var v = $('#viewAudio');
     if (v) v.classList.toggle('processando', !!on);
     var el = $('#auInfo');
     if (!el) return;
-    if (on) { el.dataset.antes = el.textContent; el.textContent = 'PROCESSANDO A CADEIA…'; }
-    else if (el.dataset.antes !== undefined) { el.textContent = el.dataset.antes; delete el.dataset.antes; }
+    if (on) {
+      /* guardar o texto de antes UMA vez: o andamento repinta esta linha a
+         cada módulo, e sem a guarda o "antes" viraria o próprio aviso */
+      if (el.dataset.antes === undefined) el.dataset.antes = el.textContent;
+      el.textContent = detalhe ? ('PROCESSANDO · ' + detalhe) : 'PROCESSANDO A CADEIA…';
+    } else if (el.dataset.antes !== undefined) {
+      el.textContent = el.dataset.antes; delete el.dataset.antes;
+    }
   }
 
   var reTimer = null;
   A.queueRender = function () {
     clearTimeout(reTimer);
+    /* o controle mudou: o que está sendo calculado lá fora já não vale.
+       Sem isto, mexer num trilho durante um ESPECTRAL longo esperaria o
+       cálculo velho terminar para só então começar o novo.          */
+    if (A.trab && A.trab.ocupado()) { dirty = true; A.trab.cancelar(); }
     reTimer = setTimeout(function () {
       var wasPlaying = playing;
       A.rerender().then(function () { if (wasPlaying) { stop(); play(); } });
