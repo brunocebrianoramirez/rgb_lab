@@ -1,6 +1,6 @@
 # rgb_lab — DOSSIÊ DO PROJETO
 
-> Arquivo único de entrada. Gerado por `node dossie.js` em 24/08/2026, 01:20:05.
+> Arquivo único de entrada. Gerado por `node dossie.js` em 24/08/2026, 01:40:17.
 > Contém as **diretrizes**, o **histórico de decisões**, o **manual de uso**, o
 > **motor de cor** e um **inventário lido do código** neste momento.
 >
@@ -26,8 +26,8 @@
 Autoria: Elaborado e criado por Bruno Cebriano Ramirez.
 
 ```
-módulos js .......... 52
-linhas de js ........ 31.435
+módulos js .......... 53
+linhas de js ........ 31.873
 efeitos ............. 144
 famílias de efeito .. 8
 formas de máscara ... 8
@@ -98,27 +98,28 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | 29 | `js/projfile.js` | 214 | rgb_lab — ARQUIVO DE PROJETO Existiam dois jeitos de guardar, e nenhum servia para "salvo aqui, abro amanhã naquela outra máquina": · SALVAR PROJETO (.json)  guarda a EDIÇÃO — cortes, efeitos, máscaras, keyframes, legendas, traçados. Não guarda os vídeos. Abri |
 | 30 | `js/view.js` | 192 | rgb_lab — viewport: zoom, pan, fit O canvas é exibido em pixels do projeto (100% = 1:1) e o palco é transladado/escalado. Vertical 1080×1920 cabe inteiro. |
 | 31 | `js/timeline.js` | 1065 | rgb_lab — LINHA DO TEMPO Uma mesa de edição não linear de verdade: · pistas V / A / FX, cada uma com vários clipes lado a lado · arrastar, mover entre pistas, aparar as bordas (trim) · cortar no cursor, ripple, apagar trecho · camadas de ajuste que alcançam tu |
-| 32 | `js/panels.js` | 1177 | rgb_lab — catálogo de efeitos, ficha técnica (inspetor) e edição da máscara direto na prévia |
+| 32 | `js/panels.js` | 1279 | rgb_lab — catálogo de efeitos, ficha técnica (inspetor) e edição da máscara direto na prévia |
 | 33 | `js/motion.js` | 1094 | rgb_lab — MOTION · CONTROLES DE EFEITO · KEYFRAMES Este é o painel que fica à direita quando um clipe está selecionado. Ele é o equivalente ao "Effect Controls": mostra o clipe inteiro como uma pilha de propriedades animáveis. TEMPO       início, duração, entr |
-| 34 | `js/compui.js` | 923 | rgb_lab — A FICHA DA COMPOSIÇÃO As seções que a coluna da direita ganha quando um clipe de vídeo está selecionado. Elas moram aqui e não em `motion.js` porque motion.js já carrega tempo, movimento, transições, pilha de efeitos, áudio reativo e keyframes — e um |
-| 35 | `js/guia.js` | 595 | rgb_lab — GUIA DE CADA LABORATÓRIO Um tutorial dentro de cada laboratório, escrito para quem nunca abriu um editor na vida. Ele mora numa gaveta que desliza por cima da ferramenta — não é outra página, não tira você de onde estava, e fecha no ESC. COMO ACRESCE |
-| 36 | `js/filters.js` | 561 | rgb_lab — GALERIA DE FILTROS Uma prateleira de emulsões. Cada filtro é um conjunto de valores do efeito `filmstock` — nenhum deles copia curva de produto nenhum: são construídos aqui, com nome e código de arquivo. A galeria mostra MINIATURAS AO VIVO: o quadro  |
-| 37 | `js/exporter.js` | 522 | rgb_lab — exportação tempo real (com áudio) · frame a frame (exato) · sequência PNG (única saída com alpha real) |
-| 38 | `js/audiodsp.js` | 800 | rgb_lab — BIBLIOTECA DE PROCESSAMENTO DE ÁUDIO Funções puras que operam sobre AudioBuffer. Nada aqui desenha, nada aqui conhece a interface: só matemática de sinal. Existe para que os MÓDULOS do rack de áudio (js/audiofx.js) sejam declarações curtas, e para qu |
-| 39 | `js/audio.js` | 1462 | rgb_lab — LABORATÓRIO 02 · ÁUDIO Buffer original → transformações → grafo offline → buffer final O mesmo caminho serve para tocar, exportar e mandar pra timeline. |
-| 40 | `js/audiofx.js` | 873 | rgb_lab — MÓDULOS NOVOS DO RACK DE ÁUDIO Este arquivo NÃO cria um segundo laboratório de áudio. Ele acrescenta módulos ao rack que já existe, pelo mesmo registro que os doze originais usam (`VE.audio.register`), com os mesmos tipos de parâmetro e a mesma rende |
-| 41 | `js/audiovoz.js` | 816 | rgb_lab — A FAMÍLIA VOZ (módulos do MESMO rack de áudio) Este arquivo NÃO cria um segundo laboratório nem um segundo rack. Ele acrescenta uma família ao rack que já existe, pelo mesmo `VE.audio.register` dos vinte e seis anteriores, com os mesmos tipos de parâ |
-| 42 | `js/audiopresets.js` | 133 | rgb_lab — PRESETS ARTÍSTICOS DO RACK DE ÁUDIO Cada preset é uma CADEIA: quais módulos, em que ordem e com que valores. Nenhum deles inventa processamento — todos usam os módulos que existem no rack, e depois de aplicar tudo continua aberto para você mexer. Apa |
-| 43 | `js/audiotrab.js` | 320 | rgb_lab — O TRABALHADOR DO ÁUDIO ESPECTRAL, GRANULAR e a família VOZ custam de 100 a 500 ms por segundo de áudio. Num arquivo de três minutos isso é mais de um minuto de conta — e, feita na linha principal, é um minuto com a aba dura: o aviso PROCESSANDO apare |
-| 44 | `js/reactmap.js` | 145 | rgb_lab — ÁUDIO REATIVO O som do laboratório 02 mexendo na imagem do laboratório 01. Não é um módulo novo nem uma janela: é uma camada de leitura. Um mapeamento diz "grave → escala deste clipe", e o valor é SOMADO à propriedade no momento em que ela é lida (`V |
-| 45 | `js/legendas.js` | 811 | rgb_lab — LEGENDAS COMO OS OUTROS FAZEM, e o que vale a pena copiar: · Premiere — a legenda NÃO é um gráfico. É uma faixa própria (C1), acima do vídeo, e cada legenda é um segmento com entrada, saída e texto. Um ESTILO DE FAIXA vale para todas de uma vez: muda |
-| 46 | `js/tinta.js` | 446 | rgb_lab — TINTA: escrever com a mão As famílias LAB são traço, não contorno — cada glifo é um caminho com comprimento conhecido, e é por isso que a ESCRITA À MÃO existe no laboratório de tipografia: dá para revelar o traço aos poucos. Aqui a ideia é a mesma, c |
-| 47 | `js/tintaui.js` | 261 | rgb_lab — TINTA: a interface, dentro do laboratório de tipografia Mesma separação de comp.js / compui.js: o modelo e o desenho ficam em `tinta.js`, a mão na massa fica aqui. Sem janela nova e sem página nova: o palco que já existe ganha uma folha por cima. Enq |
-| 48 | `js/recorte.js` | 588 | rgb_lab — LETRAS RECORTADAS Aquela mensagem montada com letras cortadas de jornal e revista. A ideia inteira está numa frase: CADA LETRA É UM PEDAÇO DE PAPEL DIFERENTE. Não é uma fonte — é um sorteio por letra, e é por isso que oito "A" seguidos saem oito veze |
-| 49 | `js/recorteui.js` | 374 | rgb_lab — LETRAS RECORTADAS: a interface Vive dentro do laboratório de tipografia, como a tinta: uma folha por cima do palco, uma barra de controles ao lado, e o texto vem do campo que já existe. Nada de página nova. O gesto que manda: CLICAR NUMA LETRA E ARRA |
-| 50 | `js/type.js` | 1155 | rgb_lab — LABORATÓRIO 03 · TIPOGRAFIA Cada letra é um objeto com transformação própria. Ferramentas nomeadas alteram o conjunto; o inspetor abre o detalhe. |
-| 51 | `js/shell.js` | 549 | rgb_lab — casca do sistema entrada em ascii → boot → índice → laboratórios |
-| 52 | `js/app.js` | 979 | rgb_lab — aplicação |
+| 34 | `js/compui.js` | 957 | rgb_lab — A FICHA DA COMPOSIÇÃO As seções que a coluna da direita ganha quando um clipe de vídeo está selecionado. Elas moram aqui e não em `motion.js` porque motion.js já carrega tempo, movimento, transições, pilha de efeitos, áudio reativo e keyframes — e um |
+| 35 | `js/marcar.js` | 302 | rgb_lab — MARCAR OBJETO: a I.A. preenchendo o traçado da caneta O rotoscópio é o trabalho mais chato do laboratório: contornar a mesma coisa quadro a quadro. Isto não substitui o artista — ele continua dono do traçado —, mas tira dele o PRIMEIRO contorno de ca |
+| 36 | `js/guia.js` | 595 | rgb_lab — GUIA DE CADA LABORATÓRIO Um tutorial dentro de cada laboratório, escrito para quem nunca abriu um editor na vida. Ele mora numa gaveta que desliza por cima da ferramenta — não é outra página, não tira você de onde estava, e fecha no ESC. COMO ACRESCE |
+| 37 | `js/filters.js` | 561 | rgb_lab — GALERIA DE FILTROS Uma prateleira de emulsões. Cada filtro é um conjunto de valores do efeito `filmstock` — nenhum deles copia curva de produto nenhum: são construídos aqui, com nome e código de arquivo. A galeria mostra MINIATURAS AO VIVO: o quadro  |
+| 38 | `js/exporter.js` | 522 | rgb_lab — exportação tempo real (com áudio) · frame a frame (exato) · sequência PNG (única saída com alpha real) |
+| 39 | `js/audiodsp.js` | 800 | rgb_lab — BIBLIOTECA DE PROCESSAMENTO DE ÁUDIO Funções puras que operam sobre AudioBuffer. Nada aqui desenha, nada aqui conhece a interface: só matemática de sinal. Existe para que os MÓDULOS do rack de áudio (js/audiofx.js) sejam declarações curtas, e para qu |
+| 40 | `js/audio.js` | 1462 | rgb_lab — LABORATÓRIO 02 · ÁUDIO Buffer original → transformações → grafo offline → buffer final O mesmo caminho serve para tocar, exportar e mandar pra timeline. |
+| 41 | `js/audiofx.js` | 873 | rgb_lab — MÓDULOS NOVOS DO RACK DE ÁUDIO Este arquivo NÃO cria um segundo laboratório de áudio. Ele acrescenta módulos ao rack que já existe, pelo mesmo registro que os doze originais usam (`VE.audio.register`), com os mesmos tipos de parâmetro e a mesma rende |
+| 42 | `js/audiovoz.js` | 816 | rgb_lab — A FAMÍLIA VOZ (módulos do MESMO rack de áudio) Este arquivo NÃO cria um segundo laboratório nem um segundo rack. Ele acrescenta uma família ao rack que já existe, pelo mesmo `VE.audio.register` dos vinte e seis anteriores, com os mesmos tipos de parâ |
+| 43 | `js/audiopresets.js` | 133 | rgb_lab — PRESETS ARTÍSTICOS DO RACK DE ÁUDIO Cada preset é uma CADEIA: quais módulos, em que ordem e com que valores. Nenhum deles inventa processamento — todos usam os módulos que existem no rack, e depois de aplicar tudo continua aberto para você mexer. Apa |
+| 44 | `js/audiotrab.js` | 320 | rgb_lab — O TRABALHADOR DO ÁUDIO ESPECTRAL, GRANULAR e a família VOZ custam de 100 a 500 ms por segundo de áudio. Num arquivo de três minutos isso é mais de um minuto de conta — e, feita na linha principal, é um minuto com a aba dura: o aviso PROCESSANDO apare |
+| 45 | `js/reactmap.js` | 145 | rgb_lab — ÁUDIO REATIVO O som do laboratório 02 mexendo na imagem do laboratório 01. Não é um módulo novo nem uma janela: é uma camada de leitura. Um mapeamento diz "grave → escala deste clipe", e o valor é SOMADO à propriedade no momento em que ela é lida (`V |
+| 46 | `js/legendas.js` | 811 | rgb_lab — LEGENDAS COMO OS OUTROS FAZEM, e o que vale a pena copiar: · Premiere — a legenda NÃO é um gráfico. É uma faixa própria (C1), acima do vídeo, e cada legenda é um segmento com entrada, saída e texto. Um ESTILO DE FAIXA vale para todas de uma vez: muda |
+| 47 | `js/tinta.js` | 446 | rgb_lab — TINTA: escrever com a mão As famílias LAB são traço, não contorno — cada glifo é um caminho com comprimento conhecido, e é por isso que a ESCRITA À MÃO existe no laboratório de tipografia: dá para revelar o traço aos poucos. Aqui a ideia é a mesma, c |
+| 48 | `js/tintaui.js` | 261 | rgb_lab — TINTA: a interface, dentro do laboratório de tipografia Mesma separação de comp.js / compui.js: o modelo e o desenho ficam em `tinta.js`, a mão na massa fica aqui. Sem janela nova e sem página nova: o palco que já existe ganha uma folha por cima. Enq |
+| 49 | `js/recorte.js` | 588 | rgb_lab — LETRAS RECORTADAS Aquela mensagem montada com letras cortadas de jornal e revista. A ideia inteira está numa frase: CADA LETRA É UM PEDAÇO DE PAPEL DIFERENTE. Não é uma fonte — é um sorteio por letra, e é por isso que oito "A" seguidos saem oito veze |
+| 50 | `js/recorteui.js` | 374 | rgb_lab — LETRAS RECORTADAS: a interface Vive dentro do laboratório de tipografia, como a tinta: uma folha por cima do palco, uma barra de controles ao lado, e o texto vem do campo que já existe. Nada de página nova. O gesto que manda: CLICAR NUMA LETRA E ARRA |
+| 51 | `js/type.js` | 1155 | rgb_lab — LABORATÓRIO 03 · TIPOGRAFIA Cada letra é um objeto com transformação própria. Ferramentas nomeadas alteram o conjunto; o inspetor abre o detalhe. |
+| 52 | `js/shell.js` | 549 | rgb_lab — casca do sistema entrada em ascii → boot → índice → laboratórios |
+| 53 | `js/app.js` | 979 | rgb_lab — aplicação |
 
 ### Armadilhas que já custaram caro
 
@@ -151,7 +152,6 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -3653,6 +3653,106 @@ E os 144 efeitos continuam compilando: o PRELUDE mudou para todos eles.
 
 ---
 
+### 5b. MARCAR OBJETO: a I.A. preenchendo o traçado (décima oitava passada)
+
+O último item da lista. A pesquisa da seção 13 já tinha escolhido o caminho —
+`InteractiveSegmenter` do MediaPipe, rodando DENTRO do navegador — e dito como
+ele deveria entrar: **um botão dentro da máscara que já existe**, gerando os
+pontos do traçado. Foi assim que entrou.
+
+#### Um botão, dois trabalhos
+
+```
+traçado VAZIO   → MARCAR OBJETO   o contorno da coisa clicada vira os
+                                  vértices, simplificados até caber em 48
+traçado PRONTO  → SEGUIR          os vértices que já existem encostam no
+                                  contorno deste quadro, sem mudar a
+                                  quantidade nem perder as alças
+```
+
+A quantidade de vértices só é decidida na primeira vez, e isso não é detalhe:
+um traçado que muda de número de pontos no meio da animação **não tem como ser
+interpolado** — os keyframes que existiam viram lixo. Mantendo a contagem, o
+SEGUIR convive com a rotoscopia à mão: marcar, avançar, seguir, corrigir.
+
+#### Como isto NÃO é uma dependência
+
+A biblioteca e o modelo não estão no arquivo único e nunca estarão. São
+buscados na primeira vez que alguém clica no botão (**2,1 s** medidos aqui,
+uma vez por sessão) e, se não der — sem rede, arquivo aberto do disco, CSP que
+barre o CDN —, o botão diz o motivo e o laboratório continua inteiro. Mesma
+regra do trabalhador de áudio: acelera, não sustenta. E o processamento é
+local: **nenhum quadro sai desta máquina**, que era a condição para o caminho
+(a) ser o escolhido.
+
+#### Medido — primeiro sem I.A. nenhuma
+
+Da máscara de bits para baixo é geometria pura, e foi testada com uma máscara
+sintética de círculo, que tem área e perímetro conhecidos:
+
+```
+ilha do círculo R=70 ....... 15.373 px  (esperado 15.394 — 0,1%)
+um respingo solto no canto . NÃO entrou no contorno (a ilha é a do clique)
+contorno ................... 392 pixels de borda
+simplificado ............... 46 pontos, com 1,21% de erro de área
+encostar 4 vértices longe .. todos caíram a raio 70,0 — na borda exata
+```
+
+#### Depois com a I.A. de verdade
+
+```
+carregar a biblioteca ...... 2,1 s (uma vez)
+segmentar um quadro ........ ~1,0 s
+círculo laranja de 110 px .. contorno com 44 pontos, raio médio 109 px,
+                             área 12,5% do quadro (esperado 12,4%)
+```
+
+E o teste que fecha a corrente: o traçado que a I.A. desenhou, usado como
+**recorte de camada**, deixa passar o objeto e corta o fundo —
+**99,8% do objeto preservado e 1,6% de fundo vazando**.
+
+*(Esse número precisou do instrumento consertado antes: a conta dava 43,5% de
+objeto preservado, e o motivo era que a prévia renderiza em 1267×713 enquanto
+o projeto é 1920×1080 — razão de área 0,436. É a terceira vez neste projeto
+que o medidor precisou ser validado antes do código.)*
+
+#### Dois defeitos achados por medida, que passariam despercebidos
+
+**1. A máscara vem INVERTIDA.** O `magic_touch` devolve a categoria do objeto
+em **0** e o fundo em 255 — o contrário do que se espera. Com o limiar
+"maior que o meio", 87,5% do quadro vinha marcado e o ponto clicado vinha
+zero, então o contorno saía da moldura da tela. Em vez de escrever a convenção
+na pedra (que muda com o modelo e com a versão), **o objeto passou a ser
+definido pelo clique**: é a categoria que estiver embaixo do dedo. A
+polaridade se corrige sozinha.
+
+**2. Encostar no ponto mais perto não é seguir.** Com o objeto andando 0,2 da
+largura — mais que o próprio raio —, o traçado inteiro **desabou na borda mais
+próxima**: o centro foi de 0,427 para 0,486 quando o objeto tinha ido para
+0,62. Metade dos vértices achou a beirada de perto e ficou lá. O conserto é o
+que qualquer rastreador faz: **primeiro o grosso, depois o fino** — transladar
+e escalar pelo centro e pelo raio médio, e só então encostar. Medido depois:
+
+```
+objeto foi para 0,62 ................ vértices em 0,623, raio 110
+foi para 0,30/0,62 e cresceu p/ 150 . vértices em 0,304/0,613, raio 150
+objeto parado ....................... não piorou o que já estava certo
+```
+
+#### O que ele NÃO faz
+
+- **Não propaga no tempo.** É por quadro, como a pesquisa já dizia. O
+  rotoscópio continua sendo do artista; a I.A. adianta o primeiro contorno de
+  cada quadro-chave. Propagação temporal seria SAM 2, que é outro tamanho de
+  download e ainda depende de WebGPU (seção 13, caminho b).
+- **Não entra no arquivo único.** Quem exporta o laboratório inteiro leva tudo
+  menos isto.
+- **Não foi visto acertando gente, pelo ou vidro.** Os testes usaram formas
+  sintéticas de contorno conhecido, porque é o que dá para medir. Como ele se
+  sai numa pessoa contra um fundo parecido é olho — e é seu.
+
+---
+
 ### 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3688,8 +3788,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
 7. ~~Alça de Bézier por vértice na máscara de EFEITO~~ — **feito na 5a.** A
    região do efeito aponta para um traçado do clipe e herda as alças, a
    animação por vértice e o editor da caneta. *(seção 5a)*
-8. **Botão SEGUIR na máscara de caneta** — MediaPipe `InteractiveSegmenter`
-   empurrando os vértices do traçado que já existe. *(seção 13)*
+8. ~~Botão SEGUIR na máscara de caneta~~ — **feito na 5b.** MARCAR OBJETO
+   preenche o traçado vazio e SEGUIR encosta os vértices que já existem no
+   contorno do quadro, mantendo a contagem e as alças. *(seção 5b)*
 
 #### Ideias que apareceram e ainda não foram escritas
 
@@ -4258,6 +4359,28 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 
 Dois pontos de partida na galeria de filtros: **VHS 1994** e **FITA RUIM** —
 o segundo é a fita judiada de uma vez só, com o rasgo e os riscos no alto.
+
+#### MARCAR OBJETO — a I.A. desenha o contorno para você
+
+Dentro do painel do traçado há um botão de **I.A.**. Ele faz duas coisas,
+conforme o estado do traçado:
+
+* **traçado vazio → MARCAR OBJETO.** Você clica em cima da coisa na prévia e o
+  contorno dela vira os vértices, já fechados. Dali em diante é traçado normal:
+  arraste os pontos, use SUAVIZAR TUDO para curvar, anime.
+* **traçado pronto → SEGUIR O OBJETO.** Os vértices que já existem andam até o
+  contorno deste quadro, **sem mudar de quantidade e sem perder as alças** — é
+  isso que deixa a rotoscopia à mão e a I.A. conviverem: marque, avance, siga,
+  corrija.
+
+**Roda dentro do seu navegador: nenhum quadro sai da sua máquina.** A
+biblioteca e o modelo são baixados na primeira vez que você usa o botão (uns
+dois segundos, uma vez por sessão) e **não fazem parte do arquivo único** — se
+você abrir o laboratório sem internet, o botão avisa e todo o resto continua
+igual.
+
+Ele é **por quadro**: não adivinha o movimento sozinho. O que ele tira de você
+é o trabalho de desenhar o primeiro contorno de cada quadro-chave.
 
 #### A região de um efeito pode ser um traçado
 

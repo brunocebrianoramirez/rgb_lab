@@ -424,6 +424,93 @@
     return rowNum(pr.k, pr.label, val, pr.min, pr.max, pr.step, true, c);
   }
 
+  /* ------------------------------------------ MARCAR OBJETO (I.A.)
+     O quadro que a I.A. vê é o MESMO que está na tela — copiado do canvas
+     de composição depois de um render forçado, porque um canvas WebGL sem
+     `preserveDrawingBuffer` pode estar vazio fora do laço de desenho.
+
+     O contorno volta em uv da IMAGEM (y para baixo) e é convertido para o
+     espaço da máscara com `daTela`, o mesmo caminho que o arrasto usa —
+     assim o resultado já nasce certo com deslocamento, escala e giro da
+     máscara aplicados.                                                */
+  function quadroParaIA() {
+    var gl = document.getElementById('gl');
+    if (!gl) return null;
+    try { VE.app.renderNow(); } catch (e) { }
+    var c = document.createElement('canvas');
+    c.width = gl.width; c.height = gl.height;
+    try { c.getContext('2d').drawImage(gl, 0, 0); } catch (e) { return null; }
+    return c;
+  }
+
+  P.marcarObjetoEm = function (clip, mi, ux, uy) {
+    var m = (clip.masks || [])[mi];
+    if (!VE.ehCaneta(m)) return;
+    var W = VE.project.canvas.w, H = VE.project.canvas.h;
+    var pre = 'masks.' + mi + '.';
+    var lt = Math.max(0, Math.min(clip.dur, VE.project.time - clip.start));
+    /* o mesmo caminho de volta que o editor usa: referência em 0,5,
+       escala, giro e deslocamento — só que ao contrário */
+    var dx = VE.valueAt(clip, pre + 'x', lt) - 0.5;
+    var dy = VE.valueAt(clip, pre + 'y', lt) - 0.5;
+    var esc = Math.max(0.01, VE.valueAt(clip, pre + 'w', lt));
+    var ang = VE.valueAt(clip, pre + 'ang', lt) * Math.PI / 180;
+    var aspect = W / H;
+    function daTela(px, py) {
+      var qx = (px / W - 0.5 - dx) * aspect, qy = ((1 - py / H) - 0.5 - dy);
+      var c = Math.cos(-ang), s2 = Math.sin(-ang);
+      var rx = qx * c - qy * s2, ry = qx * s2 + qy * c;
+      return { x: rx / (aspect * esc) + 0.5, y: ry / esc + 0.5 };
+    }
+    marcarNoPonto(clip, mi, m, daTela, ux, uy);
+  };
+
+  function marcarNoPonto(clip, mi, m, daTela, ux, uy) {
+    var img = quadroParaIA();
+    if (!img) { VE.app.toast('não achei o quadro na tela', 'err'); return; }
+    var W = VE.project.canvas.w, H = VE.project.canvas.h;
+    var lt = Math.max(0, Math.min(clip.dur, VE.project.time - clip.start));
+    VE.app.toast('procurando o objeto…');
+    VE.marcar.carregar().then(function (ok) {
+      if (!ok) { VE.app.toast('a I.A. não carregou: ' + VE.marcar.motivo(), 'err'); return null; }
+      return VE.marcar.pontosDe(img, ux, uy, VE.MASK_MAX_PTS);
+    }).then(function (r) {
+      if (!r) return;
+      var novos = r.pts.map(function (p) { return daTela(p.x * W, p.y * H); });
+      var linha = r.contorno.map(function (p) { return daTela(p.x * W, p.y * H); });
+      var atuais = (m.pts || []);
+      if (atuais.length < 3) {
+        /* PREENCHER: o traçado nasce inteiro, já fechado */
+        m.pts = novos.map(function (p) { return VE.newMaskPt(p.x, p.y); });
+        m.aberta = 0;
+        VE.app.toast('contorno com ' + m.pts.length + ' pontos — arraste para corrigir, SUAVIZAR TUDO para curvar', 'ok');
+      } else {
+        /* SEGUIR: os vértices que existem encostam no contorno novo. A
+           quantidade não muda, as alças ficam — é o que permite ter
+           keyframe antes e depois disto.                            */
+        var agora = atuais.map(function (p, j) {
+          return { x: VE.valueAt(clip, 'masks.' + mi + '.pts.' + j + '.x', lt),
+                   y: VE.valueAt(clip, 'masks.' + mi + '.pts.' + j + '.y', lt) };
+        });
+        var destino = VE.marcar.encostar(agora, linha);
+        if (!destino) { VE.app.toast('não consegui encostar os vértices', 'err'); return; }
+        if (VE.compui.canetaAnimada(clip, mi)) VE.compui.canetaPose(clip, mi, lt);
+        destino.forEach(function (p, j) {
+          P.setValue(clip, 'masks.' + mi + '.pts.' + j + '.x', p.x);
+          P.setValue(clip, 'masks.' + mi + '.pts.' + j + '.y', p.y);
+        });
+        VE.app.toast(destino.length + ' vértices encostados no objeto deste quadro', 'ok');
+      }
+      VE.compui.marcarArmado = null;
+      VE.pushHistory(); VE.emit('project');
+      P.renderProps(); P.renderMaskOverlay();
+    }).catch(function (e) {
+      VE.compui.marcarArmado = null;
+      P.renderProps(); P.renderMaskOverlay();
+      VE.app.toast('a I.A. não achou objeto aqui: ' + (e && e.message ? e.message : e), 'err');
+    });
+  }
+
   /* ---------- escrita de valores ----------
      Se a propriedade está animada e o cursor está dentro do clipe, escrever
      um valor CRIA/ATUALIZA um keyframe — exatamente como no Premiere.     */
@@ -865,6 +952,21 @@
   function bindCaneta(svg, clip, mi, daTela, m) {
     var pre = 'masks.' + mi + '.pts.';
     var arrasto = null;
+
+    /* ---------------- MARCAR OBJETO (I.A.) ----------------
+       Armado, o próximo clique na prévia não põe vértice nem arrasta: ele
+       vai para o segmentador. Por isso o ouvinte é de CAPTURA — ele chega
+       antes dos outros e engole o evento.                            */
+    var arm = VE.compui.marcarArmado;
+    if (VE.marcar && arm && arm.clipId === clip.id && arm.mi === mi) {
+      svg.addEventListener('pointerdown', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var r = svg.getBoundingClientRect();
+        var ux = (e.clientX - r.left) / r.width, uy = (e.clientY - r.top) / r.height;
+        marcarNoPonto(clip, mi, m, daTela, ux, uy);
+      }, true);
+    }
+    
     function pos(e) {
       var r = svg.getBoundingClientRect();
       var W = VE.project.canvas.w, H = VE.project.canvas.h;

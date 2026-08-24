@@ -13,7 +13,6 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -3515,6 +3514,106 @@ E os 144 efeitos continuam compilando: o PRELUDE mudou para todos eles.
 
 ---
 
+## 5b. MARCAR OBJETO: a I.A. preenchendo o traçado (décima oitava passada)
+
+O último item da lista. A pesquisa da seção 13 já tinha escolhido o caminho —
+`InteractiveSegmenter` do MediaPipe, rodando DENTRO do navegador — e dito como
+ele deveria entrar: **um botão dentro da máscara que já existe**, gerando os
+pontos do traçado. Foi assim que entrou.
+
+### Um botão, dois trabalhos
+
+```
+traçado VAZIO   → MARCAR OBJETO   o contorno da coisa clicada vira os
+                                  vértices, simplificados até caber em 48
+traçado PRONTO  → SEGUIR          os vértices que já existem encostam no
+                                  contorno deste quadro, sem mudar a
+                                  quantidade nem perder as alças
+```
+
+A quantidade de vértices só é decidida na primeira vez, e isso não é detalhe:
+um traçado que muda de número de pontos no meio da animação **não tem como ser
+interpolado** — os keyframes que existiam viram lixo. Mantendo a contagem, o
+SEGUIR convive com a rotoscopia à mão: marcar, avançar, seguir, corrigir.
+
+### Como isto NÃO é uma dependência
+
+A biblioteca e o modelo não estão no arquivo único e nunca estarão. São
+buscados na primeira vez que alguém clica no botão (**2,1 s** medidos aqui,
+uma vez por sessão) e, se não der — sem rede, arquivo aberto do disco, CSP que
+barre o CDN —, o botão diz o motivo e o laboratório continua inteiro. Mesma
+regra do trabalhador de áudio: acelera, não sustenta. E o processamento é
+local: **nenhum quadro sai desta máquina**, que era a condição para o caminho
+(a) ser o escolhido.
+
+### Medido — primeiro sem I.A. nenhuma
+
+Da máscara de bits para baixo é geometria pura, e foi testada com uma máscara
+sintética de círculo, que tem área e perímetro conhecidos:
+
+```
+ilha do círculo R=70 ....... 15.373 px  (esperado 15.394 — 0,1%)
+um respingo solto no canto . NÃO entrou no contorno (a ilha é a do clique)
+contorno ................... 392 pixels de borda
+simplificado ............... 46 pontos, com 1,21% de erro de área
+encostar 4 vértices longe .. todos caíram a raio 70,0 — na borda exata
+```
+
+### Depois com a I.A. de verdade
+
+```
+carregar a biblioteca ...... 2,1 s (uma vez)
+segmentar um quadro ........ ~1,0 s
+círculo laranja de 110 px .. contorno com 44 pontos, raio médio 109 px,
+                             área 12,5% do quadro (esperado 12,4%)
+```
+
+E o teste que fecha a corrente: o traçado que a I.A. desenhou, usado como
+**recorte de camada**, deixa passar o objeto e corta o fundo —
+**99,8% do objeto preservado e 1,6% de fundo vazando**.
+
+*(Esse número precisou do instrumento consertado antes: a conta dava 43,5% de
+objeto preservado, e o motivo era que a prévia renderiza em 1267×713 enquanto
+o projeto é 1920×1080 — razão de área 0,436. É a terceira vez neste projeto
+que o medidor precisou ser validado antes do código.)*
+
+### Dois defeitos achados por medida, que passariam despercebidos
+
+**1. A máscara vem INVERTIDA.** O `magic_touch` devolve a categoria do objeto
+em **0** e o fundo em 255 — o contrário do que se espera. Com o limiar
+"maior que o meio", 87,5% do quadro vinha marcado e o ponto clicado vinha
+zero, então o contorno saía da moldura da tela. Em vez de escrever a convenção
+na pedra (que muda com o modelo e com a versão), **o objeto passou a ser
+definido pelo clique**: é a categoria que estiver embaixo do dedo. A
+polaridade se corrige sozinha.
+
+**2. Encostar no ponto mais perto não é seguir.** Com o objeto andando 0,2 da
+largura — mais que o próprio raio —, o traçado inteiro **desabou na borda mais
+próxima**: o centro foi de 0,427 para 0,486 quando o objeto tinha ido para
+0,62. Metade dos vértices achou a beirada de perto e ficou lá. O conserto é o
+que qualquer rastreador faz: **primeiro o grosso, depois o fino** — transladar
+e escalar pelo centro e pelo raio médio, e só então encostar. Medido depois:
+
+```
+objeto foi para 0,62 ................ vértices em 0,623, raio 110
+foi para 0,30/0,62 e cresceu p/ 150 . vértices em 0,304/0,613, raio 150
+objeto parado ....................... não piorou o que já estava certo
+```
+
+### O que ele NÃO faz
+
+- **Não propaga no tempo.** É por quadro, como a pesquisa já dizia. O
+  rotoscópio continua sendo do artista; a I.A. adianta o primeiro contorno de
+  cada quadro-chave. Propagação temporal seria SAM 2, que é outro tamanho de
+  download e ainda depende de WebGPU (seção 13, caminho b).
+- **Não entra no arquivo único.** Quem exporta o laboratório inteiro leva tudo
+  menos isto.
+- **Não foi visto acertando gente, pelo ou vidro.** Os testes usaram formas
+  sintéticas de contorno conhecido, porque é o que dá para medir. Como ele se
+  sai numa pessoa contra um fundo parecido é olho — e é seu.
+
+---
+
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3550,8 +3649,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
 7. ~~Alça de Bézier por vértice na máscara de EFEITO~~ — **feito na 5a.** A
    região do efeito aponta para um traçado do clipe e herda as alças, a
    animação por vértice e o editor da caneta. *(seção 5a)*
-8. **Botão SEGUIR na máscara de caneta** — MediaPipe `InteractiveSegmenter`
-   empurrando os vértices do traçado que já existe. *(seção 13)*
+8. ~~Botão SEGUIR na máscara de caneta~~ — **feito na 5b.** MARCAR OBJETO
+   preenche o traçado vazio e SEGUIR encosta os vértices que já existem no
+   contorno do quadro, mantendo a contagem e as alças. *(seção 5b)*
 
 ### Ideias que apareceram e ainda não foram escritas
 

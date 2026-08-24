@@ -525,6 +525,28 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 Dois pontos de partida na galeria de filtros: **VHS 1994** e **FITA RUIM** —
 o segundo é a fita judiada de uma vez só, com o rasgo e os riscos no alto.
 
+### MARCAR OBJETO — a I.A. desenha o contorno para você
+
+Dentro do painel do traçado há um botão de **I.A.**. Ele faz duas coisas,
+conforme o estado do traçado:
+
+* **traçado vazio → MARCAR OBJETO.** Você clica em cima da coisa na prévia e o
+  contorno dela vira os vértices, já fechados. Dali em diante é traçado normal:
+  arraste os pontos, use SUAVIZAR TUDO para curvar, anime.
+* **traçado pronto → SEGUIR O OBJETO.** Os vértices que já existem andam até o
+  contorno deste quadro, **sem mudar de quantidade e sem perder as alças** — é
+  isso que deixa a rotoscopia à mão e a I.A. conviverem: marque, avance, siga,
+  corrija.
+
+**Roda dentro do seu navegador: nenhum quadro sai da sua máquina.** A
+biblioteca e o modelo são baixados na primeira vez que você usa o botão (uns
+dois segundos, uma vez por sessão) e **não fazem parte do arquivo único** — se
+você abrir o laboratório sem internet, o botão avisa e todo o resto continua
+igual.
+
+Ele é **por quadro**: não adivinha o movimento sozinho. O que ele tira de você
+é o trabalho de desenhar o primeiro contorno de cada quadro-chave.
+
 ### A região de um efeito pode ser um traçado
 
 Todo efeito tem uma **REGIÃO**: onde ele acontece. Além de retângulo, elipse e

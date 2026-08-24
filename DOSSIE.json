@@ -1,6 +1,6 @@
 {
   "projeto": "rgb_lab",
-  "gerado": "2026-08-24T04:20:05.778Z",
+  "gerado": "2026-08-24T04:40:17.086Z",
   "descricao": "Laboratório audiovisual experimental em HTML/CSS/JS puro (WebGL2 + Web Audio), sem dependências e sem servidor. Três mesas: vídeo, áudio, tipografia.",
   "autoria": "Elaborado e criado por Bruno Cebriano Ramirez",
   "laboratorios": [
@@ -14,8 +14,8 @@
     "vermelho": "tipografia"
   },
   "contagens": {
-    "modulosJs": 52,
-    "linhasJs": 31435,
+    "modulosJs": 53,
+    "linhasJs": 31873,
     "efeitos": 144,
     "familias": 8,
     "conjuntosDeEmoji": 8,
@@ -1266,7 +1266,7 @@
     },
     {
       "arquivo": "js/panels.js",
-      "linhas": 1177,
+      "linhas": 1279,
       "resumo": "rgb_lab — catálogo de efeitos, ficha técnica (inspetor) e edição da máscara direto na prévia"
     },
     {
@@ -1276,8 +1276,13 @@
     },
     {
       "arquivo": "js/compui.js",
-      "linhas": 923,
+      "linhas": 957,
       "resumo": "rgb_lab — A FICHA DA COMPOSIÇÃO As seções que a coluna da direita ganha quando um clipe de vídeo está selecionado. Elas moram aqui e não em `motion.js` porque motion.js já carrega tempo, movimento, transições, pilha de efeitos, áudio reativo e keyframes — e um"
+    },
+    {
+      "arquivo": "js/marcar.js",
+      "linhas": 302,
+      "resumo": "rgb_lab — MARCAR OBJETO: a I.A. preenchendo o traçado da caneta O rotoscópio é o trabalho mais chato do laboratório: contornar a mesma coisa quadro a quadro. Isto não substitui o artista — ele continua dono do traçado —, mas tira dele o PRIMEIRO contorno de ca"
     },
     {
       "arquivo": "js/guia.js",

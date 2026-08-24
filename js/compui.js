@@ -410,6 +410,22 @@
       '<button class="cmd cmd-sm" data-mcaneta="reto:' + mi + '" title="Volta a cantos vivos">RETO</button>' +
       '</div>';
 
+    /* ---------------- MARCAR OBJETO: a I.A. preenche o traçado ------
+       Um botão, dois trabalhos, decididos pelo estado: traçado vazio é
+       PREENCHER, traçado pronto é SEGUIR — encostar os vértices que já
+       existem no contorno deste quadro, sem mudar a quantidade nem
+       perder as alças, que é o que mantém os keyframes de pé.       */
+    var iaArmado = C.marcarArmado && C.marcarArmado.clipId === clip.id && C.marcarArmado.mi === mi;
+    var iaEstado = VE.marcar ? VE.marcar.estado() : 'sem';
+    h += '<div class="pbtns">' +
+      '<button class="cmd cmd-sm' + (iaArmado ? ' active cmd-solid' : '') + '" data-mcaneta="ia:' + mi + '"' +
+      ' title="Clique no objeto na prévia e a I.A. desenha o contorno dele. Roda dentro do navegador: nenhum quadro sai daqui.">' +
+      (iaArmado ? 'CLIQUE NO OBJETO…' : (pts.length >= 3 ? 'SEGUIR O OBJETO (I.A.)' : 'MARCAR OBJETO (I.A.)')) +
+      '</button></div>';
+    if (iaEstado === 'carregando') h += '<div class="pnote">buscando o modelo da I.A. — alguns megabytes, só desta vez</div>';
+    else if (iaEstado === 'sem') h += '<div class="pnote">a I.A. não está disponível: ' + (VE.marcar ? VE.marcar.motivo() : '') + ' — o traçado à mão continua igual</div>';
+    else if (iaArmado) h += '<div class="pnote">clique em cima da coisa que você quer contornar · Esc desarma</div>';
+
     /* ---------------- CAMINHO DO TRAÇADO: um cronômetro só ---------- */
     var anim = C.canetaAnimada(clip, mi);
     var tempos = anim ? C.canetaTempos(clip, mi) : [];
@@ -802,6 +818,24 @@
           VE.app.toast(a[0] === 'reta'
             ? 'movimento reto entre as poses — o recorte acompanha em velocidade constante'
             : 'movimento suave entre as poses — acelera e desacelera em cada uma', 'ok');
+          return;
+        }
+        if (a[0] === 'ia') {
+          if (!VE.marcar) { VE.app.toast('a I.A. não está neste build', 'err'); return; }
+          if (C.marcarArmado && C.marcarArmado.mi === mi) {
+            C.marcarArmado = null;
+            VE.panels.renderProps(); VE.panels.renderMaskOverlay();
+            return;
+          }
+          C.marcarArmado = { clipId: clip.id, mi: mi };
+          C.canetaEdit = { clipId: clip.id, mi: mi };   /* precisa da prévia ligada */
+          VE.panels.renderProps(); VE.panels.renderMaskOverlay();
+          VE.marcar.carregar().then(function (ok) {
+            VE.panels.renderProps();
+            VE.app.toast(ok
+              ? 'clique em cima do objeto na prévia'
+              : 'a I.A. não carregou: ' + VE.marcar.motivo(), ok ? 'ok' : 'err');
+          });
           return;
         }
         if (a[0] === 'seltodos') { C.canetaSelTodos(clip, mi); VE.panels.renderProps(); VE.panels.renderMaskOverlay(); return; }
