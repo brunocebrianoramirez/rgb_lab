@@ -1,12 +1,25 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **23/08/2026** (décima quarta passada).
+> Documento de continuidade. Última sessão: **24/08/2026** (décima oitava passada).
 > O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi decidido,
 > o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
+
+**A LISTA ACABOU.** Sobrou um item, e ele é uma DECISÃO sua (o `D.tom`), mais
+o que só pode ser feito olhando e ouvindo. O combinado é este: **o Bruno vai
+testar tudo, anotar os erros, e a próxima sessão começa pela lista dele** —
+um por um, na ordem que ele trouxer.
+
+**Enquanto a lista dele não chega, o que vale a pena é ISTO, nesta ordem:**
+
+1. Nada do que foi entregue de 22 a 24/08 foi VISTO ou OUVIDO por mim. Se
+   ele trouxer um defeito, o primeiro passo é reproduzi-lo com uma medida —
+   quase todos os bugs graves deste projeto ficaram invisíveis até virar número.
+2. Não abrir frente nova sem pedido. As seções 7 e 14 têm ideias antigas;
+   nenhuma delas foi pedida por ele.
 
 A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 
@@ -1034,9 +1047,46 @@ Tudo abaixo foi medido no navegador, com leitura de pixel ou de geometria — n�
 
 ## 6. NÃO verificado (fica pra você testar)
 
-- **Aparência montada.** O painel de navegador destas sessões não compõe
-  quadros: nenhum screenshot foi possível do meu lado. Toda a auditoria é
-  geométrica (medir elementos) e por pixel lido do WebGL.
+### O QUE ESTÁ ESPERANDO O TESTE DELE — 22 a 24/08/2026
+
+Sete entregas seguidas, todas MEDIDAS e nenhuma julgada por olho ou ouvido.
+Ele disse que vai testar tudo e anotar os erros; a próxima sessão começa por
+essa lista. Isto aqui é o roteiro do que olhar, e o que cada coisa pode ter de
+errado que a medida não pegaria:
+
+| onde | o que abrir | o que pode estar errado sem a medida acusar |
+|---|---|---|
+| **LAB 03 · letras recortadas** | estilo **LISO** e **CAOS LISO**, com Troca e Treme em taxas diferentes | o deslizar pode parecer manteiga; 12 passos/s pode continuar sendo o certo |
+| **LAB 01 · VHS** | o padrão novo e o estilo **FITA RUIM**, RODANDO | fita é tempo: dente, tracking e cintilação só se julgam em movimento |
+| **LAB 01 · região do efeito** | REGIÃO → **TRAÇADO** num efeito, com o traçado animado | se o recorte acompanha uma coisa que anda é olho |
+| **LAB 01 · MARCAR OBJETO** | a I.A. em **pele, pelo, vidro e fundo parecido** | os testes usaram formas sintéticas; material real é outra história |
+| **LAB 02 · família VOZ** | OUVIR os sete módulos com voz gravada no microfone | tudo foi medido por espectro, nada foi ouvido |
+| **LAB 02 · TELEFONE e RÁDIO** | ouvir depois do biquad — a banda mudou de verdade | pode ter ficado apertado demais |
+| **LAB 02 · cadeia pesada** | um arquivo de três minutos com ESPECTRAL ou VOZ | a aba tem de continuar respondendo; o aviso diz qual módulo está rodando |
+
+**Como trazer um defeito de forma que ele conserte rápido:** dizer **onde**
+(qual laboratório, qual controle), **o que se vê ou se ouve**, e se possível o
+**valor dos controles**. Print ajuda muito. Arquivo exportado ajuda ainda mais
+— com o PNG ou o WAV na mão dá para medir o defeito em vez de adivinhá-lo.
+
+
+
+- **Aparência montada.** Durante muitas passadas isto ficou escrito como
+  "impossível", e em 24/08/2026 descobriu-se que é **condicional**: o painel
+  do navegador só compõe quadros quando ele está **EXIBIDO na janela do app**.
+  Com o painel escondido, `screenshot` estoura o tempo com a mensagem
+  *"the Browser pane is not displayed"*, `getBoundingClientRect` devolve zero
+  e um canvas WebGL lido de fora do laço volta vazio. Com o painel aberto pelo
+  Bruno, tudo isso passou a funcionar — foi assim que deu para comparar o
+  nosso VHS com o da referência lado a lado, e foi VENDO que apareceram os
+  dois erros de desenho que medida nenhuma tinha pegado (seção 4y).
+
+  **Então: se precisar ver, PEÇA A ELE PARA ABRIR O PAINEL.** É um pedido de
+  dez segundos que transforma o que dá para verificar.
+
+  Quando o painel está fechado, a auditoria continua sendo geométrica (medir
+  elementos) e por pixel lido do WebGL — e uma folha de contato salva em
+  arquivo é sempre possível, porque ela não depende de composição.
 
   **O Bruno já abriu e olhou** — e valeu: foi assim que apareceram a sobreposição
   na coluna do LAB 01, o transbordo da coluna do LAB 03 e os três bugs do P&B.
