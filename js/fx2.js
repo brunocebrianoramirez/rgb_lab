@@ -732,10 +732,19 @@
       id: 'vhs94', name: 'VHS 1994', desc: 'fita gasta, cor sangrando e tracking',
       fx: [
         ['color', { con: 0.15, sat: 0.35, gam: 1.05 }],
-        ['vhs', { res: 200, bleed: 1.1, track: 0.45, wob: 0.9, noise: 0.16, scan: 0.35,
-                  cdelay: 8, fring: 0.9, crease: 0.6, drop: 0.7, head: 0.8, gen: 0.8,
-                  sharp: 0.5, soft: 0.9, tbe: 0.8 }],
+        ['vhs', { res: 200, bleed: 1.2, track: 0.5, wob: 0.9, noise: 0.18, scan: 0.25,
+                  cdelay: 9, fring: 1.1, crease: 0.6, drop: 0.9, head: 0.9, gen: 0.9,
+                  sharp: 0.5, soft: 1.2, tbe: 1.0, tear: 1.1, smear: 0.7 }],
         ['vignette', { size: 0.42, int: 0.6 }]
+      ]
+    },
+    {
+      id: 'fitaruim', name: 'Fita ruim', desc: 'a fita judiada: borda rasgada, cor escorrendo e riscos',
+      fx: [
+        ['vhs', { res: 170, soft: 1.8, sharp: 0.3, smear: 1.1, cdelay: 11, bleed: 1.6,
+                  fring: 1.6, cshift: 0.06, sat: 0.8, wob: 1.4, tbe: 1.6, tear: 1.6,
+                  vjump: 0.08, crease: 0.9, track: 1.0, head: 1.2, drop: 1.3,
+                  noise: 0.26, flick: 0.1, scan: 0.1, gen: 1.6 }]
       ]
     },
     {

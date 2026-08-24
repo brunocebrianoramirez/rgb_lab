@@ -31,9 +31,10 @@ por quadro para zero nos quadros parados, com a saída idêntica byte a byte. De
 quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo dele
 promete.
 
-**E o VHS foi reconstruído pela cadeia de sinal (4y):** vinte controles, três
-passadas, YIQ entre elas, cada artefato medido por leitura de pixel — e os sete
-parâmetros antigos com as mesmas chaves.
+**E o VHS foi reconstruído pela cadeia de sinal (4y):** vinte e dois controles,
+três passadas, YIQ entre elas, tudo em unidades de FITA (720×480) e não de tela
+— com borda rasgada e rabo de luz. Os sete parâmetros antigos ficaram com as
+mesmas chaves.
 
 **E o áudio pesado saiu da linha principal (4x):** os vinte módulos de buffer
 rodam num Worker montado com o texto da própria biblioteca — som idêntico
@@ -3180,18 +3181,92 @@ dava 0,18 ms — com o painel escondido a chamada volta sem esperar nada. Só
 com `readPixels` os números viraram físicos. É a terceira vez neste projeto
 que o medidor precisou ser validado antes do código.
 
-### O que NÃO foi feito
+### SEGUNDA VOLTA: por que não estava igual à referência
 
-- **O rabo de luz (streaking)** — o borrão claro que um objeto brilhante
-  deixa à direita, do amplificador da cabeça. É o artefato mais reconhecível
-  que ficou de fora: não está na lista da §14 nem entre os dezesseis
-  controles da referência, e entraria como o vigésimo primeiro controle.
-  Se for pedido, o lugar é a passada 2, com seis amostras à esquerda e peso
-  exponencial.
+O Bruno olhou e disse que não tinha ficado igual ao site que ele mandou. Ele
+estava certo, e a causa principal é um erro de projeto meu:
+
+**Os controles estavam em pixels de TELA, não em unidades de FITA.** "Atraso
+da cor = 6 px" é 1,9% da largura numa prévia de 320 e 0,3% num quadro de
+1920 — ou seja, o MESMO ajuste dava fitas diferentes conforme o tamanho do
+projeto, e a folha de contato que eu mostrei (480 de largura) era quatro a
+cinco vezes mais forte do que o que ele via na timeline em 1080p.
+
+Uma fita não sabe quantos pixels você tem. A régua agora é a fita:
+
+```
+720 amostras por linha  ·  480 linhas
+```
+
+O atraso da cor, o realce do deck, a suavidade, o tamanho do grão, o
+comprimento dos riscos e a listra de varredura são frações DISSO. Medido com
+o mesmo ajuste em três tamanhos, perguntando em que porcentagem da largura a
+cor cai:
+
+```
+ 320×240 ....... 2,5 %
+ 960×720 ....... 2,5 %
+1920×1080 ...... 2,5 %      antes: 1,9 % · 0,6 % · 0,3 %
+```
+
+**E faltavam dois artefatos que aparecem nas capturas dele:**
+
+1. **A BORDA RASGADA.** A linha empurrada para fora do quadro mostrava a
+   imagem grampeada na beirada; numa fita ela mostra a BEIRA DA FITA, que é
+   preta com sujeira de cor — o dente irregular magenta e laranja nos dois
+   lados. É o detalhe que mais entrega o formato, e é o que dominava as
+   capturas da referência. O desenho do dente vem de uma cauda de lei de
+   potência no erro de base de tempo: quase toda linha anda pouco (a imagem
+   parece firme) e uma em cada dez vai muito longe.
+
+   ```
+   BORDA RASGADA · num quadro de 400 px, com o erro de base em 1,2
+     rasgo 0 ....... 0 linhas com dente
+     rasgo 0,5 ... 108 linhas · dente médio 7,9 px · maior 27 px
+     rasgo 1 ..... 126 linhas · 9,8 px · maior 37 px
+     rasgo 1,5 ... 127 linhas · 12,4 px · maior 46 px
+     rasgo 2 ..... 130 linhas · 14,8 px · maior 56 px
+   ```
+
+   *(De 1 para cima o trilho não fazia nada na primeira tentativa — a
+   mistura já saturava. Medido, corrigido: agora o rasgo também morde mais
+   fundo. Controle que aparece e não faz é a armadilha desta casa.)*
+
+2. **O RABO DE LUZ.** O amplificador da cabeça não acompanha o degrau e
+   arrasta o que passou para a direita. É assimétrico de propósito — seis
+   amostras, só para trás, com peso exponencial:
+
+   ```
+   RABO DE LUZ · soma da luz ao lado de uma faixa branca
+     rabo 0 ...... 0 à direita · 0 à esquerda
+     rabo 0,6 .... 97 à direita · 0 à esquerda
+     rabo 2 ..... 658 à direita · 0 à esquerda
+   ```
+
+**E a perda de fita estava rala demais.** Nas capturas dele há dezenas de
+riscos claros por quadro; o nosso dava um. A conta agora é por LINHA DE FITA:
+
+```
+perda 0 → 0 riscos · perda 0,8 → 14 · perda 2 → 31
+```
+
+**Os padrões subiram.** O efeito nasce com resolução 215, suavidade 1,5,
+rabo 0,6, atraso 8, franja 1, rasgo 1 e geração 0,4 — a fita já é fita ao
+arrastar para o clipe, sem precisar mexer em nada. E entrou o estilo
+**FITA RUIM** na galeria, que é a versão judiada de uma vez só.
+
+**O que ainda não é igual, e é honesto dizer:** eu não vejo a tela deles.
+O painel destas sessões não compõe quadros — comparo pelas capturas que ele
+manda e pelas causas físicas, não lado a lado. Se sobrar diferença, é
+olhando que se acha.
+
+### O que NÃO foi feito
 - **Nada foi VISTO em movimento por mim.** As medidas provam que cada
-  controle faz o que promete; a folha de contato mostra quatro quadros
-  parados. Fita é tempo — o julgamento de como isso se comporta rodando é
-  seu.
+  controle faz o que promete; a folha de contato mostra quadros parados.
+  Fita é tempo — o julgamento de como isso se comporta rodando é seu.
+- **A faixa colorida no topo** que aparece numa das capturas da referência.
+  Aqui o vinco e o tracking passeiam pela altura em vez de morar no topo;
+  se ele quiser a faixa fixa lá, é uma linha em `vhsVinco`.
 - **A imagem com alfa não acompanha a mecânica.** O deslocamento move a cor,
   não o alfa, como já era no efeito antigo.
 

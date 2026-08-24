@@ -1,6 +1,6 @@
 # rgb_lab — DOSSIÊ DO PROJETO
 
-> Arquivo único de entrada. Gerado por `node dossie.js` em 23/08/2026, 21:57:44.
+> Arquivo único de entrada. Gerado por `node dossie.js` em 23/08/2026, 22:49:37.
 > Contém as **diretrizes**, o **histórico de decisões**, o **manual de uso**, o
 > **motor de cor** e um **inventário lido do código** neste momento.
 >
@@ -27,7 +27,7 @@ Autoria: Elaborado e criado por Bruno Cebriano Ramirez.
 
 ```
 módulos js .......... 52
-linhas de js ........ 31.091
+linhas de js ........ 31.148
 efeitos ............. 144
 famílias de efeito .. 8
 formas de máscara ... 8
@@ -68,8 +68,8 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | # | arquivo | linhas | o que faz |
 |---|---|---|---|
 | 01 | `js/brand.js` | 16 | rgb_lab — identidade A marca em si é um PNG embutido em css/system.css (.brandmark), preto sobre transparência, invertido no modo noturno. Aqui ficam só o nome e as etiquetas usadas em texto e arquivos. |
-| 02 | `js/fx.js` | 880 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
-| 03 | `js/fx2.js` | 853 | rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art) |
+| 02 | `js/fx.js` | 928 | rgb_lab — registro de efeitos (parte 1: base, cor e luz) Cada efeito é um fragment shader que implementa vec3 fx(vec2 uv). O framework cuida de: máscara (região), intensidade e fades. |
+| 03 | `js/fx2.js` | 862 | rgb_lab — registro de efeitos (parte 2: distorção, glitch, movimento e ASCII art) |
 | 04 | `js/fx3.js` | 409 | rgb_lab — efeitos parte 3 Transparência (alpha), tinta sobre papel, trama e sistemas de imagem. Efeitos marcados com alpha:true implementam vec4 fx4(vec2 uv) e podem alterar o canal alpha. |
 | 05 | `js/fx4.js` | 846 | rgb_lab — efeitos parte 4 Família construída a partir das referências da pasta EFEITOS: brinquedo, gravura, cianotipia, fotocópia, paleta retrô, pintura, brilho anamórfico, monocromo neon, tv 80, fumaça, desfoques e arte generativa. |
 | 06 | `js/fx5.js` | 493 | rgb_lab — PELÍCULA O pacote de câmera antiga: a JANELA (o formato do quadro, com o canto arredondado que a chapa deixa), os VAZAMENTOS DE LUZ, o FLASH de começo de rolo, o GRÃO por bitola, a SUJEIRA e o TREMOR DA JANELA. Nota honesta sobre bitolas: 32mm não ex |
@@ -169,9 +169,10 @@ por quadro para zero nos quadros parados, com a saída idêntica byte a byte. De
 quebra, o PULSO, que era o CAOS com outro nome, virou o que o rótulo dele
 promete.
 
-**E o VHS foi reconstruído pela cadeia de sinal (4y):** vinte controles, três
-passadas, YIQ entre elas, cada artefato medido por leitura de pixel — e os sete
-parâmetros antigos com as mesmas chaves.
+**E o VHS foi reconstruído pela cadeia de sinal (4y):** vinte e dois controles,
+três passadas, YIQ entre elas, tudo em unidades de FITA (720×480) e não de tela
+— com borda rasgada e rabo de luz. Os sete parâmetros antigos ficaram com as
+mesmas chaves.
 
 **E o áudio pesado saiu da linha principal (4x):** os vinte módulos de buffer
 rodam num Worker montado com o texto da própria biblioteca — som idêntico
@@ -3318,18 +3319,92 @@ dava 0,18 ms — com o painel escondido a chamada volta sem esperar nada. Só
 com `readPixels` os números viraram físicos. É a terceira vez neste projeto
 que o medidor precisou ser validado antes do código.
 
-#### O que NÃO foi feito
+#### SEGUNDA VOLTA: por que não estava igual à referência
 
-- **O rabo de luz (streaking)** — o borrão claro que um objeto brilhante
-  deixa à direita, do amplificador da cabeça. É o artefato mais reconhecível
-  que ficou de fora: não está na lista da §14 nem entre os dezesseis
-  controles da referência, e entraria como o vigésimo primeiro controle.
-  Se for pedido, o lugar é a passada 2, com seis amostras à esquerda e peso
-  exponencial.
+O Bruno olhou e disse que não tinha ficado igual ao site que ele mandou. Ele
+estava certo, e a causa principal é um erro de projeto meu:
+
+**Os controles estavam em pixels de TELA, não em unidades de FITA.** "Atraso
+da cor = 6 px" é 1,9% da largura numa prévia de 320 e 0,3% num quadro de
+1920 — ou seja, o MESMO ajuste dava fitas diferentes conforme o tamanho do
+projeto, e a folha de contato que eu mostrei (480 de largura) era quatro a
+cinco vezes mais forte do que o que ele via na timeline em 1080p.
+
+Uma fita não sabe quantos pixels você tem. A régua agora é a fita:
+
+```
+720 amostras por linha  ·  480 linhas
+```
+
+O atraso da cor, o realce do deck, a suavidade, o tamanho do grão, o
+comprimento dos riscos e a listra de varredura são frações DISSO. Medido com
+o mesmo ajuste em três tamanhos, perguntando em que porcentagem da largura a
+cor cai:
+
+```
+ 320×240 ....... 2,5 %
+ 960×720 ....... 2,5 %
+1920×1080 ...... 2,5 %      antes: 1,9 % · 0,6 % · 0,3 %
+```
+
+**E faltavam dois artefatos que aparecem nas capturas dele:**
+
+1. **A BORDA RASGADA.** A linha empurrada para fora do quadro mostrava a
+   imagem grampeada na beirada; numa fita ela mostra a BEIRA DA FITA, que é
+   preta com sujeira de cor — o dente irregular magenta e laranja nos dois
+   lados. É o detalhe que mais entrega o formato, e é o que dominava as
+   capturas da referência. O desenho do dente vem de uma cauda de lei de
+   potência no erro de base de tempo: quase toda linha anda pouco (a imagem
+   parece firme) e uma em cada dez vai muito longe.
+
+   ```
+   BORDA RASGADA · num quadro de 400 px, com o erro de base em 1,2
+     rasgo 0 ....... 0 linhas com dente
+     rasgo 0,5 ... 108 linhas · dente médio 7,9 px · maior 27 px
+     rasgo 1 ..... 126 linhas · 9,8 px · maior 37 px
+     rasgo 1,5 ... 127 linhas · 12,4 px · maior 46 px
+     rasgo 2 ..... 130 linhas · 14,8 px · maior 56 px
+   ```
+
+   *(De 1 para cima o trilho não fazia nada na primeira tentativa — a
+   mistura já saturava. Medido, corrigido: agora o rasgo também morde mais
+   fundo. Controle que aparece e não faz é a armadilha desta casa.)*
+
+2. **O RABO DE LUZ.** O amplificador da cabeça não acompanha o degrau e
+   arrasta o que passou para a direita. É assimétrico de propósito — seis
+   amostras, só para trás, com peso exponencial:
+
+   ```
+   RABO DE LUZ · soma da luz ao lado de uma faixa branca
+     rabo 0 ...... 0 à direita · 0 à esquerda
+     rabo 0,6 .... 97 à direita · 0 à esquerda
+     rabo 2 ..... 658 à direita · 0 à esquerda
+   ```
+
+**E a perda de fita estava rala demais.** Nas capturas dele há dezenas de
+riscos claros por quadro; o nosso dava um. A conta agora é por LINHA DE FITA:
+
+```
+perda 0 → 0 riscos · perda 0,8 → 14 · perda 2 → 31
+```
+
+**Os padrões subiram.** O efeito nasce com resolução 215, suavidade 1,5,
+rabo 0,6, atraso 8, franja 1, rasgo 1 e geração 0,4 — a fita já é fita ao
+arrastar para o clipe, sem precisar mexer em nada. E entrou o estilo
+**FITA RUIM** na galeria, que é a versão judiada de uma vez só.
+
+**O que ainda não é igual, e é honesto dizer:** eu não vejo a tela deles.
+O painel destas sessões não compõe quadros — comparo pelas capturas que ele
+manda e pelas causas físicas, não lado a lado. Se sobrar diferença, é
+olhando que se acha.
+
+#### O que NÃO foi feito
 - **Nada foi VISTO em movimento por mim.** As medidas provam que cada
-  controle faz o que promete; a folha de contato mostra quatro quadros
-  parados. Fita é tempo — o julgamento de como isso se comporta rodando é
-  seu.
+  controle faz o que promete; a folha de contato mostra quadros parados.
+  Fita é tempo — o julgamento de como isso se comporta rodando é seu.
+- **A faixa colorida no topo** que aparece numa das capturas da referência.
+  Aqui o vinco e o tracking passeiam pela altura em vez de morar no topo;
+  se ele quiser a faixa fixa lá, é uma linha em `vhsVinco`.
 - **A imagem com alfa não acompanha a mecânica.** O deslocamento move a cor,
   não o alfa, como já era no efeito antigo.
 
@@ -3883,6 +3958,11 @@ O **VHS** não é um filtro de aparência: é a cadeia de uma gravação em fita
 escrita a partir do que o formato faz de errado. São vinte controles, em
 quatro grupos.
 
+Uma coisa importante: **os ajustes são em unidades de fita, não de tela.** A
+régua é 720 amostras por linha e 480 linhas, que é o que uma fita guarda. O
+mesmo ajuste dá a mesma fita numa prévia pequena e num quadro de 4K — foi
+medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
+
 **A imagem que a fita consegue guardar**
 
 * **Resolução (linhas)** — quanto detalhe horizontal sobrevive. VHS real fica
@@ -3891,6 +3971,9 @@ quatro grupos.
 * **Realce do deck** — o aparelho tentava devolver a nitidez perdida e criava
   o **halo claro** na borda. É a assinatura do VHS, e é o controle que faz a
   imagem "parecer VHS" antes de qualquer sujeira.
+* **Rabo de luz** — o borrão que um objeto claro deixa **à direita**, porque o
+  amplificador da cabeça não acompanha o degrau. Só para a direita: é o que
+  faz um rosto claro deixar rastro no fundo escuro.
 
 **A cor, que é gravada à parte**
 
@@ -3912,7 +3995,12 @@ quatro grupos.
 * **Vinco da fita** — a faixa estreita que empurra e clareia, de uma dobra.
 * **Tracking (barras)** — a faixa que perde o sincronismo e vira ruído.
 * **Troca de cabeça** — o rabo bagunçado nas últimas linhas, na base do
-  quadro. Todo VHS tem, e é o detalhe que mais entrega o formato.
+  quadro. Todo VHS tem.
+* **Borda rasgada** — quando a linha é empurrada para fora do quadro, o que
+  aparece na beirada é a **beira da fita**: preto com sujeira de cor, em
+  dentes irregulares dos dois lados. Junto com o atraso da cor, é o detalhe
+  que mais entrega o formato. Quase toda linha anda pouco e uma em cada dez
+  vai longe — por isso o dente é irregular e a imagem continua firme.
 
 **A sujeira**
 
@@ -3922,7 +4010,8 @@ quatro grupos.
   cópia): perde resolução, ganha ruído e riscos, e a cor vaza mais. Um
   controle só que envelhece o conjunto inteiro.
 
-O preset **VHS 1994**, na galeria de filtros, é um ponto de partida ajustado.
+Dois pontos de partida na galeria de filtros: **VHS 1994** e **FITA RUIM** —
+o segundo é a fita judiada de uma vez só, com o rasgo e os riscos no alto.
 
 #### Película: 8 mm, Super 8, 16 mm, 35 mm
 

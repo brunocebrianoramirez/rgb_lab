@@ -4119,24 +4119,39 @@ window.VE = window.VE || {};
      O que a fita faz, na ordem em que faz:
 
        1. a MECÂNICA erra                a linha inteira anda para o lado
-          · erro de base de tempo          ruído rápido, linha a linha
+          · erro de base de tempo          ruído rápido, linha a linha, com
+                                           algumas linhas indo MUITO longe
           · ondulação                      onda lenta ao longo da altura
           · vinco da fita                  uma faixa que empurra e clareia
           · tracking                       a faixa que perde o sincronismo
           · troca de cabeça                as últimas linhas do quadro
           · salto vertical                 o quadro inteiro pula
-       2. a LUZ perde banda              borrão horizontal: 240 linhas é VHS
-       3. a COR perde MUITO mais banda   sete vezes mais borrada que a luz
-       4. a COR chega ATRASADA           por isso ela escorre para a direita
-       5. o DECK realça a borda          o halo claro que todo VHS tem
-       6. a FITA suja                    chuvisco, perda de fita, cintilação
+          · BORDA RASGADA                  a linha empurrada para fora do
+                                           quadro mostra a beira da fita:
+                                           preto com sujeira de cor. É o
+                                           dente irregular nos dois lados, e
+                                           é o que mais entrega o formato
+       2. a LUZ perde banda              VHS resolve ~240 linhas na horizontal
+       3. a LUZ ARRASTA para a direita   o rabo do amplificador da cabeça
+       4. a COR perde MUITO mais banda   cerca de sete vezes mais que a luz
+       5. a COR chega ATRASADA           por isso ela escorre para a direita
+       6. o DECK realça a borda          o halo claro que todo VHS tem
+       7. a FITA suja                    chuvisco, perda de fita, cintilação
 
-     Cada etapa é um controle, e nenhum é decorativo.
+     TUDO EM UNIDADES DE FITA, e isto é a correção mais importante desta
+     segunda volta: uma fita não sabe quantos pixels você tem. Antes o
+     atraso da cor era "6 pixels de tela" — 1,9% da largura numa prévia de
+     320 e 0,3% num quadro de 1920, ou seja, o MESMO ajuste dava fitas
+     diferentes conforme o tamanho do projeto. Agora a régua é a fita:
+
+       720 amostras por linha  ·  480 linhas
+       o atraso, o realce, a suavidade, o grão, os riscos e as listras são
+       frações DISSO, e o resultado é o mesmo em 320 ou em 4K.
 
      TRÊS PASSADAS, porque borrão largo com poucas amostras deixa buraco:
        0 · mecânica + luz com pouca banda   (lê a imagem que entrou)
        1 · cor com muito menos banda        (lê a passada 0)
-       2 · atraso, franja, realce, sujeira  (compõe)
+       2 · rabo, atraso, franja, realce, sujeira  (compõe)
 
      Entre as passadas o sinal viaja em YIQ — luz num canal, cor em dois —
      porque é assim que a fita guarda, e é o que permite borrar a cor sem
@@ -4145,35 +4160,40 @@ window.VE = window.VE || {};
 
      Os SETE parâmetros antigos continuam com as mesmas chaves: um projeto
      salvo com este efeito continua achando `bleed`, `track`, `wob`,
-     `lines`, `noise`, `scan` e `sat`. O que ele vai ver é a fita melhor.
+     `lines`, `noise`, `scan` e `sat`.
      ====================================================================== */
   D({
     id: 'vhs', name: 'VHS', cat: 'cor', color: '#ffb020',
     passes: 3,
-    desc: 'a cadeia da fita: pouca banda, cor atrasada, mecânica errando e a cabeça trocando',
+    desc: 'a cadeia da fita: pouca banda, cor atrasada, borda rasgada e a cabeça trocando',
     params: [
-      { k: 'res', label: 'Resolução (linhas)', min: 40, max: 640, step: 1, def: 240 },
-      { k: 'soft', label: 'Suavidade', min: 0, max: 3, def: 0.7 },
-      { k: 'sharp', label: 'Realce do deck', min: 0, max: 2, def: 0.35 },
-      { k: 'cdelay', label: 'Atraso da cor (px)', min: -12, max: 24, step: 0.1, def: 6 },
-      { k: 'bleed', label: 'Sangramento da cor', min: 0, max: 3, def: 1 },
-      { k: 'fring', label: 'Franja de cor', min: 0, max: 3, def: 0.6 },
+      { k: 'res', label: 'Resolução (linhas)', min: 40, max: 640, step: 1, def: 215 },
+      { k: 'soft', label: 'Suavidade', min: 0, max: 3, def: 1.5 },
+      { k: 'sharp', label: 'Realce do deck', min: 0, max: 2, def: 0.45 },
+      { k: 'smear', label: 'Rabo de luz', min: 0, max: 2, def: 0.6 },
+      { k: 'cdelay', label: 'Atraso da cor', min: -12, max: 30, step: 0.1, def: 8 },
+      { k: 'bleed', label: 'Sangramento da cor', min: 0, max: 3, def: 1.2 },
+      { k: 'fring', label: 'Franja de cor', min: 0, max: 3, def: 1 },
       { k: 'cshift', label: 'Desvio de matiz', min: -1, max: 1, def: 0.04 },
-      { k: 'sat', label: 'Saturação', min: -1, max: 2, def: 0.25 },
-      { k: 'wob', label: 'Ondulação', min: 0, max: 3, def: 0.6 },
+      { k: 'sat', label: 'Saturação', min: -1, max: 2, def: 0.45 },
+      { k: 'wob', label: 'Ondulação', min: 0, max: 3, def: 0.7 },
       { k: 'lines', label: 'Frequência da onda', min: 5, max: 400, step: 1, def: 90 },
-      { k: 'tbe', label: 'Erro de base de tempo', min: 0, max: 3, def: 0.5 },
-      { k: 'vjump', label: 'Salto vertical', min: 0, max: 1, def: 0.05 },
-      { k: 'crease', label: 'Vinco da fita', min: 0, max: 2, def: 0.35 },
-      { k: 'track', label: 'Tracking (barras)', min: 0, max: 2, def: 0.35 },
-      { k: 'head', label: 'Troca de cabeça', min: 0, max: 2, def: 0.6 },
-      { k: 'drop', label: 'Perda de fita', min: 0, max: 2, def: 0.5 },
-      { k: 'noise', label: 'Chuvisco', min: 0, max: 1, def: 0.18 },
-      { k: 'flick', label: 'Cintilação', min: 0, max: 1, def: 0.06 },
-      { k: 'scan', label: 'Linhas de varredura', min: 0, max: 1, def: 0.25 },
-      { k: 'gen', label: 'Geração da cópia', min: 0, max: 3, def: 0 }
+      { k: 'tbe', label: 'Erro de base de tempo', min: 0, max: 3, def: 0.9 },
+      { k: 'tear', label: 'Borda rasgada', min: 0, max: 2, def: 1 },
+      { k: 'vjump', label: 'Salto vertical', min: 0, max: 1, def: 0.06 },
+      { k: 'crease', label: 'Vinco da fita', min: 0, max: 2, def: 0.5 },
+      { k: 'track', label: 'Tracking (barras)', min: 0, max: 2, def: 0.6 },
+      { k: 'head', label: 'Troca de cabeça', min: 0, max: 2, def: 0.8 },
+      { k: 'drop', label: 'Perda de fita', min: 0, max: 2, def: 0.8 },
+      { k: 'noise', label: 'Chuvisco', min: 0, max: 1, def: 0.14 },
+      { k: 'flick', label: 'Cintilação', min: 0, max: 1, def: 0.08 },
+      { k: 'scan', label: 'Linhas de varredura', min: 0, max: 1, def: 0.15 },
+      { k: 'gen', label: 'Geração da cópia', min: 0, max: 3, def: 0.4 }
     ],
     glsl: [
+      /* ------------------------------------------- a régua é a FITA ---- */
+      '#define VHS_AMOSTRAS 720.0',
+      '#define VHS_LINHAS 480.0',
       /* --------------------------------------------------- luz e cor ---- */
       'vec3 vhsYIQ(vec3 c){',
       '  return vec3(dot(c, vec3(0.299, 0.587, 0.114)),',
@@ -4185,22 +4205,17 @@ window.VE = window.VE || {};
       '              y.x - 0.272*y.y - 0.647*y.z,',
       '              y.x - 1.106*y.y + 1.703*y.z);',
       '}',
-      /* a cópia da cópia: cada geração perde banda e ganha sujeira */
       'float vhsGer(){ return clamp(u_gen, 0.0, 3.0); }',
-      /* largura do borrão de luz, em fração da largura do quadro */
       'float vhsLargL(){',
       '  float r = max(u_res, 24.0)/(1.0 + vhsGer()*0.45);',
       '  return 1.0/max(r, 12.0);',
       '}',
-      /* a cor da fita tem MUITO menos banda que a luz — é o sangramento */
       'float vhsLargC(){ return vhsLargL()*(1.0 + u_bleed*6.5)*(1.0 + vhsGer()*0.5); }',
       /* o quadro da FITA: 30 por segundo, para o ruído não tremer no ritmo
          da tela em vez do ritmo da fita */
       'float vhsQuadro(){ return floor(uTime*30.0); }',
       /* ------------------------------------------------- a mecânica ----- */
-      /* onde está a faixa de tracking agora (centro, em altura) */
       'float vhsBanda(){ return fract(uTime*0.11 + 0.37); }',
-      /* e o vinco da fita, que anda mais devagar ainda */
       'float vhsVinco(){ return fract(uTime*0.043 + 0.12); }',
       /* Quanto esta altura está dentro do rodapé, onde a cabeça troca.
          MEDIDO, não suposto: com `head` no máximo, a sujeira caiu nas dez
@@ -4210,8 +4225,6 @@ window.VE = window.VE || {};
       '  float faixa = 0.012 + 0.02*clamp(u_head, 0.0, 2.0);',
       '  return smoothstep(faixa, 0.0, y);',
       '}',
-      /* o quadro inteiro pulando: uma deriva lenta e, de vez em quando, um
-         pulo — que é o vertical hold perdendo a linha                    */
       'float vhsSaltoY(float fr){',
       '  float lento = (vnoise(vec2(fr*0.06, 3.3)) - 0.5)*0.03;',
       '  float pulo = step(0.985, hash11(fr*1.7 + 5.0))*(hash11(fr*2.9) - 0.5)*0.22;',
@@ -4219,12 +4232,19 @@ window.VE = window.VE || {};
       '}',
       /* TUDO o que empurra uma linha para o lado, somado. A mesma função é
          usada na passada da mecânica e na do acabamento, para a sujeira
-         cair exatamente onde a imagem foi empurrada.                     */
+         cair exatamente onde a imagem foi empurrada.
+
+         A cauda LONGA é o que faz o dente da borda: a maioria das linhas
+         anda pouco (a imagem parece firme) e uma em cada catorze vai muito
+         longe. Sem isso, ou o quadro inteiro treme, ou não há rasgo.    */
       'float vhsDesloc(float y, float fr){',
-      '  float lin = floor(y*uRes.y);',
+      '  float lin = floor(y*VHS_LINHAS);',
       '  float n1 = hash21(vec2(lin, fr)) - 0.5;',
       '  float n2 = hash21(vec2(floor(lin/7.0), fr*1.7)) - 0.5;',
       '  float tbe = (n1*0.62 + n2*0.38)*u_tbe*0.006;',
+      '  float u = hash21(vec2(lin, fr*5.0 + 11.0));',
+      '  float lado = hash21(vec2(lin, fr*7.0 + 3.0)) - 0.5;',
+      '  tbe += sign(lado)*pow(u, 3.0)*u_tbe*0.075*(0.45 + 0.55*clamp(u_tear, 0.0, 2.0));',
       '  float w = sin(y*u_lines*0.35 + uTime*2.7) + 0.55*sin(y*u_lines*0.11 - uTime*1.3);',
       '  float wob = w*u_wob*0.004;',
       '  float dv = y - vhsVinco();',
@@ -4237,18 +4257,34 @@ window.VE = window.VE || {};
       '  float sh = hs*(0.03 + 0.06*(hash11(fr) - 0.5))*clamp(u_head, 0.0, 2.0);',
       '  return tbe + wob + sv + sb + sh;',
       '}',
+      /* A BEIRA DA FITA: o que existe fora da imagem gravada. Não é preto
+         chapado — é preto com a sujeira de cor do sinal que sobra ali, e é
+         por isso que o dente sai magenta e laranja, e não cinza.        */
+      'vec3 vhsBeira(float px, float lin, float fr){',
+      '  float r = hash21(vec2(floor(px*VHS_AMOSTRAS), lin + fr*3.0));',
+      '  float claro = step(0.86, r)*r;',
+      '  return vec3(r*0.10 + claro*0.7,',
+      '              (hash11(r*31.0 + lin*0.13) - 0.5)*1.1,',
+      '              (hash11(r*57.0 + lin*0.29) - 0.5)*1.1);',
+      '}',
       /* ============================== PASSADA 0 · mecânica e banda de luz */
       'vec4 vhsFita(vec2 uv){',
       '  float fr = vhsQuadro();',
       '  vec2 p = uv;',
       '  p.y = clamp(p.y + vhsSaltoY(fr), 0.0, 1.0);',
       '  float dx = vhsDesloc(p.y, fr);',
+      '  float lin = floor(p.y*VHS_LINHAS);',
       '  float passo = vhsLargL()/8.0;',
+      '  float rasga = clamp(u_tear, 0.0, 2.0);',
       '  vec3 acc = vec3(0.0);',
       '  for(int i=0;i<8;i++){',
-      '    float o = (float(i) - 3.5)*passo;',
-      '    vec3 c = texture(uOrig, clamp(vec2(p.x + dx + o, p.y), 0.0, 1.0)).rgb;',
-      '    acc += vhsYIQ(c);',
+      '    float px = p.x + dx + (float(i) - 3.5)*passo;',
+      '    if(rasga > 0.01 && (px < 0.0 || px > 1.0)){',
+      '      acc += mix(vhsYIQ(texture(uOrig, vec2(clamp(px, 0.0, 1.0), p.y)).rgb),',
+      '                 vhsBeira(px, lin, fr), min(rasga, 1.0));',
+      '    } else {',
+      '      acc += vhsYIQ(texture(uOrig, vec2(clamp(px, 0.0, 1.0), p.y)).rgb);',
+      '    }',
       '  }',
       '  vec3 yiq = acc/8.0;',
       '  return vec4(yiq.x, yiq.y*0.5 + 0.5, yiq.z*0.5 + 0.5, 1.0);',
@@ -4263,7 +4299,7 @@ window.VE = window.VE || {};
       '  }',
       '  iq /= 8.0;',
       /* a fita também é macia no vertical, e isso é da cabeça, não da banda */
-      '  float sv = u_soft*1.1/max(uRes.y, 1.0);',
+      '  float sv = u_soft*1.1/VHS_LINHAS;',
       '  float y = texture(uTex, uv).x*0.44',
       '          + texture(uTex, clamp(vec2(uv.x, uv.y + sv), 0.0, 1.0)).x*0.28',
       '          + texture(uTex, clamp(vec2(uv.x, uv.y - sv), 0.0, 1.0)).x*0.28;',
@@ -4272,13 +4308,25 @@ window.VE = window.VE || {};
       /* ===================================== PASSADA 2 · o acabamento */
       'vec3 vhsFim(vec2 uv){',
       '  float fr = vhsQuadro();',
-      '  vec2 tx = 1.0/max(uRes, vec2(1.0));',
       '  float ger = vhsGer();',
+      '  float am = 1.0/VHS_AMOSTRAS;',
       '  float Y = texture(uTex, uv).x;',
+      /* O RABO DE LUZ: o amplificador da cabeça não acompanha o degrau e
+         arrasta o que passou para a direita. É assimétrico de propósito —
+         só olha para trás — e é o que faz o objeto claro deixar cauda.  */
+      '  if(u_smear > 0.005){',
+      '    float soma = 0.0, w = 0.0;',
+      '    for(int i=1;i<=6;i++){',
+      '      float wi = exp(-float(i)*0.55);',
+      '      soma += texture(uTex, clamp(vec2(uv.x - float(i)*u_smear*5.0*am, uv.y), 0.0, 1.0)).x*wi;',
+      '      w += wi;',
+      '    }',
+      '    Y = mix(Y, max(Y, soma/max(w, 1e-4)), clamp(u_smear, 0.0, 1.0)*0.6);',
+      '  }',
       /* a cor chega depois da luz: é por isso que ela escorre para a direita */
-      '  float d = u_cdelay*tx.x;',
+      '  float d = u_cdelay*am;',
       '  vec2 iq0 = texture(uTex, clamp(vec2(uv.x - d, uv.y), 0.0, 1.0)).yz*2.0 - 1.0;',
-      '  vec2 iq1 = texture(uTex, clamp(vec2(uv.x - d - 3.0*tx.x, uv.y), 0.0, 1.0)).yz*2.0 - 1.0;',
+      '  vec2 iq1 = texture(uTex, clamp(vec2(uv.x - d - 3.0*am, uv.y), 0.0, 1.0)).yz*2.0 - 1.0;',
       /* franja: a diferença entre dois instantes da cor, realçada. Em área
          chapada é zero; na borda de cor vira o halo que a fita faz.      */
       '  vec2 iq = iq0 + u_fring*0.9*(iq0 - iq1);',
@@ -4288,25 +4336,25 @@ window.VE = window.VE || {};
       '  iq = vec2(iq.x*ca - iq.y*sa, iq.x*sa + iq.y*ca);',
       '  iq *= 1.0 + u_sat;',
       /* o realce de borda do deck: horizontal, como o circuito faz */
-      '  float ya = texture(uTex, clamp(vec2(uv.x - 2.0*tx.x, uv.y), 0.0, 1.0)).x;',
-      '  float yb = texture(uTex, clamp(vec2(uv.x + 2.0*tx.x, uv.y), 0.0, 1.0)).x;',
+      '  float ya = texture(uTex, clamp(vec2(uv.x - 2.0*am, uv.y), 0.0, 1.0)).x;',
+      '  float yb = texture(uTex, clamp(vec2(uv.x + 2.0*am, uv.y), 0.0, 1.0)).x;',
       '  Y += u_sharp*1.5*(Y - (ya + yb)*0.5);',
-      /* cintilação: o ganho do quadro inteiro variando */
       '  Y *= 1.0 + (hash11(fr*1.13) - 0.5)*u_flick*0.8;',
-      /* o vinco também clareia a faixa que ele empurrou */
       '  float dv = uv.y - vhsVinco();',
       '  Y += exp(-dv*dv*9000.0)*clamp(u_crease, 0.0, 2.0)*0.10;',
-      /* chuvisco: mais visível no escuro, e o da cor é mais grosso */
+      /* chuvisco: o grão é da FITA, então tem o tamanho da amostra e não do
+         pixel — a mesma imagem em 4K não fica com grão mais fino */
       '  float ruido = u_noise*(1.0 + ger*0.5);',
-      '  Y += (hash21(uv*uRes + fr*71.0) - 0.5)*ruido*(1.10 - 0.55*clamp(Y, 0.0, 1.0));',
-      '  iq += (hash22(floor(uv*uRes*0.34) + fr*29.0) - 0.5)*ruido*0.30;',
-      /* perda de fita: risco horizontal claro, de uma ou duas linhas */
-      '  float par = floor(uv.y*uRes.y*0.5);',
-      '  float ds = hash21(vec2(par, fr*3.7));',
-      '  float lim = 1.0 - clamp(u_drop, 0.0, 2.0)*(1.0 + ger*0.8)*0.012;',
+      '  vec2 gr = floor(uv*vec2(VHS_AMOSTRAS, VHS_LINHAS));',
+      '  Y += (hash21(gr + fr*71.0) - 0.5)*ruido*(1.10 - 0.55*clamp(Y, 0.0, 1.0));',
+      '  iq += (hash22(floor(uv*vec2(180.0, 240.0)) + fr*29.0) - 0.5)*ruido*0.30;',
+      /* perda de fita: risco claro e curto, de UMA linha de fita */
+      '  float lf = floor(uv.y*VHS_LINHAS);',
+      '  float ds = hash21(vec2(lf, fr*3.7));',
+      '  float lim = 1.0 - clamp(u_drop, 0.0, 2.0)*(1.0 + ger*0.8)*0.05;',
       '  if(ds > lim){',
       '    float x0 = hash11(ds*57.3 + 1.0);',
-      '    float len = 0.008 + hash11(ds*91.7 + 2.0)*0.06;',
+      '    float len = 0.006 + hash11(ds*91.7 + 2.0)*0.10;',
       '    float dentro = step(x0, uv.x)*step(uv.x, x0 + len);',
       '    Y = mix(Y, 1.0, dentro*0.92);',
       '    iq = mix(iq, vec2(0.0), dentro*0.88);',
@@ -4315,7 +4363,7 @@ window.VE = window.VE || {};
       '  float db = uv.y - vhsBanda();',
       '  float banda = exp(-db*db*2000.0)*clamp(u_track, 0.0, 2.0);',
       '  if(banda > 0.002){',
-      '    float r = hash21(vec2(floor(uv.x*uRes.x*0.25), floor(uv.y*uRes.y) + fr*13.0));',
+      '    float r = hash21(vec2(floor(uv.x*180.0), lf + fr*13.0));',
       '    float k = min(banda, 1.0);',
       '    Y = mix(Y, r*0.85 + 0.12, k*0.85);',
       '    iq = mix(iq, vec2(0.0), k*0.92);',
@@ -4323,14 +4371,14 @@ window.VE = window.VE || {};
       /* troca de cabeça: o rabo do quadro, onde a cabeça deixa a fita */
       '  float hs = vhsCabeca(uv.y);',
       '  if(hs > 0.001){',
-      '    float r = hash21(vec2(floor(uv.x*uRes.x*0.5), floor(uv.y*uRes.y) + fr*17.0));',
-      '    float k = hs*clamp(u_head, 0.0, 2.0);',
-      '    Y = mix(Y, r, clamp(k, 0.0, 1.0)*0.9);',
-      '    iq = mix(iq, vec2(0.0), clamp(k, 0.0, 1.0)*0.95);',
+      '    float r = hash21(vec2(floor(uv.x*360.0), lf + fr*17.0));',
+      '    float k = clamp(hs*clamp(u_head, 0.0, 2.0), 0.0, 1.0);',
+      '    Y = mix(Y, r, k*0.9);',
+      '    iq = mix(iq, vec2(0.0), k*0.95);',
       '  }',
       '  vec3 c = vhsRGB(vec3(Y, iq));',
-      /* a linha de varredura é da TELA, não da fita — mas quem vê VHS vê nela */
-      '  c *= 1.0 - u_scan*0.45*step(0.5, fract(uv.y*uRes.y*0.5));',
+      /* a listra é da varredura de 480 linhas, não da grade de pixels */
+      '  c *= 1.0 - u_scan*0.45*step(0.5, fract(uv.y*VHS_LINHAS*0.5));',
       '  return c;',
       '}',
       /* --------------------------------------------------- as passadas -- */
@@ -5303,10 +5351,19 @@ window.VE = window.VE || {};
       id: 'vhs94', name: 'VHS 1994', desc: 'fita gasta, cor sangrando e tracking',
       fx: [
         ['color', { con: 0.15, sat: 0.35, gam: 1.05 }],
-        ['vhs', { res: 200, bleed: 1.1, track: 0.45, wob: 0.9, noise: 0.16, scan: 0.35,
-                  cdelay: 8, fring: 0.9, crease: 0.6, drop: 0.7, head: 0.8, gen: 0.8,
-                  sharp: 0.5, soft: 0.9, tbe: 0.8 }],
+        ['vhs', { res: 200, bleed: 1.2, track: 0.5, wob: 0.9, noise: 0.18, scan: 0.25,
+                  cdelay: 9, fring: 1.1, crease: 0.6, drop: 0.9, head: 0.9, gen: 0.9,
+                  sharp: 0.5, soft: 1.2, tbe: 1.0, tear: 1.1, smear: 0.7 }],
         ['vignette', { size: 0.42, int: 0.6 }]
+      ]
+    },
+    {
+      id: 'fitaruim', name: 'Fita ruim', desc: 'a fita judiada: borda rasgada, cor escorrendo e riscos',
+      fx: [
+        ['vhs', { res: 170, soft: 1.8, sharp: 0.3, smear: 1.1, cdelay: 11, bleed: 1.6,
+                  fring: 1.6, cshift: 0.06, sat: 0.8, wob: 1.4, tbe: 1.6, tear: 1.6,
+                  vjump: 0.08, crease: 0.9, track: 1.0, head: 1.2, drop: 1.3,
+                  noise: 0.26, flick: 0.1, scan: 0.1, gen: 1.6 }]
       ]
     },
     {

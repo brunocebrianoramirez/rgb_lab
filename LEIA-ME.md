@@ -467,6 +467,11 @@ O **VHS** não é um filtro de aparência: é a cadeia de uma gravação em fita
 escrita a partir do que o formato faz de errado. São vinte controles, em
 quatro grupos.
 
+Uma coisa importante: **os ajustes são em unidades de fita, não de tela.** A
+régua é 720 amostras por linha e 480 linhas, que é o que uma fita guarda. O
+mesmo ajuste dá a mesma fita numa prévia pequena e num quadro de 4K — foi
+medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
+
 **A imagem que a fita consegue guardar**
 
 * **Resolução (linhas)** — quanto detalhe horizontal sobrevive. VHS real fica
@@ -475,6 +480,9 @@ quatro grupos.
 * **Realce do deck** — o aparelho tentava devolver a nitidez perdida e criava
   o **halo claro** na borda. É a assinatura do VHS, e é o controle que faz a
   imagem "parecer VHS" antes de qualquer sujeira.
+* **Rabo de luz** — o borrão que um objeto claro deixa **à direita**, porque o
+  amplificador da cabeça não acompanha o degrau. Só para a direita: é o que
+  faz um rosto claro deixar rastro no fundo escuro.
 
 **A cor, que é gravada à parte**
 
@@ -496,7 +504,12 @@ quatro grupos.
 * **Vinco da fita** — a faixa estreita que empurra e clareia, de uma dobra.
 * **Tracking (barras)** — a faixa que perde o sincronismo e vira ruído.
 * **Troca de cabeça** — o rabo bagunçado nas últimas linhas, na base do
-  quadro. Todo VHS tem, e é o detalhe que mais entrega o formato.
+  quadro. Todo VHS tem.
+* **Borda rasgada** — quando a linha é empurrada para fora do quadro, o que
+  aparece na beirada é a **beira da fita**: preto com sujeira de cor, em
+  dentes irregulares dos dois lados. Junto com o atraso da cor, é o detalhe
+  que mais entrega o formato. Quase toda linha anda pouco e uma em cada dez
+  vai longe — por isso o dente é irregular e a imagem continua firme.
 
 **A sujeira**
 
@@ -506,7 +519,8 @@ quatro grupos.
   cópia): perde resolução, ganha ruído e riscos, e a cor vaza mais. Um
   controle só que envelhece o conjunto inteiro.
 
-O preset **VHS 1994**, na galeria de filtros, é um ponto de partida ajustado.
+Dois pontos de partida na galeria de filtros: **VHS 1994** e **FITA RUIM** —
+o segundo é a fita judiada de uma vez só, com o rasgo e os riscos no alto.
 
 ### Película: 8 mm, Super 8, 16 mm, 35 mm
 
