@@ -13,9 +13,8 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
-| 3 | Alça de Bézier na máscara de EFEITO | 4l |
-| 4 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 2 | Alça de Bézier na máscara de EFEITO | 4l |
+| 3 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -3371,6 +3370,75 @@ preto, não avisa. **Todo teste de efeito começa por essas duas perguntas.**
 
 ---
 
+## 4z. O BIQUAD NO `D` (décima sexta passada)
+
+O `D` só tinha filtros de UM POLO: 6 dB por oitava. Isso é uma inclinação,
+não um corte, e a 4v tinha medido o preço — o TELEFONE deixava **30% da
+energia fora** da banda de 300 a 3400 Hz, e o que o ouvido lê nesses 30% é
+"voz abafada" e não "voz no telefone".
+
+Entrou o biquad do cookbook do Bristow-Johnson: dois polos e dois zeros, sete
+tipos (passa-baixa, passa-alta, passa-banda, rejeita-banda, pico e as duas
+prateleiras), com Q e ganho. A conta é em **direta transposta II** — menos
+estado e menos erro acumulado em buffer longo que a direta I.
+
+E junto veio `D.butter(b, tipo, hz, polos)`, a cascata Butterworth: os Q de
+cada estágio saem dos ângulos dos polos, `Q_k = 1/(2·cos((2k+1)π/2n))`. Com
+os Q certos o **−3 dB cai exatamente na frequência pedida**, sem o fator de
+correção que a cascata de um polo precisava para não encolher a banda. Ordem
+ímpar ganha um estágio de um polo no fim, que é o filtro simples que já
+existia.
+
+### Medido
+
+Primeiro o instrumento, que aqui é o próprio filtro contra a resposta que a
+teoria manda:
+
+```
+passa-baixa em 1 kHz          2 polos      4 polos
+  250 Hz .................... −0,02 dB
+  500 Hz .................... −0,26       −0,02
+  1000 Hz (o corte) ......... −3,01       −3,01
+  2000 Hz ................... −12,37      −24,25
+  4000 Hz ................... −24,48      −48,92
+```
+
+−3,01 dB no corte e 12 dB por oitava por par de polos: é a Butterworth do
+livro. Depois os dois módulos que motivaram o pedido, com ruído branco na
+entrada e a energia medida por FFT — medidor independente dos filtros que
+estão sendo julgados:
+
+```
+                        antes (4v)    agora
+TELEFONE, 300–3400 Hz .... 69,5%      92,2%   (só o filtro: 92,5%)
+RÁDIO, 180–4500 Hz ....... 66,2%      92,4%   (só o filtro: 92,5%)
+entrada (ruído branco) ... 13,4% e 18,5% da energia nessas bandas
+```
+
+Os 7,5% que sobram são a saia do filtro, não a sujeira dos módulos: desligar
+aperto, sujeira e chiado move o número em três décimos.
+
+**A paridade com o trabalhador se manteve sozinha**, que era o ponto de ele
+rodar o mesmo texto: TELEFONE, RÁDIO, MATÉRIA e ESPECTRAL saem **idênticos
+amostra a amostra** entre a linha principal e o Worker, sem eu tocar em nada
+do lado de lá.
+
+### O que muda para quem já usava
+
+O som do TELEFONE e do RÁDIO **muda** — é o conserto de um número errado, não
+um ajuste de gosto. Os parâmetros são os mesmos (`grave`, `agudo`, e o
+resto), então projeto salvo continua achando tudo; o que ele vai ouvir é a
+banda que os controles sempre prometeram.
+
+### O que NÃO foi feito
+
+- **Os outros usos de um polo continuam de um polo** — MATÉRIA e ESPACIAL
+  usam `D.passaBaixa` para colorir, e ali inclinação é o que se quer.
+- **Nada foi ouvido.** A banda está medida; se o telefone agora soa apertado
+  demais é ouvido, e ouvido eu não tenho.
+
+---
+
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3393,10 +3461,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
    módulos de buffer rodam fora da linha principal, com o mesmo texto da
    biblioteca; saída idêntica amostra a amostra, e a maior espera da página
    caiu de 2.607 ms para 30 ms. *(seção 4x)*
-5. **Filtro de segunda ordem no `D`.** Só há passa-baixa e passa-alta de um
-   polo, e é por isso que o TELEFONE ainda deixa 30% da energia fora da banda.
-   Um biquad genérico serve a ele, ao RÁDIO e a qualquer módulo futuro.
-   *(seção 4v)*
+5. ~~Filtro de segunda ordem no `D`~~ — **feito na 4z.** Biquad de sete tipos
+   mais a cascata Butterworth `D.butter`. O TELEFONE foi de 69,5% para 92,2%
+   da energia dentro da banda, o RÁDIO de 66,2% para 92,4%. *(seção 4z)*
 
 ### Pedidos ainda não atendidos
 

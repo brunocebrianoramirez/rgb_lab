@@ -1,6 +1,6 @@
 # rgb_lab — DOSSIÊ DO PROJETO
 
-> Arquivo único de entrada. Gerado por `node dossie.js` em 24/08/2026, 00:48:08.
+> Arquivo único de entrada. Gerado por `node dossie.js` em 24/08/2026, 01:05:31.
 > Contém as **diretrizes**, o **histórico de decisões**, o **manual de uso**, o
 > **motor de cor** e um **inventário lido do código** neste momento.
 >
@@ -27,7 +27,7 @@ Autoria: Elaborado e criado por Bruno Cebriano Ramirez.
 
 ```
 módulos js .......... 52
-linhas de js ........ 31.198
+linhas de js ........ 31.300
 efeitos ............. 144
 famílias de efeito .. 8
 formas de máscara ... 8
@@ -104,10 +104,10 @@ A ordem é arquitetura, não acaso — veja as armadilhas abaixo.
 | 35 | `js/guia.js` | 595 | rgb_lab — GUIA DE CADA LABORATÓRIO Um tutorial dentro de cada laboratório, escrito para quem nunca abriu um editor na vida. Ele mora numa gaveta que desliza por cima da ferramenta — não é outra página, não tira você de onde estava, e fecha no ESC. COMO ACRESCE |
 | 36 | `js/filters.js` | 561 | rgb_lab — GALERIA DE FILTROS Uma prateleira de emulsões. Cada filtro é um conjunto de valores do efeito `filmstock` — nenhum deles copia curva de produto nenhum: são construídos aqui, com nome e código de arquivo. A galeria mostra MINIATURAS AO VIVO: o quadro  |
 | 37 | `js/exporter.js` | 522 | rgb_lab — exportação tempo real (com áudio) · frame a frame (exato) · sequência PNG (única saída com alpha real) |
-| 38 | `js/audiodsp.js` | 691 | rgb_lab — BIBLIOTECA DE PROCESSAMENTO DE ÁUDIO Funções puras que operam sobre AudioBuffer. Nada aqui desenha, nada aqui conhece a interface: só matemática de sinal. Existe para que os MÓDULOS do rack de áudio (js/audiofx.js) sejam declarações curtas, e para qu |
+| 38 | `js/audiodsp.js` | 800 | rgb_lab — BIBLIOTECA DE PROCESSAMENTO DE ÁUDIO Funções puras que operam sobre AudioBuffer. Nada aqui desenha, nada aqui conhece a interface: só matemática de sinal. Existe para que os MÓDULOS do rack de áudio (js/audiofx.js) sejam declarações curtas, e para qu |
 | 39 | `js/audio.js` | 1462 | rgb_lab — LABORATÓRIO 02 · ÁUDIO Buffer original → transformações → grafo offline → buffer final O mesmo caminho serve para tocar, exportar e mandar pra timeline. |
 | 40 | `js/audiofx.js` | 873 | rgb_lab — MÓDULOS NOVOS DO RACK DE ÁUDIO Este arquivo NÃO cria um segundo laboratório de áudio. Ele acrescenta módulos ao rack que já existe, pelo mesmo registro que os doze originais usam (`VE.audio.register`), com os mesmos tipos de parâmetro e a mesma rende |
-| 41 | `js/audiovoz.js` | 823 | rgb_lab — A FAMÍLIA VOZ (módulos do MESMO rack de áudio) Este arquivo NÃO cria um segundo laboratório nem um segundo rack. Ele acrescenta uma família ao rack que já existe, pelo mesmo `VE.audio.register` dos vinte e seis anteriores, com os mesmos tipos de parâ |
+| 41 | `js/audiovoz.js` | 816 | rgb_lab — A FAMÍLIA VOZ (módulos do MESMO rack de áudio) Este arquivo NÃO cria um segundo laboratório nem um segundo rack. Ele acrescenta uma família ao rack que já existe, pelo mesmo `VE.audio.register` dos vinte e seis anteriores, com os mesmos tipos de parâ |
 | 42 | `js/audiopresets.js` | 133 | rgb_lab — PRESETS ARTÍSTICOS DO RACK DE ÁUDIO Cada preset é uma CADEIA: quais módulos, em que ordem e com que valores. Nenhum deles inventa processamento — todos usam os módulos que existem no rack, e depois de aplicar tudo continua aberto para você mexer. Apa |
 | 43 | `js/audiotrab.js` | 320 | rgb_lab — O TRABALHADOR DO ÁUDIO ESPECTRAL, GRANULAR e a família VOZ custam de 100 a 500 ms por segundo de áudio. Num arquivo de três minutos isso é mais de um minuto de conta — e, feita na linha principal, é um minuto com a aba dura: o aviso PROCESSANDO apare |
 | 44 | `js/reactmap.js` | 145 | rgb_lab — ÁUDIO REATIVO O som do laboratório 02 mexendo na imagem do laboratório 01. Não é um módulo novo nem uma janela: é uma camada de leitura. Um mapeamento diz "grave → escala deste clipe", e o valor é SOMADO à propriedade no momento em que ela é lida (`V |
@@ -151,9 +151,8 @@ A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
 | # | o que | onde está explicado |
 |---|---|---|
 | 1 | **`D.tom` e `D.esticar` erram o tom** — o motor certo já existe (`D.tomVoz` / `D.esticarVoz`); trocar muda o som dos presets do TEMPO ELÁSTICO e do GRANULAR, e essa decisão é sua | 4v |
-| 2 | Filtro de segunda ordem no `D` — é por isso que o TELEFONE deixa 30% da energia fora da banda | 4v |
-| 3 | Alça de Bézier na máscara de EFEITO | 4l |
-| 4 | Botão SEGUIR na caneta (MediaPipe) | 13 |
+| 2 | Alça de Bézier na máscara de EFEITO | 4l |
+| 3 | Botão SEGUIR na caneta (MediaPipe) | 13 |
 
 **Fechado na décima terceira passada (4v), não repetir:** as TIRAS foram
 destravadas — o anel da fonte vive em meia resolução, a distância de leitura
@@ -3509,6 +3508,75 @@ preto, não avisa. **Todo teste de efeito começa por essas duas perguntas.**
 
 ---
 
+### 4z. O BIQUAD NO `D` (décima sexta passada)
+
+O `D` só tinha filtros de UM POLO: 6 dB por oitava. Isso é uma inclinação,
+não um corte, e a 4v tinha medido o preço — o TELEFONE deixava **30% da
+energia fora** da banda de 300 a 3400 Hz, e o que o ouvido lê nesses 30% é
+"voz abafada" e não "voz no telefone".
+
+Entrou o biquad do cookbook do Bristow-Johnson: dois polos e dois zeros, sete
+tipos (passa-baixa, passa-alta, passa-banda, rejeita-banda, pico e as duas
+prateleiras), com Q e ganho. A conta é em **direta transposta II** — menos
+estado e menos erro acumulado em buffer longo que a direta I.
+
+E junto veio `D.butter(b, tipo, hz, polos)`, a cascata Butterworth: os Q de
+cada estágio saem dos ângulos dos polos, `Q_k = 1/(2·cos((2k+1)π/2n))`. Com
+os Q certos o **−3 dB cai exatamente na frequência pedida**, sem o fator de
+correção que a cascata de um polo precisava para não encolher a banda. Ordem
+ímpar ganha um estágio de um polo no fim, que é o filtro simples que já
+existia.
+
+#### Medido
+
+Primeiro o instrumento, que aqui é o próprio filtro contra a resposta que a
+teoria manda:
+
+```
+passa-baixa em 1 kHz          2 polos      4 polos
+  250 Hz .................... −0,02 dB
+  500 Hz .................... −0,26       −0,02
+  1000 Hz (o corte) ......... −3,01       −3,01
+  2000 Hz ................... −12,37      −24,25
+  4000 Hz ................... −24,48      −48,92
+```
+
+−3,01 dB no corte e 12 dB por oitava por par de polos: é a Butterworth do
+livro. Depois os dois módulos que motivaram o pedido, com ruído branco na
+entrada e a energia medida por FFT — medidor independente dos filtros que
+estão sendo julgados:
+
+```
+                        antes (4v)    agora
+TELEFONE, 300–3400 Hz .... 69,5%      92,2%   (só o filtro: 92,5%)
+RÁDIO, 180–4500 Hz ....... 66,2%      92,4%   (só o filtro: 92,5%)
+entrada (ruído branco) ... 13,4% e 18,5% da energia nessas bandas
+```
+
+Os 7,5% que sobram são a saia do filtro, não a sujeira dos módulos: desligar
+aperto, sujeira e chiado move o número em três décimos.
+
+**A paridade com o trabalhador se manteve sozinha**, que era o ponto de ele
+rodar o mesmo texto: TELEFONE, RÁDIO, MATÉRIA e ESPECTRAL saem **idênticos
+amostra a amostra** entre a linha principal e o Worker, sem eu tocar em nada
+do lado de lá.
+
+#### O que muda para quem já usava
+
+O som do TELEFONE e do RÁDIO **muda** — é o conserto de um número errado, não
+um ajuste de gosto. Os parâmetros são os mesmos (`grave`, `agudo`, e o
+resto), então projeto salvo continua achando tudo; o que ele vai ouvir é a
+banda que os controles sempre prometeram.
+
+#### O que NÃO foi feito
+
+- **Os outros usos de um polo continuam de um polo** — MATÉRIA e ESPACIAL
+  usam `D.passaBaixa` para colorir, e ali inclinação é o que se quer.
+- **Nada foi ouvido.** A banda está medida; se o telefone agora soa apertado
+  demais é ouvido, e ouvido eu não tenho.
+
+---
+
 ### 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
@@ -3531,10 +3599,9 @@ Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
    módulos de buffer rodam fora da linha principal, com o mesmo texto da
    biblioteca; saída idêntica amostra a amostra, e a maior espera da página
    caiu de 2.607 ms para 30 ms. *(seção 4x)*
-5. **Filtro de segunda ordem no `D`.** Só há passa-baixa e passa-alta de um
-   polo, e é por isso que o TELEFONE ainda deixa 30% da energia fora da banda.
-   Um biquad genérico serve a ele, ao RÁDIO e a qualquer módulo futuro.
-   *(seção 4v)*
+5. ~~Filtro de segunda ordem no `D`~~ — **feito na 4z.** Biquad de sete tipos
+   mais a cascata Butterworth `D.butter`. O TELEFONE foi de 69,5% para 92,2%
+   da energia dentro da banda, o RÁDIO de 66,2% para 92,4%. *(seção 4z)*
 
 #### Pedidos ainda não atendidos
 
@@ -4297,7 +4364,8 @@ continua fazendo tudo — os formantes, as consoantes — e o que era nota virou
 
 **TELEFONE** — a banda estreita da linha, o pico da cápsula, o aperto da
 compressão, a sujeira do codec, o chiado e, se quiser, as quedas de sinal do
-celular.
+celular. A banda é de verdade: **92% da energia cai dentro dela**, com uma
+queda de 24 dB por oitava de cada lado.
 
 **RÁDIO** — a estação quase sintonizada. A estática ANDA em vez de ficar
 parada, que é o que faz a estação parecer distante em vez de suja. Tem assobio

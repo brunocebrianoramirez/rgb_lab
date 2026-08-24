@@ -25925,6 +25925,115 @@ window.VE = window.VE || {};
     return out;
   };
 
+  /* ================================================== SEGUNDA ORDEM =====
+     Os dois filtros acima são de UM POLO: 6 dB por oitava. Isso é uma
+     inclinação, não um corte — e foi medido o que ela custa: o TELEFONE,
+     com três estágios de um polo, ainda deixava 30% da energia fora da
+     banda de 300 a 3400 Hz (seção 4v do PROJETO.md).
+
+     Aqui está o biquad de verdade, na forma do cookbook do Robert
+     Bristow-Johnson: dois polos e dois zeros, 12 dB por oitava por
+     estágio, com Q e ganho. Serve ao TELEFONE, ao RÁDIO e a qualquer
+     módulo que precise de banda de verdade.
+
+     A conta é feita em DIRETA TRANSPOSTA II: menos estado, menos erro
+     acumulado em buffer longo que a direta I.                        */
+  D.BIQ = ['baixa', 'alta', 'banda', 'rejeita', 'pico', 'pratGrave', 'pratAgudo'];
+
+  D.biquadCoef = function (tipo, hz, sr, q, ganhoDb) {
+    var f = Math.max(10, Math.min(sr * 0.49, hz));
+    var Q = Math.max(0.05, q === undefined ? Math.SQRT1_2 : q);
+    var A = Math.pow(10, (ganhoDb || 0) / 40);
+    var w0 = 2 * Math.PI * f / sr;
+    var cw = Math.cos(w0), sw = Math.sin(w0);
+    var alpha = sw / (2 * Q);
+    var b0, b1, b2, a0, a1, a2;
+    switch (tipo) {
+      case 1:  /* passa-alta */
+        b0 = (1 + cw) / 2; b1 = -(1 + cw); b2 = b0;
+        a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha;
+        break;
+      case 2:  /* passa-banda, ganho unitário no pico */
+        b0 = alpha; b1 = 0; b2 = -alpha;
+        a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha;
+        break;
+      case 3:  /* rejeita-banda */
+        b0 = 1; b1 = -2 * cw; b2 = 1;
+        a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha;
+        break;
+      case 4:  /* pico */
+        b0 = 1 + alpha * A; b1 = -2 * cw; b2 = 1 - alpha * A;
+        a0 = 1 + alpha / A; a1 = -2 * cw; a2 = 1 - alpha / A;
+        break;
+      case 5: {  /* prateleira grave */
+        var s5 = 2 * Math.sqrt(A) * alpha;
+        b0 = A * ((A + 1) - (A - 1) * cw + s5);
+        b1 = 2 * A * ((A - 1) - (A + 1) * cw);
+        b2 = A * ((A + 1) - (A - 1) * cw - s5);
+        a0 = (A + 1) + (A - 1) * cw + s5;
+        a1 = -2 * ((A - 1) + (A + 1) * cw);
+        a2 = (A + 1) + (A - 1) * cw - s5;
+        break;
+      }
+      case 6: {  /* prateleira aguda */
+        var s6 = 2 * Math.sqrt(A) * alpha;
+        b0 = A * ((A + 1) + (A - 1) * cw + s6);
+        b1 = -2 * A * ((A - 1) + (A + 1) * cw);
+        b2 = A * ((A + 1) + (A - 1) * cw - s6);
+        a0 = (A + 1) - (A - 1) * cw + s6;
+        a1 = 2 * ((A - 1) - (A + 1) * cw);
+        a2 = (A + 1) - (A - 1) * cw - s6;
+        break;
+      }
+      default: /* 0 = passa-baixa */
+        b0 = (1 - cw) / 2; b1 = 1 - cw; b2 = b0;
+        a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha;
+    }
+    return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0 };
+  };
+
+  /* aplica um estágio já calculado, em todos os canais */
+  D.biquadEm = function (b, k) {
+    for (var c = 0; c < b.numberOfChannels; c++) {
+      var d = b.getChannelData(c), z1 = 0, z2 = 0;
+      for (var i = 0; i < d.length; i++) {
+        var x = d[i];
+        var y = k.b0 * x + z1;
+        z1 = k.b1 * x - k.a1 * y + z2;
+        z2 = k.b2 * x - k.a2 * y;
+        d[i] = y;
+      }
+    }
+    return b;
+  };
+
+  D.biquad = function (b, tipo, hz, q, ganhoDb) {
+    return D.biquadEm(D.copy(b), D.biquadCoef(tipo, hz, b.sampleRate, q, ganhoDb));
+  };
+
+  /* ---------------------------------------------------------------------
+     CASCATA BUTTERWORTH, em POLOS.
+
+     Cada biquad dá dois polos. Os Q de uma Butterworth de ordem n saem
+     dos ângulos dos polos: Q_k = 1/(2·cos((2k+1)π/2n)) — 0,707 para dois
+     polos; 0,541 e 1,307 para quatro. Com os Q certos o −3 dB cai
+     EXATAMENTE na frequência pedida, sem fator de correção nenhum, que é
+     o que a cascata de um polo precisava para não encolher a banda.
+
+     Ordem ímpar ganha um estágio de um polo no fim, que é o filtro
+     simples que já existia aqui.                                      */
+  D.butter = function (b, tipo, hz, polos) {
+    var n = Math.max(1, Math.round(polos || 2));
+    var pares = Math.floor(n / 2);
+    var out = D.copy(b);
+    for (var k = 0; k < pares; k++) {
+      var q = 1 / (2 * Math.cos((2 * k + 1) * Math.PI / (2 * n)));
+      D.biquadEm(out, D.biquadCoef(tipo === 1 ? 1 : 0, hz, b.sampleRate, q, 0));
+    }
+    if (n % 2 === 1) out = (tipo === 1) ? D.passaAlta(out, hz) : D.passaBaixa(out, hz);
+    return out;
+  };
+
   /* ressonador: um pico agudo numa frequência, é o que dá "material" */
   D.ressonar = function (b, hz, q, ganho) {
     var out = D.copy(b);
@@ -28617,30 +28726,23 @@ window.VE = window.VE || {};
   }
 
   /* ------------------------------------------------------------------
-     A BANDA DA LINHA, EM CASCATA.
+     A BANDA DA LINHA.
 
-     `D.passaBaixa` e `D.passaAlta` são de um polo: 6 dB por oitava. Isso
-     é uma inclinação, não um corte — e um telefone não é uma inclinação.
-     Medido com ruído branco na entrada, um estágio deixava 42% da energia
-     ACIMA de 3,4 kHz, e o que o ouvido lê nesses 42% é "voz abafada",
-     não "voz no telefone".
+     Aqui era uma cascata de filtros de UM POLO — 6 dB por oitava cada —,
+     com um fator para devolver o −3 dB ao lugar pedido. Funcionava, mas
+     inclinação não é corte: medido, o TELEFONE deixava 30% da energia
+     fora da banda de 300 a 3400 Hz, e o que o ouvido lê nesses 30% é
+     "voz abafada", não "voz no telefone".
 
-     Três estágios dão 18 dB por oitava. Em cascata, cada estágio tira
-     3 dB na frequência de corte, então a banda encolheria; o fator
-     `1/sqrt(2^(1/N) − 1)` afasta o corte de cada estágio o tanto que
-     devolve os −3 dB no lugar pedido. É a correção de sempre, e sem ela
-     um telefone de 300 a 3400 vira um de 590 a 1730.
+     Agora é BUTTERWORTH de verdade, com o biquad que entrou no `D`:
+     12 dB por oitava por estágio, o −3 dB caindo exatamente na
+     frequência pedida sem correção nenhuma, e a banda plana por dentro.
+
+     `polos` é em polos: 4 são 24 dB por oitava de cada lado.
      ------------------------------------------------------------------ */
-  function correcaoDeOrdem(N) {
-    return 1 / Math.sqrt(Math.pow(2, 1 / Math.max(1, N)) - 1);
-  }
-
-  function banda(b, grave, agudo, ordem) {
-    var k = correcaoDeOrdem(ordem), i;
-    var o = b;
-    for (i = 0; i < ordem; i++) o = D.passaAlta(o, grave / k);
-    for (i = 0; i < ordem; i++) o = D.passaBaixa(o, agudo * k);
-    return o;
+  function banda(b, grave, agudo, polos) {
+    var o = D.butter(b, 1, grave, polos);
+    return D.butter(o, 0, agudo, polos);
   }
 
   var PORTADORAS = ['SERRA', 'PULSO DE GLOTE', 'RUÍDO', 'SOPRO', 'O PRÓPRIO SOM'];
@@ -29001,7 +29103,7 @@ window.VE = window.VE || {};
          próprio filtro, que com três polos de um polo cada ainda leva
          uma oitava para chegar aos 18 dB. Fica na ordem certa porque é
          a ordem certa, não porque salvou o resultado.               */
-      o = banda(o, v.grave, Math.max(v.grave + 200, v.agudo), 3);
+      o = banda(o, v.grave, Math.max(v.grave + 200, v.agudo), 4);
       o = casarNivel(b, o);
       return v.mix >= 0.999 ? o : D.blend(b, o, v.mix);
     }
@@ -29064,7 +29166,7 @@ window.VE = window.VE || {};
       /* a banda por último, pelo mesmo motivo do TELEFONE: a estática e o
          assobio chegam pelo aparelho, e o alto-falante do aparelho é que
          define o que se ouve                                        */
-      o = banda(o, v.grave, Math.max(v.grave + 300, v.agudo), 3);
+      o = banda(o, v.grave, Math.max(v.grave + 300, v.agudo), 4);
       o = casarNivel(b, o);
       return v.mix >= 0.999 ? o : D.blend(b, o, v.mix);
     }

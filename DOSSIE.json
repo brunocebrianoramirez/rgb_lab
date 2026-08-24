@@ -1,6 +1,6 @@
 {
   "projeto": "rgb_lab",
-  "gerado": "2026-08-24T03:48:08.702Z",
+  "gerado": "2026-08-24T04:05:31.989Z",
   "descricao": "Laboratório audiovisual experimental em HTML/CSS/JS puro (WebGL2 + Web Audio), sem dependências e sem servidor. Três mesas: vídeo, áudio, tipografia.",
   "autoria": "Elaborado e criado por Bruno Cebriano Ramirez",
   "laboratorios": [
@@ -15,7 +15,7 @@
   },
   "contagens": {
     "modulosJs": 52,
-    "linhasJs": 31198,
+    "linhasJs": 31300,
     "efeitos": 144,
     "familias": 8,
     "conjuntosDeEmoji": 8,
@@ -1296,7 +1296,7 @@
     },
     {
       "arquivo": "js/audiodsp.js",
-      "linhas": 691,
+      "linhas": 800,
       "resumo": "rgb_lab — BIBLIOTECA DE PROCESSAMENTO DE ÁUDIO Funções puras que operam sobre AudioBuffer. Nada aqui desenha, nada aqui conhece a interface: só matemática de sinal. Existe para que os MÓDULOS do rack de áudio (js/audiofx.js) sejam declarações curtas, e para qu"
     },
     {
@@ -1311,7 +1311,7 @@
     },
     {
       "arquivo": "js/audiovoz.js",
-      "linhas": 823,
+      "linhas": 816,
       "resumo": "rgb_lab — A FAMÍLIA VOZ (módulos do MESMO rack de áudio) Este arquivo NÃO cria um segundo laboratório nem um segundo rack. Ele acrescenta uma família ao rack que já existe, pelo mesmo `VE.audio.register` dos vinte e seis anteriores, com os mesmos tipos de parâ"
     },
     {

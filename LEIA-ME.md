@@ -707,7 +707,8 @@ continua fazendo tudo — os formantes, as consoantes — e o que era nota virou
 
 **TELEFONE** — a banda estreita da linha, o pico da cápsula, o aperto da
 compressão, a sujeira do codec, o chiado e, se quiser, as quedas de sinal do
-celular.
+celular. A banda é de verdade: **92% da energia cai dentro dela**, com uma
+queda de 24 dB por oitava de cada lado.
 
 **RÁDIO** — a estação quase sintonizada. A estática ANDA em vez de ficar
 parada, que é o que faz a estação parecer distante em vez de suja. Tem assobio

@@ -290,30 +290,23 @@
   }
 
   /* ------------------------------------------------------------------
-     A BANDA DA LINHA, EM CASCATA.
+     A BANDA DA LINHA.
 
-     `D.passaBaixa` e `D.passaAlta` são de um polo: 6 dB por oitava. Isso
-     é uma inclinação, não um corte — e um telefone não é uma inclinação.
-     Medido com ruído branco na entrada, um estágio deixava 42% da energia
-     ACIMA de 3,4 kHz, e o que o ouvido lê nesses 42% é "voz abafada",
-     não "voz no telefone".
+     Aqui era uma cascata de filtros de UM POLO — 6 dB por oitava cada —,
+     com um fator para devolver o −3 dB ao lugar pedido. Funcionava, mas
+     inclinação não é corte: medido, o TELEFONE deixava 30% da energia
+     fora da banda de 300 a 3400 Hz, e o que o ouvido lê nesses 30% é
+     "voz abafada", não "voz no telefone".
 
-     Três estágios dão 18 dB por oitava. Em cascata, cada estágio tira
-     3 dB na frequência de corte, então a banda encolheria; o fator
-     `1/sqrt(2^(1/N) − 1)` afasta o corte de cada estágio o tanto que
-     devolve os −3 dB no lugar pedido. É a correção de sempre, e sem ela
-     um telefone de 300 a 3400 vira um de 590 a 1730.
+     Agora é BUTTERWORTH de verdade, com o biquad que entrou no `D`:
+     12 dB por oitava por estágio, o −3 dB caindo exatamente na
+     frequência pedida sem correção nenhuma, e a banda plana por dentro.
+
+     `polos` é em polos: 4 são 24 dB por oitava de cada lado.
      ------------------------------------------------------------------ */
-  function correcaoDeOrdem(N) {
-    return 1 / Math.sqrt(Math.pow(2, 1 / Math.max(1, N)) - 1);
-  }
-
-  function banda(b, grave, agudo, ordem) {
-    var k = correcaoDeOrdem(ordem), i;
-    var o = b;
-    for (i = 0; i < ordem; i++) o = D.passaAlta(o, grave / k);
-    for (i = 0; i < ordem; i++) o = D.passaBaixa(o, agudo * k);
-    return o;
+  function banda(b, grave, agudo, polos) {
+    var o = D.butter(b, 1, grave, polos);
+    return D.butter(o, 0, agudo, polos);
   }
 
   var PORTADORAS = ['SERRA', 'PULSO DE GLOTE', 'RUÍDO', 'SOPRO', 'O PRÓPRIO SOM'];
@@ -674,7 +667,7 @@
          próprio filtro, que com três polos de um polo cada ainda leva
          uma oitava para chegar aos 18 dB. Fica na ordem certa porque é
          a ordem certa, não porque salvou o resultado.               */
-      o = banda(o, v.grave, Math.max(v.grave + 200, v.agudo), 3);
+      o = banda(o, v.grave, Math.max(v.grave + 200, v.agudo), 4);
       o = casarNivel(b, o);
       return v.mix >= 0.999 ? o : D.blend(b, o, v.mix);
     }
@@ -737,7 +730,7 @@
       /* a banda por último, pelo mesmo motivo do TELEFONE: a estática e o
          assobio chegam pelo aparelho, e o alto-falante do aparelho é que
          define o que se ouve                                        */
-      o = banda(o, v.grave, Math.max(v.grave + 300, v.agudo), 3);
+      o = banda(o, v.grave, Math.max(v.grave + 300, v.agudo), 4);
       o = casarNivel(b, o);
       return v.mix >= 0.999 ? o : D.blend(b, o, v.mix);
     }
