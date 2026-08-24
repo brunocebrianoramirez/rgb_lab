@@ -505,11 +505,12 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 * **Tracking (barras)** — a faixa que perde o sincronismo e vira ruído.
 * **Troca de cabeça** — o rabo bagunçado nas últimas linhas, na base do
   quadro. Todo VHS tem.
-* **Borda rasgada** — quando a linha é empurrada para fora do quadro, o que
-  aparece na beirada é a **beira da fita**: preto com sujeira de cor, em
-  dentes irregulares dos dois lados. Junto com o atraso da cor, é o detalhe
-  que mais entrega o formato. Quase toda linha anda pouco e uma em cada dez
-  vai longe — por isso o dente é irregular e a imagem continua firme.
+* **Borda rasgada** — a fita não guarda a mesma largura em todas as linhas, e
+  o que aparece nas beiradas é a **beira da fita**: preto com sujeira de cor,
+  em dentes irregulares dos dois lados. Quase toda linha mostra um fio e uma
+  em cada dez mostra um dente longo. Junto com o atraso da cor, é o detalhe
+  que mais entrega o formato — e repare que **o miolo continua firme**: a
+  beira é irregular sozinha, sem sacudir a imagem.
 
 **A sujeira**
 

@@ -477,25 +477,25 @@ window.VE = window.VE || {};
     passes: 3,
     desc: 'a cadeia da fita: pouca banda, cor atrasada, borda rasgada e a cabeça trocando',
     params: [
-      { k: 'res', label: 'Resolução (linhas)', min: 40, max: 640, step: 1, def: 215 },
-      { k: 'soft', label: 'Suavidade', min: 0, max: 3, def: 1.5 },
-      { k: 'sharp', label: 'Realce do deck', min: 0, max: 2, def: 0.45 },
-      { k: 'smear', label: 'Rabo de luz', min: 0, max: 2, def: 0.6 },
+      { k: 'res', label: 'Resolução (linhas)', min: 40, max: 640, step: 1, def: 250 },
+      { k: 'soft', label: 'Suavidade', min: 0, max: 3, def: 1.15 },
+      { k: 'sharp', label: 'Realce do deck', min: 0, max: 2, def: 0.3 },
+      { k: 'smear', label: 'Rabo de luz', min: 0, max: 2, def: 0.35 },
       { k: 'cdelay', label: 'Atraso da cor', min: -12, max: 30, step: 0.1, def: 8 },
-      { k: 'bleed', label: 'Sangramento da cor', min: 0, max: 3, def: 1.2 },
+      { k: 'bleed', label: 'Sangramento da cor', min: 0, max: 3, def: 0.7 },
       { k: 'fring', label: 'Franja de cor', min: 0, max: 3, def: 1 },
       { k: 'cshift', label: 'Desvio de matiz', min: -1, max: 1, def: 0.04 },
       { k: 'sat', label: 'Saturação', min: -1, max: 2, def: 0.45 },
       { k: 'wob', label: 'Ondulação', min: 0, max: 3, def: 0.7 },
       { k: 'lines', label: 'Frequência da onda', min: 5, max: 400, step: 1, def: 90 },
-      { k: 'tbe', label: 'Erro de base de tempo', min: 0, max: 3, def: 0.9 },
+      { k: 'tbe', label: 'Erro de base de tempo', min: 0, max: 3, def: 0.5 },
       { k: 'tear', label: 'Borda rasgada', min: 0, max: 2, def: 1 },
       { k: 'vjump', label: 'Salto vertical', min: 0, max: 1, def: 0.06 },
       { k: 'crease', label: 'Vinco da fita', min: 0, max: 2, def: 0.5 },
-      { k: 'track', label: 'Tracking (barras)', min: 0, max: 2, def: 0.6 },
+      { k: 'track', label: 'Tracking (barras)', min: 0, max: 2, def: 0.35 },
       { k: 'head', label: 'Troca de cabeça', min: 0, max: 2, def: 0.8 },
-      { k: 'drop', label: 'Perda de fita', min: 0, max: 2, def: 0.8 },
-      { k: 'noise', label: 'Chuvisco', min: 0, max: 1, def: 0.14 },
+      { k: 'drop', label: 'Perda de fita', min: 0, max: 2, def: 0.5 },
+      { k: 'noise', label: 'Chuvisco', min: 0, max: 1, def: 0.09 },
       { k: 'flick', label: 'Cintilação', min: 0, max: 1, def: 0.08 },
       { k: 'scan', label: 'Linhas de varredura', min: 0, max: 1, def: 0.15 },
       { k: 'gen', label: 'Geração da cópia', min: 0, max: 3, def: 0.4 }
@@ -554,7 +554,7 @@ window.VE = window.VE || {};
       '  float tbe = (n1*0.62 + n2*0.38)*u_tbe*0.006;',
       '  float u = hash21(vec2(lin, fr*5.0 + 11.0));',
       '  float lado = hash21(vec2(lin, fr*7.0 + 3.0)) - 0.5;',
-      '  tbe += sign(lado)*pow(u, 3.0)*u_tbe*0.075*(0.45 + 0.55*clamp(u_tear, 0.0, 2.0));',
+      '  tbe += sign(lado)*pow(u, 3.0)*u_tbe*0.02;',
       '  float w = sin(y*u_lines*0.35 + uTime*2.7) + 0.55*sin(y*u_lines*0.11 - uTime*1.3);',
       '  float wob = w*u_wob*0.004;',
       '  float dv = y - vhsVinco();',
@@ -569,7 +569,18 @@ window.VE = window.VE || {};
       '}',
       /* A BEIRA DA FITA: o que existe fora da imagem gravada. Não é preto
          chapado — é preto com a sujeira de cor do sinal que sobra ali, e é
-         por isso que o dente sai magenta e laranja, e não cinza.        */
+         por isso que o dente sai magenta e laranja, e não cinza.
+
+         A LARGURA da beira é sorteada POR LINHA, com lei de potência:
+         quase toda linha mostra um fio e uma em cada dez mostra um dente
+         longo. Isso é o que estava errado na primeira tentativa — eu fazia
+         o dente empurrando a linha inteira, e então a imagem tinha de
+         tremer para a borda existir. Na fita são duas coisas separadas: o
+         quadro fica firme e a beira é que é irregular.                 */
+      'float vhsBeiraLarg(float lin, float fr, float lado){',
+      '  float u = hash21(vec2(lin*1.7 + lado*311.0, fr*2.3));',
+      '  return (0.004 + pow(u, 3.0)*0.085)*clamp(u_tear, 0.0, 2.0);',
+      '}',
       'vec3 vhsBeira(float px, float lin, float fr){',
       '  float r = hash21(vec2(floor(px*VHS_AMOSTRAS), lin + fr*3.0));',
       '  float claro = step(0.86, r)*r;',
@@ -586,12 +597,15 @@ window.VE = window.VE || {};
       '  float lin = floor(p.y*VHS_LINHAS);',
       '  float passo = vhsLargL()/8.0;',
       '  float rasga = clamp(u_tear, 0.0, 2.0);',
+      '  float esq = vhsBeiraLarg(lin, fr, 0.0);',
+      '  float dir = 1.0 - vhsBeiraLarg(lin, fr, 1.0);',
       '  vec3 acc = vec3(0.0);',
       '  for(int i=0;i<8;i++){',
       '    float px = p.x + dx + (float(i) - 3.5)*passo;',
-      '    if(rasga > 0.01 && (px < 0.0 || px > 1.0)){',
-      '      acc += mix(vhsYIQ(texture(uOrig, vec2(clamp(px, 0.0, 1.0), p.y)).rgb),',
-      '                 vhsBeira(px, lin, fr), min(rasga, 1.0));',
+      '    float xt = uv.x + (float(i) - 3.5)*passo;',
+      '    bool beira = (rasga > 0.01) && (xt < esq || xt > dir || px < 0.0 || px > 1.0);',
+      '    if(beira){',
+      '      acc += vhsBeira(xt, lin, fr);',
       '    } else {',
       '      acc += vhsYIQ(texture(uOrig, vec2(clamp(px, 0.0, 1.0), p.y)).rgb);',
       '    }',
@@ -631,7 +645,7 @@ window.VE = window.VE || {};
       '      soma += texture(uTex, clamp(vec2(uv.x - float(i)*u_smear*5.0*am, uv.y), 0.0, 1.0)).x*wi;',
       '      w += wi;',
       '    }',
-      '    Y = mix(Y, max(Y, soma/max(w, 1e-4)), clamp(u_smear, 0.0, 1.0)*0.6);',
+      '    Y = mix(Y, soma/max(w, 1e-4), clamp(u_smear, 0.0, 1.0)*0.6);',
       '  }',
       /* a cor chega depois da luz: é por isso que ela escorre para a direita */
       '  float d = u_cdelay*am;',
@@ -657,7 +671,7 @@ window.VE = window.VE || {};
       '  float ruido = u_noise*(1.0 + ger*0.5);',
       '  vec2 gr = floor(uv*vec2(VHS_AMOSTRAS, VHS_LINHAS));',
       '  Y += (hash21(gr + fr*71.0) - 0.5)*ruido*(1.10 - 0.55*clamp(Y, 0.0, 1.0));',
-      '  iq += (hash22(floor(uv*vec2(180.0, 240.0)) + fr*29.0) - 0.5)*ruido*0.30;',
+      '  iq += (hash22(floor(uv*vec2(180.0, 240.0)) + fr*29.0) - 0.5)*ruido*0.18;',
       /* perda de fita: risco claro e curto, de UMA linha de fita */
       '  float lf = floor(uv.y*VHS_LINHAS);',
       '  float ds = hash21(vec2(lf, fr*3.7));',

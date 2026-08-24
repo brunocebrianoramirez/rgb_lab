@@ -3255,10 +3255,54 @@ rabo 0,6, atraso 8, franja 1, rasgo 1 e geração 0,4 — a fita já é fita ao
 arrastar para o clipe, sem precisar mexer em nada. E entrou o estilo
 **FITA RUIM** na galeria, que é a versão judiada de uma vez só.
 
-**O que ainda não é igual, e é honesto dizer:** eu não vejo a tela deles.
-O painel destas sessões não compõe quadros — comparo pelas capturas que ele
-manda e pelas causas físicas, não lado a lado. Se sobrar diferença, é
-olhando que se acha.
+### TERCEIRA VOLTA: com a tela deles à vista
+
+O Bruno abriu o painel do navegador do app — e com o painel VISÍVEL a página
+volta a compor quadros, então a captura passou a funcionar. Pela primeira vez
+deu para ver o resultado deles e o nosso lado a lado, e duas coisas apareceram
+na hora. Nenhuma das duas era achável por medida, porque as duas são de
+DESENHO e não de valor.
+
+**1. Na fita deles o miolo é FIRME e a beira é selvagem.** No nosso, a imagem
+inteira tremia. A causa era minha: eu fazia o dente da borda com uma cauda
+longa no erro de base de tempo — ou seja, para a beira ficar irregular a linha
+inteira precisava andar, e aí o prato virava purê.
+
+Na fita são **duas coisas separadas**: o quadro fica no lugar, e a BEIRA é que
+é irregular, porque a largura da parte gravada varia. Agora a beira tem largura
+própria, sorteada por linha com lei de potência — quase toda linha mostra um
+fio, e uma em cada dez mostra um dente longo:
+
+```
+BORDA RASGADA · quadro de 544 px        esquerda                (direita)
+  rasgo 0 ....... nenhum dente
+  rasgo 0,5 ..... 680 linhas · médio 6,7 px · maior 24    (7,1 · 24)
+  rasgo 1 ....... 680 linhas · médio 13,3 px · maior 48   (14,1 · 48)
+  rasgo 2 ....... 680 linhas · médio 26,6 px · maior 96   (28,1 · 96)
+
+FIRMEZA DO MIOLO · aspereza da borda de um círculo, de linha para linha
+  sem efeito .... 0,68 px
+  com o padrão .. 3,75 px     antes desta volta o círculo era destruído
+```
+
+**2. O miolo derretia por três auréolas somadas.** Comparando um prato branco
+sobre vermelho — que por acaso é quase a imagem de amostra deles:
+
+- o **sangramento da cor** espalhava o "sem cor" do prato por 23 px dentro do
+  vermelho, e isso vira uma auréola pálida em volta. Padrão de 1,2 para 0,7;
+- o **rabo de luz** somava com `max()`, então o objeto claro CRESCIA em vez de
+  arrastar. A resposta do amplificador é atraso, não ganho: virou mistura pura;
+- o **realce do deck** empilhava halo em cima dos dois. De 0,45 para 0,3.
+
+**E o miolo deles é mais limpo que o nosso era.** O chuvisco caiu de 0,14 para
+0,09, o ruído de cor de 0,30 para 0,18 do total, o tracking de 0,6 para 0,35, a
+perda de fita de 0,8 para 0,5 e o erro de base de tempo de 0,9 para 0,5. Os
+trilhos continuam indo até onde iam; o que mudou foi onde o efeito NASCE.
+
+**O que esta volta ensina, e vale para o resto do projeto:** a medida prova que
+um controle faz o que promete, e não prova que o conjunto está certo. Os vinte
+e dois controles estavam certos um a um — e o desenho estava errado. Foi VER
+que consertou, e ver só foi possível porque ele abriu o painel.
 
 ### O que NÃO foi feito
 - **Nada foi VISTO em movimento por mim.** As medidas provam que cada
