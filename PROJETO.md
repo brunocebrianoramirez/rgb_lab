@@ -384,7 +384,9 @@ js/timeline.js           a mesa de edição
 js/panels.js             catálogo, ficha da composição, PLACAS RECOLHÍVEIS, máscara
 js/motion.js             MOTION / Effect Controls / keyframes / gráficos / caixa
 js/filters.js            galeria de 52 filtros, agora com filtro em CADEIA
-js/exporter.js           exportação (vídeo, sequência PNG com alpha, ZIP próprio)
+js/exporter.js           exportação (vídeo, sequência PNG com alpha, ZIP próprio,
+                         e o modo EXATO por WebCodecs, com pré-análise da I.A.)
+js/webm.js      ← NOVO   o escritor de WebM (EBML por extenso) para o modo exato
 js/audiodsp.js  ← NOVO   biblioteca de sinal: FFT, STFT, granular, esticador,
                          respostas impulsivas, ressonadores, sorteio por semente
 js/audio.js              LAB 02 — o rack, agora DIRIGIDO PELA ORDEM dos módulos,
@@ -6917,6 +6919,43 @@ por número de quadro. Na gravação, `VE.exportando.quadro` diz ao efeito
 qual mapa subir. Medido no lab: trecho de 0,5 s a 4 fps com a
 profundidade na pilha → 2 análises, 2 PNGs, `VE.exportando` limpo no fim.
 O tempo real não tem como esperar, e a dica da janela diz isso.
+
+### 5l.11 A EXPORTAÇÃO EXATA DE VERDADE: o codificador e o escritor de WebM
+
+O Bruno: *"quando exporto o vídeo nesse efeito, só exporta uns frames, não
+o vídeo animado como era"*. Reproduzi aqui com um MP4 real (uma gravação
+de tela dele, copiada para dentro do projeto só durante o teste e apagada
+no fim): 2 s de composição com o datamosh, FRAME A FRAME em MP4 → um
+arquivo de **47 s com 3 quadros distintos nos primeiros 2 s**. O
+MediaRecorder carimba cada quadro pelo relógio de parede — o quadro vale
+o instante em que CHEGOU. Este painel é lento (temporizadores
+estrangulados), então o caso é extremo; na máquina dele é o mesmo
+mecanismo em escala menor: efeito pesado, quadro atrasado, arquivo
+esticado ou com quadro repetido. Em TEMPO REAL o sintoma é o inverso —
+arquivo do tamanho certo com poucos quadros. E a SEQUÊNCIA PNG é só
+quadros por definição. Os três dão "uns frames, não o vídeo".
+
+A saída é não usar o gravador: **WebCodecs**. `VideoEncoder` recebe cada
+quadro como `VideoFrame` com o carimbo `i/fps` e devolve pedaços VP9 com
+esse carimbo; o **js/webm.js** escreve o arquivo à mão (EBML: header,
+Info com duração, Tracks, Clusters com SimpleBlocks, Cues para a busca —
+tamanhos por extenso, sem "desconhecido"), no espírito do escritor de ZIP.
+Sem relógio de parede em lugar nenhum: a máquina lenta demora mais e o
+arquivo sai igual. Contrapressão de quatro quadros na fila do
+codificador. O formato aparece como **WEBM · VP9 · EXATO (codificador)**
+e é escolhido sozinho quando o modo vira FRAME A FRAME; em tempo real cai
+no gravador (o codificador não grava som).
+
+**Medido, o mesmo trecho de 2 s a 24 fps com o datamosh:** o arquivo saiu
+com **2,000 s, 48 quadros lidos, 48 distintos, 47 mudanças**, posicionável
+de ponta a ponta — em 49 s de máquina. O gravador, no mesmo painel: 47 s e
+3 distintos.
+
+**E o servidor local não respondia a Range.** Um vídeo carregado por URL
+daqui ficava com `seekable` vazio — escrever em `currentTime` não fazia
+nada, e a exportação frame a frame repetia o mesmo quadro. Não era o caso
+dele (ARQUIVO → blob), mas era um buraco: server.js agora responde 206 com
+`Content-Range` e anuncia `Accept-Ranges`. Precisa reiniciar o servidor.
 
 ### 5l.8 O que NÃO foi feito, e por quê
 

@@ -52,10 +52,26 @@ http.createServer((req, res) => {
   if (!file.startsWith(ROOT)) { res.writeHead(403); res.end('403'); return; }
   fs.readFile(file, (err, data) => {
     if (err) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('404 — não encontrei ' + p); return; }
-    res.writeHead(200, {
-      'Content-Type': TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream',
-      'Cache-Control': 'no-cache'
-    });
+    const tipo = TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream';
+    /* PEDIDO PARCIAL (Range). Sem ele, o navegador considera um vídeo
+       servido daqui NÃO POSICIONÁVEL: `seekable` fica vazio e escrever
+       em `currentTime` não faz nada — a exportação frame a frame de um
+       vídeo carregado por URL repetia o mesmo quadro. Medido em
+       11/09/2026. Um arquivo aberto do disco (blob) nunca teve o
+       problema; este servidor tinha.                                 */
+    const range = req.headers.range && /^bytes=(d*)-(d*)$/.exec(req.headers.range);
+    if (range && data.length) {
+      let ini = range[1] === '' ? Math.max(0, data.length - parseInt(range[2], 10)) : parseInt(range[1], 10);
+      let fim = (range[1] !== '' && range[2] !== '') ? Math.min(parseInt(range[2], 10), data.length - 1) : data.length - 1;
+      if (!(ini >= 0 && ini <= fim)) { res.writeHead(416, { 'Content-Range': 'bytes */' + data.length }); res.end(); return; }
+      res.writeHead(206, {
+        'Content-Type': tipo, 'Cache-Control': 'no-cache', 'Accept-Ranges': 'bytes',
+        'Content-Range': 'bytes ' + ini + '-' + fim + '/' + data.length, 'Content-Length': fim - ini + 1
+      });
+      res.end(data.subarray(ini, fim + 1));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': tipo, 'Cache-Control': 'no-cache', 'Accept-Ranges': 'bytes', 'Content-Length': data.length });
     res.end(data);
   });
 }).listen(PORT, () => {

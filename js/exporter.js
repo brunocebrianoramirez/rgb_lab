@@ -10,6 +10,14 @@
   var EX = VE.exporter = {};
   var running = false, cancelFlag = false, recorder = null, lastUrl = null;
 
+  /* O CODIFICADOR (WebCodecs). O MediaRecorder carimba o quadro pelo
+     relógio de parede: quadro atrasado é arquivo esticado. O VideoEncoder
+     recebe cada quadro com o carimbo que ELE tem — o modo exato deixa de
+     depender da velocidade da máquina, e roda o mais rápido que ela
+     desenha. O arquivo é montado por js/webm.js. Só vídeo, como o modo
+     exato sempre foi.                                                 */
+  var EXATO = { mime: 'webcodecs/vp9', label: 'WEBM · VP9 · EXATO (codificador)', ext: 'webm', wc: true, codec: 'vp09.00.10.08' };
+
   var CANDIDATES = [
     { mime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', label: 'MP4 · H.264 · abre em tudo', ext: 'mp4' },
     { mime: 'video/webm;codecs=vp9,opus', label: 'WEBM · VP9 · melhor qualidade', ext: 'webm' },
@@ -96,6 +104,7 @@
     var ok = CANDIDATES.filter(function (c) {
       try { return window.MediaRecorder && MediaRecorder.isTypeSupported(c.mime); } catch (e) { return false; }
     });
+    if (window.VideoEncoder && VE.webm) ok.unshift(EXATO);
     if (!ok.length) {
       sel.innerHTML = '<option>indisponível</option>';
     } else {
@@ -105,6 +114,15 @@
       if (pref < 0) pref = 0;
       sel.value = pref;
     }
+    /* o modo escolhe o formato que lhe serve: exato → codificador; tempo
+       real → gravador (o codificador não grava som nem tempo real) */
+    EX.formatoParaModo = function (modo) {
+      if (!EX.formats) return;
+      var wc = EX.formats.findIndex(function (c) { return c.wc; });
+      var mr = EX.formats.findIndex(function (c) { return !c.wc && c.ext === 'mp4' }); if (mr < 0) mr = EX.formats.findIndex(function (c) { return !c.wc; });
+      if (modo === 'precise' && wc >= 0) sel.value = wc;
+      else if (modo === 'realtime' && EX.formats[+sel.value] && EX.formats[+sel.value].wc && mr >= 0) sel.value = mr;
+    };
     $('#exportBtn').addEventListener('click', EX.open);
     $('#expClose').addEventListener('click', EX.close);
     $('#expCancel').addEventListener('click', function () { if (running) cancelFlag = true; else EX.close(); });
@@ -112,10 +130,11 @@
     $('#snapBtn').addEventListener('click', EX.snapshot);
     $('#expMode').addEventListener('change', function () {
       var v = this.value;
+      EX.formatoParaModo(v);
       $('#modeHint').textContent = v === 'realtime'
         ? 'Toca a composição do início ao fim gravando a saída. Mantém o áudio. Se a máquina engasgar, pode perder frames. O mapa de profundidade (I.A.) sai como na prévia, atrasado — para ele, use frame a frame.'
         : v === 'precise'
-          ? 'Renderiza frame a frame com precisão total. Sem áudio. Mais lento, resultado exato. Com o mapa de profundidade (I.A.) na pilha, analisa cada quadro antes de gravar.'
+          ? 'Renderiza frame a frame com precisão total. Sem áudio. Com o formato EXATO (codificador), cada quadro entra com o seu tempo — o arquivo sai certo mesmo com efeito pesado, e roda o mais rápido que a máquina desenha. Com o mapa de profundidade (I.A.) na pilha, analisa cada quadro antes de gravar.'
           : 'Gera um PNG por frame, com transparência preservada, e entrega tudo num .zip.';
       $('#expFormat').disabled = (v === 'frames');
     });
@@ -226,6 +245,13 @@
 
     var fmt = EX.formats[+$('#expFormat').value] || EX.formats[0];
     if (!fmt) { VE.app.toast('sem gravador neste navegador', 'err'); finish(null, null); return; }
+    /* o codificador só serve ao modo exato; em tempo real, o gravador */
+    if (fmt.wc && mode === 'realtime') {
+      fmt = EX.formats.find(function (c) { return !c.wc; });
+      if (!fmt) { VE.app.toast('sem gravador para tempo real neste navegador', 'err'); finish(null, null); return; }
+      VE.app.toast('tempo real grava com o gravador do navegador (' + fmt.label + ')');
+    }
+    if (fmt.wc && mode === 'precise') { runExato(fps, total, faixa.ini, w, h, bitrate, fmt); return; }
 
     /* Quadro EMPURRADO nos dois modos (`captureStream(0)` + `requestFrame`).
        Com `captureStream(fps)` quem decide quando existe um quadro novo é
@@ -413,6 +439,66 @@
         var falta = (t * 1000) - (performance.now() - t0);
         if (falta > 2) setTimeout(entrega, falta);
         else { if (falta < -80) atrasos++; entrega(); }
+      }).catch(function () { i++; setTimeout(step, 0); });
+    }
+    step();
+  }
+
+  /* ------------------------------------------------------ EXATO (WebCodecs)
+     Cada quadro é desenhado, virado em VideoFrame com o carimbo i/fps e
+     entregue ao codificador; os pedaços codificados guardam esse
+     carimbo, e o js/webm.js escreve o arquivo com ele. Não há relógio
+     de parede em lugar nenhum: a máquina lenta demora mais, e o arquivo
+     sai igual. Contrapressão: no máximo quatro quadros na fila do
+     codificador — senão a memória sobe sem limite num trecho longo.   */
+  function runExato(fps, total, ini, w, h, bitrate, fmt) {
+    ini = ini || 0;
+    var frames = quadros(total, fps), chunks = [], desc = null, i = 0, t0 = performance.now();
+    var canvas = $('#gl'), enc, fechado = false;
+    function terminar() {
+      if (fechado) return; fechado = true;
+      var fim = function () {
+        try { enc.close(); } catch (e2) { }
+        if (cancelFlag || !chunks.length) { finish(null, fmt); return; }
+        var blob = VE.webm.mux({ width: w, height: h, codec: 'V_VP9', description: desc, chunks: chunks, duration: frames / fps });
+        finish(blob, fmt);
+      };
+      try { enc.flush().then(fim, fim); } catch (e3) { fim(); }
+    }
+    try {
+      enc = new VideoEncoder({
+        output: function (chunk, meta) {
+          if (!desc && meta && meta.decoderConfig && meta.decoderConfig.description) desc = new Uint8Array(meta.decoderConfig.description);
+          var buf = new Uint8Array(chunk.byteLength);
+          chunk.copyTo(buf);
+          chunks.push({ data: buf, timestamp: chunk.timestamp, key: chunk.type === 'key', duration: chunk.duration || 0 });
+        },
+        error: function (err) { VE.app.toast('codificador: ' + (err && err.message), 'err'); cancelFlag = true; }
+      });
+      enc.configure({ codec: fmt.codec, width: w, height: h, bitrate: bitrate, framerate: fps, latencyMode: 'quality' });
+    } catch (err) { VE.app.toast('codificador falhou: ' + (err && err.message), 'err'); finish(null, fmt); return; }
+    VE.media.pauseAll();
+    VE.app.clearFeedback();
+    function step() {
+      if (cancelFlag || i >= frames) { terminar(); return; }
+      var t = i / fps;
+      VE.project.time = ini + t;
+      VE.media.seekAll(ini + t).then(function () {
+        if (VE.exportando) VE.exportando.quadro = i;
+        VE.app.renderNow();
+        try {
+          var frame = new VideoFrame(canvas, { timestamp: Math.round(i * 1e6 / fps), duration: Math.round(1e6 / fps) });
+          enc.encode(frame, { keyFrame: (i % (fps * 2)) === 0 });
+          frame.close();
+        } catch (err) { VE.app.toast('quadro ' + i + ': ' + (err && err.message), 'err'); cancelFlag = true; terminar(); return; }
+        VE.tl.setTime(ini + t);
+        prog(i / frames, 'codificando · quadro ' + (i + 1) + ' de ' + frames + ' · ' + ((performance.now() - t0) / 1000).toFixed(1) + 's');
+        i++;
+        if (enc.encodeQueueSize > 4) {
+          var seguiu = false, segue = function () { if (seguiu) return; seguiu = true; setTimeout(step, 0); };
+          try { enc.addEventListener('dequeue', segue, { once: true }); } catch (e4) { }
+          setTimeout(segue, 250);
+        } else setTimeout(step, 0);
       }).catch(function () { i++; setTimeout(step, 0); });
     }
     step();

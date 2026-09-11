@@ -1184,11 +1184,14 @@ onde; **EXPORTAR TUDO** ali limpa as marcas.
 | modo | quando usar | o que sai |
 |---|---|---|
 | **TEMPO REAL · COM ÁUDIO** | quando tem som e a composição roda liso na prévia | MP4 ou WEBM com áudio. Grava tocando: se a máquina engasgar, perde quadro |
-| **FRAME A FRAME · EXATO** | efeitos pesados, datamosh, várias camadas, o mapa de profundidade | MP4 ou WEBM sem áudio, cada quadro desenhado com calma. Leva o tempo da composição (o gravador do navegador carimba pelo relógio) |
+| **FRAME A FRAME · EXATO** | efeitos pesados, datamosh, várias camadas, o mapa de profundidade | **WEBM · VP9 · EXATO (codificador)**, sem áudio: cada quadro entra no arquivo com o SEU tempo, e a exportação roda o mais rápido que a máquina desenha — o arquivo sai certo mesmo com efeito pesado. Se escolher MP4 neste modo, cai no gravador do navegador, que carimba pelo relógio (e aí a máquina precisa acompanhar) |
 | **SEQUÊNCIA PNG · COM ALPHA** | quando precisa de transparência (tricô, cupom, recorte do perto, letras recortadas) ou vai montar o vídeo em outro programa | um PNG por quadro, com alfa real, num `.zip`. Até 1200 quadros |
 
-**3. Formato, resolução, fps, taxa.** MP4 H.264 abre em tudo; WEBM VP9 tem a
-melhor qualidade. 100% é a resolução da composição. 30 fps é o padrão; 24
+**3. Formato, resolução, fps, taxa.** No modo frame a frame o formato
+**EXATO (codificador)** é escolhido sozinho — é o único que não depende da
+velocidade da máquina. Ele gera WEBM (VP9); se precisar de MP4, o gravador
+do navegador continua na lista, ou converta o WEBM depois. Em tempo real,
+MP4 H.264 abre em tudo e WEBM VP9 tem a melhor qualidade. 100% é a resolução da composição. 30 fps é o padrão; 24
 dá a cadência de cinema; 60 só se a fonte for 60. Taxa de 8 Mbps serve para
 1080p; 16 para o que tem muito grão, ruído ou datamosh (o codec do
 navegador esmaga detalhe fino com taxa baixa — e o glitch É detalhe fino).
@@ -1198,8 +1201,22 @@ PAPEL para achatar. MANTER ALPHA só vale para a sequência PNG.
 
 **5. Confira.** No fim, a janela mostra o vídeo e **mede a duração do
 arquivo** contra a da composição: ✓ quando bate; "saiu curto" quando o
-gravador perdeu quadros (tente resolução menor, menos fps ou frame a frame);
-"saiu longo" quando a máquina não desenhou no ritmo. Aí é só BAIXAR.
+gravador perdeu quadros; "saiu longo" quando a máquina não desenhou no
+ritmo. As duas coisas só acontecem com o gravador do navegador (tempo real,
+ou frame a frame em MP4) — com o formato EXATO o arquivo bate sempre. Aí é
+só BAIXAR.
+
+**Se o vídeo saiu "com uns quadros só", parado ou aos pulos:**
+
+* o download é um **.zip**? Então foi a SEQUÊNCIA PNG — que é só quadros
+  mesmo, um PNG por quadro, para montar em outro programa. Para um vídeo,
+  escolha FRAME A FRAME;
+* foi em **TEMPO REAL** com efeito pesado (datamosh, várias camadas,
+  profundidade)? A máquina não desenhou a tempo e o gravador gravou o que
+  chegou: poucos quadros num arquivo do tamanho certo. Use FRAME A FRAME,
+  que agora não depende da velocidade;
+* foi em FRAME A FRAME com **MP4**? O gravador carimba pelo relógio: o
+  arquivo sai esticado, com quadro repetido. Deixe no formato EXATO.
 
 **Os efeitos novos na exportação:**
 
@@ -1906,7 +1923,8 @@ js/panels.js                  catálogo, ficha da composição, máscara na pré
 js/motion.js                  MOTION, Effect Controls, gráficos, caixa na prévia
 js/filters.js                 galeria de filtros com miniatura ao vivo
 js/presets.js                 presets
-js/exporter.js                exportação (vídeo, sequência PNG, zip)
+js/exporter.js                exportação (vídeo, sequência PNG, zip, modo exato por WebCodecs)
+js/webm.js                    o escritor de WebM do modo exato
 js/audio.js                   laboratório de áudio
 js/audiotrab.js               o trabalhador: a cadeia calculada fora da linha principal
 js/type.js                    laboratório de tipografia
