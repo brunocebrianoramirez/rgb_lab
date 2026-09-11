@@ -81,6 +81,20 @@
     f('x05', 'LOMO', 'CRUZADO', { sat: 0.45, con: 0.42, crush: 0.1, fade: 0.04, split: 0.5, shTint: '#101f30', hiTint: '#fff0c0', vig: 0.85, sharp: 0.3 }),
     f('x06', 'POLAROIDE', 'CRUZADO', { exp: 0.16, temp: 0.14, sat: -0.08, con: -0.06, fade: 0.3, roll: 0.78, split: 0.55, shTint: '#2a2a3a', hiTint: '#fff4e2', vig: 0.18, grain: 0.05 }),
 
+    /* ---- 8 MM: os filmes do 8mm Vintage Camera, lidos dos prints ----
+       Todos desbotados (preto levantado, ombro nas luzes) e cada um com
+       o seu par de tons: o 60s tem sombra magenta e luz amarelo-verde; o
+       Two-Color, sombra teal e luz rosada, quase sem saturação.        */
+    f('m01', '60s', '8 MM', { con: 0.02, sat: -0.1, temp: 0.2, tintg: -0.1, fade: 0.14, roll: 0.55, split: 0.7, shTint: '#4a2a48', hiTint: '#f4f0a8', vig: 0.12, grain: 0.03 }),
+    f('m02', 'TWO-COLOR', '8 MM', { con: 0.05, sat: -0.38, temp: 0.04, fade: 0.16, roll: 0.5, split: 0.85, shTint: '#1f4a52', hiTint: '#ffd6c8', vig: 0.1, grain: 0.03 }),
+    f('m03', '70s', '8 MM', { con: 0.14, sat: 0.08, temp: 0.4, fade: 0.1, roll: 0.5, split: 0.5, shTint: '#3a2210', hiTint: '#ffd9a0', vig: 0.16, grain: 0.03 }),
+    f('m04', '1920', '8 MM', { skin: 0, sat: -1, con: 0.24, fade: 0.1, roll: 0.45, split: 0.6, shTint: '#2a1e14', hiTint: '#e8d9b8', vig: 0.3, grain: 0.09 }),
+    f('m05', 'SIENA', '8 MM', { skin: 0.1, sat: -0.5, temp: 0.35, con: 0.18, fade: 0.08, roll: 0.5, split: 0.8, shTint: '#3a2416', hiTint: '#f1d9b0', vig: 0.18, grain: 0.04 }),
+    f('m06', 'SAKURA', '8 MM', { exp: 0.14, sat: -0.2, con: -0.08, temp: 0.08, tintg: -0.26, fade: 0.2, roll: 0.7, split: 0.6, shTint: '#5a3550', hiTint: '#ffe4ec', vig: 0.06, grain: 0.02 }),
+    f('m07', 'INDIGO', '8 MM', { temp: -0.4, sat: -0.15, con: 0.2, fade: 0.1, roll: 0.5, split: 0.65, shTint: '#1a1f4a', hiTint: '#d8e4ff', vig: 0.14, grain: 0.03 }),
+    f('m08', 'XPRO', '8 MM', { sat: 0.3, con: 0.38, crush: 0.05, fade: 0.04, roll: 0.35, split: 0.8, shTint: '#0f3a44', hiTint: '#ffe873', vig: 0.2, grain: 0.04 }),
+    f('m09', 'NOIR', '8 MM', { skin: 0, sat: -1, con: 0.45, crush: 0.1, fade: 0.03, roll: 0.3, split: 0, vig: 0.45, grain: 0.07, sharp: 0.2 }),
+
     /* ---- PRETO E BRANCO ---- */
     f('b01', 'P&B NEUTRO', 'P&B', { skin: 0, sat: -1, con: 0.22, fade: 0.06, split: 0, grain: 0.05, sharp: 0.25 }),
     f('b02', 'P&B DURO', 'P&B', { skin: 0, split: 0, sat: -1, con: 0.72, crush: 0.14, fade: 0, roll: 0.1, grain: 0.07, vig: 0.35, sharp: 0.45 }),

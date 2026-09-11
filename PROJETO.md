@@ -6957,6 +6957,59 @@ nada, e a exportação frame a frame repetia o mesmo quadro. Não era o caso
 dele (ARQUIVO → blob), mas era um buraco: server.js agora responde 206 com
 `Content-Range` e anuncia `Accept-Ranges`. Precisa reiniciar o servidor.
 
+### 5l.12 A PELÍCULA PELO 8MM VINTAGE CAMERA
+
+*"Os efeitos de 8mm, super 8mm e 16mm estão MUITO FORÇADOS, HORRÍVEL"* —
+com quatro prints do app 8mm Vintage Camera (e um do Super 16). Ele tinha
+razão: cada pacote empilhava OITO efeitos, todos no talo (grão 0,4 grosso
+e colorido, poeira 0,5, riscos, cabelo, tremor contínuo 0,5, vazamento
+0,7 pulsando, flash de rolo a cada dois segundos, halação 0,75, vinheta
+duas vezes). Nenhuma câmera faz isso tudo ao mesmo tempo; o app faz quase
+nada, e é por isso que parece filme.
+
+O que os prints mostram, lido controle a controle: janela 4:3 de canto
+redondo com uma SOMBRA MACIA que acompanha a borda (não vinheta radial);
+cor desbotada (preto levantado, ombro nas luzes, saturação contida) com um
+tom por filme — 60s: sombra magenta, luz amarelo-esverdeada; Two-Color:
+sombra teal, luz rosada; imagem macia; grão fino e baixo; cintilação
+leve; um vazamento discreto à esquerda de vez em quando; jitter raro; e a
+CADÊNCIA de 18 quadros por segundo.
+
+**O que mudou (fx5.js, filters.js):**
+- `filmgate` ganhou SOMBRA (força e largura, seguindo o canto redondo),
+  CINTILAÇÃO (com ritmo) e a FORMA DA JANELA — LARGA (o desenho antigo:
+  fração do quadro) ou DA BITOLA (4:3 pela altura, barras pretas dos
+  lados, como o app; a imagem é recortada, não espremida);
+- `filmgrain` ganhou SUAVIDADE (mistura ruído de valor contínuo — o
+  "smoothness" do Super 16) e nasce em 0,14 em vez de 0,28;
+- `cadencia` é efeito novo, sobre a MEMÓRIA PRÓPRIA do motor (5l.9): a
+  passada 0 guarda o quadro quando o relógio vira e devolve o guardado
+  nos outros — 18 fps no 8 mm e no Super 8, 24 no 16 mm. Vale na prévia
+  e na exportação;
+- os quatro pacotes foram refeitos: cadência → maciez → cor → grão →
+  (poeira rara, jitter mínimo, vazamento 0,2) → janela. Sem flash, sem
+  riscos, sem halação no 8 mm. O 16 mm mostra a tira com perfurações e a
+  base marrom (Super 16); a PROJEÇÃO VELHA continua sendo a cópia
+  judiada, só sem o flash a cada dois segundos;
+- a galeria de filtros ganhou a família 8 MM: 60s, TWO-COLOR, 70s, 1920,
+  SIENA, SAKURA, INDIGO, XPRO, NOIR — `filmstock` puro, para pôr por cima
+  de qualquer pacote.
+
+**Visto no banco de prova** (painel aberto, cena de praia sintética com
+céu, mar, areia e duas figuras): o 8 mm sai numa janela 4:3 de 640×483
+num quadro de 960 (aspecto 1,33 medido), sombra na borda, cor
+desbotada quente, grão fino, três ou quatro pontos de poeira; o 16 mm
+sai na tira marrom com as perfurações à esquerda, neutro e limpo; os
+filtros 60s (céu amarelo-verde, sombra quente) e TWO-COLOR (mar teal,
+luz rosada, quase sem saturação) batem com os prints.
+
+**Armadilha de ferramenta, para não repetir:** dois scripts de edição
+falharam por BARRA INVERTIDA — `\n` num template literal virou quebra de
+linha de verdade dentro do `join('...')` do shader, e o MSYS do Git Bash
+colapsa `\\` em argumentos de `node -e`. Script de edição que carrega
+texto de shader vai para ARQUIVO, e a barra se monta com
+`String.fromCharCode(92)`.
+
 ### 5l.8 O que NÃO foi feito, e por quê
 
 - **Nada foi VISTO por mim em movimento** — o painel estava escondido. O

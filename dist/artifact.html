@@ -8993,6 +8993,30 @@ window.VE = window.VE || {};
    captação. As bitolas reais que este pacote cobre são
    8mm · Super 8 · 16mm · 35mm — em ordem crescente de área de
    quadro, e portanto de grão cada vez mais fino.
+
+   SEGUNDA VOLTA (11/09/2026): o Bruno achou os pacotes de 8 mm,
+   Super 8 e 16 mm "muito forçados, horríveis", e mandou os prints do
+   app 8mm Vintage Camera (e do Super 16) como régua. Ele tinha razão:
+   cada pacote empilhava OITO efeitos, todos no talo — grão grosso e
+   colorido, poeira, riscos, cabelo, tremor contínuo, vazamento
+   pulsando, flash de rolo a cada dois segundos, halação, duas vinhetas.
+   O app faz quase nada, e é por isso que parece filme:
+
+     · a JANELA de canto redondo com uma SOMBRA MACIA que acompanha a
+       borda (não uma vinheta radial), preto fora;
+     · a cor DESBOTADA: preto levantado, altas luzes comprimidas,
+       saturação contida, e um tom por filme (60s: sombras magenta e
+       luzes amarelo-esverdeadas; Two-Color: sombras teal e luzes
+       rosadas; 1920, Siena, Sakura, Indigo, XPro, Noir…);
+     · imagem MACIA, grão FINO e baixo, cintilação leve, um vazamento
+       discreto na borda esquerda de vez em quando, jitter raro;
+     · e a CADÊNCIA: 18 quadros por segundo no 8 mm e no Super 8, 24 no
+       16 mm. É o tranco que mais diz "filme", e não existia aqui.
+
+   Daí: a janela ganhou SOMBRA e CINTILAÇÃO; o grão ganhou SUAVIDADE;
+   entrou a CADÊNCIA (memória própria do motor, gl.js); os pacotes foram
+   refeitos com metade dos efeitos e um décimo dos valores; e os filmes
+   do app viraram a família 8 MM da galeria de filtros (filters.js).
    ============================================================ */
 (function (VE) {
   'use strict';
@@ -9022,6 +9046,12 @@ window.VE = window.VE || {};
     alpha: true,
     params: [
       { k: 'fmt', t: 's', label: 'Bitola', def: 1, opts: ['8 mm', 'SUPER 8', '16 mm', '35 mm'] },
+      /* LARGA: a janela é uma fração do quadro, seja ele qual for (o desenho
+         antigo). DA BITOLA: a janela tem a proporção do filme (4:3 no 8 mm)
+         pela altura do quadro — é o que o app faz, com as barras pretas
+         dos lados num vídeo 16:9. A imagem é recortada, não espremida.  */
+      { k: 'forma', t: 's', label: 'Forma da janela', def: 0, opts: ['LARGA (do quadro)', 'DA BITOLA (4:3 no 8 mm)'] },
+      { k: 'tam', label: 'Tamanho (da altura do quadro)', min: 0.4, max: 1, def: 0.88 },
       { k: 'zoom', label: 'Sangria (encher a janela)', min: 0.6, max: 1.6, def: 1.06 },
       { k: 'soft', label: 'Maciez da borda', min: 0, max: 0.12, def: 0.012 },
       { k: 'round', label: 'Canto arredondado', min: 0, max: 2, def: 1 },
@@ -9029,7 +9059,13 @@ window.VE = window.VE || {};
       { k: 'holeSide', t: 's', label: 'Lado das perfurações', def: 0, opts: ['Esquerda', 'Direita', 'Os dois'] },
       { k: 'weave', label: 'Tremor da janela', min: 0, max: 1, def: 0.22 },
       { k: 'weaveSpd', label: 'Velocidade do tremor', min: 0.2, max: 8, def: 2.4 },
-      { k: 'vig', label: 'Queda de luz nos cantos', min: 0, max: 1.5, def: 0.45 },
+      { k: 'vig', label: 'Queda de luz nos cantos', min: 0, max: 1.5, def: 0.2 },
+      /* a sombra do app: escurece a faixa junto da borda, seguindo o canto
+         redondo — é o que faz a janela parecer uma janela e não um recorte */
+      { k: 'sombra', label: 'Sombra da borda', min: 0, max: 1, def: 0.5 },
+      { k: 'sombraW', label: 'Largura da sombra', min: 0.01, max: 0.3, def: 0.08 },
+      { k: 'flick', label: 'Cintilação', min: 0, max: 1, def: 0.06 },
+      { k: 'flickHz', label: 'Ritmo da cintilação', min: 4, max: 48, step: 1, def: 18 },
       { k: 'edge', t: 'c', label: 'Cor fora da janela', def: '#0b0a08' },
       { k: 'edgeA', label: 'Opacidade fora da janela', min: 0, max: 1, def: 1 }
     ],
@@ -9049,6 +9085,9 @@ window.VE = window.VE || {};
       '  vec2 suv = (uv - 0.5 - wv)/max(u_zoom, 0.05) + 0.5;',
       '  vec4 col = src4(suv);',
       '  vec2 b = vec2(half_.x*uAspect, half_.y);',
+      /* da bitola: altura = tam do quadro, largura pela proporção do filme,
+         nas mesmas unidades (a altura do quadro vale 1 depois do uAspect) */
+      '  if(u_forma > 0.5){ b = vec2(u_tam*spec.w, u_tam)*0.5; r = spec.z*u_round*min(b.x, b.y)*2.0; }',
       '  float d = roundBox(p, b, min(r, min(b.x, b.y)*0.98));',
       '  float m = 1.0 - smoothstep(0.0, max(u_soft, 0.0008), d);',
       /* perfurações: quadrados de canto redondo, ritmados na vertical */
@@ -9066,7 +9105,13 @@ window.VE = window.VE || {};
       /* queda de luz do canto — a lente barata da bitola pequena */
       '  float vd = length(p/max(b, vec2(0.001)));',
       '  float vig = 1.0 - smoothstep(0.45, 1.35, vd)*u_vig;',
-      '  vec3 rgb = col.rgb*vig;',
+      /* a sombra da borda: d é a distância com sinal ao canto redondo
+         (negativa dentro); a faixa de largura sombraW junto da borda
+         escurece, com a mesma forma da janela                          */
+      '  float sombra = 1.0 - smoothstep(-max(u_sombraW, 0.005), 0.0, d)*u_sombra;',
+      /* cintilação: o obturador e a lâmpada, quadro a quadro */
+      '  float cint = 1.0 + (hash11(floor(uTime*u_flickHz)) - 0.5)*u_flick*0.5;',
+      '  vec3 rgb = col.rgb*vig*sombra*cint;',
       '  vec3 outside = u_edge;',
       '  float a = col.a*m;',
       '  rgb = mix(outside, rgb, m);',
@@ -9169,9 +9214,12 @@ window.VE = window.VE || {};
     desc: 'quanto menor a bitola, maior o grão — 8mm é grosso, 35mm é fino',
     params: [
       { k: 'fmt', t: 's', label: 'Bitola', def: 1, opts: ['8 mm', 'SUPER 8', '16 mm', '35 mm'] },
-      { k: 'amt', label: 'Intensidade', min: 0, max: 1, def: 0.28 },
+      { k: 'amt', label: 'Intensidade', min: 0, max: 1, def: 0.14 },
       { k: 'shadow', label: 'Mais grão nas sombras', min: 0, max: 1, def: 0.7 },
-      { k: 'color', label: 'Grão colorido', min: 0, max: 1, def: 0.25 },
+      { k: 'color', label: 'Grão colorido', min: 0, max: 1, def: 0.1 },
+      /* o "smoothness" do Super 16: grão duro é ruído de sensor; grão de
+         prata é uma nuvem — o suave mistura o ruído de valor, contínuo */
+      { k: 'suave', label: 'Suavidade do grão', min: 0, max: 1, def: 0.4 },
       { k: 'fps', label: 'Cadência do grão', min: 6, max: 60, step: 1, def: 18 }
     ],
     glsl: [
@@ -9180,10 +9228,16 @@ window.VE = window.VE || {};
       '  float sizes[4];',
       '  sizes[0] = 0.30; sizes[1] = 0.42; sizes[2] = 0.62; sizes[3] = 1.00;',
       '  float sc = sizes[int(clamp(u_fmt, 0.0, 3.0))];',
-      '  vec2 gp = floor(uv*uRes*sc) + floor(uTime*u_fps);',
+      '  float tk = floor(uTime*u_fps);',
+      '  vec2 gp = floor(uv*uRes*sc) + tk;',
       '  float g = hash21(gp) - 0.5;',
       '  float gr = hash21(gp + 17.3) - 0.5;',
       '  float gb = hash21(gp + 91.7) - 0.5;',
+      '  if(u_suave > 0.001){',
+      '    vec2 q = uv*uRes*sc*0.5 + tk*3.0;',
+      '    float sm = (vnoise(q) - 0.5)*2.2;',
+      '    g = mix(g, sm, u_suave); gr = mix(gr, (vnoise(q + 31.0) - 0.5)*2.2, u_suave); gb = mix(gb, (vnoise(q + 67.0) - 0.5)*2.2, u_suave);',
+      '  }',
       '  float lm = luma(c);',
       '  float w = mix(1.0, 1.0 - smoothstep(0.0, 0.75, lm) + 0.25, u_shadow);',
       '  vec3 n = mix(vec3(g), vec3(g, gr, gb), u_color);',
@@ -9279,6 +9333,35 @@ window.VE = window.VE || {};
       '  h /= max(wsum, 0.001);',
       '  return c + h*u_tint*u_amt*2.4;',
       '}'
+    ].join('\n')
+  });
+
+  /* ================================================== CADÊNCIA ============
+     O 8 mm roda a 18 quadros por segundo e a tela a 60: o que mais diz
+     "filme" é o tranco. Este efeito SEGURA o quadro pelo ritmo pedido —
+     com a memória própria do motor (gl.js): a passada 0 guarda o quadro
+     no instante em que o relógio vira, e devolve o guardado nos outros;
+     a última passada só o mostra. Vale na prévia e na exportação (que
+     anda pelo tempo da composição, não pelo da tela).
+     O alfa do quadro guardado é o índice do relógio, então o alfa que
+     sai é o do quadro ATUAL — só importa em clipe transparente em
+     movimento.                                                          */
+  D({
+    id: 'cadencia', name: 'Cadência de projeção', cat: 'pelicula', color: '#c98b3a',
+    passes: 2, memoria: true, memPass: 0, tempo: true,
+    desc: 'segura o quadro no ritmo da câmera: 18 por segundo no 8 mm e no Super 8, 24 no 16 mm — o tranco que diz filme',
+    params: [
+      { k: 'fps', label: 'Quadros por segundo', min: 4, max: 30, step: 1, def: 18 }
+    ],
+    glsl: [
+      'float cdQuadro(){ float fq = floor(uTime*max(u_fps, 1.0)); return (fq - 255.0*floor(fq/255.0) + 1.0)/255.0; }',
+      'vec4 fxStep(vec2 uv){',
+      '  vec4 old = texture(uMem, uv);',
+      '  float idx = cdQuadro();',
+      '  if(old.a > 0.0 && abs(idx - old.a) < 0.5/255.0) return old;',
+      '  return vec4(texture(uOrig, uv).rgb, idx);',
+      '}',
+      'vec3 fxLast(vec2 uv){ return texture(uTex, uv).rgb; }'
     ].join('\n')
   });
 
@@ -9405,51 +9488,55 @@ window.VE = window.VE || {};
    ============================================================ */
 (function (VE) {
   'use strict';
+  /* Os quatro pacotes de bitola, pela régua do 8mm Vintage Camera: metade
+     dos efeitos, um décimo dos valores. A ordem importa — a cadência
+     primeiro (segura o quadro), a maciez e a cor no quadro seguro, o grão
+     por cima, e a janela por último, que é quem enquadra tudo.          */
   VE.STYLES.push(
     {
-      id: 'p8mm', name: '8 mm caseiro', desc: 'grão grosso, janela pequena, luz vazando',
+      id: 'p8mm', name: '8 mm caseiro', desc: '18 quadros por segundo, imagem macia, cor desbotada e a janela com sombra — o 8mm Vintage Camera',
       fx: [
-        ['filmstock', { exp: 0.08, con: 0.26, sat: 0.18, temp: 0.34, fade: 0.14, roll: 0.55, split: 0.55, shTint: '#31200f', hiTint: '#ffe0a8', vig: 0.42, grain: 0, sharp: 0.1 }],
-        ['halation', { amt: 0.75, thr: 0.6, rad: 0.034, tint: '#ff6a22' }],
-        ['filmgrain', { fmt: 0, amt: 0.4, shadow: 0.75, color: 0.35, fps: 16 }],
-        ['dustscratch', { dust: 0.5, dustSize: 1.4, scratch: 0.35, hair: 0.2, fps: 14 }],
-        ['gateweave', { amt: 0.5, spd: 2.2, rot: 0.45, jump: 0.25, jumpRate: 0.5 }],
-        ['lightleak', { amt: 0.7, side: 0, width: 0.4, spd: 0.5, flick: 0.4 }],
-        ['filmflash', { amt: 0.8, rate: 0.45, len: 0.18, warm: 0.7, burn: 0.5 }],
-        ['filmgate', { fmt: 0, zoom: 1.08, soft: 0.014, round: 1.15, vig: 0.5, weave: 0.35 }]
+        ['cadencia', { fps: 18 }],
+        ['blur', { rad: 1.1, mixv: 0.7 }],
+        ['filmstock', { exp: 0.04, con: 0.02, sat: -0.12, temp: 0.2, tintg: -0.08, fade: 0.13, roll: 0.55, split: 0.55, shTint: '#3a2638', hiTint: '#f6ecb6', vig: 0.1, grain: 0, sharp: 0 }],
+        ['filmgrain', { fmt: 1, amt: 0.13, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
+        ['dustscratch', { dust: 0.07, dustSize: 0.8, scratch: 0, hair: 0.03, fps: 12 }],
+        ['gateweave', { amt: 0.07, spd: 1.2, rot: 0.05, jump: 0.06, jumpRate: 0.12 }],
+        ['lightleak', { amt: 0.2, side: 0, width: 0.22, spd: 0.25, flick: 0.2, bloom: 0.7 }],
+        ['filmgate', { fmt: 0, forma: 1, tam: 0.88, zoom: 1.0, soft: 0.01, round: 0.75, vig: 0.12, sombra: 0.55, sombraW: 0.09, flick: 0.08, flickHz: 18, weave: 0.06 }]
       ]
     },
     {
-      id: 'psuper8', name: 'Super 8', desc: 'quadro maior, cor mais saturada, ainda quente',
+      id: 'psuper8', name: 'Super 8', desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente',
       fx: [
-        ['filmstock', { exp: 0.05, con: 0.22, sat: 0.26, temp: 0.24, fade: 0.11, roll: 0.6, split: 0.45, shTint: '#241a12', hiTint: '#ffe9c4', vig: 0.3, grain: 0, sharp: 0.16 }],
-        ['halation', { amt: 0.6, thr: 0.63, rad: 0.028, tint: '#ff5a1e' }],
-        ['filmgrain', { fmt: 1, amt: 0.3, shadow: 0.7, color: 0.28, fps: 18 }],
-        ['dustscratch', { dust: 0.34, dustSize: 1.1, scratch: 0.24, hair: 0.12, fps: 14 }],
-        ['gateweave', { amt: 0.34, spd: 1.8, rot: 0.3, jump: 0.14, jumpRate: 0.35 }],
-        ['lightleak', { amt: 0.55, side: 1, width: 0.34, spd: 0.45, flick: 0.3 }],
-        ['filmgate', { fmt: 1, zoom: 1.06, soft: 0.012, round: 1, vig: 0.42, weave: 0.24 }]
+        ['cadencia', { fps: 18 }],
+        ['blur', { rad: 0.8, mixv: 0.55 }],
+        ['filmstock', { exp: 0.03, con: 0.06, sat: -0.04, temp: 0.24, tintg: -0.04, fade: 0.11, roll: 0.5, split: 0.45, shTint: '#33231c', hiTint: '#ffeac0', vig: 0.08, grain: 0, sharp: 0 }],
+        ['filmgrain', { fmt: 2, amt: 0.11, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
+        ['dustscratch', { dust: 0.05, dustSize: 0.7, scratch: 0, hair: 0.02, fps: 12 }],
+        ['gateweave', { amt: 0.05, spd: 1.1, rot: 0.04, jump: 0.05, jumpRate: 0.1 }],
+        ['lightleak', { amt: 0.14, side: 0, width: 0.2, spd: 0.2, flick: 0.15, bloom: 0.7 }],
+        ['filmgate', { fmt: 1, forma: 1, tam: 0.9, zoom: 1.0, soft: 0.009, round: 0.7, vig: 0.1, sombra: 0.45, sombraW: 0.075, flick: 0.06, flickHz: 18, weave: 0.05 }]
       ]
     },
     {
-      id: 'p16mm', name: '16 mm documentário', desc: 'grão médio, cor contida, canto quase reto',
+      id: 'p16mm', name: '16 mm documentário', desc: '24 por segundo, cor neutra de negativo (250D), grão fino e a tira de filme com as perfurações — o Super 16',
       fx: [
-        ['filmstock', { exp: 0, con: 0.3, sat: -0.04, temp: 0.08, fade: 0.07, roll: 0.4, split: 0.32, shTint: '#1a2228', hiTint: '#fff0da', vig: 0.24, grain: 0, sharp: 0.28 }],
-        ['halation', { amt: 0.42, thr: 0.68, rad: 0.02, tint: '#ff5f2a' }],
-        ['filmgrain', { fmt: 2, amt: 0.22, shadow: 0.65, color: 0.18, fps: 24 }],
-        ['dustscratch', { dust: 0.2, dustSize: 0.8, scratch: 0.3, scLen: 0.75, hair: 0.06, fps: 16 }],
-        ['gateweave', { amt: 0.2, spd: 1.4, rot: 0.18, jump: 0.08, jumpRate: 0.25 }],
-        ['filmgate', { fmt: 2, zoom: 1.04, soft: 0.008, round: 0.9, vig: 0.34, weave: 0.16 }]
+        ['cadencia', { fps: 24 }],
+        ['blur', { rad: 0.45, mixv: 0.4 }],
+        ['filmstock', { exp: 0, con: 0.12, sat: -0.02, temp: 0.04, fade: 0.07, roll: 0.4, split: 0.24, shTint: '#1e2428', hiTint: '#fff2de', vig: 0.06, grain: 0, sharp: 0.1 }],
+        ['filmgrain', { fmt: 3, amt: 0.1, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
+        ['gateweave', { amt: 0.03, spd: 1.0, rot: 0.02, jump: 0.03, jumpRate: 0.08 }],
+        ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.03, flickHz: 24, weave: 0.03, holes: 1, holeSide: 0, edge: '#3a2413' }]
       ]
     },
     {
-      id: 'p35mm', name: '35 mm', desc: 'grão fino, janela quase quadrada, halação suave',
+      id: 'p35mm', name: '35 mm', desc: 'grão fino, janela quase quadrada, quase nada além da cor',
       fx: [
-        ['filmstock', { exp: 0.02, con: 0.24, sat: 0.06, temp: 0.04, fade: 0.05, roll: 0.45, split: 0.28, shTint: '#141a22', hiTint: '#fff3e4', vig: 0.18, grain: 0, sharp: 0.24 }],
-        ['halation', { amt: 0.34, thr: 0.72, rad: 0.016, tint: '#ff5a2e', soft: 0.7 }],
-        ['filmgrain', { fmt: 3, amt: 0.14, shadow: 0.6, color: 0.12, fps: 24 }],
-        ['gateweave', { amt: 0.1, spd: 1.1, rot: 0.1, jump: 0.04, jumpRate: 0.15 }],
-        ['filmgate', { fmt: 3, zoom: 1.02, soft: 0.006, round: 0.8, vig: 0.24, weave: 0.08 }]
+        ['filmstock', { exp: 0.02, con: 0.16, sat: 0.04, temp: 0.04, fade: 0.05, roll: 0.45, split: 0.26, shTint: '#141a22', hiTint: '#fff3e4', vig: 0.06, grain: 0, sharp: 0.15 }],
+        ['halation', { amt: 0.18, thr: 0.74, rad: 0.014, tint: '#ff5a2e', soft: 0.7 }],
+        ['filmgrain', { fmt: 3, amt: 0.08, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
+        ['filmgate', { fmt: 3, zoom: 1.015, soft: 0.006, round: 0.8, vig: 0.05, sombra: 0.25, sombraW: 0.05, flick: 0.02, flickHz: 24, weave: 0.02 }]
       ]
     },
     {
@@ -9459,8 +9546,8 @@ window.VE = window.VE || {};
         ['filmgrain', { fmt: 1, amt: 0.34, shadow: 0.8, color: 0.2, fps: 16 }],
         ['dustscratch', { dust: 0.75, dustSize: 1.6, scratch: 0.62, scLen: 0.9, hair: 0.35, fps: 12, dark: 0.65 }],
         ['gateweave', { amt: 0.62, spd: 2.6, rot: 0.5, jump: 0.5, jumpRate: 0.8 }],
-        ['filmflash', { amt: 1.1, rate: 0.9, len: 0.12, warm: 0.55, burn: 0.6 }],
-        ['filmgate', { fmt: 1, zoom: 1.1, soft: 0.02, round: 1.2, vig: 0.62, weave: 0.5 }]
+        ['filmflash', { amt: 0.7, rate: 0.25, len: 0.12, warm: 0.55, burn: 0.6 }],
+        ['filmgate', { fmt: 1, zoom: 1.1, soft: 0.02, round: 1.2, vig: 0.3, sombra: 0.6, sombraW: 0.1, flick: 0.18, weave: 0.35 }]
       ]
     },
     {
@@ -29590,6 +29677,20 @@ window.VE = window.VE || {};
     f('x04', 'VENCIDO', 'CRUZADO', { temp: 0.2, tintg: 0.3, sat: -0.22, con: -0.08, fade: 0.26, roll: 0.7, split: 0.7, shTint: '#2c3320', hiTint: '#ffeccc', grain: 0.1, vig: 0.35 }),
     f('x05', 'LOMO', 'CRUZADO', { sat: 0.45, con: 0.42, crush: 0.1, fade: 0.04, split: 0.5, shTint: '#101f30', hiTint: '#fff0c0', vig: 0.85, sharp: 0.3 }),
     f('x06', 'POLAROIDE', 'CRUZADO', { exp: 0.16, temp: 0.14, sat: -0.08, con: -0.06, fade: 0.3, roll: 0.78, split: 0.55, shTint: '#2a2a3a', hiTint: '#fff4e2', vig: 0.18, grain: 0.05 }),
+
+    /* ---- 8 MM: os filmes do 8mm Vintage Camera, lidos dos prints ----
+       Todos desbotados (preto levantado, ombro nas luzes) e cada um com
+       o seu par de tons: o 60s tem sombra magenta e luz amarelo-verde; o
+       Two-Color, sombra teal e luz rosada, quase sem saturação.        */
+    f('m01', '60s', '8 MM', { con: 0.02, sat: -0.1, temp: 0.2, tintg: -0.1, fade: 0.14, roll: 0.55, split: 0.7, shTint: '#4a2a48', hiTint: '#f4f0a8', vig: 0.12, grain: 0.03 }),
+    f('m02', 'TWO-COLOR', '8 MM', { con: 0.05, sat: -0.38, temp: 0.04, fade: 0.16, roll: 0.5, split: 0.85, shTint: '#1f4a52', hiTint: '#ffd6c8', vig: 0.1, grain: 0.03 }),
+    f('m03', '70s', '8 MM', { con: 0.14, sat: 0.08, temp: 0.4, fade: 0.1, roll: 0.5, split: 0.5, shTint: '#3a2210', hiTint: '#ffd9a0', vig: 0.16, grain: 0.03 }),
+    f('m04', '1920', '8 MM', { skin: 0, sat: -1, con: 0.24, fade: 0.1, roll: 0.45, split: 0.6, shTint: '#2a1e14', hiTint: '#e8d9b8', vig: 0.3, grain: 0.09 }),
+    f('m05', 'SIENA', '8 MM', { skin: 0.1, sat: -0.5, temp: 0.35, con: 0.18, fade: 0.08, roll: 0.5, split: 0.8, shTint: '#3a2416', hiTint: '#f1d9b0', vig: 0.18, grain: 0.04 }),
+    f('m06', 'SAKURA', '8 MM', { exp: 0.14, sat: -0.2, con: -0.08, temp: 0.08, tintg: -0.26, fade: 0.2, roll: 0.7, split: 0.6, shTint: '#5a3550', hiTint: '#ffe4ec', vig: 0.06, grain: 0.02 }),
+    f('m07', 'INDIGO', '8 MM', { temp: -0.4, sat: -0.15, con: 0.2, fade: 0.1, roll: 0.5, split: 0.65, shTint: '#1a1f4a', hiTint: '#d8e4ff', vig: 0.14, grain: 0.03 }),
+    f('m08', 'XPRO', '8 MM', { sat: 0.3, con: 0.38, crush: 0.05, fade: 0.04, roll: 0.35, split: 0.8, shTint: '#0f3a44', hiTint: '#ffe873', vig: 0.2, grain: 0.04 }),
+    f('m09', 'NOIR', '8 MM', { skin: 0, sat: -1, con: 0.45, crush: 0.1, fade: 0.03, roll: 0.3, split: 0, vig: 0.45, grain: 0.07, sharp: 0.2 }),
 
     /* ---- PRETO E BRANCO ---- */
     f('b01', 'P&B NEUTRO', 'P&B', { skin: 0, sat: -1, con: 0.22, fade: 0.06, split: 0, grain: 0.05, sharp: 0.25 }),

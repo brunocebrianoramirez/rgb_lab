@@ -1081,6 +1081,24 @@ não quebra nada: a região volta a ser o quadro inteiro.
 
 ### Película: 8 mm, Super 8, 16 mm, 35 mm
 
+> **Refeitos em 11/09/2026 pela régua do app 8mm Vintage Camera** (e do
+> Super 16), depois de o Bruno achar os pacotes "muito forçados". Cada um
+> tinha oito efeitos no talo; agora têm metade, com um décimo dos valores,
+> e o que o app tem: a **janela 4:3 com sombra macia** acompanhando a
+> borda, a cor **desbotada**, imagem macia, grão fino, **cintilação** leve
+> e a **cadência** — 18 quadros por segundo no 8 mm e no Super 8, 24 no
+> 16 mm, que é o tranco que diz filme. O 16 mm mostra a tira com as
+> perfurações, como o Super 16.
+>
+> Os filmes do app estão na **galeria de filtros**, família **8 MM**: 60s,
+> TWO-COLOR, 70s, 1920, SIENA, SAKURA, INDIGO, XPRO e NOIR — para pôr por
+> cima de qualquer pacote, ou sozinhos.
+>
+> Efeitos novos e controles novos: **CADÊNCIA DE PROJEÇÃO** (segura o
+> quadro no ritmo pedido), a **SOMBRA DA BORDA** e a **CINTILAÇÃO** na
+> janela, a **FORMA DA JANELA** (larga ou da bitola, 4:3), e a
+> **SUAVIDADE** do grão.
+
 O grupo `película` reconstrói a câmera antiga inteira:
 
 * **Janela da câmera** — o formato do quadro com o canto arredondado de cada
