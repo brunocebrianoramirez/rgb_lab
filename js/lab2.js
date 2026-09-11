@@ -1709,6 +1709,14 @@
       '<rect x="15.2" y="7.2" width="1.9" height="8.6" rx=".95"/>' +
       '<path d="M17.1 7.2l3.5-1.05v2.5L17.1 9.7z"/>',
 
+    /* a filmadora: os dois carretéis em cima do corpo e a lente em cunha
+       — a silhueta que diz CÂMERA DE FILME sem precisar de rótulo     */
+    srcFilmadora:
+      '<circle cx="7.1" cy="5.4" r="3.3"/>' +
+      '<circle cx="14.1" cy="5.4" r="3.3"/>' +
+      '<rect x="2.6" y="9.6" width="13.8" height="10.4" rx="2.6"/>' +
+      '<path d="M17.8 13.4l3.5-2.3a.9.9 0 0 1 1.4.8v5.8a.9.9 0 0 1-1.4.8l-3.5-2.3z"/>',
+
     /* sobrepor: dois quadros, o de trás mais apagado. A transparência é o
        desenho — é ela que diz "um POR CIMA do outro"                   */
     srcOver:

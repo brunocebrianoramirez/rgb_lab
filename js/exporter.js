@@ -186,6 +186,16 @@
 
   EX.close = function () { if (!running) $('#exportModal').classList.add('hidden'); };
 
+  /* A PORTA DE SERVIÇO, para quem grava sem abrir a janela — a FILMADORA
+     (js/filmadora.js) é o caso: o botão vermelho dela é esta exportação,
+     e ela quer saber se está rodando, cancelar, e receber o arquivo no
+     fim. `aoTerminar` recebe { blob, fmt, name, url } — ou null, quando
+     foi cancelada ou não saiu nada. O `url` é revogado na exportação
+     seguinte: quem quiser guardar, guarda o blob.                    */
+  EX.emAndamento = function () { return running; };
+  EX.cancelar = function () { if (running) cancelFlag = true; };
+  EX.aoTerminar = null;
+
   function prog(p, txt) {
     $('#expBar').classList.remove('hidden');
     $('#expFill').style.width = (p * 100).toFixed(1) + '%';
@@ -601,6 +611,7 @@
     if (cancelFlag || !blob || !blob.size) {
       $('#expStatus').textContent = cancelFlag ? 'exportação cancelada.' : 'nada foi gravado.';
       $('#expBar').classList.add('hidden');
+      if (EX.aoTerminar) { try { EX.aoTerminar(null); } catch (e) { console.warn(e); } }
       return;
     }
     if (lastUrl) URL.revokeObjectURL(lastUrl);
@@ -635,6 +646,7 @@
     btn.addEventListener('click', function () { VE.saveFile(name, blob, fmt.ext === 'zip' ? null : lastUrl); });
     box.appendChild(btn);
     prog(1, 'pronto.');
+    if (EX.aoTerminar) { try { EX.aoTerminar({ blob: blob, fmt: fmt, name: name, url: lastUrl }); } catch (e) { console.warn(e); } }
   }
 
   /* PNG do frame atual — sempre na resolução cheia do projeto,

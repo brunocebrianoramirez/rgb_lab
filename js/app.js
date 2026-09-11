@@ -153,6 +153,11 @@
     var abrirPolaroid = function () { VE.polaroidui.abrir(); };
     ao('#srcPolaroid', 'click', abrirPolaroid);
 
+    /* A FILMADORA mora na mesma grade, pelo mesmo motivo do polaroid: é
+       uma máquina que se abre, e a grade FONTE é onde se procura por
+       máquina. No 2.0 as duas aparecem em TOOLS.                     */
+    ao('#srcFilmadora', 'click', function () { VE.filmadoraui.abrir(); });
+
     /* O SONÓGRAFO tem DUAS portas, e não é duplicação — é uma
        máquina só, aberta de dois lados. Ela come VÍDEO e devolve
        ÁUDIO, então cai bem nos dois laboratórios por motivos
@@ -293,6 +298,10 @@
       else A.toast(s.w + '×' + s.h + ' · ' + s.duration.toFixed(2) + 's · clipe acrescentado na pista', 'ok');
     }).catch(function (e) { A.toast(e.message, 'err'); });
   }
+
+  /* a porta para quem fabrica vídeo por dentro (a FILMADORA põe o rolo
+     gravado na linha do tempo por aqui) */
+  A.addVideo = addVideo;
 
   function addImage(file, over) {
     VE.media.loadImageFile(file).then(function (id) {
@@ -532,6 +541,10 @@
       var pv = VE.filters.previewOp();
       if (pv) plan = plan.concat([pv]);
     }
+    /* a FILMADORA: enquanto a máquina está aberta, a película da bitola
+       entra como o último ajuste — na prévia E na exportação, porque o
+       botão vermelho dela é a exportação (ver js/filmadora.js)      */
+    if (VE.filmadora && VE.filmadora.ativa()) plan = plan.concat(VE.filmadora.ops(t));
     if (A.exportBg) {
       /* o fundo de achatamento entra como um ajuste final sobre tudo */
       plan = plan.concat([{

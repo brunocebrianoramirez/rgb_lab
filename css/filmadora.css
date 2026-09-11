@@ -1,0 +1,518 @@
+/* ================================================================
+   rgb_lab — A FILMADORA
+   ----------------------------------------------------------------
+   A traseira de uma câmera de filme flutuando num palco escuro. Como
+   no polaroid: NÃO HÁ JANELA. Fora a telinha de ajustes (que é uma
+   tela do laboratório, no desenho dele), tudo o que se vê é peça da
+   máquina e faz o que a peça faria.
+
+   A MEDIDA
+   Tudo é desenhado em `--u`, que é 1% da largura da máquina. A máquina
+   tem 16:9 (100u × 56,25u) — a proporção da tela de um telefone
+   deitado, que é onde as referências vivem. Mudar `--larg` no palco
+   redimensiona a máquina inteira, botão a botão, sem outra conta.
+
+   AS PELES
+   O couro, a pintura rugosa e a martelada são imagens CALCULADAS em
+   js/filmadora.js (mapa de altura periódico + luz), entregues por
+   variável (`--fil-pele`) para não haver arquivo nenhum. O que a folha
+   faz é a ILUMINAÇÃO da peça: bisel, sombra no chão, vinheta.
+
+   A ORDEM EM PROFUNDIDADE
+     z1  a pele (o fundo da máquina) e a vinheta
+     z2  as peças fixas: visor, contador, plaqueta, parafusos
+     z3  os comandos: botões, porta, vermelho, engrenagem, seletor
+     z7  a telinha, ao lado
+     z9  as gavetas (bitolas em baixo, rolos à direita)
+   ================================================================ */
+
+/* ============================================================ O PALCO */
+.fil-palco{
+  position:fixed;inset:0;z-index:150;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(120% 90% at 50% 30%, rgba(28,26,24,.95), rgba(9,9,8,.985));
+  /* Sem `backdrop-filter`, de propósito: o laboratório atrás continua
+     desenhando vídeo a cada quadro, e desfocar a tela inteira por cima
+     dele custaria uma passada cheia por quadro. O visor é a única coisa
+     para olhar aqui, e ele já mostra o mesmo vídeo.                  */
+  --larg:min(980px, 90vw, calc((100vh - 120px) * 1.62));
+  --u:calc(var(--larg) / 100);
+  --fil-azul:var(--ch-video, #1b4fd8);
+  --fil-tela:#17171a; --fil-tela2:#212127;
+  --fil-tx:#eceae4;   --fil-tx2:#8f8d87;  --fil-linha:rgba(255,255,255,.075);
+  --fil-creme:#e9dcb0;
+  font-family:var(--mono);
+  overflow:hidden;
+}
+.fil-palco.hidden{display:none}
+
+/* o × não é peça de câmera nenhuma: fica discreto, no canto do palco */
+.fil-sair{
+  position:absolute;top:18px;right:22px;z-index:12;
+  width:38px;height:38px;border-radius:50%;padding:0;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.55);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.fil-sair svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;display:block}
+.fil-sair:hover{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.4)}
+
+.fil-conjunto{
+  position:relative;width:var(--larg);
+  perspective:1800px;perspective-origin:50% 30%;
+  transition:transform .42s cubic-bezier(.25,.9,.3,1);
+}
+/* com a telinha aberta o conjunto anda para a esquerda metade do que
+   ela ocupa, para o par ficar centrado                               */
+.fil-palco.com-tela .fil-conjunto{transform:translateX(calc(var(--larg) * -.19))}
+
+/* ========================================================== A MÁQUINA */
+.fil-cam{
+  position:relative;width:100%;aspect-ratio:16 / 9;
+  border-radius:calc(var(--u) * 3.2);
+  overflow:hidden;
+  background:var(--fil-pele) center / calc(var(--u) * 15) repeat;
+  /* o bisel: luz em cima e à esquerda, sombra em baixo e à direita — a
+     mesma luz que iluminou o couro. E a sombra no chão, que é o que
+     assenta o objeto no palco.                                        */
+  box-shadow:
+    inset 0 1px 0 var(--fil-bisel, rgba(255,255,255,.16)),
+    inset 1px 0 0 rgba(255,255,255,.06),
+    inset 0 -2px 0 rgba(0,0,0,.55),
+    inset -1px 0 0 rgba(0,0,0,.4),
+    0 44px 90px rgba(0,0,0,.72), 0 12px 28px rgba(0,0,0,.55);
+  transform:rotateX(3deg);
+  color:var(--fil-tinta, #e8d9a8);
+}
+/* a vinheta da peça: mais clara onde a luz bate, mais escura em baixo */
+.fil-cam::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  border-radius:inherit;
+  background:
+    radial-gradient(90% 80% at 28% 16%, rgba(255,255,255,.085), rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,0) 30%, rgba(0,0,0,.30));
+}
+.fil-cam > *{z-index:2}
+
+.fil-parafuso{
+  position:absolute;width:calc(var(--u) * 1.6);height:calc(var(--u) * 1.6);border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #d4d4d4, #6f6f6f 62%, #383838);
+  box-shadow:0 1px 2px rgba(0,0,0,.85), inset 0 0 0 1px rgba(0,0,0,.35);
+}
+.fil-parafuso::after{
+  content:"";position:absolute;left:15%;top:46%;width:70%;height:9%;background:#242424;
+  transform:rotate(var(--r, 20deg));
+}
+
+/* ------------------------------------------------------------ O VISOR
+   Moldura de plástico preto com brilho, a janela na proporção da
+   bitola (o JS mede e põe a largura/altura), o vidro por cima.      */
+.fil-visor{
+  position:absolute;left:calc(var(--u) * 4.4);top:calc(var(--u) * 4.4);
+  width:calc(var(--u) * 56);height:calc(var(--u) * 42);
+  border-radius:calc(var(--u) * 2.8);cursor:pointer;
+  background:linear-gradient(155deg, #3f3f3f 0%, #1c1c1c 42%, #0d0d0d 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.28), inset 0 -1px 1px rgba(0,0,0,.9),
+    0 0 0 1px rgba(0,0,0,.65), 0 4px 10px rgba(0,0,0,.6);
+}
+.fil-visor-janela{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:#000;border-radius:calc(var(--u) * .9);overflow:hidden;
+  box-shadow:inset 0 0 0 1px #000, inset 0 3px 8px rgba(0,0,0,.95);
+}
+.fil-visor-janela canvas{display:block;width:100%;height:100%}
+.fil-visor-vidro{
+  position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:
+    linear-gradient(112deg, rgba(255,255,255,.085), rgba(255,255,255,0) 30%),
+    radial-gradient(110% 100% at 50% 50%, rgba(0,0,0,0) 58%, rgba(0,0,0,.4));
+  box-shadow:inset 0 0 calc(var(--u) * 1.2) rgba(0,0,0,.7);
+}
+/* o triângulo só aparece com a composição PARADA — é o visor dizendo
+   que um toque nele toca                                              */
+.fil-play{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:calc(var(--u) * 7);height:calc(var(--u) * 7);border-radius:50%;
+  background:rgba(0,0,0,.42);pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .25s;
+}
+.fil-play svg{width:55%;height:55%;fill:var(--fil-creme);display:block;margin-left:6%}
+.fil-visor.parado .fil-play{opacity:.85}
+.fil-visor:hover .fil-play{opacity:1}
+
+/* ------------------------------------------------------------ BOTÕES
+   Cinco botões redondos, pretos, com o glifo em creme — e o nome
+   gravado embaixo, como numa máquina de verdade.                    */
+.fil-botoes{
+  position:absolute;left:calc(var(--u) * 5.6);top:calc(var(--u) * 48.4);
+  display:flex;gap:calc(var(--u) * 5.4);
+}
+.fil-bt{
+  position:relative;width:calc(var(--u) * 4.7);height:calc(var(--u) * 4.7);
+  border-radius:50%;border:0;padding:0;cursor:pointer;flex:0 0 auto;
+  background:radial-gradient(circle at 50% 32%, var(--fil-bt1, #4c4c4c), var(--fil-bt2, #121212) 72%);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 1px rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .08s, box-shadow .08s;
+}
+.fil-bt svg{width:52%;height:52%;fill:var(--fil-glifo, #e8d9a8);stroke:none;display:block}
+.fil-bt:active{
+  transform:translateY(1px);
+  box-shadow:0 1px 2px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12), inset 0 2px 4px rgba(0,0,0,.6);
+}
+/* ligado: o anel acende na cor do glifo */
+.fil-bt.on{box-shadow:0 2px 4px rgba(0,0,0,.7), 0 0 0 1.5px var(--fil-glifo, #e8d9a8), 0 0 calc(var(--u) * 1.4) var(--fil-glifo, #e8d9a8), inset 0 1px 0 rgba(255,255,255,.25)}
+.fil-bt small{
+  position:absolute;top:118%;left:50%;transform:translateX(-50%);
+  background:var(--fil-placa, transparent);padding:1px 4px;border-radius:3px;
+  font-size:calc(var(--u) * 1.02);letter-spacing:.16em;font-weight:500;
+  color:var(--fil-tinta, #e8d9a8);opacity:var(--fil-op, .78);white-space:nowrap;
+  text-shadow:0 1px 0 var(--fil-sombra-tinta, rgba(0,0,0,.7)), 0 0 2px var(--fil-halo, rgba(0,0,0,0)), 0 0 2px var(--fil-halo, rgba(0,0,0,0)), 0 0 4px var(--fil-halo, rgba(0,0,0,0));
+}
+.fil-bt.gira svg{animation:filGira .5s cubic-bezier(.3,.8,.3,1)}
+@keyframes filGira{to{transform:rotate(-360deg)}}
+
+/* --------------------------------------------------------- O CONTADOR
+   Uma janelinha escura com os pés de filme e o tempo. Os dígitos são
+   tabulares para não dançarem.                                      */
+.fil-contador{
+  position:absolute;left:calc(var(--u) * 63);top:calc(var(--u) * 4.6);
+  width:calc(var(--u) * 14.4);height:calc(var(--u) * 7.2);border-radius:calc(var(--u) * 1);
+  background:linear-gradient(180deg, #0c0c0c, #1b1b1b);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.95), 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(0,0,0,.7);
+  color:var(--fil-creme);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+}
+.fil-contador b{font-size:calc(var(--u) * 2.5);letter-spacing:.1em;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.05}
+.fil-contador b small{font-size:58%;opacity:.7;margin-left:.35em;letter-spacing:.14em}
+.fil-contador > span{font-size:calc(var(--u) * 1.15);letter-spacing:.2em;opacity:.6;font-variant-numeric:tabular-nums}
+
+/* a plaqueta do modelo, gravada no couro */
+.fil-plaqueta{
+  position:absolute;left:calc(var(--u) * 63);top:calc(var(--u) * 13.4);
+  width:calc(var(--u) * 16.4);box-sizing:border-box;white-space:nowrap;
+  background:var(--fil-placa, transparent);padding:3px 5px;border-radius:4px;margin:-3px -5px;
+  font-size:calc(var(--u) * 1.1);letter-spacing:.18em;line-height:1.7;
+  color:var(--fil-tinta, #e8d9a8);opacity:var(--fil-op, .9);
+  text-shadow:0 1px 0 var(--fil-sombra-tinta, rgba(0,0,0,.7)), 0 0 2px var(--fil-halo, rgba(0,0,0,0)), 0 0 2px var(--fil-halo, rgba(0,0,0,0)), 0 0 5px var(--fil-halo, rgba(0,0,0,0));
+}
+.fil-plaqueta b{display:block;font-size:calc(var(--u) * 1.75);letter-spacing:.3em;font-weight:600}
+
+/* ---------------------------------------------------------- A PORTA
+   A porta do carregador, no alto à direita: por ela saem os rolos. */
+.fil-porta{
+  position:absolute;left:calc(var(--u) * 80);top:calc(var(--u) * 4.4);
+  width:calc(var(--u) * 13.5);height:calc(var(--u) * 8.4);
+  border-radius:calc(var(--u) * 1.4);border:0;padding:0;cursor:pointer;
+  background:linear-gradient(180deg, #353535, #171717);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.8), 0 3px 6px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.6);
+  transition:transform .08s;
+}
+.fil-porta:active{transform:translateY(1px)}
+.fil-porta i{
+  position:absolute;left:12%;top:20%;width:76%;height:60%;border-radius:calc(var(--u) * .8);
+  background:linear-gradient(180deg, #cfcfca, #8d8d88);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65), inset 0 -2px 3px rgba(0,0,0,.35);
+}
+.fil-porta b{
+  position:absolute;right:-8%;top:-16%;min-width:calc(var(--u) * 2.8);height:calc(var(--u) * 2.8);
+  border-radius:999px;background:#c8102e;color:#fff;font-weight:600;
+  font-size:calc(var(--u) * 1.35);line-height:calc(var(--u) * 2.8);text-align:center;padding:0 calc(var(--u) * .5);
+  box-shadow:0 1px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.3);
+}
+.fil-porta b.hidden{display:none}
+.fil-porta small{
+  position:absolute;top:112%;left:50%;transform:translateX(-50%);
+  background:var(--fil-placa, transparent);padding:1px 4px;border-radius:3px;
+  font-size:calc(var(--u) * 1.02);letter-spacing:.16em;font-weight:500;
+  color:var(--fil-tinta, #e8d9a8);opacity:var(--fil-op, .78);
+  text-shadow:0 1px 0 var(--fil-sombra-tinta, rgba(0,0,0,.7)), 0 0 2px var(--fil-halo, rgba(0,0,0,0)), 0 0 2px var(--fil-halo, rgba(0,0,0,0)), 0 0 4px var(--fil-halo, rgba(0,0,0,0));
+}
+
+/* --------------------------------------------------------- O VERMELHO
+   Aro de cromo escovado, anel preto, o botão vermelho com brilho. */
+.fil-rec{
+  position:absolute;left:calc(var(--u) * 80.5);top:calc(var(--u) * 16.4);
+  width:calc(var(--u) * 12.5);height:calc(var(--u) * 12.5);
+  border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:conic-gradient(from 20deg, #e9e9e9, #8c8c8c 10%, #f2f2f2 22%, #7d7d7d 36%, #ededed 50%, #8a8a8a 63%, #f4f4f4 76%, #858585 89%, #e9e9e9);
+  box-shadow:0 5px 12px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.7), inset 0 -1px 2px rgba(0,0,0,.35);
+}
+.fil-rec::before{
+  content:"";position:absolute;inset:12%;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%, #2c2c2c, #0a0a0a 70%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.6);
+}
+.fil-rec i{
+  position:absolute;inset:27%;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, #ff7d6b, #d21630 52%, #7e0a1c 100%);
+  box-shadow:inset 0 -2px 4px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.35), 0 1px 3px rgba(0,0,0,.7);
+  transition:transform .08s;
+}
+.fil-rec:active i{transform:scale(.94)}
+.fil-rec.gravando i{animation:filPulsa 1s ease-in-out infinite}
+@keyframes filPulsa{
+  0%,100%{box-shadow:inset 0 -2px 4px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.35), 0 0 0 0 rgba(255,50,50,0)}
+  50%{box-shadow:inset 0 -2px 4px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.35), 0 0 calc(var(--u) * 2.2) rgba(255,60,60,.85)}
+}
+
+/* a lâmpada de gravação */
+.fil-lampada{
+  position:absolute;left:calc(var(--u) * 95.2);top:calc(var(--u) * 21.6);
+  width:calc(var(--u) * 1.7);height:calc(var(--u) * 1.7);border-radius:50%;
+  background:#3a0a0a;box-shadow:inset 0 1px 1px rgba(0,0,0,.8), 0 0 0 1px rgba(0,0,0,.6);
+}
+.fil-cam.gravando .fil-lampada{
+  background:#ff3b30;box-shadow:0 0 calc(var(--u) * 1.6) #ff3b30, 0 0 0 1px rgba(0,0,0,.6);
+  animation:filPisca 1s steps(2, start) infinite;
+}
+@keyframes filPisca{50%{opacity:.25}}
+
+/* a engrenagem: um botão como os cinco, solto no meio do couro */
+.fil-eng{position:absolute;left:calc(var(--u) * 65.8);top:calc(var(--u) * 29.4)}
+
+/* ---------------------------------------------------------- O SELETOR
+   A roda grande do canto, cortada pela borda da máquina como na
+   referência: anel serrilhado, disco de alumínio torneado (canvas),
+   tampa dourada. A janela do rótulo NÃO gira: fica em cima da roda,
+   e a roda passa por baixo dela, um dente por filme.               */
+.fil-seletor{
+  position:absolute;left:calc(var(--u) * 71.6);top:calc(var(--u) * 33.6);
+  width:calc(var(--u) * 31);height:calc(var(--u) * 31);
+}
+.fil-roda{
+  position:absolute;inset:0;border-radius:50%;cursor:grab;touch-action:none;
+  background:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,.17) 0deg 1.1deg, rgba(0,0,0,0) 1.1deg 4deg),
+    radial-gradient(circle, #2c2c2c 54%, #171717 71%, #0b0b0b 100%);
+  box-shadow:0 8px 18px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.12);
+  transform:rotate(var(--ang, 0deg));
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.15);
+}
+.fil-roda:active{cursor:grabbing}
+.fil-roda canvas{
+  position:absolute;left:19%;top:19%;width:62%;height:62%;border-radius:50%;display:block;
+  box-shadow:0 2px 6px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,255,255,.2);
+  pointer-events:none;
+}
+.fil-roda-tampa{
+  position:absolute;left:44.5%;top:44.5%;width:11%;height:11%;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #f3e6b8, #a8862e 68%, #5b4512);
+  box-shadow:0 1px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.45);
+}
+.fil-roda-marca{
+  position:absolute;left:50%;top:2.6%;width:2px;height:8%;margin-left:-1px;border-radius:2px;
+  background:var(--fil-creme);opacity:.9;
+}
+.fil-rotulo{
+  position:absolute;left:50%;top:calc(var(--u) * 2.3);transform:translateX(-50%);
+  width:calc(var(--u) * 15.4);height:calc(var(--u) * 4);border-radius:999px;
+  background:linear-gradient(90deg, var(--c1, #333), var(--c2, #ddd));
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.12);
+  color:#fff;font:italic 600 calc(var(--u) * var(--rot-fs, 2.05)) Georgia, "Times New Roman", serif;
+  line-height:calc(var(--u) * 4);text-align:center;letter-spacing:.04em;
+  text-shadow:0 1px 2px rgba(0,0,0,.85), 0 0 6px rgba(0,0,0,.5);
+  cursor:pointer;user-select:none;white-space:nowrap;overflow:hidden;
+}
+
+/* ========================================================= A TELINHA
+   A mesma telinha do polaroid: desdobra da lateral, no desenho do
+   laboratório — monoespaçada, filete de 1px, azul do canal de vídeo. */
+.fil-tela{
+  position:absolute;left:100%;margin-left:1.6%;
+  top:2%;width:38%;height:96%;z-index:7;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--fil-tela);
+  border:1px solid rgba(255,255,255,.09);border-radius:18px;
+  box-shadow:0 26px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05);
+  transform-origin:left center;
+  transform:perspective(1500px) rotateY(112deg);
+  opacity:0;visibility:hidden;backface-visibility:hidden;
+  transition:transform .55s cubic-bezier(.2,.9,.25,1), opacity .22s, visibility 0s linear .55s;
+}
+.fil-tela.aberta{
+  transform:perspective(1500px) rotateY(0deg);
+  opacity:1;visibility:visible;
+  transition:transform .55s cubic-bezier(.2,.9,.25,1), opacity .2s, visibility 0s;
+}
+.fil-tela-h{
+  display:flex;align-items:center;gap:9px;
+  padding:13px 14px 12px;border-bottom:1px solid var(--fil-linha);flex:0 0 auto;
+}
+.fil-led{width:7px;height:7px;border-radius:50%;background:var(--fil-azul);box-shadow:0 0 8px var(--fil-azul);flex:0 0 auto}
+.fil-tela-h h4{
+  flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  text-transform:uppercase;font-weight:500;color:var(--fil-tx);margin:0;
+}
+.fil-tela-x{
+  width:26px;height:26px;flex:0 0 auto;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(255,255,255,.18);background:transparent;
+  color:var(--fil-tx2);padding:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.fil-tela-x svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;display:block}
+.fil-tela-x:hover{color:var(--fil-tx);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.07)}
+.fil-tela-pag{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 16px}
+.fil-tela-pag::-webkit-scrollbar{width:7px}
+.fil-tela-pag::-webkit-scrollbar-track{background:transparent}
+.fil-tela-pag::-webkit-scrollbar-thumb{background:#3a3a42;border-radius:7px}
+.fil-tela-pag{scrollbar-width:thin;scrollbar-color:#3a3a42 transparent}
+
+.fil-sub{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--fil-tx2);margin:16px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--fil-linha);
+}
+.fil-sub:first-child{margin-top:0}
+.fil-nota{font-family:var(--mono);font-size:9px;line-height:1.7;color:var(--fil-tx2);margin:-2px 0 10px}
+.fil-nota b{color:var(--fil-tx);font-weight:500}
+.fil-ctrl{margin-bottom:12px}
+.fil-ctrl label{
+  display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--fil-tx);margin-bottom:6px;
+}
+.fil-ctrl-l{display:flex;align-items:center;gap:9px}
+.fil-ctrl i{display:block;font-family:var(--mono);font-size:8.5px;line-height:1.6;color:var(--fil-tx2);font-style:normal;margin-top:4px}
+.fil-num{
+  flex:0 0 50px;min-width:0;font-family:var(--mono);font-size:10px;color:var(--fil-tx);
+  background:transparent;border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:5px 4px;text-align:center;
+}
+.fil-num:focus{outline:none;border-color:var(--fil-azul)}
+/* a linha É o campo (o controle padrão das fichas): a barra se enche
+   até onde o valor está — o `--fill` vem do JS a cada mexida         */
+.fil-tela input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;min-width:0;
+  height:3px;border-radius:3px;outline:none;
+  background:linear-gradient(90deg, var(--fil-azul) var(--fill, 0%), rgba(255,255,255,.18) var(--fill, 0%));
+}
+.fil-tela input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:3px;
+  background:var(--fil-azul);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+.fil-tela input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;border-radius:3px;background:var(--fil-azul);cursor:pointer}
+.fil-pilulas{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.fil-pil{
+  flex:1 0 44%;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;
+  padding:7px 9px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.16);background:transparent;color:var(--fil-tx2);
+  transition:all .14s;
+}
+.fil-pil:hover{border-color:rgba(255,255,255,.45);color:var(--fil-tx)}
+.fil-pil.on{background:var(--fil-azul);border-color:var(--fil-azul);color:#fff}
+.fil-repor{width:100%;flex:none;margin-top:6px}
+.fil-lista{display:flex;flex-direction:column}
+.fil-item{
+  display:grid;grid-template-columns:78px 1fr;gap:10px;align-items:start;
+  padding:7px 0;border-bottom:1px solid var(--fil-linha);
+  font-family:var(--mono);font-size:8.5px;line-height:1.6;color:var(--fil-tx2);
+}
+.fil-item b{color:var(--fil-tx);font-weight:500;letter-spacing:.12em}
+
+/* ========================================================= AS GAVETAS */
+/* z acima do × do palco: com uma gaveta aberta, quem fecha é o × dela */
+.fil-gaveta{position:absolute;z-index:14;transition:transform .38s cubic-bezier(.2,.9,.3,1);font-family:var(--mono)}
+
+/* a das BITOLAS sobe do chão do palco: plástico claro pontilhado, as
+   quatro máquinas em miniatura, a escolhida com o nome numa pastilha */
+.fil-gaveta-pel{
+  left:0;right:0;bottom:0;height:176px;transform:translateY(103%);
+  background:var(--fil-plastico) center / 160px repeat, #dcdcd8;
+  box-shadow:0 -12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.75);
+  display:flex;align-items:center;justify-content:center;gap:30px;
+}
+.fil-gaveta-pel.aberta{transform:translateY(0)}
+.fil-mini{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  border:0;background:transparent;cursor:pointer;padding:6px 4px;
+}
+.fil-mini i{
+  position:relative;display:block;width:120px;height:72px;border-radius:9px;
+  background:var(--pele) center / 66px repeat, #222;
+  box-shadow:0 8px 16px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.5);
+  transition:transform .15s;
+}
+.fil-mini i::before{
+  content:"";position:absolute;left:9%;top:14%;height:58%;aspect-ratio:var(--ar, 1.333);
+  border-radius:5px;background:#0b0b0b;box-shadow:inset 0 0 0 2px #2a2a2a, 0 1px 2px rgba(0,0,0,.6);
+}
+.fil-mini i::after{
+  content:"";position:absolute;right:10%;top:26%;width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #ff7d6b, #c8102e 60%, #7e0a1c);
+  box-shadow:0 0 0 3px #d8d8d8, 0 1px 3px rgba(0,0,0,.6);
+}
+.fil-mini:hover i{transform:translateY(-3px)}
+.fil-mini span{font-size:10px;letter-spacing:.2em;color:#2a2a2a;padding:5px 12px;border-radius:999px;font-weight:600}
+.fil-mini em{font-style:normal;font-size:8px;letter-spacing:.16em;color:#6b6b66;margin-top:-4px}
+.fil-mini.on span{background:#161616;color:#fff}
+
+/* a dos ROLOS entra pela direita: couro preto, os rolos como quadros
+   de filme com as perfurações, o carimbo laranja da data            */
+.fil-gaveta-rolos{
+  top:0;bottom:0;right:0;width:min(350px, 92vw);transform:translateX(103%);
+  background:var(--fil-couro) center / 150px repeat, #141414;
+  box-shadow:-14px 0 40px rgba(0,0,0,.65);
+  display:flex;flex-direction:column;
+}
+.fil-gaveta-rolos.aberta{transform:translateX(0)}
+.fil-gav-h{
+  display:flex;align-items:center;gap:10px;padding:18px 18px 12px;
+  color:var(--fil-creme);font-size:10px;letter-spacing:.26em;
+  border-bottom:1px solid rgba(255,255,255,.09);flex:0 0 auto;
+}
+.fil-gav-h b{flex:1;font-weight:500}
+.fil-gav-h span{font-size:9px;letter-spacing:.16em;opacity:.6}
+.fil-rolos{flex:1;overflow-y:auto;min-height:0;padding:16px 18px 24px;display:flex;flex-direction:column;gap:18px}
+.fil-rolos::-webkit-scrollbar{width:7px}
+.fil-rolos::-webkit-scrollbar-thumb{background:#3a3a42;border-radius:7px}
+.fil-rolo{display:flex;flex-direction:column;gap:8px}
+.fil-rolo-quadro{
+  position:relative;aspect-ratio:4 / 3;border-radius:3px;overflow:hidden;
+  background:#1d1a17;padding:0 17px;
+  box-shadow:0 8px 20px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.05);
+}
+/* as perfurações: uma coluna de furos em cada beira da tira */
+.fil-rolo-quadro::before,.fil-rolo-quadro::after{
+  content:"";position:absolute;top:0;bottom:0;width:17px;
+  background:
+    repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 5px, #070605 5px 13px, rgba(0,0,0,0) 13px 19px) 50% 0 / 7px 100% no-repeat,
+    #2a2521;
+}
+.fil-rolo-quadro::before{left:0}
+.fil-rolo-quadro::after{right:0}
+.fil-rolo-quadro img{display:block;width:100%;height:100%;object-fit:cover;background:#000}
+.fil-carimbo{
+  position:absolute;left:26px;bottom:9px;z-index:2;
+  color:#ff9b2e;font-size:11px;letter-spacing:.18em;font-weight:600;
+  text-shadow:0 0 6px rgba(255,120,20,.9), 0 0 2px #ff7a00;opacity:.92;
+}
+.fil-rodando{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  color:var(--fil-creme);font-size:10px;letter-spacing:.3em;
+  animation:filPisca 1.2s steps(2, start) infinite;
+}
+.fil-rolo.rodando .fil-rolo-quadro{background:#2a1a12}
+.fil-rolo-info{display:flex;justify-content:space-between;gap:8px;color:var(--fil-creme);font-size:9.5px;letter-spacing:.14em}
+.fil-rolo-info span{color:#9b937f;text-align:right;white-space:nowrap}
+.fil-rolo-acoes{display:flex;gap:6px}
+.fil-rolo-acoes button{
+  flex:1;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;padding:8px 8px;
+  border-radius:999px;border:1px solid rgba(255,255,255,.18);background:transparent;
+  color:var(--fil-creme);cursor:pointer;transition:all .14s;white-space:nowrap;
+}
+.fil-rolo-acoes button:hover{border-color:rgba(255,255,255,.5);color:#fff;background:rgba(255,255,255,.05)}
+.fil-rolo-acoes .apagar{flex:0 0 34px;display:flex;align-items:center;justify-content:center;padding:0}
+.fil-rolo-acoes .apagar svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.fil-vazio{color:#9b937f;font-size:9px;letter-spacing:.14em;line-height:1.85;padding:6px 2px}
+
+/* em tela baixa a máquina encolhe pela altura (já está na conta de
+   `--larg`); a gaveta das bitolas fica mais baixa para não a cobrir */
+@media (max-height:640px){
+  .fil-gaveta-pel{height:140px;gap:18px}
+  .fil-mini i{width:96px;height:58px}
+}

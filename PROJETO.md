@@ -1,12 +1,37 @@
 # rgb_lab — estado do projeto
 
 > Documento de continuidade. Última sessão: **11/09/2026** (vigésima
-> quinta). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> sexta). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
 > decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
+
+**A vigésima sexta passada (11/09/2026, à noite) pôs a FILMADORA em TOOLS** —
+a traseira de uma câmera de filme flutuando no palco, na regra do polaroid
+(cada peça é uma função). Está na **seção 5m**:
+
+```
+js/filmadora.js     o motor: as 4 bitolas, a cadeia da película (ops), as
+                    TEXTURAS calculadas (couro, rugosa, martelada, disco
+                    torneado), a gravação pelo exportador e os rolos
+js/filmadoraui.js   a tela: visor espelhando o #gl, seletor, botões, gavetas
+                    (bitolas em baixo, rolos à direita), telinha de ajustes
+css/filmadora.css   tudo em --u (1% da largura da máquina)
+```
+
+Dois ganchos pequenos: `VE.filmadora.ops(t)` entra em `A.renderNow` como o
+último ajuste (prévia E exportação); `VE.exporter.emAndamento / cancelar /
+aoTerminar` são a porta de serviço do exportador para quem grava sem abrir a
+janela dele. **Medido no laboratório de verdade:** a película entra no quadro
+(barra da janela 4:3 em 11/10/8, miolo com o olhar 60s), o rolo sai com
+5,967 s de uma composição de 5,964 s e com a película DENTRO do arquivo, USAR
+põe o rolo na linha do tempo. **O que eu não vi:** a máquina em movimento
+(visor a 60 fps, a roda girando, a gaveta subindo) — o painel destas sessões
+estava com 280 px; as fotos vieram de um Chrome sem cabeça (ver 5m.4).
+
+---
 
 **A vigésima quinta passada (11/09/2026) pôs CINCO EFEITOS no LAB 01, a
 partir de seis capturas e duas referências abertas que o Bruno mandou** —
@@ -377,6 +402,10 @@ js/manchas.js   ← NOVO   analisador das MANCHAS: grade 128×72 lida de volta,
                          componentes conexos, rastreio por número, vizinhas
 js/profundidade.js ← NOVO analisador da PROFUNDIDADE: Depth Anything V2 pela
                          Transformers.js, WebGPU ou WASM, buscado sob demanda
+js/filmadora.js ← NOVO   A FILMADORA, motor: bitolas, cadeia da película, texturas
+                         calculadas, gravação pelo exportador, rolos
+js/filmadoraui.js ← NOVO a traseira da filmadora: visor, seletor, gavetas, telinha
+css/filmadora.css ← NOVO o couro, o visor, o vermelho, a roda — em --u
 js/presets.js            presets (localStorage)
 js/media.js              fontes + geometria de MOTION + plano para a GPU
 js/view.js               viewport: zoom, pan, fit, réguas
@@ -7044,6 +7073,122 @@ texto de shader vai para ARQUIVO, e a barra se monta com
 - **A textura da tooooools sai mais macia** pelo buffer de 800×600 deles
   reamostrado; o nosso ponto é o do desenho, sem essa suavização. Se ele
   quiser o mesmo aveludado, é subir `suave` ou o halo.
+
+## 5m. A FILMADORA — a traseira de uma câmera de filme (vigésima sexta passada)
+
+O pedido veio com nove capturas de tela — o NOMO Cam (a Instax branca
+pontilhada, a 135 de couro preto com a gaveta de câmeras em baixo, a galeria
+com carimbo laranja da data), o 8mm Vintage Camera (o visor 4:3 no couro
+preto, os cinco botões, o vermelho de cromo, a roda com o nome do filme) e o
+Super 16 — e uma frase: *"vamos fazer isso de câmera 8mm 16mm 32mm uma tool
+separada na parte de tool onde está o polaroid, sonógrafo etc. — ao clicar
+no tool, abre uma janela, uma traseira flutuante de uma câmera vintage.
+Texturas reais."*
+
+### 5m.1 O que a máquina é
+
+A regra é a do polaroid (5f): **não há janela, há uma máquina**, e cada peça
+faz o que a peça faria. A BITOLA é a máquina inteira — couro, visor,
+película, cadência, contador — e são quatro: 8 MM (couro preto, 4:3, 18 q/s),
+SUPER 8 (couro marrom, 4:3, 18), 16 MM (pintura rugosa, 5:3, 24, glifos
+laranja como o Super 16) e 35 MM (martelada cinza das câmeras de cinema,
+1,85, 24). "32 mm" não existe: é 35. O FILME é o seletor: PURO ou os nove
+olhares da família 8 MM do catálogo. O vermelho GRAVA.
+
+```
+visor        espelha o #gl a cada quadro (preserveDrawingBuffer já era true);
+             recortado à proporção da bitola — no 4:3 as barras da janela somem
+vermelho     VE.exporter.start() sem a janela: modo exato (ou tempo real com
+             SOM), resolução cheia, formato/fps da janela EXPORTAR, trecho I–O
+contador     pés de filme: t × fps / quadros-por-pé (80, 72, 40, 16)
+porta        ROLOS da sessão: blob guardado, url próprio (o do exportador é
+             revogado na exportação seguinte), miniatura do visor a 25%
+seletor      arrasto angular em volta do centro, roda, toque, ← →; a roda
+             gira um dente por filme e continua no mesmo sentido
+BITOLA       gaveta que sobe do chão do palco (o desenho do NOMO), com as
+             quatro máquinas em miniatura na própria pele
+i / ⚙        a telinha do polaroid (mesmo desenho), com PLAQUETA e AJUSTES
+```
+
+### 5m.2 A película entra pela cadeia, não pela linha do tempo
+
+`VE.filmadora.ops(t)` devolve UM ajuste com a cadeia do pacote da bitola
+(js/fx5.js) já resolvida: `params` completos por `VE.defaults`, `effId`
+fixo (`fil-cadencia` etc., para a memória da cadência), máscara nova. Entra
+em `A.renderNow` logo depois da prévia da galeria e ANTES do fundo de
+achatamento — na prévia e na exportação, que é o que faz o vermelho gravar
+com a película. Fechou a máquina, `ativa` cai e a cadeia some. Nada vai
+para a linha do tempo sem USAR.
+
+Os sete ajustes da telinha são MULTIPLICADORES sobre a calibração da bitola
+(1 = como veio), não valores soltos — é o que mantém a régua do 8mm Vintage
+Camera (metade dos efeitos, um décimo dos valores) como referência de cada
+controle. O olhar do seletor substitui os parâmetros do `filmstock` inteiro,
+com grão/nitidez zerados (são da bitola) e a vinheta do pacote; COR DO FILME
+é o `amount` desse efeito (0,7 de fábrica).
+
+### 5m.3 As texturas são relevo calculado
+
+"Texturas reais" com referências que são capturas de tela de aplicativos:
+nada se copia. Cada pele é um MAPA DE ALTURA periódico (o ladrilho emenda)
+iluminado por uma luz de cima e da esquerda com brilho de Blinn, gerado num
+canvas de 320 px na abertura e entregue ao CSS como `--fil-pele`:
+
+- **couro**: pastilhas de Voronoi numa grade tremida (32 por lado), vinco
+  macio entre elas, leve domo, duas oitavas de ruído. A primeira versão tinha
+  18 pastilhas e o triplo do brilho — e parecia PLÁSTICO BOLHA. O couro de
+  câmera é grão fino e fosco;
+- **rugosa**: ruído em cristas (1 − |2n − 1|) em três oitavas;
+- **martelada**: covas rasas que se sobrepõem, a mais funda manda; base
+  clara (152) para a tinta preta ler;
+- **disco torneado**: ruído em função do ÂNGULO (o risco circular), um arco
+  de luz e a borda que escurece — o alumínio do seletor.
+
+A pele clara precisou de PLAQUETAS: tinta preta com halo branco ainda sumia
+na martelada, e a solução foi a das câmeras de cinema mesmo — o nome numa
+plaquinha lisa (`--fil-placa`, transparente nas peles escuras).
+
+### 5m.4 Como isto foi visto, com o painel a 280 px
+
+O painel do navegador estava aberto mas com **280×163 px** (`outerWidth`):
+a emulação de 1400×820 fazia o layout certo e o screenshot voltava com a
+página inteira num canto de 160 px. O que destravou: **o Chrome instalado,
+sem cabeça** — `chrome.exe --headless=new --screenshot=x.png
+--window-size=1400,820 --virtual-time-budget=6000 http://localhost:5173/__banco.html?auto=1`
+— renderiza a página em tamanho cheio e eu LEIO o PNG. O banco de prova
+(`__banco.html`, apagado no fim) recebia por querystring a bitola, o filme, a
+tela, a gaveta e um `gravar=1` que simulava a exportação. Foi assim que
+apareceram o couro-bolha, o TWO-COLOR cortado no rótulo, a tinta ilegível na
+pele clara e o × do palco debaixo da gaveta. Vale para qualquer coisa
+visual daqui em diante: é um Chrome de verdade, com GPU por software.
+
+### 5m.5 Medido no laboratório de verdade (lab2.html, servidor local)
+
+- TOOLS mostra seis instrumentos, FILMADORA entre SONÓGRAFO e SOBREPOR;
+  em MÍDIA o botão some (as duas listas do lab2.css);
+- máquina aberta: `ops(1)` = 8 efeitos (cadencia, blur, filmstock@0.7,
+  filmgrain, dustscratch, gateweave, lightleak, filmgate); o pixel da beira
+  do #gl foi de 238/238/226 a **11/10/8** (a barra da janela 4:3) e o do meio
+  de 236/239/224 a **218/214/175** (o olhar 60s);
+- visor 485×362 (1,339 = 4:3), canvas 603×453 (dpr 1,25);
+- vermelho: rolo de **5,967 s** de uma composição de 5,964 s, 1280×720, VP9
+  exato, 4,78 MB, miniatura JPEG de 15,6 KB; no arquivo, beira 12/10/8 e
+  miolo 214/206/167 — a película está DENTRO; campos da janela EXPORTAR
+  devolvidos; crachá "1"; gaveta abre sozinha;
+- → troca o filme (m02, rótulo TWO-COLOR, roda a 36°); gaveta com quatro
+  máquinas; 35 MM veste `pele-35mm`, visor 1,855, cadeia de 4 efeitos;
+- USAR: 1 → 2 clipes, palco fechado, `ops` vazio. Console sem erro.
+
+### 5m.6 O que NÃO foi feito
+
+- A máquina em movimento não foi vista (o painel). O visor a 60 fps, a roda
+  girando, a gaveta subindo, a lâmpada piscando: só o Bruno olhando.
+- Rolos não sobrevivem ao recarregar (são blobs). Guardar em IndexedDB é
+  simples se ele pedir.
+- Não há "foto" (quadro parado): a filmadora só grava rolo. O polaroid é a
+  máquina de foto.
+- O 16 MM não tem a tira de filme com perfurações no visor — está na
+  película (o `filmgate` com `holes`), não na máquina.
 
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 

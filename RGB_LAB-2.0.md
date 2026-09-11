@@ -1585,6 +1585,15 @@ Medido a 1400×820: trilho 28 · torre 54 · texto do trilho com 12–14 px de
 corpo dentro dos 28 · os seis rótulos cabem (o maior, PRESETS, com 40 dos
 42 px do botão) · nada vaza.
 
+## 5ap. A FILMADORA ENTRA EM TOOLS (11/09/2026, à noite)
+
+O sexto instrumento da aba: a traseira de uma câmera de filme (PROJETO.md,
+seção 5m). No 2.0 ele exigiu o de sempre — o botão declarado nas DUAS listas
+do lab2.css (some em MÍDIA, aparece em TOOLS) e o ícone cheio em
+CHEIOS.srcFilmadora (dois carretéis sobre o corpo, a lente em cunha).
+Medido: TOOLS mostra seis (SCANNER, MOSAICO, POLAROID, SONÓGRAFO, FILMADORA,
+SOBREPOR), MÍDIA nenhum deles; o botão tem 110×96 como os vizinhos.
+
 ## 6. Verificado
 
 ```

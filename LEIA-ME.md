@@ -1060,6 +1060,54 @@ travessia leva, e a foto vira partitura da esquerda para a direita.
 > deixe só o sensor BRILHO ligado. Se sair silêncio, faça o contrário — e
 > confira se a linha está em cima de alguma coisa que se mexe.
 
+### FILMADORA — a traseira de uma câmera de filme
+
+Está em **TOOLS** (no 2.0) e na grade FONTE (no Classic), ao lado do polaroid
+e do sonógrafo. Clica e abre, no palco escuro, a **traseira de uma filmadora
+vintage** — o visor mostrando a composição **já com a película**, e cada
+peça da máquina fazendo o que a peça faria. Não há janela; a telinha de
+ajustes é a única coisa que não é câmera.
+
+| Peça | O que ela faz |
+|---|---|
+| **o visor** | a composição com a película. Clique toca e pausa (a barra de espaço também). Nas bitolas de 8 mm ele é 4:3 e recorta as barras pretas que a janela deixa num vídeo largo — como o visor de uma câmera de verdade |
+| **o botão vermelho** | **GRAVA**: a exportação do laboratório, com a película dentro. A lâmpada pisca, o contador conta. Apertar de novo cancela |
+| **o contador** | pés de filme desta bitola. 50 pés de Super 8 a 18 q/s são 3 min 20 s — é conta real (72 quadros por pé no Super 8, 80 no 8 mm, 40 no 16, 16 no 35) |
+| **a porta do carregador** (alto, à direita) | os **ROLOS** gravados nesta sessão: baixar, **usar na linha do tempo**, apagar. Cada rolo é um quadro de filme com o carimbo laranja da data |
+| **o seletor** (a roda do canto) | o **FILME**: PURO (a película da bitola como vem) ou um dos nove olhares 8 MM do catálogo — 60s, TWO-COLOR, 70s, 1920, SIENA, SAKURA, INDIGO, XPRO, NOIR. Arraste em volta, role, toque no nome, ou ← → |
+| **i** | a plaqueta: o que cada peça faz |
+| **BITOLA** | a gaveta das máquinas: **8 MM, SUPER 8, 16 MM, 35 MM**. Cada uma é outra câmera — outro couro, outro visor, outra película, outra cadência |
+| **REBOB.** | volta ao início |
+| **LUZ** | o vazamento de luz pelo chassi, liga e desliga |
+| **SOM** | grava em **tempo real, com o áudio** (o gravador do navegador). Desligado, grava **exato**, quadro a quadro, sem som — o arquivo sai certo mesmo com efeito pesado |
+| **a engrenagem** | a telinha de ajustes |
+
+**As quatro máquinas.** A bitola é a máquina inteira: o 8 MM é couro
+preto, o SUPER 8 couro marrom, o 16 MM a pintura rugosa de câmera de
+documentário com os glifos laranja, o 35 MM a pintura martelada cinza das
+câmeras de cinema. As texturas não são fotos: são relevo calculado e
+iluminado na hora (mapa de altura periódico, luz de cima e da esquerda,
+brilho de superfície) — por isso o arquivo único não carrega imagem nenhuma.
+
+**A película** é o pacote da bitola em ESTILOS (`8 MM CASEIRO`, `SUPER 8`,
+`16 MM DOCUMENTÁRIO`, `35 MM`), calibrado pela régua do 8mm Vintage Camera.
+Ela entra como o **último ajuste da cadeia** enquanto a máquina está aberta —
+na prévia e no rolo — e some ao fechar. Nada é gravado na linha do tempo
+sem você pedir. Se a mesma bitola já estiver aplicada como camada de ajuste,
+a película entra duas vezes: feche uma das duas.
+
+**A telinha de ajustes** tem sete valores que MULTIPLICAM a calibração da
+bitola (1 é ela como veio, 0 desliga, 2 é o dobro): COR DO FILME (quanto do
+olhar do seletor entra), MACIEZ, GRÃO, SUJEIRA, TREMOR, VAZAMENTO, SOMBRA DA
+JANELA — mais a CADÊNCIA (da bitola, ou do vídeo como veio) e o modo de
+gravação. A máquina lembra a bitola, o filme e os ajustes entre sessões; os
+rolos não — são arquivos na memória, baixe o que quiser guardar.
+
+**A gravação** usa a resolução cheia da composição, o formato e o fps da
+janela EXPORTAR (que não abre), e o trecho entre as marcas I e O quando
+existe. Medido: uma composição de 5,964 s saiu com 5,967 s, 1280×720, VP9
+exato, com a janela 4:3 e a cor do filme dentro do arquivo.
+
 ### A região de um efeito pode ser um traçado
 
 Todo efeito tem uma **REGIÃO**: onde ele acontece. Além de retângulo, elipse e
@@ -1934,6 +1982,9 @@ js/musica.js                  núcleo musical: escalas, vozes, síntese, .mid, r
 js/sonografo.js               sonógrafo: a linha parada e o detector do que cruza
 js/sonografoui.js             a janela do sonógrafo: visor, régua, piano roll, mesa
 css/sonografo.css             o chassi de metal do sonógrafo, no palco escuro
+js/filmadora.js               filmadora: bitolas, a cadeia da película, as texturas calculadas, a gravação e os rolos
+js/filmadoraui.js             a traseira da filmadora: visor, seletor, botões, gavetas, telinha
+css/filmadora.css             o couro, o visor, o vermelho, a roda — em 1% da largura da máquina
 js/cifra.js                   cifra: campo harmônico, acordes, inversões, gravação
 js/cifraui.js                 a janela da cifra: pastilhas, teclado, gravador
 css/cifra.css                 o corpo de marfim da cifra
