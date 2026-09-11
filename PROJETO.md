@@ -6900,6 +6900,24 @@ o que sobra é a GPU dividida — com análise contínua, o pior quadro do
 WebGL esperou 24 ms; a 1 por segundo, 9 ms. Daí o **RITMO** na ficha
 (sempre · 2/s · 1/s · só parado), padrão 2 por segundo.
 
+### 5l.10 A EXPORTAÇÃO da I.A.: pré-análise
+
+O Bruno perguntou como exportar direito, e a resposta honesta era que o
+mapa de profundidade NÃO saía direito em nenhum modo: a análise é
+assíncrona (worker), o gravador não espera por ela, e o arquivo levava o
+mapa da prévia — atrasado e aos pulos. E não dá para esperar dentro do
+modo frame a frame: o MediaRecorder carimba pelo relógio de parede, e meio
+segundo de análise por quadro viraria um arquivo doze vezes mais longo.
+
+A saída é uma PRÉ-ANÁLISE (exporter.js, `preAnalise`): antes de o gravador
+existir, os modos frame a frame e sequência PNG passam por cada quadro do
+trecho — seek, render (que dispara a análise com `VE.exportando.pre`),
+`P.pendente()` até o worker devolver — e o mapa fica no cache do módulo
+por número de quadro. Na gravação, `VE.exportando.quadro` diz ao efeito
+qual mapa subir. Medido no lab: trecho de 0,5 s a 4 fps com a
+profundidade na pilha → 2 análises, 2 PNGs, `VE.exportando` limpo no fim.
+O tempo real não tem como esperar, e a dica da janela diz isso.
+
 ### 5l.8 O que NÃO foi feito, e por quê
 
 - **Nada foi VISTO por mim em movimento** — o painel estava escondido. O

@@ -1169,11 +1169,53 @@ direção em que você está indo — e quanto mais fundo na beirada, mais rápi
 nos dois eixos: para o lado, para levar no tempo; para cima e para baixo, para
 alcançar uma pista que está fora da tela. Solta, para.
 
-### Exportação
-* **Tempo real** — grava tocando, mantém o áudio
-* **Frame a frame** — renderiza cada frame com precisão, sem áudio
-* **Sequência PNG** — um PNG por frame com alpha, entregue num `.zip`
-* **PNG** do frame atual, a qualquer momento
+### Exportação — como sair com o vídeo certo
+
+O botão **EXPORTAR** fica na barra de cima da prévia (ao lado de PNG). O que
+sai é o que está na linha do tempo, na resolução da composição.
+
+**1. Decida o trecho.** Sem marcas, sai a sequência inteira. Para sair só um
+pedaço, ponha o cursor e aperte **I** (entrada) e **O** (saída) — a janela de
+exportação avisa em letras grandes que há trecho marcado e diz de onde a
+onde; **EXPORTAR TUDO** ali limpa as marcas.
+
+**2. Escolha o modo.** São três, e a escolha depende do que tem na pilha:
+
+| modo | quando usar | o que sai |
+|---|---|---|
+| **TEMPO REAL · COM ÁUDIO** | quando tem som e a composição roda liso na prévia | MP4 ou WEBM com áudio. Grava tocando: se a máquina engasgar, perde quadro |
+| **FRAME A FRAME · EXATO** | efeitos pesados, datamosh, várias camadas, o mapa de profundidade | MP4 ou WEBM sem áudio, cada quadro desenhado com calma. Leva o tempo da composição (o gravador do navegador carimba pelo relógio) |
+| **SEQUÊNCIA PNG · COM ALPHA** | quando precisa de transparência (tricô, cupom, recorte do perto, letras recortadas) ou vai montar o vídeo em outro programa | um PNG por quadro, com alfa real, num `.zip`. Até 1200 quadros |
+
+**3. Formato, resolução, fps, taxa.** MP4 H.264 abre em tudo; WEBM VP9 tem a
+melhor qualidade. 100% é a resolução da composição. 30 fps é o padrão; 24
+dá a cadência de cinema; 60 só se a fonte for 60. Taxa de 8 Mbps serve para
+1080p; 16 para o que tem muito grão, ruído ou datamosh (o codec do
+navegador esmaga detalhe fino com taxa baixa — e o glitch É detalhe fino).
+
+**4. Fundo.** MP4 e WEBM não guardam transparência: escolha PRETO, BRANCO ou
+PAPEL para achatar. MANTER ALPHA só vale para a sequência PNG.
+
+**5. Confira.** No fim, a janela mostra o vídeo e **mede a duração do
+arquivo** contra a da composição: ✓ quando bate; "saiu curto" quando o
+gravador perdeu quadros (tente resolução menor, menos fps ou frame a frame);
+"saiu longo" quando a máquina não desenhou no ritmo. Aí é só BAIXAR.
+
+**Os efeitos novos na exportação:**
+
+* **Datamosh** e os outros de realimentação (eco, acúmulo) saem certos nos
+  três modos — o datamosh anda no relógio do codec (24 por segundo, ou o
+  que estiver na ficha), então prévia e arquivo dão o mesmo resultado. Ele
+  começa do quadro-chave no início do trecho.
+* **Mapa de profundidade (I.A.)**: só sai certo em **FRAME A FRAME** ou
+  **SEQUÊNCIA PNG** — antes de gravar, o exportador analisa cada quadro do
+  trecho uma vez ("analisando a profundidade · quadro 12 de 300") e guarda
+  o mapa; na gravação cada quadro usa o mapa dele. É lento (meio segundo a
+  um por quadro, conforme a máquina): um trecho de 10 s a 30 fps leva uns
+  3 minutos de análise. Em TEMPO REAL o mapa sai como na prévia — atrasado.
+* **Rastreio de manchas** e **cupom** saem certos em qualquer modo.
+* **PNG** do quadro atual, a qualquer momento, na resolução cheia — para o
+  CRT e o cupom, é o jeito de olhar o ponto e a trama de perto.
 
 ---
 

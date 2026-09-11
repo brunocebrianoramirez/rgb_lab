@@ -113,9 +113,9 @@
     $('#expMode').addEventListener('change', function () {
       var v = this.value;
       $('#modeHint').textContent = v === 'realtime'
-        ? 'Toca a composição do início ao fim gravando a saída. Mantém o áudio. Se a máquina engasgar, pode perder frames.'
+        ? 'Toca a composição do início ao fim gravando a saída. Mantém o áudio. Se a máquina engasgar, pode perder frames. O mapa de profundidade (I.A.) sai como na prévia, atrasado — para ele, use frame a frame.'
         : v === 'precise'
-          ? 'Renderiza frame a frame com precisão total. Sem áudio. Mais lento, resultado exato.'
+          ? 'Renderiza frame a frame com precisão total. Sem áudio. Mais lento, resultado exato. Com o mapa de profundidade (I.A.) na pilha, analisa cada quadro antes de gravar.'
           : 'Gera um PNG por frame, com transparência preservada, e entrega tudo num .zip.';
       $('#expFormat').disabled = (v === 'frames');
     });
@@ -216,6 +216,12 @@
     VE.app.setRenderSize(w, h);
     VE.app.exportBg = (bg === 'keep') ? null : bg;
 
+    /* a pré-análise vem ANTES do gravador existir: o gravador carimba pelo
+       relógio de parede, e meio minuto de análise antes do primeiro
+       quadro viraria meio minuto de nada no começo do arquivo         */
+    var pre = (mode === 'realtime') ? Promise.resolve(false) : preAnalise(fps, total, faixa.ini);
+    pre.then(function () {
+    if (cancelFlag) { finish(null, null); return; }
     if (mode === 'frames') { runFrames(fps, total, faixa.ini); return; }
 
     var fmt = EX.formats[+$('#expFormat').value] || EX.formats[0];
@@ -264,6 +270,7 @@
 
       if (mode === 'realtime') runRealtime(total, fps, faixa.ini); else runPrecise(fps, total, faixa.ini);
     });
+    });
   };
 
   /* Quantos quadros, sempre um inteiro >= 1. Existe porque
@@ -275,6 +282,47 @@
   }
 
   function stopRec() { try { if (recorder && recorder.state !== 'inactive') recorder.stop(); } catch (e) { } }
+
+  /* ------------------------------------------------------ PRÉ-ANÁLISE
+     Um efeito de I.A. (o mapa de profundidade) calcula fora do laço de
+     desenho e demora meio segundo por quadro. Gravar sem esperar dava um
+     mapa ATRASADO e aos pulos — o da prévia, não o do quadro. Nos modos
+     frame a frame e sequência PNG, cada quadro do trecho é analisado
+     UMA VEZ antes da gravação e o mapa fica guardado por número de
+     quadro; na gravação o efeito lê o mapa do quadro. O tempo real não
+     tem como esperar: lá o mapa continua o da prévia, e a dica diz.  */
+  function precisaPreAnalise() {
+    if (!VE.profundidade) return false;
+    return VE.allClips().some(function (c) {
+      return (c.effects || []).some(function (x) { return x.enabled !== false && x.fx === 'profundidade_ia'; });
+    });
+  }
+  function preAnalise(fps, total, ini) {
+    return new Promise(function (resolve) {
+      if (!precisaPreAnalise()) { resolve(false); return; }
+      var P = VE.profundidade, frames = quadros(total, fps), i = 0;
+      prog(0, 'carregando a I.A. da profundidade…');
+      P.carregar().then(function (ok) {
+        if (!ok || cancelFlag) { resolve(false); return; }
+        P.exportInicio();
+        VE.exportando = { pre: true, quadro: 0 };
+        VE.media.pauseAll();
+        function step() {
+          if (cancelFlag || i >= frames) { VE.exportando = { pre: false, quadro: 0 }; resolve(true); return; }
+          VE.exportando.quadro = i;
+          var t = i / fps;
+          VE.project.time = ini + t;
+          VE.media.seekAll(ini + t).then(function () {
+            VE.app.renderNow();
+            var espera = P.pendente();
+            prog(i / frames, 'analisando a profundidade · quadro ' + (i + 1) + ' de ' + frames);
+            (espera || Promise.resolve()).then(function () { i++; setTimeout(step, 0); });
+          }).catch(function () { i++; setTimeout(step, 0); });
+        }
+        step();
+      });
+    });
+  }
 
   function runRealtime(total, fps, ini) {
     ini = ini || 0;
@@ -344,6 +392,7 @@
     var i = 0, t0 = performance.now(), atrasos = 0;
 
     function entrega() {
+      if (VE.exportando) VE.exportando.quadro = i;
       VE.app.renderNow();
       try { vtrack.requestFrame(); } catch (e) { }
       VE.tl.setTime(ini + i / fps);
@@ -380,6 +429,7 @@
       var t = i / fps;
       VE.project.time = ini + t;
       VE.media.seekAll(ini + t).then(function () {
+        if (VE.exportando) VE.exportando.quadro = i;
         VE.app.renderNow();
         canvas.toBlob(function (b) {
           if (!b) { i++; setTimeout(step, 0); return; }
@@ -456,6 +506,8 @@
 
   function finish(blob, fmt, count) {
     running = false; recorder = null;
+    VE.exportando = null;
+    if (VE.profundidade && VE.profundidade.exportFim) VE.profundidade.exportFim();
     $('#expStart').disabled = false;
     VE.app.exportBg = null;
     VE.app.restoreRenderSize();

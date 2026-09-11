@@ -22120,6 +22120,11 @@ window.VE = window.VE || {};
   var worker = null, carga = null, resolverCarga = null;
   var ocupado = false, tex = null, texW = 0, texH = 0, ultimoMs = 0, quadros = 0, ultimaAnalise = 0;
   var alvo = null, pixels = null, alvoW = 0, alvoH = 0, linha = null, glDaTex = null;
+  /* EXPORTAÇÃO: o gravador não espera pela I.A. — então, no modo frame a
+     frame, o exportador ANALISA CADA QUADRO ANTES de gravar e guarda o
+     mapa aqui, por número de quadro. Na gravação o efeito lê o mapa do
+     quadro em vez de pedir análise. (exporter.js, preAnalise)       */
+  var cache = null, quadroEmAnalise = null, texQuadro = null, pendentes = [];
 
   P.estado = function () { return estado; };
   P.motivo = function () { return motivo; };
@@ -22167,6 +22172,12 @@ window.VE = window.VE || {};
     '};'
   ].join('\n');
 
+  /* quem espera pela análise em curso (o exportador) é avisado aqui */
+  function liberar() { var ps = pendentes; pendentes = []; ps.forEach(function (f) { f(); }); }
+  P.pendente = function () { if (!ocupado) return null; return new Promise(function (res) { pendentes.push(res); }); };
+  P.exportInicio = function () { cache = new Map(); texQuadro = null; };
+  P.exportFim = function () { cache = null; texQuadro = null; };
+
   function atualizarNota() {
     var el = document.querySelector('[data-nota-ia]');
     if (el) el.textContent = P.nota();
@@ -22182,9 +22193,13 @@ window.VE = window.VE || {};
     var m = ev.data || {};
     if (m.tipo === 'progresso') { progresso = m.v; if (m.dispositivo) dispositivo = m.dispositivo; atualizarNota(); }
     else if (m.tipo === 'pronto') { estado = 'pronto'; progresso = 1; dispositivo = m.dispositivo || dispositivo; if (resolverCarga) resolverCarga(true); redesenharFicha(); }
-    else if (m.tipo === 'mapa') { subirMapa(m); ocupado = false; atualizarNota(); }
+    else if (m.tipo === 'mapa') {
+      subirMapa(m);
+      if (cache && quadroEmAnalise !== null) { cache.set(quadroEmAnalise, { W: m.W, H: m.H, dados: new Uint8Array(m.dados) }); texQuadro = quadroEmAnalise; }
+      quadroEmAnalise = null; ocupado = false; liberar(); atualizarNota();
+    }
     else if (m.tipo === 'erro') {
-      ocupado = false;
+      ocupado = false; quadroEmAnalise = null; liberar();
       motivo = m.motivo || 'erro no trabalhador';
       if (m.fase === 'carregar') { estado = 'sem'; if (resolverCarga) resolverCarga(false); redesenharFicha(); }
       else atualizarNota();
@@ -22279,13 +22294,25 @@ window.VE = window.VE || {};
     if (!gl || !inTex) return null;
     glDaTex = glDaTex || gl;
     if (estado === 'frio') P.carregar();
+    var ex = VE.exportando;
+    /* gravando com pré-análise feita: o mapa do quadro vem do cache */
+    if (ex && cache && !ex.pre) {
+      var c = cache.get(ex.quadro);
+      if (c && texQuadro !== ex.quadro) { subirMapa({ W: c.W, H: c.H, dados: c.dados, ms: ultimoMs }); quadros--; texQuadro = ex.quadro; }
+      return P.atual(gl);
+    }
     if (estado !== 'pronto' || ocupado) return P.atual(gl);
-    var minimo = P.RITMOS[ritmo | 0];
-    if (minimo === undefined) minimo = 0;
     var agora = performance.now();
-    /* SÓ PARADO: com o vídeo tocando, o mapa que existe continua */
-    if (minimo < 0 && VE.app && VE.app.playing) return P.atual(gl);
-    if (minimo > 0 && agora - ultimaAnalise < minimo) return P.atual(gl);
+    if (ex && cache && ex.pre) {
+      /* pré-análise: sem ritmo, um mapa por quadro, e o exportador espera */
+      quadroEmAnalise = ex.quadro;
+    } else {
+      var minimo = P.RITMOS[ritmo | 0];
+      if (minimo === undefined) minimo = 0;
+      /* SÓ PARADO: com o vídeo tocando, o mapa que existe continua */
+      if (minimo < 0 && VE.app && VE.app.playing) return P.atual(gl);
+      if (minimo > 0 && agora - ultimaAnalise < minimo) return P.atual(gl);
+    }
     ultimaAnalise = agora;
     ocupado = true;
     var alt = P.TAMANHOS[tam | 0] || P.TAMANHOS[0];
@@ -30192,9 +30219,9 @@ window.VE = window.VE || {};
     $('#expMode').addEventListener('change', function () {
       var v = this.value;
       $('#modeHint').textContent = v === 'realtime'
-        ? 'Toca a composição do início ao fim gravando a saída. Mantém o áudio. Se a máquina engasgar, pode perder frames.'
+        ? 'Toca a composição do início ao fim gravando a saída. Mantém o áudio. Se a máquina engasgar, pode perder frames. O mapa de profundidade (I.A.) sai como na prévia, atrasado — para ele, use frame a frame.'
         : v === 'precise'
-          ? 'Renderiza frame a frame com precisão total. Sem áudio. Mais lento, resultado exato.'
+          ? 'Renderiza frame a frame com precisão total. Sem áudio. Mais lento, resultado exato. Com o mapa de profundidade (I.A.) na pilha, analisa cada quadro antes de gravar.'
           : 'Gera um PNG por frame, com transparência preservada, e entrega tudo num .zip.';
       $('#expFormat').disabled = (v === 'frames');
     });
@@ -30295,6 +30322,12 @@ window.VE = window.VE || {};
     VE.app.setRenderSize(w, h);
     VE.app.exportBg = (bg === 'keep') ? null : bg;
 
+    /* a pré-análise vem ANTES do gravador existir: o gravador carimba pelo
+       relógio de parede, e meio minuto de análise antes do primeiro
+       quadro viraria meio minuto de nada no começo do arquivo         */
+    var pre = (mode === 'realtime') ? Promise.resolve(false) : preAnalise(fps, total, faixa.ini);
+    pre.then(function () {
+    if (cancelFlag) { finish(null, null); return; }
     if (mode === 'frames') { runFrames(fps, total, faixa.ini); return; }
 
     var fmt = EX.formats[+$('#expFormat').value] || EX.formats[0];
@@ -30343,6 +30376,7 @@ window.VE = window.VE || {};
 
       if (mode === 'realtime') runRealtime(total, fps, faixa.ini); else runPrecise(fps, total, faixa.ini);
     });
+    });
   };
 
   /* Quantos quadros, sempre um inteiro >= 1. Existe porque
@@ -30354,6 +30388,47 @@ window.VE = window.VE || {};
   }
 
   function stopRec() { try { if (recorder && recorder.state !== 'inactive') recorder.stop(); } catch (e) { } }
+
+  /* ------------------------------------------------------ PRÉ-ANÁLISE
+     Um efeito de I.A. (o mapa de profundidade) calcula fora do laço de
+     desenho e demora meio segundo por quadro. Gravar sem esperar dava um
+     mapa ATRASADO e aos pulos — o da prévia, não o do quadro. Nos modos
+     frame a frame e sequência PNG, cada quadro do trecho é analisado
+     UMA VEZ antes da gravação e o mapa fica guardado por número de
+     quadro; na gravação o efeito lê o mapa do quadro. O tempo real não
+     tem como esperar: lá o mapa continua o da prévia, e a dica diz.  */
+  function precisaPreAnalise() {
+    if (!VE.profundidade) return false;
+    return VE.allClips().some(function (c) {
+      return (c.effects || []).some(function (x) { return x.enabled !== false && x.fx === 'profundidade_ia'; });
+    });
+  }
+  function preAnalise(fps, total, ini) {
+    return new Promise(function (resolve) {
+      if (!precisaPreAnalise()) { resolve(false); return; }
+      var P = VE.profundidade, frames = quadros(total, fps), i = 0;
+      prog(0, 'carregando a I.A. da profundidade…');
+      P.carregar().then(function (ok) {
+        if (!ok || cancelFlag) { resolve(false); return; }
+        P.exportInicio();
+        VE.exportando = { pre: true, quadro: 0 };
+        VE.media.pauseAll();
+        function step() {
+          if (cancelFlag || i >= frames) { VE.exportando = { pre: false, quadro: 0 }; resolve(true); return; }
+          VE.exportando.quadro = i;
+          var t = i / fps;
+          VE.project.time = ini + t;
+          VE.media.seekAll(ini + t).then(function () {
+            VE.app.renderNow();
+            var espera = P.pendente();
+            prog(i / frames, 'analisando a profundidade · quadro ' + (i + 1) + ' de ' + frames);
+            (espera || Promise.resolve()).then(function () { i++; setTimeout(step, 0); });
+          }).catch(function () { i++; setTimeout(step, 0); });
+        }
+        step();
+      });
+    });
+  }
 
   function runRealtime(total, fps, ini) {
     ini = ini || 0;
@@ -30423,6 +30498,7 @@ window.VE = window.VE || {};
     var i = 0, t0 = performance.now(), atrasos = 0;
 
     function entrega() {
+      if (VE.exportando) VE.exportando.quadro = i;
       VE.app.renderNow();
       try { vtrack.requestFrame(); } catch (e) { }
       VE.tl.setTime(ini + i / fps);
@@ -30459,6 +30535,7 @@ window.VE = window.VE || {};
       var t = i / fps;
       VE.project.time = ini + t;
       VE.media.seekAll(ini + t).then(function () {
+        if (VE.exportando) VE.exportando.quadro = i;
         VE.app.renderNow();
         canvas.toBlob(function (b) {
           if (!b) { i++; setTimeout(step, 0); return; }
@@ -30535,6 +30612,8 @@ window.VE = window.VE || {};
 
   function finish(blob, fmt, count) {
     running = false; recorder = null;
+    VE.exportando = null;
+    if (VE.profundidade && VE.profundidade.exportFim) VE.profundidade.exportFim();
     $('#expStart').disabled = false;
     VE.app.exportBg = null;
     VE.app.restoreRenderSize();

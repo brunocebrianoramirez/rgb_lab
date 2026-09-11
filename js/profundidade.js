@@ -59,6 +59,11 @@
   var worker = null, carga = null, resolverCarga = null;
   var ocupado = false, tex = null, texW = 0, texH = 0, ultimoMs = 0, quadros = 0, ultimaAnalise = 0;
   var alvo = null, pixels = null, alvoW = 0, alvoH = 0, linha = null, glDaTex = null;
+  /* EXPORTAÇÃO: o gravador não espera pela I.A. — então, no modo frame a
+     frame, o exportador ANALISA CADA QUADRO ANTES de gravar e guarda o
+     mapa aqui, por número de quadro. Na gravação o efeito lê o mapa do
+     quadro em vez de pedir análise. (exporter.js, preAnalise)       */
+  var cache = null, quadroEmAnalise = null, texQuadro = null, pendentes = [];
 
   P.estado = function () { return estado; };
   P.motivo = function () { return motivo; };
@@ -106,6 +111,12 @@
     '};'
   ].join('\n');
 
+  /* quem espera pela análise em curso (o exportador) é avisado aqui */
+  function liberar() { var ps = pendentes; pendentes = []; ps.forEach(function (f) { f(); }); }
+  P.pendente = function () { if (!ocupado) return null; return new Promise(function (res) { pendentes.push(res); }); };
+  P.exportInicio = function () { cache = new Map(); texQuadro = null; };
+  P.exportFim = function () { cache = null; texQuadro = null; };
+
   function atualizarNota() {
     var el = document.querySelector('[data-nota-ia]');
     if (el) el.textContent = P.nota();
@@ -121,9 +132,13 @@
     var m = ev.data || {};
     if (m.tipo === 'progresso') { progresso = m.v; if (m.dispositivo) dispositivo = m.dispositivo; atualizarNota(); }
     else if (m.tipo === 'pronto') { estado = 'pronto'; progresso = 1; dispositivo = m.dispositivo || dispositivo; if (resolverCarga) resolverCarga(true); redesenharFicha(); }
-    else if (m.tipo === 'mapa') { subirMapa(m); ocupado = false; atualizarNota(); }
+    else if (m.tipo === 'mapa') {
+      subirMapa(m);
+      if (cache && quadroEmAnalise !== null) { cache.set(quadroEmAnalise, { W: m.W, H: m.H, dados: new Uint8Array(m.dados) }); texQuadro = quadroEmAnalise; }
+      quadroEmAnalise = null; ocupado = false; liberar(); atualizarNota();
+    }
     else if (m.tipo === 'erro') {
-      ocupado = false;
+      ocupado = false; quadroEmAnalise = null; liberar();
       motivo = m.motivo || 'erro no trabalhador';
       if (m.fase === 'carregar') { estado = 'sem'; if (resolverCarga) resolverCarga(false); redesenharFicha(); }
       else atualizarNota();
@@ -218,13 +233,25 @@
     if (!gl || !inTex) return null;
     glDaTex = glDaTex || gl;
     if (estado === 'frio') P.carregar();
+    var ex = VE.exportando;
+    /* gravando com pré-análise feita: o mapa do quadro vem do cache */
+    if (ex && cache && !ex.pre) {
+      var c = cache.get(ex.quadro);
+      if (c && texQuadro !== ex.quadro) { subirMapa({ W: c.W, H: c.H, dados: c.dados, ms: ultimoMs }); quadros--; texQuadro = ex.quadro; }
+      return P.atual(gl);
+    }
     if (estado !== 'pronto' || ocupado) return P.atual(gl);
-    var minimo = P.RITMOS[ritmo | 0];
-    if (minimo === undefined) minimo = 0;
     var agora = performance.now();
-    /* SÓ PARADO: com o vídeo tocando, o mapa que existe continua */
-    if (minimo < 0 && VE.app && VE.app.playing) return P.atual(gl);
-    if (minimo > 0 && agora - ultimaAnalise < minimo) return P.atual(gl);
+    if (ex && cache && ex.pre) {
+      /* pré-análise: sem ritmo, um mapa por quadro, e o exportador espera */
+      quadroEmAnalise = ex.quadro;
+    } else {
+      var minimo = P.RITMOS[ritmo | 0];
+      if (minimo === undefined) minimo = 0;
+      /* SÓ PARADO: com o vídeo tocando, o mapa que existe continua */
+      if (minimo < 0 && VE.app && VE.app.playing) return P.atual(gl);
+      if (minimo > 0 && agora - ultimaAnalise < minimo) return P.atual(gl);
+    }
     ultimaAnalise = agora;
     ocupado = true;
     var alt = P.TAMANHOS[tam | 0] || P.TAMANHOS[0];
