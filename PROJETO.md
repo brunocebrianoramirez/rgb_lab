@@ -7003,6 +7003,19 @@ sai na tira marrom com as perfurações à esquerda, neutro e limpo; os
 filtros 60s (céu amarelo-verde, sombra quente) e TWO-COLOR (mar teal,
 luz rosada, quase sem saturação) batem com os prints.
 
+**Segunda afinação, no mesmo dia** (ele: *"ainda está muito forçado"*).
+Achei o culpado principal medindo unidades: o raio do efeito `blur` é
+FRAÇÃO DO QUADRO (`u_rad·0,02`), e os pacotes pediam 1,1 — **2,2% da
+largura, 42 px em 1080p**, uma imagem inteira borrada. Passou para 0,09
+(0,18%, uns 3 px em 1920 — a resolução de um 8 mm de verdade). O
+vazamento era permanente; ganhou VEM E VAI (`raro`: chance por trecho de
+3 s, com subida e descida macias). A cor padrão do 8 mm ficou mais
+neutra (o tom 60s fica como filtro), grão 0,10, sombra 0,45. Visto com
+texto de 14 e 9 px na cena: o de 14 legível, o de 9 macio — é o que se
+espera. **Lição:** controle de efeito com unidade em fração do quadro
+não se copia "a olho" de um preset para outro — 1,1 no `blur` e 1,1 no
+`filmgrain` são grandezas de mundos diferentes.
+
 **Armadilha de ferramenta, para não repetir:** dois scripts de edição
 falharam por BARRA INVERTIDA — `\n` num template literal virou quebra de
 linha de verdade dentro do `join('...')` do shader, e o MSYS do Git Bash

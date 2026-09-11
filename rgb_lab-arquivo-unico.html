@@ -9148,7 +9148,10 @@ window.VE = window.VE || {};
       { k: 'c2', t: 'c', label: 'Cor média', def: '#ffa521' },
       { k: 'c3', t: 'c', label: 'Cor clara', def: '#ffe9a8' },
       { k: 'bloom', label: 'Espalhar na luz', min: 0, max: 1, def: 0.5 },
-      { k: 'grain', label: 'Textura do vazamento', min: 0, max: 1, def: 0.3 }
+      { k: 'grain', label: 'Textura do vazamento', min: 0, max: 1, def: 0.3 },
+      /* no filme de verdade o vazamento não é permanente: entra e sai, em
+         alguns trechos do rolo. Com 0, é constante (o desenho antigo). */
+      { k: 'raro', label: 'Vem e vai (chance por trecho)', min: 0, max: 1, def: 0 }
     ],
     glsl: [
       'vec3 fx(vec2 uv){',
@@ -9171,6 +9174,13 @@ window.VE = window.VE || {};
       /* pulsação: a luz não é constante, ela treme */
       '  float fl = 1.0 + (vnoise(vec2(t*7.0, 2.0)) - 0.5)*2.0*u_flick;',
       '  k *= max(0.0, fl);',
+      /* vem e vai: trechos de ~3 s; em cada um, ou aparece (uma subida e
+         descida macias) ou não aparece                                  */
+      '  if(u_raro > 0.001){',
+      '    float sl = floor(uTime*0.3);',
+      '    float on = step(1.0 - u_raro, hash11(sl*3.7 + 0.5));',
+      '    k *= on*sin(fract(uTime*0.3)*3.14159);',
+      '  }',
       /* rampa de cor: quente na borda, clara no centro do vazamento */
       '  vec3 leak = mix(u_c1, u_c2, smoothstep(0.0, 0.55, k));',
       '  leak = mix(leak, u_c3, smoothstep(0.55, 1.0, k));',
@@ -9507,25 +9517,25 @@ window.VE = window.VE || {};
       id: 'p8mm', name: '8 mm caseiro', desc: '18 quadros por segundo, imagem macia, cor desbotada e a janela com sombra — o 8mm Vintage Camera',
       fx: [
         ['cadencia', { fps: 18 }],
-        ['blur', { rad: 1.1, mixv: 0.7 }],
-        ['filmstock', { exp: 0.04, con: 0.02, sat: -0.12, temp: 0.2, tintg: -0.08, fade: 0.13, roll: 0.55, split: 0.55, shTint: '#3a2638', hiTint: '#f6ecb6', vig: 0.1, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 1, amt: 0.13, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
-        ['dustscratch', { dust: 0.07, dustSize: 0.8, scratch: 0, hair: 0.03, fps: 12 }],
-        ['gateweave', { amt: 0.07, spd: 1.2, rot: 0.05, jump: 0.06, jumpRate: 0.12 }],
-        ['lightleak', { amt: 0.2, side: 0, width: 0.22, spd: 0.25, flick: 0.2, bloom: 0.7 }],
-        ['filmgate', { fmt: 0, forma: 1, tam: 0.88, zoom: 1.0, soft: 0.01, round: 0.75, vig: 0.12, sombra: 0.55, sombraW: 0.09, flick: 0.08, flickHz: 18, weave: 0.06 }]
+        ['blur', { rad: 0.09, mixv: 0.6 }],
+        ['filmstock', { exp: 0.03, con: 0.02, sat: -0.1, temp: 0.16, tintg: -0.05, fade: 0.11, roll: 0.5, split: 0.36, shTint: '#33262f', hiTint: '#f7eec2', vig: 0.08, grain: 0, sharp: 0 }],
+        ['filmgrain', { fmt: 1, amt: 0.1, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
+        ['dustscratch', { dust: 0.05, dustSize: 0.8, scratch: 0, hair: 0.02, fps: 12 }],
+        ['gateweave', { amt: 0.06, spd: 1.2, rot: 0.04, jump: 0.05, jumpRate: 0.1 }],
+        ['lightleak', { amt: 0.3, side: 0, width: 0.22, spd: 0.25, flick: 0.15, bloom: 0.7, raro: 0.35 }],
+        ['filmgate', { fmt: 0, forma: 1, tam: 0.88, zoom: 1.0, soft: 0.01, round: 0.75, vig: 0.1, sombra: 0.45, sombraW: 0.08, flick: 0.07, flickHz: 18, weave: 0.05 }]
       ]
     },
     {
       id: 'psuper8', name: 'Super 8', desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente',
       fx: [
         ['cadencia', { fps: 18 }],
-        ['blur', { rad: 0.8, mixv: 0.55 }],
-        ['filmstock', { exp: 0.03, con: 0.06, sat: -0.04, temp: 0.24, tintg: -0.04, fade: 0.11, roll: 0.5, split: 0.45, shTint: '#33231c', hiTint: '#ffeac0', vig: 0.08, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 2, amt: 0.11, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
-        ['dustscratch', { dust: 0.05, dustSize: 0.7, scratch: 0, hair: 0.02, fps: 12 }],
-        ['gateweave', { amt: 0.05, spd: 1.1, rot: 0.04, jump: 0.05, jumpRate: 0.1 }],
-        ['lightleak', { amt: 0.14, side: 0, width: 0.2, spd: 0.2, flick: 0.15, bloom: 0.7 }],
+        ['blur', { rad: 0.07, mixv: 0.5 }],
+        ['filmstock', { exp: 0.03, con: 0.06, sat: -0.04, temp: 0.2, tintg: -0.03, fade: 0.1, roll: 0.5, split: 0.34, shTint: '#30241e', hiTint: '#ffeec8', vig: 0.06, grain: 0, sharp: 0 }],
+        ['filmgrain', { fmt: 2, amt: 0.09, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
+        ['dustscratch', { dust: 0.04, dustSize: 0.7, scratch: 0, hair: 0.015, fps: 12 }],
+        ['gateweave', { amt: 0.04, spd: 1.1, rot: 0.03, jump: 0.04, jumpRate: 0.08 }],
+        ['lightleak', { amt: 0.22, side: 0, width: 0.2, spd: 0.2, flick: 0.12, bloom: 0.7, raro: 0.25 }],
         ['filmgate', { fmt: 1, forma: 1, tam: 0.9, zoom: 1.0, soft: 0.009, round: 0.7, vig: 0.1, sombra: 0.45, sombraW: 0.075, flick: 0.06, flickHz: 18, weave: 0.05 }]
       ]
     },
@@ -9533,10 +9543,10 @@ window.VE = window.VE || {};
       id: 'p16mm', name: '16 mm documentário', desc: '24 por segundo, cor neutra de negativo (250D), grão fino e a tira de filme com as perfurações — o Super 16',
       fx: [
         ['cadencia', { fps: 24 }],
-        ['blur', { rad: 0.45, mixv: 0.4 }],
+        ['blur', { rad: 0.04, mixv: 0.4 }],
         ['filmstock', { exp: 0, con: 0.12, sat: -0.02, temp: 0.04, fade: 0.07, roll: 0.4, split: 0.24, shTint: '#1e2428', hiTint: '#fff2de', vig: 0.06, grain: 0, sharp: 0.1 }],
-        ['filmgrain', { fmt: 3, amt: 0.1, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
-        ['gateweave', { amt: 0.03, spd: 1.0, rot: 0.02, jump: 0.03, jumpRate: 0.08 }],
+        ['filmgrain', { fmt: 3, amt: 0.08, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
+        ['gateweave', { amt: 0.025, spd: 1.0, rot: 0.02, jump: 0.02, jumpRate: 0.06 }],
         ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.03, flickHz: 24, weave: 0.03, holes: 1, holeSide: 0, edge: '#3a2413' }]
       ]
     },
