@@ -92,8 +92,18 @@
 
     list.querySelectorAll('.fxitem').forEach(function (el) {
       el.addEventListener('click', function () {
-        if (!VE.project) { VE.app.toast('carregue uma fonte primeiro'); return; }
         var fxId = el.dataset.fx;
+        /* ITEM QUE É UMA PORTA, não um efeito: a mesa de digitalização
+           grava ao vivo numa janela em vez de virar shader na pilha.
+           Vem antes da checagem de projeto de propósito — ela gera
+           FONTE (como a câmera), então funciona com o laboratório
+           ainda vazio.                                              */
+        var porta = (VE.FXBY[fxId] || {}).janela;
+        if (porta) {
+          if (porta === 'mesa' && VE.mesaui) VE.mesaui.abrir();
+          return;
+        }
+        if (!VE.project) { VE.app.toast('carregue uma fonte primeiro'); return; }
         var sel = VE.selected();
         if (sel) {
           /* há um clipe selecionado: o efeito é DELE */
@@ -113,6 +123,8 @@
         VE.pushHistory(); VE.emit('project');
       });
       el.addEventListener('dragstart', function (e) {
+        /* porta não se arrasta para cima de clipe: não há o que aplicar */
+        if ((VE.FXBY[el.dataset.fx] || {}).janela) { e.preventDefault(); return; }
         e.dataTransfer.setData('text/fx', el.dataset.fx);
         e.dataTransfer.effectAllowed = 'copy';
       });
@@ -601,6 +613,15 @@
 
   P.isFolded = function (title) { return !!folded[plateKey(title)]; };
 
+  /* Recolhe estas placas UMA vez — na primeira visita, antes de o usuário
+     ter opinião. Serve para uma ficha longa abrir mostrando só o primeiro
+     bloco em vez de despejar tudo. Quem chamar é responsável por só
+     chamar uma vez; depois disso manda o que o usuário escolheu.       */
+  P.foldDefault = function (keys) {
+    (keys || []).forEach(function (k) { folded[k] = true; });
+    saveFolded();
+  };
+
   P.plate = function (title, body, extra, opts) {
     opts = opts || {};
     var key = opts.key || plateKey(title);
@@ -617,8 +638,89 @@
       '<div class="plate-b">' + body + '</div></div>';
   };
 
+  /* ================= O ENCHIMENTO DA LINHA DE NÚMERO =================
+     A ficha da tipografia trocou o par "campo em cima, cursor deslizante
+     embaixo" por UMA caixa que se enche até onde o valor está na faixa
+     (PROJETO.md 5h.1), e o Bruno pediu o mesmo para a ficha do vídeo.
+
+     Aqui não dá para refazer os construtores: quem desenha nesta coluna
+     são cinco arquivos (`panels.js`, `motion.js`, `compui.js`, `audio.js`,
+     `legendas.js`), com cronômetro de keyframe, linha de áudio reativo,
+     máscara e gráfico pendurados na estrutura exata do par `.prow` +
+     `.prow-slider`. Mexer nos cinco para mudar DESENHO seria refazer
+     arquitetura para repaginar — o erro que o RGB_LAB-2.0.md abre
+     dizendo que não se comete.
+
+     Então o par continua saindo igual dos cinco, o CSS junta os dois numa
+     caixa só, e o JS entra apenas para dizer QUANTO encher. Um observador
+     no `#insp` cobre os cinco arquivos sem que nenhum saiba disto.     */
+  function fillDe(rng) {
+    /* duas estruturas, porque quem desenha são dois módulos: a ficha do
+       clipe faz `.prow` + `.prow-slider` (panels.js) e a pilha de efeitos
+       faz `.mprop-h` + `.mrange` (motion.js). O desenho é o mesmo; a caixa
+       a encher é que muda de nome.                                      */
+    var linha = null;
+    if (rng.classList.contains('mrange')) {
+      var mp = rng.parentElement;
+      linha = mp && mp.querySelector(':scope > .mprop-h');
+    } else {
+      var sl = rng.parentElement;
+      if (sl && sl.classList.contains('prow-slider')) {
+        var ant = sl.previousElementSibling;
+        if (ant && ant.classList.contains('prow')) linha = ant;
+      }
+    }
+    if (!linha) return;
+    var min = parseFloat(rng.min), max = parseFloat(rng.max), v = parseFloat(rng.value);
+    if (!isFinite(min) || !isFinite(max) || max === min || !isFinite(v)) return;
+    /* faixa que atravessa o zero enche a partir do ZERO, não da borda:
+       senão DESLOCAR X em 0 aparece com a caixa metade cheia */
+    var lim = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
+    var p = lim((v - min) / (max - min));
+    var z = (min < 0 && max > 0) ? lim((0 - min) / (max - min)) : 0;
+    var a = Math.min(z, p), b = Math.max(z, p);
+    linha.style.setProperty('--fill-x', (a * 100).toFixed(2) + '%');
+    linha.style.setProperty('--fill', ((b - a) * 100).toFixed(2) + '%');
+  }
+  P.pintarFills = function (box) {
+    (box || document).querySelectorAll('.prow-slider > input[type=range], input.mrange').forEach(fillDe);
+  };
+
+  /* O maquinário do enchimento tem init PRÓPRIO, e não mora dentro do
+     `initFold`. Morava, e custou um defeito: `initFold` é chamado pela
+     ficha do vídeo e pela da tipografia, mas NUNCA pela do áudio — que
+     não tem placas para recolher. Quem entrasse direto no laboratório de
+     áudio não tinha observador nem ouvinte, e nenhuma barra se enchia ao
+     arrastar. Ligar o enchimento a quem dobra placa era acoplar duas
+     coisas que não têm nada a ver uma com a outra.                    */
+  P.initFills = function () {
+    var insp = $('#insp');
+    if (!insp || insp.dataset.fillwired) return;
+    insp.dataset.fillwired = '1';
+
+    /* arrastar: o enchimento acompanha o valor ao vivo */
+    insp.addEventListener('input', function (e) {
+      if (e.target && e.target.type === 'range') fillDe(e.target);
+    }, true);
+
+    /* redesenhar: a coluna inteira se refaz a cada seleção, a cada efeito
+       acrescentado, a cada quadro de keyframe e a cada busca no rack. Um
+       observador é o único jeito de pintar os enchimentos sem pedir a
+       cinco arquivos que avisem — e nenhum deles sabe que isto existe. */
+    if (window.MutationObserver) {
+      var pendente = false;
+      new MutationObserver(function () {
+        if (pendente) return;
+        pendente = true;
+        setTimeout(function () { pendente = false; P.pintarFills(insp); }, 0);
+      }).observe(insp, { childList: true, subtree: true });
+    }
+    P.pintarFills(insp);
+  };
+
   /* clique na setinha — delegado, vale para tudo que a coluna desenhar */
   P.initFold = function () {
+    P.initFills();
     var insp = $('#insp');
     if (!insp || insp.dataset.foldwired) return;
     insp.dataset.foldwired = '1';
@@ -687,6 +789,13 @@
        à máscara de efeito, como era.                                 */
     if (VE.compui && VE.compui.canetaEdit && desenhaCaneta(svg)) return;
     var foc = VE.motion && VE.motion.focusEffect ? VE.motion.focusEffect() : null;
+    /* GESTO GRAVADO: um efeito como o Scanner declara `rawCurve` — ver a
+       nota grande logo abaixo, em desenhaArrasteFx. Enquanto ele está
+       aberto na ficha, a prévia inteira vira superfície de arraste no
+       lugar do gizmo de máscara, e tem prioridade sobre ele: os dois
+       nunca fazem sentido ao mesmo tempo.                              */
+    var fdefCurva = foc && VE.FXBY[foc.effect.fx];
+    if (foc && fdefCurva && fdefCurva.rawCurve && desenhaArrasteFx(svg, foc)) return;
     if (!foc || !foc.effect.mask || !foc.effect.mask.shape || (foc.effect.mask.shape | 0) === 5) {
       svg.innerHTML = ''; svg.classList.remove('active'); return;
     }
@@ -742,6 +851,117 @@
      E escrever passa por `P.setValue`, que grava keyframe quando aquilo
      está animado e valor direto quando não está. É isso que faz a
      rotoscopia funcionar: marcar todos, avançar, arrastar.            */
+  /* ═══════════════════════════════════════════════ O GESTO GRAVADO ═══
+     A folha sendo puxada embaixo do escâner, e o jeito mais simples que
+     existe de dizer isso: APERTE, ARRASTE, SOLTE.
+
+     O gesto inteiro — do aperto ao soltar — é esticado para caber do
+     começo ao fim da digitalização: cada linha da imagem mostra o ponto
+     do arraste que corresponde à MESMA fração do percurso. Arrastar
+     devagar num trecho faz aquele trecho ocupar mais linhas, porque o
+     que é gravado são as posições do ponteiro no ritmo em que ele
+     andou — a demora vira espaço, como numa digitalização de verdade.
+
+     Isto NÃO passa por keyframe de propósito. A primeira versão puxava
+     dois parâmetros animáveis (`offX`/`offY`) e exigia ligar o
+     cronômetro antes de arrastar; era fiel à arquitetura do
+     laboratório e mesmo assim confuso de usar. O gesto é um traçado
+     só, e agora é guardado como um traçado só, em `e.trilha`.
+
+     Clicar sem arrastar APAGA o gesto gravado — é o "reiniciar" do
+     site de referência, no lugar onde a mão já está.                 */
+  var TRILHA_N = 128;
+
+  /* reamostra o gesto para um número fixo de pares, pelo ÍNDICE (que é o
+     ritmo do ponteiro), não pelo comprimento — é isso que preserva a
+     demora como espaço.                                              */
+  function reamostrarTrilha(pts, n) {
+    var m = pts.length;
+    if (m < 2) return null;
+    var out = new Array(n * 2);
+    for (var i = 0; i < n; i++) {
+      var f = (m - 1) * i / (n - 1);
+      var i0 = Math.floor(f), fr = f - i0;
+      var a = pts[i0], b = pts[Math.min(i0 + 1, m - 1)];
+      out[i * 2] = a[0] + (b[0] - a[0]) * fr;
+      out[i * 2 + 1] = a[1] + (b[1] - a[1]) * fr;
+    }
+    return out;
+  }
+
+  function desenhaArrasteFx(svg, foc) {
+    var e = foc.effect;
+    var W = VE.project.canvas.w, H = VE.project.canvas.h;
+    svg.classList.add('active');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var sc = 1 / Math.max(0.05, (VE.view ? VE.view.zoom : 1));
+    var sw = 1.8 * sc;
+
+    /* a área inteira pega o gesto: não há alvo para acertar, aperta-se
+       em qualquer lugar da imagem e puxa                              */
+    var g = '<rect data-fxdrag="1" x="0" y="0" width="' + W + '" height="' + H +
+      '" style="fill:rgba(0,0,0,0.001);cursor:crosshair"/>';
+
+    var t = e.trilha;
+    if (t && t.length >= 4) {
+      var d = '';
+      for (var i = 0; i < t.length; i += 2) {
+        var px = (0.5 + t[i]) * W, py = (0.5 - t[i + 1]) * H;
+        d += (i ? 'L' : 'M') + px.toFixed(1) + ',' + py.toFixed(1);
+      }
+      g += '<path d="' + d + '" style="fill:none;stroke:#ff2e63;stroke-width:' + sw +
+        ';stroke-linejoin:round;pointer-events:none"/>';
+      var x0 = (0.5 + t[0]) * W, y0 = (0.5 - t[1]) * H;
+      var xf = (0.5 + t[t.length - 2]) * W, yf = (0.5 - t[t.length - 1]) * H;
+      g += '<circle cx="' + x0.toFixed(1) + '" cy="' + y0.toFixed(1) + '" r="' + (5 * sc) +
+        '" style="fill:#16150f;stroke:#ff2e63;stroke-width:' + sw + ';pointer-events:none"/>';
+      g += '<circle cx="' + xf.toFixed(1) + '" cy="' + yf.toFixed(1) + '" r="' + (5 * sc) +
+        '" style="fill:#ff2e63;pointer-events:none"/>';
+    }
+
+    var msg = (t && t.length >= 4)
+      ? 'CLIQUE SEM ARRASTAR PARA APAGAR · ARRASTE DE NOVO PARA REGRAVAR'
+      : 'APERTE E ARRASTE SOBRE A IMAGEM PARA PUXAR A FOLHA';
+    g += '<text x="' + (W * 0.5) + '" y="' + (H - 18 * sc) + '" text-anchor="middle" style="fill:#ff2e63;font:' +
+      (12 * sc) + 'px ui-monospace,monospace;paint-order:stroke;stroke:#16150f;stroke-width:' + (3 * sc) +
+      ';pointer-events:none">' + msg + '</text>';
+
+    svg.innerHTML = g;
+    bindArrasteFx(svg, e);
+    return true;
+  }
+
+  function bindArrasteFx(svg, e) {
+    var alvo = svg.querySelector('[data-fxdrag]');
+    if (!alvo) return;
+    var arrasto = null;
+    alvo.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      svg.setPointerCapture(ev.pointerId);
+      arrasto = { p0: { x: ev.clientX, y: ev.clientY }, pts: [[0, 0]], andou: 0 };
+    });
+    svg.addEventListener('pointermove', function (ev) {
+      if (!arrasto) return;
+      var r = svg.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var dx = (ev.clientX - arrasto.p0.x) / r.width;
+      var dy = -(ev.clientY - arrasto.p0.y) / r.height;
+      arrasto.pts.push([dx, dy]);
+      arrasto.andou = Math.max(arrasto.andou, Math.abs(dx), Math.abs(dy));
+      e.trilha = reamostrarTrilha(arrasto.pts, TRILHA_N);
+      VE.emit('livechange');
+      P.renderMaskOverlay();
+    });
+    svg.addEventListener('pointerup', function () {
+      if (!arrasto) return;
+      /* clique sem arrastar apaga — o gesto curto demais não vira dado */
+      if (arrasto.andou < 0.005) e.trilha = null;
+      arrasto = null;
+      VE.pushHistory(); VE.emit('project');
+      P.renderProps(); P.renderMaskOverlay();
+    });
+  }
+
   function desenhaCaneta(svg) {
     var ed = VE.compui.canetaEdit;
     var f = VE.findClip(ed.clipId);

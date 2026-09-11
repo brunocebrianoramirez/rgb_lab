@@ -1,0 +1,648 @@
+/* ================================================================
+   rgb_lab — A CÂMERA POLAROID
+   ----------------------------------------------------------------
+   NÃO HÁ JANELA. Há uma câmera flutuando num palco escuro, e fora a
+   TELINHA de ajustes todo comando é uma peça da máquina — inclusive
+   as duas saídas (baixar, usar), que moram na própria foto pendurada
+   porque é dela que elas tratam.
+
+   O RECORTE, que é o coração desta folha
+   A imagem `assets/polaroid/camera.png` é UMA só, e aparece três
+   vezes — recortada nas alturas medidas no arquivo. Cada faixa é uma
+   peça de verdade da máquina:
+
+     0 → 66,92%      O CORPO   lente, disparador, flash, faixa, botões
+     66,92 → 87,61%  A PORTA   o painel do filme, que ABRE
+     87,61 → 100%    A BASE    a fenda e o lábio por onde a foto sai
+
+   A ordem em profundidade não é enfeite, é o mecanismo: a foto que
+   sai fica ENTRE a base e a porta. Some por trás do corpo, aparece
+   na fenda, e passa por cima do lábio — que é como um polaroid sai.
+
+     z1  a câmara do filme (o escuro que a porta esconde)
+     z2  a base: fenda + lábio
+     z3  A FOTO PENDURADA (e as anteriores, atrás dela)
+     z4  o corpo
+     z5  o remendo do corpo · a porta, que gira na dobradiça
+     z6  os pontos de toque
+     z7  a telinha, que se desdobra para o lado
+
+   NADA de `transform-style:preserve-3d` no conjunto, e isso é
+   decisão, não esquecimento: num contexto 3D o navegador empilha por
+   GEOMETRIA e ignora o z-index — a foto guardada dentro da máquina
+   aparecia por cima dela. A porta e a telinha ganham a própria
+   `perspective()` na transformação, que é 3D de verdade e não
+   estraga a ordem das camadas.
+
+   A CONTA DO TAMANHO
+   A folha tem 125,25% da altura da câmera e fica 90% para fora —
+   90% porque o Bruno pediu a foto "praticamente visível ao sair", e
+   nesse ponto a janela da emulsão inteira e quase toda a tarja
+   aparecem. Logo o conjunto mede 1,662 vez a LARGURA da câmera, e
+   1/1,662 = 0,6017. Os quatro números que dependem dessa conta
+   (`--larg`, `PENDURA` no JS, o `margin-bottom` de `.com-folha` e o
+   `bottom` da calha) estão marcados um a um; mexer num sem os outros
+   corta a folha.
+   ================================================================ */
+
+/* ============================================================ O PALCO */
+.pol-palco{
+  position:fixed;inset:0;z-index:150;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(120% 90% at 50% 28%, rgba(30,27,24,.90), rgba(11,10,9,.97));
+  backdrop-filter:blur(7px);
+  /* os 96px descontados são respiro em cima e em baixo MAIS a folga
+     que a perspetiva come: `rotateX(7deg)` faz a caixa PINTADA ficar
+     ~5% maior que a caixa de layout */
+  --larg:min(660px, 62vw, calc((100vh - 96px) * .6017));
+  /* o azul é o do CANAL DE VÍDEO do laboratório (`--ch-video`), não um
+     azul escolhido aqui: a telinha é uma tela do rgb_lab */
+  --pol-azul:var(--ch-video, #1b4fd8);
+  --pol-tela:#17171a; --pol-tela2:#212127;
+  --pol-tx:#eceae4;   --pol-tx2:#8f8d87;  --pol-linha:rgba(255,255,255,.075);
+}
+.pol-palco.hidden{display:none}
+
+/* o × não é peça de polaroid nenhum: é a única coisa aqui que não é
+   câmera, e por isso fica discreta, no canto do palco */
+.pol-sair{
+  position:absolute;top:18px;right:22px;z-index:12;
+  width:38px;height:38px;border-radius:50%;padding:0;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.55);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.pol-sair svg{
+  width:15px;height:15px;fill:none;stroke:currentColor;
+  stroke-width:1.8;stroke-linecap:round;display:block;
+}
+.pol-sair:hover{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.4)}
+
+.pol-conjunto{
+  width:var(--larg);
+  perspective:1600px;perspective-origin:50% 32%;
+  transition:transform .42s cubic-bezier(.25,.9,.3,1);
+}
+/* com a telinha aberta o conjunto anda para a esquerda exatamente
+   metade do que ela ocupa, para o par ficar centrado */
+.pol-palco.com-tela .pol-conjunto{transform:translateX(calc(var(--larg) * -.278))}
+
+/* ============================================================ A CÂMERA */
+.pol-cam{
+  position:relative;width:100%;
+  aspect-ratio:798 / 662;
+  transform:rotateX(7deg) rotateZ(-.5deg);
+  transition:transform .45s cubic-bezier(.2,.9,.3,1),
+             margin-bottom .55s cubic-bezier(.3,.9,.3,1);
+  /* O chão que a foto pendurada ocupa: 83,2% da LARGURA da câmera
+     (margem em % resolve pela largura do bloco que a contém, e o bloco
+     que a contém tem exatamente a largura dela). Só que ele é
+     reservado QUANDO HÁ FOTO: reservar sempre deixava a câmera
+     encostada no alto da tela com meia tela de vazio embaixo. */
+  margin-bottom:4%;
+}
+.pol-cam.com-folha{margin-bottom:83.2%}
+.pol-cam.recebendo{transform:rotateX(4deg) scale(1.02)}
+
+/* a sombra no chão: é ela que assenta o objeto, e ela ACOMPANHA o
+   tranco do disparo — sombra parada com objeto que mexe é adesivo */
+.pol-piso{
+  position:absolute;left:5%;right:5%;bottom:-6%;height:14%;
+  background:radial-gradient(50% 46% at 50% 50%,rgba(0,0,0,.62),rgba(0,0,0,0) 72%);
+  filter:blur(9px);z-index:0;transition:transform .2s,opacity .2s;
+}
+
+/* as três faixas da MESMA chapa */
+.pol-chapa{
+  position:absolute;inset:0;width:100%;height:100%;
+  display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;
+}
+.pol-chapa-baixo{z-index:2}
+.pol-chapa-alto{z-index:4;filter:drop-shadow(0 14px 26px rgba(0,0,0,.45))}
+
+/* a câmara do filme: o escuro que só se vê com a porta aberta */
+.pol-camara{
+  position:absolute;left:1.2%;right:1.2%;z-index:1;
+  top:66.92%;height:20.69%;
+  background:linear-gradient(180deg,#050505 0%,#141210 42%,#0a0908 100%);
+  box-shadow:inset 0 8px 16px rgba(0,0,0,.9), inset 0 -2px 6px rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:#7d7566;
+  opacity:0;transition:opacity .28s .12s;
+}
+.pol-cam.porta-aberta .pol-camara{opacity:1}
+.pol-camara b{
+  width:32%;height:54%;border-radius:2px;
+  background:linear-gradient(180deg,#e9e6dc,#cfcab6);
+  box-shadow:0 2px 6px rgba(0,0,0,.7);
+  font:inherit;color:#5b564a;text-align:center;line-height:2.8;
+}
+
+/* --------------------------------------------- O REMENDO DO CORPO
+   O 3D traz UM botão redondo ali. O Bruno pediu dois. Não dá para
+   encolher um desenho que é imagem, então a chapa é remendada neste
+   ponto e os botões nascem em CSS. Funciona porque o corpo é liso e
+   de uma cor só na faixa toda — medido pixel a pixel: rgb(224,224,201)
+   constante de x=546 a x=756, de y=202 a y=326. A borda do remendo
+   desaparece num degradê, e por isso não há emenda para ver. */
+.pol-remendo{
+  position:absolute;z-index:5;pointer-events:none;
+  background:radial-gradient(ellipse closest-side at 50% 50%,
+    #e0e0c9 0%, #e0e0c9 80%, rgba(224,224,201,0) 100%);
+}
+
+/* ------------------------------------------- A FOTO PENDURADA
+   A calha começa na borda de cima da fenda: o que está acima dela
+   está DENTRO da máquina, e é o `overflow` dela que esconde. Ela é
+   mais larga que a fenda de propósito — precisa cortar para cima e
+   não para os lados, senão deceparia as fotos de trás. */
+.pol-tubo{
+  position:absolute;bottom:-112%;z-index:3;
+  overflow:hidden;pointer-events:none;
+}
+.pol-saindo{
+  position:absolute;top:0;
+  left:var(--pad,0);width:var(--folha,100%);
+  transform:translateY(-100%);
+  transform-origin:50% 0;                 /* a fenda segura a ponta de cima */
+  filter:drop-shadow(0 10px 20px rgba(0,0,0,.55));
+  pointer-events:auto;cursor:grab;touch-action:none;
+}
+.pol-saindo:not(.tem){display:none}
+.pol-saindo.arrastando{cursor:grabbing}
+.pol-saindo canvas{display:block;width:100%;height:auto}
+.pol-saindo.pendurada{transform:translateY(var(--pendura,-10%)) rotate(-.35deg)}
+.pol-saindo.saindo{animation:pol-pendurar 1.15s cubic-bezier(.16,.9,.3,1) forwards}
+/* sai com tranco, passa um pouco do ponto e BALANÇA até parar —
+   ela está pendurada pela ponta, e coisa pendurada balança */
+@keyframes pol-pendurar{
+  0%  {transform:translateY(-100%) rotate(0deg)}
+  44% {transform:translateY(calc(var(--pendura) + 3.5%)) rotate(0deg)}
+  58% {transform:translateY(var(--pendura)) rotate(1.9deg)}
+  72% {transform:translateY(var(--pendura)) rotate(-1.2deg)}
+  86% {transform:translateY(var(--pendura)) rotate(.6deg)}
+  100%{transform:translateY(var(--pendura)) rotate(-.35deg)}
+}
+
+/* a revelação: a emulsão some e a imagem sobe por baixo dela */
+.pol-emulsao{position:absolute;inset:0;opacity:0;pointer-events:none}
+.pol-emulsao.revelando{animation:pol-revelar 2.6s ease-out forwards}
+@keyframes pol-revelar{0%{opacity:1}20%{opacity:.92}100%{opacity:0}}
+.pol-saindo.revelado canvas{animation:pol-subir 2.6s ease-out}
+@keyframes pol-subir{
+  0%{filter:contrast(.16) saturate(.08) brightness(1.28)}
+  30%{filter:contrast(.5) saturate(.4) brightness(1.14)}
+  100%{filter:none}
+}
+
+/* as duas saídas moram NA FOTO, na tarja de baixo — o espaço vazio
+   da folha, que é onde elas não tapam imagem nenhuma */
+.pol-acoes{
+  position:absolute;left:0;right:0;bottom:2.5%;
+  display:flex;gap:6px;justify-content:center;
+  opacity:0;transition:opacity .16s;pointer-events:none;
+}
+.pol-saindo.pendurada:hover .pol-acoes{opacity:1;pointer-events:auto}
+.pol-a{
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  padding:6px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  border:1px solid rgba(0,0,0,.25);background:rgba(255,255,255,.92);color:#1b1a17;
+  backdrop-filter:blur(3px);
+}
+.pol-a:hover{background:#1b1a17;color:#fff}
+.pol-a-forte{background:var(--pol-azul);border-color:transparent;color:#fff}
+.pol-a-forte:hover{background:#1b1a17}
+
+/* as anteriores continuam penduradas, ATRÁS — é assim que se comparam
+   duas revelações do mesmo quadro. Elas espiam por BAIXO, como um maço
+   de fotos na mão: leque lateral grande num objeto tão alto joga a
+   ponta de baixo 60px para o lado e a calha decepa. */
+.pol-pilha{position:absolute;left:0;top:0;width:100%;pointer-events:none}
+.pol-atras{
+  position:absolute;top:0;padding:0;border:0;background:none;
+  left:var(--pad,0);width:var(--folha,100%);
+  transform:translateY(calc(var(--pendura,-10%) + var(--i) * 2.4%))
+            rotate(calc(var(--i) * -1.5deg))
+            scale(calc(1 - var(--i) * .015));
+  transform-origin:50% 0;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)) brightness(calc(1 - var(--i) * .10));
+  pointer-events:auto;cursor:pointer;line-height:0;
+  transition:transform .22s,filter .22s;
+}
+.pol-atras img{width:100%;display:block}
+.pol-atras:hover{
+  transform:translateY(calc(var(--pendura,-10%) + var(--i) * 3%))
+            rotate(calc(var(--i) * -2.4deg))
+            scale(calc(1 - var(--i) * .008));
+  filter:drop-shadow(0 10px 20px rgba(0,0,0,.6)) brightness(1);
+}
+
+/* ================================================ OS PONTOS DE TOQUE */
+.pol-h{
+  position:absolute;z-index:6;padding:0;border:0;background:transparent;
+  cursor:pointer;border-radius:6px;
+  transition:box-shadow .14s,transform .1s,filter .14s;
+}
+.pol-h:focus-visible{outline:2px solid var(--pol-azul);outline-offset:3px}
+/* a etiqueta de cada peça: diz o que ela faz, só quando se chega perto */
+.pol-h::after{
+  position:absolute;left:50%;translate:-50% 0;
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  background:#12110f;color:#f3f2f0;padding:3px 7px;border-radius:3px;
+  opacity:0;transition:opacity .14s;white-space:nowrap;pointer-events:none;
+  box-shadow:0 3px 10px rgba(0,0,0,.5);
+}
+.pol-h:hover::after{opacity:1}
+
+/* --- A LENTE: é por onde a imagem entra -------------------------
+   NADA de `overflow:hidden` aqui: era ele que engolia a etiqueta e
+   deixava a lente sem sinal nenhum, sozinha entre peças que todas
+   avisam o que fazem. O vidro redondo já é recortado pelo próprio
+   `border-radius` do canvas. */
+.pol-lente{border-radius:22%}
+.pol-lente canvas{
+  position:absolute;left:16%;top:16%;width:68%;height:68%;
+  border-radius:50%;opacity:0;transition:opacity .3s;
+}
+.pol-cam.carregada .pol-lente canvas{opacity:1}
+.pol-lente .pol-brilho{
+  position:absolute;inset:0;border-radius:22%;pointer-events:none;
+  background:radial-gradient(38% 30% at 34% 26%,rgba(255,255,255,.30),rgba(255,255,255,0) 62%);
+}
+/* o alvo: um + dentro do vidro, que só aparece ao chegar perto */
+.pol-lente-alvo{
+  position:absolute;left:50%;top:50%;translate:-50% -50%;
+  width:34%;height:34%;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.75);
+  opacity:0;transform:scale(.72);transition:opacity .16s,transform .16s;
+  pointer-events:none;
+}
+.pol-lente-alvo svg{width:62%;height:62%;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.pol-lente:hover .pol-lente-alvo{opacity:1;transform:scale(1)}
+.pol-lente:hover{box-shadow:0 0 0 3px var(--pol-azul), 0 0 30px rgba(27,79,216,.5)}
+.pol-lente::after{content:"CARREGAR FOTO · 2 CLIQUES: DO CLIPE";bottom:-26px}
+
+/* --- O DISPARADOR: botão afunda porque botão afunda ------------- */
+.pol-disp{border-radius:50%}
+.pol-disp i{
+  position:absolute;inset:0;border-radius:50%;
+  box-shadow:inset 0 3px 8px rgba(255,255,255,.35), inset 0 -4px 10px rgba(120,10,0,.55);
+  transition:box-shadow .1s;
+}
+.pol-disp:hover{box-shadow:0 0 0 3px rgba(255,72,40,.55), 0 0 30px rgba(255,72,40,.5)}
+.pol-disp:active{transform:translateY(2px) scale(.965)}
+.pol-disp:active i{box-shadow:inset 0 6px 12px rgba(90,6,0,.7)}
+.pol-disp::after{content:"REVELAR";bottom:-24px;background:#e0261a}
+
+/* --- O FLASH: acende quando está armado ------------------------- */
+.pol-flash{border-radius:14%}
+.pol-flash i{
+  position:absolute;left:26%;top:24%;width:48%;height:48%;border-radius:12%;
+  background:#f2f0e6;opacity:.15;transition:opacity .2s,box-shadow .2s;
+}
+.pol-flash:hover{box-shadow:0 0 0 2px rgba(255,255,255,.45)}
+.pol-flash::after{content:"FLASH";bottom:-24px}
+.pol-cam.com-flash .pol-flash i{
+  opacity:1;background:#fffdf2;
+  box-shadow:0 0 18px 6px rgba(255,250,214,.85), 0 0 48px 16px rgba(255,244,180,.45);
+}
+.pol-cam.com-flash .pol-flash{animation:pol-pisca 2.6s ease-in-out infinite}
+@keyframes pol-pisca{0%,92%,100%{filter:none}95%{filter:brightness(1.5)}}
+
+/* --- OS DOIS BOTÕES ---------------------------------------------
+   Mesma matéria do olho elétrico original, lida dos pixels dele:
+   centro escuro (#151514 no topo, #272726 no meio) e aro claro
+   (#4a4948), com a sombra quente que o corpo faz por baixo. */
+.pol-bt{
+  border-radius:50%;
+  background:radial-gradient(circle at 50% 44%,
+    #171716 0%, #212120 44%, #383735 76%, #4d4c4a 100%);
+  box-shadow:
+    0 3px 7px rgba(96,92,58,.55),
+    inset 0 1px 1px rgba(255,255,255,.10),
+    inset 0 -3px 5px rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;
+}
+.pol-bt svg{
+  width:46%;height:46%;fill:none;stroke:#8e8b84;stroke-width:1.5;
+  stroke-linecap:round;transition:stroke .16s;
+}
+.pol-bt:hover{box-shadow:0 0 0 2px var(--pol-azul),0 3px 10px rgba(0,0,0,.5),
+  inset 0 1px 1px rgba(255,255,255,.12), inset 0 -3px 5px rgba(0,0,0,.55)}
+.pol-bt:hover svg{stroke:#dcd9d1}
+.pol-bt:active{transform:translateY(1px) scale(.97)}
+
+/* o esquerdo é a roda CLARO/ESCURO: arrasta-se em volta dele */
+.pol-expo{cursor:grab;touch-action:none}
+.pol-expo:active{cursor:grabbing}
+.pol-expo b{                       /* o ponteiro: para onde a roda foi */
+  position:absolute;left:50%;top:50%;width:2px;height:46%;
+  margin-left:-1px;transform-origin:50% 0;
+  background:linear-gradient(180deg,var(--pol-azul),rgba(27,79,216,0));
+  opacity:0;transition:opacity .16s;
+}
+.pol-expo:hover b,.pol-expo.mexido b{opacity:1}
+.pol-expo::after{content:attr(data-val);top:-28px}
+.pol-expo.mexido::after{opacity:1}
+.pol-editar::after{content:"EDITAR";top:-28px}
+.pol-cam.com-tela .pol-editar{
+  box-shadow:0 0 0 2px var(--pol-azul),0 0 22px rgba(27,79,216,.6),
+    inset 0 1px 1px rgba(255,255,255,.12), inset 0 -3px 5px rgba(0,0,0,.55);
+}
+.pol-cam.com-tela .pol-editar svg{stroke:#dcd9d1}
+
+/* --- A FAIXA ARCO-ÍRIS: a marca do filme ------------------------ */
+.pol-arco{border-radius:3px}
+.pol-arco i{position:absolute;inset:0;border-radius:3px;transition:filter .16s,box-shadow .16s}
+.pol-arco:hover i{filter:saturate(1.5) brightness(1.15);box-shadow:0 0 22px rgba(255,255,255,.55)}
+.pol-arco::after{content:attr(data-val);top:-26px}
+.pol-cam.trocou-filme .pol-arco i{animation:pol-varre .42s ease-out}
+@keyframes pol-varre{0%{filter:saturate(3) brightness(1.7)}100%{filter:none}}
+
+/* --- A PLAQUETA: o modelo vira contador -------------------------
+   Sem texto por cima: o "Supercolor 1000" já está impresso ali. */
+.pol-plaq{border-radius:2px;cursor:default}
+.pol-plaq::after{content:attr(data-val);bottom:-26px}
+
+/* --- A PORTA DO FILME: gira na dobradiça de baixo --------------- */
+.pol-porta{
+  z-index:5;overflow:hidden;border-radius:0;
+  transform-origin:50% 100%;
+  transform:perspective(760px) rotateX(0deg);
+  transition:transform .5s cubic-bezier(.25,1.05,.35,1), filter .2s;
+  backface-visibility:hidden;
+}
+/* a chapa inteira dentro da porta: `top` e `height` saem da mesma
+   medida do JS, para não haver dois lugares dizendo onde é o vinco */
+.pol-porta img{
+  position:absolute;left:0;width:100%;
+  pointer-events:none;user-select:none;-webkit-user-drag:none;
+}
+.pol-porta:hover{filter:brightness(1.14)}
+.pol-porta::after{display:none}
+.pol-cam.porta-aberta .pol-porta{
+  transform:perspective(760px) rotateX(-62deg);
+  box-shadow:0 16px 26px rgba(0,0,0,.4);
+}
+.pol-porta-dica{
+  position:absolute;left:50%;top:50%;translate:-50% -50%;
+  font-family:var(--mono);font-size:10px;letter-spacing:.24em;
+  color:#fff;background:var(--pol-azul);padding:6px 14px;border-radius:999px;
+  opacity:0;transition:opacity .16s;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
+}
+.pol-porta:hover .pol-porta-dica{opacity:1}
+.pol-cam.porta-aberta .pol-porta-dica{opacity:0}
+
+/* --- A FENDA: só boca de arquivo, sem desenho próprio ----------- */
+.pol-fenda{z-index:6;pointer-events:none}
+.pol-cam.recebendo .pol-fenda{
+  box-shadow:0 0 0 2px var(--pol-azul),0 0 34px rgba(27,79,216,.55);
+}
+
+/* --- O TRANCO DO DISPARO ---------------------------------------- */
+.pol-cam.disparando{animation:pol-tranco .22s ease-out}
+@keyframes pol-tranco{
+  0%{transform:rotateX(7deg) rotateZ(-.5deg) translateY(0)}
+  40%{transform:rotateX(10deg) rotateZ(-.5deg) translateY(-6px) scale(1.008)}
+  100%{transform:rotateX(7deg) rotateZ(-.5deg) translateY(0)}
+}
+.pol-cam.disparando .pol-piso{transform:scale(1.07);opacity:.72}
+
+/* ========================================================= A TELINHA
+   Presa por duas dobradiças na lateral da câmera. FECHADA ela está
+   dobrada ATRÁS da máquina (rotateY 112°, com a face virada para o
+   outro lado — `backface-visibility` a esconde); ao abrir, ela
+   desdobra e vem para a frente. É 3D com função: a dobradiça existe
+   porque a tela tem de sair de algum lugar, e o lugar é atrás.
+
+   O desenho é o do laboratório — monoespaçada em caixa alta, filete
+   de 1px, e o AZUL DO CANAL DE VÍDEO no que está aberto. */
+.pol-dobra{
+  /* A borda direita PINTADA da câmera não está em 100%: a chapa tem
+     alfa, e na altura das dobradiças o corpo termina em 94,2%–95,1%
+     (medido: x=752 em y=100, x=759 em y=300, de 798 de largura). Pôr a
+     dobradiça em `left:100%` a deixava boiando a 40px do metal — que
+     foi o que o Bruno viu. Ela começa em 93,5%, ou seja PRESA no corpo,
+     com uma folga que a enfia debaixo dele em toda a faixa. */
+  position:absolute;left:93.5%;top:14%;height:34%;width:9.5%;
+  z-index:6;pointer-events:none;
+  display:flex;flex-direction:column;justify-content:space-between;
+  opacity:0;transition:opacity .3s;
+}
+.pol-cam.com-tela .pol-dobra{opacity:1}
+.pol-dobra i{
+  display:block;width:100%;height:34%;border-radius:4px;
+  background:linear-gradient(90deg,#1a1a1c,#3a3a3e 45%,#232326);
+  box-shadow:0 2px 5px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.14);
+}
+
+.pol-tela{
+  position:absolute;left:100%;margin-left:1.5%;
+  top:6%;width:54%;height:84%;
+  z-index:7;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--pol-tela);
+  border:1px solid rgba(255,255,255,.09);border-radius:18px;
+  box-shadow:0 26px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05);
+  transform-origin:left center;
+  transform:perspective(1500px) rotateY(112deg);
+  opacity:0;visibility:hidden;backface-visibility:hidden;
+  transition:transform .55s cubic-bezier(.2,.9,.25,1), opacity .22s,
+             visibility 0s linear .55s;
+}
+.pol-tela.aberta{
+  transform:perspective(1500px) rotateY(0deg);
+  opacity:1;visibility:visible;
+  transition:transform .55s cubic-bezier(.2,.9,.25,1), opacity .2s, visibility 0s;
+}
+
+.pol-tela-h{
+  display:flex;align-items:center;gap:9px;
+  padding:13px 14px 12px;border-bottom:1px solid var(--pol-linha);flex:0 0 auto;
+}
+.pol-led{
+  width:7px;height:7px;border-radius:50%;background:var(--pol-azul);
+  box-shadow:0 0 8px var(--pol-azul);flex:0 0 auto;
+}
+.pol-tela-h h4{
+  flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  text-transform:uppercase;font-weight:500;color:var(--pol-tx);
+}
+/* Ícone DESENHADO e centrado por flex. Com glifo de texto (✕, ‹) o
+   símbolo saía pequeno num caso e torto no outro: cada fonte põe esses
+   caracteres numa altura de base diferente, e nenhum `line-height`
+   conserta os dois ao mesmo tempo. */
+.pol-tela-x{
+  width:26px;height:26px;flex:0 0 auto;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(255,255,255,.18);background:transparent;
+  color:var(--pol-tx2);padding:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.pol-tela-x svg{
+  width:12px;height:12px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;display:block;
+}
+.pol-tela-x:hover{color:var(--pol-tx);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.07)}
+
+.pol-tela-pag{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 16px}
+.pol-tela-pag.e-indice{padding:6px 8px}
+/* a calha da barra ficava CLARA por omissão, e desenhava um risco de
+   16px na beira da telinha que parecia defeito do canto arredondado */
+.pol-tela-pag::-webkit-scrollbar{width:7px}
+.pol-tela-pag::-webkit-scrollbar-track{background:transparent}
+.pol-tela-pag::-webkit-scrollbar-thumb{background:#3a3a42;border-radius:7px}
+.pol-tela-pag{scrollbar-width:thin;scrollbar-color:#3a3a42 transparent}
+
+/* --- o ÍNDICE: seis linhas, ícone, nome e seta ------------------- */
+.pol-lista{display:flex;flex-direction:column}
+.pol-linha{
+  display:grid;grid-template-columns:20px 1fr 10px;align-items:center;gap:11px;
+  /* as seis linhas do índice têm de caber SEM rolar num monitor de
+     720px de altura — foi essa a conta que fixou a altura da telinha
+     em 84% e o respiro da linha em 8px */
+  padding:8px 10px;border:0;background:transparent;cursor:pointer;
+  border-radius:9px;text-align:left;color:var(--pol-tx2);
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;position:relative;transition:background .14s,color .14s;
+}
+.pol-linha + .pol-linha::before{
+  content:"";position:absolute;left:10px;right:10px;top:0;height:1px;
+  background:var(--pol-linha);
+}
+.pol-linha svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.4}
+.pol-linha em{font-style:normal;font-size:13px;opacity:.55}
+.pol-linha:hover{background:rgba(255,255,255,.05);color:var(--pol-tx)}
+.pol-linha.on{background:var(--pol-azul);color:#fff}
+.pol-linha.on::before,.pol-linha.on + .pol-linha::before{opacity:0}
+
+/* --- as páginas -------------------------------------------------- */
+.pol-sub{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--pol-tx2);
+  margin:16px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--pol-linha);
+}
+.pol-sub:first-child{margin-top:0}
+.pol-nota{
+  font-family:var(--mono);font-size:9px;line-height:1.7;
+  color:var(--pol-tx2);margin:-2px 0 10px;
+}
+.pol-nota code{background:rgba(255,255,255,.07);padding:1px 4px;border-radius:3px}
+
+.pol-ctrl{margin-bottom:13px}
+.pol-ctrl label{
+  display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--pol-tx);margin-bottom:7px;
+}
+.pol-ctrl-l{display:flex;align-items:center;gap:9px}
+.pol-ctrl i{
+  display:block;font-family:var(--mono);font-size:8.5px;line-height:1.6;
+  color:var(--pol-tx2);font-style:normal;margin-top:5px;
+}
+.pol-num,.pol-nome{
+  font-family:var(--mono);font-size:10px;color:var(--pol-tx);
+  background:transparent;border:1px solid rgba(255,255,255,.16);
+  border-radius:6px;padding:5px 4px;text-align:center;
+}
+/* min-width:0 é obrigatório: item de flex nasce com min-width:auto, e
+   para um <input> isso é a largura intrínseca dele (~170px) — a caixa
+   ignorava o flex-basis de 46px e comia a barra inteira */
+.pol-num{flex:0 0 46px;min-width:0}
+.pol-nome{width:100%;text-align:left;padding:8px 9px;letter-spacing:.1em}
+.pol-num:focus,.pol-nome:focus{outline:none;border-color:var(--pol-azul)}
+
+.pol-tela input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;min-width:0;
+  height:3px;border-radius:3px;background:rgba(255,255,255,.18);outline:none;
+}
+.pol-tela input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:3px;
+  background:var(--pol-azul);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+.pol-tela input[type=range]::-moz-range-thumb{
+  width:13px;height:13px;border:0;border-radius:3px;background:var(--pol-azul);cursor:pointer;
+}
+.pol-cor{
+  width:40px;height:26px;padding:0;border:1px solid rgba(255,255,255,.16);
+  border-radius:6px;background:transparent;cursor:pointer;
+}
+.pol-txt{
+  width:100%;font-family:var(--mono);font-size:10px;line-height:1.5;
+  border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  background:transparent;color:var(--pol-tx);padding:8px 9px;
+  resize:vertical;margin-bottom:12px;
+}
+.pol-txt:focus{outline:none;border-color:var(--pol-azul)}
+
+.pol-pilulas{display:flex;gap:4px;flex-wrap:wrap}
+.pol-pilulas-l .pol-pil{flex:1 0 44%}
+.pol-pil{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;
+  padding:6px 9px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.16);background:transparent;color:var(--pol-tx2);
+  transition:all .14s;
+}
+.pol-pil:hover{border-color:rgba(255,255,255,.45);color:var(--pol-tx)}
+.pol-pil.on{background:var(--pol-azul);border-color:var(--pol-azul);color:#fff}
+
+.pol-cartoes{display:flex;flex-direction:column;gap:5px}
+.pol-cartao{
+  display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:center;
+  text-align:left;padding:9px 10px;border-radius:9px;cursor:pointer;
+  border:1px solid transparent;background:var(--pol-tela2);
+  font-family:var(--mono);transition:border-color .14s,background .14s;
+}
+.pol-cartao i{width:20px;height:20px;border-radius:5px;display:block;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.pol-cartao img{width:20px;height:25px;object-fit:cover;border-radius:4px;display:block}
+.pol-cartao b{grid-column:2;font-size:9.5px;letter-spacing:.14em;color:var(--pol-tx);font-weight:500}
+.pol-cartao span{grid-column:2;font-size:8.5px;line-height:1.55;color:var(--pol-tx2)}
+.pol-cartao:hover{background:#2a2a31}
+.pol-cartao.on{border-color:var(--pol-azul);background:#1d2333}
+.pol-cartao-p{cursor:default}
+.pol-cartao-b{grid-column:2;display:flex;gap:4px;margin-top:6px}
+
+.pol-orig{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.pol-o{
+  width:56px;padding:0;border:1px solid rgba(255,255,255,.14);border-radius:8px;
+  background:var(--pol-tela2);cursor:pointer;display:block;overflow:hidden;
+}
+.pol-o img{width:100%;height:58px;object-fit:cover;display:block}
+.pol-o span{
+  display:block;font-family:var(--mono);font-size:7px;letter-spacing:.06em;
+  padding:3px;color:var(--pol-tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.pol-o:hover{border-color:var(--pol-azul)}
+
+.pol-rodape{display:flex;gap:5px;margin-top:12px}
+.pol-b{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  padding:8px 12px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--pol-tx);
+  transition:all .14s;
+}
+.pol-b:hover{background:var(--pol-tx);color:#17171a;border-color:var(--pol-tx)}
+.pol-b-forte{background:var(--pol-azul);border-color:var(--pol-azul);color:#fff}
+.pol-b-forte:hover{background:#fff;color:var(--pol-azul);border-color:#fff}
+.pol-b-x{color:var(--pol-tx2)}
+.pol-b-x:hover{background:transparent;color:#ff6b6b;border-color:#ff6b6b}
+
+/* ------------------------------------------------------- ESTREITO
+   Sem largura para a telinha ao lado, ela deixa de ser porta e passa
+   a subir por baixo — continua sendo a mesma tela, no mesmo lugar
+   da máquina, só que pelo caminho que cabe. */
+@media (max-width:900px){
+  .pol-palco{--larg:min(660px, 74vw, calc((100vh - 120px) * .6017))}
+  .pol-tela{
+    left:auto;right:0;margin-left:0;top:auto;bottom:-6%;
+    width:88%;height:56%;transform-origin:center bottom;
+    transform:perspective(1500px) rotateX(-96deg);
+  }
+  .pol-tela.aberta{transform:perspective(1500px) rotateX(0deg)}
+  .pol-palco.com-tela .pol-conjunto{transform:none}
+  .pol-dobra{display:none}
+}

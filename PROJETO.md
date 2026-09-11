@@ -1,24 +1,190 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **24/08/2026** (décima oitava passada).
-> O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi decidido,
-> o que está pronto, o que não foi verificado e o que vem depois.
+> Documento de continuidade. Última sessão: **11/09/2026** (vigésima
+> quinta). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
 
-**A LISTA ACABOU.** Sobrou um item, e ele é uma DECISÃO sua (o `D.tom`), mais
-o que só pode ser feito olhando e ouvindo. O combinado é este: **o Bruno vai
-testar tudo, anotar os erros, e a próxima sessão começa pela lista dele** —
-um por um, na ordem que ele trouxer.
+**A vigésima quinta passada (11/09/2026) pôs CINCO EFEITOS no LAB 01, a
+partir de seis capturas e duas referências abertas que o Bruno mandou** —
+está tudo na **seção 5l**:
 
-**Enquanto a lista dele não chega, o que vale a pena é ISTO, nesta ordem:**
+```
+js/fx14.js          CRT / TUBÃO reconstruído pelo tubo (tooooools/crt, com os
+                    padrões de fábrica dela, medido a 1% contra a página)
+                    DATAMOSH reconstruído pelo codec (Supermosh): vetores
+                    medidos por busca de bloco, resíduo, blocos intra
+js/fx15.js          PAPEL TÉRMICO / CUPOM — um bit por ponto de 203 dpi
+js/fx16.js          MAPA DE PROFUNDIDADE (I.A.) e RASTREIO DE MANCHAS
+js/profundidade.js  Depth Anything V2 no navegador (WebGPU/WASM, 18 MB)
+js/manchas.js       componentes conexos + rastreio, na CPU
+```
 
-1. Nada do que foi entregue de 22 a 24/08 foi VISTO ou OUVIDO por mim. Se
-   ele trouxer um defeito, o primeiro passo é reproduzi-lo com uma medida —
-   quase todos os bugs graves deste projeto ficaram invisíveis até virar número.
-2. Não abrir frente nova sem pedido. As seções 7 e 14 têm ideias antigas;
+Três ganchos novos no motor, todos pequenos e reutilizáveis: `fontePrev:
+true` dá a um efeito a FONTE de um quadro atrás (`uFontePrev`) sem perder o
+`uPrev` composto; `def.atlas(params, fxDef, inTex, time)` recebe a imagem
+de entrada — um atlas pode ser uma ANÁLISE; e `def.nota(e, clip)` escreve
+uma nota viva na ficha (o estado da I.A.).
+
+**O que NÃO foi visto por mim: nada em movimento.** Tudo foi medido (o CRT
+contra a referência, na mesma imagem; o datamosh quadro a quadro; o cupom,
+as manchas e a profundidade em número e em ASCII). Peça para ele abrir o
+painel, arrastar os cinco para um clipe de VÍDEO e olhar — o datamosh só
+existe em movimento, e a profundidade atrasa meio segundo por quadro.
+
+---
+
+**A vigésima quarta passada foi longa e mexeu nos TRÊS laboratórios.** Ela
+começou com um pedido de desenho — *"deixar o lab de tipografia menos
+poluído"*, com o brik.space de referência — e terminou com um espectrograma
+no áudio, porque cada correção mostrou a próxima. Quatro seções:
+
+```
+5h   LAB 03 · TIPOGRAFIA repaginado, e o que isso ensinou
+5i   LAB 02 · o rack foi da faixa do pé para a coluna da direita
+5j   LAB 02 · A MONTAGEM: uma linha do tempo só de som
+5k   LAB 02 · o espectrograma do arquivo inteiro
+```
+
+#### A ideia que atravessou tudo: A LINHA É O CAMPO
+
+O par "campo em cima, cursor deslizante solto embaixo" virou UMA caixa que se
+enche até onde o valor está na faixa. Começou na ficha da tipografia (5h.1),
+o Bruno gostou e pediu no vídeo (5h.9), e no fim chegou às duas mesas da
+tipografia e ao rack do áudio — que herdaram de graça, por serem o mesmo par.
+
+```
+                          antes              depois
+ficha da tipografia       2,8 / 3,5 telas    1,00 tela
+ferramentas do LAB 03     4,1 telas          1,15 tela
+rack do áudio na coluna   21,3 telas         4,4 telas
+```
+
+**A lição, e ela vale para o resto do 2.0:** *o 2.0 tinha embelezado a linha
+sem reduzir o NÚMERO de linhas* — a `.prow` virou cartão arredondado e a
+ficha ficou mais alta (57px por controle contra 47 do Classic). A calma da
+referência não vem de linha bonita; vem de pouca linha na tela.
+
+#### As três armadilhas desta passada, para não cair de novo
+
+1. **`:has()` dentro de `:has()` é inválido, e não avisa.** O navegador
+   descarta a regra inteira em silêncio — vinte e três regras morreram de uma
+   vez e as três fichas voltaram ao desenho antigo. Quando um `:has()`
+   complexo "não pega", `el.matches(seletor)` é onde o erro sai escrito
+   (5i.5). A forma certa é um `:has()` só, com seletor relativo composto.
+2. **Repaginar por folha de estilo só alcança o que a folha NOMEIA.** As duas
+   mesas da tipografia e a pilha de efeitos do vídeo são montadas por
+   JavaScript, nunca apareceram numa auditoria do `index.html`, e ficaram com
+   o desenho de outra época até alguém olhar (5h.8, 5j). Se sobrar coisa com
+   cara de site antigo, é aí que se procura.
+3. **`requestAnimationFrame` PARA onde o navegador não está pintando.** A fila
+   das miniaturas usava rAF, copiado do LAB 01, e num painel escondido não
+   completou um segundo em quarenta e cinco. `setTimeout` é estrangulado, mas
+   nunca parado (5h.6).
+
+#### Cinco defeitos ANTIGOS que só apareceram porque algo passou a medi-los
+
+- **Ctrl+Z nunca funcionou no LAB 03** sem uma composição de vídeo aberta —
+  uma guarda `if (!VE.project) return` acima do bloco da tipografia (5h.8);
+- **POSIÇÃO X nunca foi para a esquerda do centro**: `min: -W` com `W`
+  função dá `NaN`, e navegador com `min` inválido usa zero. Só apareceu
+  porque o enchimento precisa de min e max válidos (5h.9);
+- **MANDAR PRA TIMELINE do áudio nunca funcionou sozinho** — `VE.addMedia`
+  lê `VE.project.tracks` sem checar, e o TypeError morria dentro de uma
+  promessa, calado (5i.6);
+- **a tinta não fechava o recorte** ao abrir (só o contrário), e as duas
+  folhas ficavam empilhadas no mesmo palco (5h.8);
+- **o menu ESPAÇO do ATMOSFERA aparecia e não abria** — exceção de CSS com
+  especificidade menor que a regra que devia vencer (5i.5).
+
+#### O QUE NÃO FOI VISTO POR MIM, e é por onde começar
+
+**Nada do áudio foi OUVIDO.** A montagem, o espectrograma, a mistura — tudo
+foi provado por medida (contagem de amostra, variância de pixel, duração do
+buffer). É a única parte deste projeto em que um erro passa sem eu detectar.
+
+Também não vi: o espectrograma no modo NOTURNO (vi só o aviso "CALCULANDO"),
+nem a mesa ESCREVER À MÃO com o desenho novo, nem as miniaturas da tipografia
+no Classic (essas conferi por assinatura de pixel).
+
+**Peça para ele abrir, tocar e trazer o que estranhar** — é assim que os
+defeitos deste projeto viram número.
+
+#### O que eu faria primeiro na próxima
+
+1. **A régua de tempo com números** sobre a onda do áudio. Hoje são dez
+   divisões sem número nenhum: não dá para saber onde está 1:20, e agora há
+   dois gráficos empilhados olhando para a mesma régua invisível.
+2. **A onda desenhada dentro do trecho da MONTAGEM.** Hoje o bloco é um
+   retângulo com o nome; com a onda dentro dá para cortar no lugar certo
+   olhando, que é como se corta som.
+3. **A lentidão do rack**, medida e não consertada (5i.4): 3,4s por volta de
+   botão num áudio de um minuto, porque toda mudança recomeça do áudio
+   original. O conserto proposto é guardar o buffer de ENTRADA de cada passo
+   — mexer no módulo 6 recalcularia só o 6. Não fiz porque é o caminho
+   central do motor de áudio e eu não escuto o resultado.
+
+---
+
+**A vigésima terceira passada entregou DOIS INSTRUMENTOS DE SOM e um núcleo
+novo para os dois** — está tudo na **seção 5g**, que tem um resumo em caixa
+logo no começo para quem só quer continuar:
+
+```
+js/musica.js       O NÚCLEO MUSICAL: escalas, vozes, síntese, .mid, render
+js/sonografo.js    · js/sonografoui.js · css/sonografo.css
+                   O SONÓGRAFO (music scanner): a linha fica parada, a
+                   imagem passa por ela, o que cruza vira nota
+js/cifra.js        · js/cifraui.js · css/cifra.css
+                   A CIFRA: o campo harmônico à mão, com teclado e gravador
+```
+
+O sonógrafo mora na aba **TOOLS** do vídeo E em **FERRAMENTAS** do áudio (come
+vídeo, devolve áudio); a cifra só no áudio. A torre do áudio virou
+**FONTE · TOOLS · CADEIA · PRESETS**.
+
+**Duas coisas desta passada que valem para o resto do laboratório:**
+
+1. **Todo controle com sentido prometido tem de ser medido numa CURVA, não num
+   ponto.** A SENSIBILIDADE do sonógrafo andava ao contrário — mais sensível
+   dava MENOS notas — e um único valor de teste no meio da faixa não mostra
+   isso (5g.3).
+2. **Cor herdada do tema pode não servir à janela que a herda.** No modo papel
+   o piano roll sumia: contraste 1,34 contra o fundo. Herdar E MEDIR, clareando
+   por mistura só quando não passa (5g.5).
+
+**O que ficou de fora, de propósito:** o banco de áudios, o upload de sons do
+usuário e o sistema de regras de evento do sonógrafo — a fase 2 que o próprio
+pedido dele manda deixar para depois (5g.10).
+
+**Antes de tudo, na próxima: nada dos dois instrumentos foi visto por mim em
+material de verdade.** O painel estrangula `requestAnimationFrame` e a
+decodificação de vídeo quando não está exibido, então a prova foi por medida e
+por eventos sintéticos. Peça para ele abrir e tocar.
+
+**Passadas anteriores, para referência:** a décima nona entregou o **TRICÔ**, o
+**SCANNER DE VÍDEO** e a **MESA DE DIGITALIZAÇÃO** (`js/fx12.js`,
+`js/fx13.js`, `js/mesa.js`, `js/mesaui.js` — **seção 5c**); a vigésima segunda,
+a **CÂMERA POLAROID** (**seção 5f**).
+
+**A próxima sessão continua começando pela lista dele.** O combinado de sempre:
+ele usa, anota o que quebrou, e a gente ataca um por um na ordem que ele trouxer.
+
+**Enquanto a lista não chega:**
+
+1. Nada do que foi entregue de 22 a 24/08 foi VISTO por mim em material de
+   verdade — nem o tecido do Tricô, nem um scan de foto dele. Se ele trouxer um
+   defeito, o primeiro passo é reproduzi-lo com uma medida: quase todos os bugs
+   graves deste projeto ficaram invisíveis até virar número.
+2. **Três defeitos da 5c foram achados por ELE USANDO, não pela medida** — a
+   porta da janela no lugar errado, o "usar na composição" que não punha nada na
+   linha do tempo, e a sessão vazia grudada. A medida provou que cada controle
+   fazia o que prometia; não provou que o CONJUNTO servia. Continua valendo:
+   peça para ele abrir o painel e olhar.
+3. Não abrir frente nova sem pedido. As seções 7 e 14 têm ideias antigas;
    nenhuma delas foi pedida por ele.
 
 A lista inteira, com o porquê de cada item, está na **seção 14**. Em resumo:
@@ -86,7 +252,7 @@ O projeto é um **laboratório audiovisual experimental** com três mesas (víde
 | | |
 |---|---|
 | Código | **27.179 linhas** · 42 JS · 2 CSS · 1 HTML |
-| Efeitos de vídeo | **139** shaders (todos compilam, nenhum sai vazio) |
+| Efeitos de vídeo | **150** shaders (todos compilam, nenhum sai vazio) — cinco da 25ª passada |
 | Famílias de efeito | **8** |
 | Filtros de cor | **52** na galeria, com miniatura ao vivo |
 | Looks do color engine | **5**, com 12 perfis de entrada |
@@ -184,6 +350,20 @@ js/fx10.js      ← NOVO   FAMÍLIA 06 PINTURA + 08 INSTRUMENTOS — aquarela, n
                          tipografia como matéria
 js/color/                COLOR ENGINE — perfis, núcleo em JS, cinco looks, LUT 3D e ΔE
 js/fx6.js                o gêmeo em GLSL do color engine
+js/fx12.js      ← NOVO   TRICÔ — malha generativa com ALFA REAL (família 05 PIXEL):
+                         8 tipos de ponto, organicidade, simetria, 5 animações e
+                         Fundo=Transparente, que é o que o faz servir de camada
+js/fx13.js      ← NOVO   SCANNER DE VÍDEO (fórmula de slit-scan por linha, com o
+                         gesto gravado `rawCurve`) + SCANNER DE MESA, que NÃO é
+                         shader: é a PORTA do catálogo para a janela (`janela:'mesa'`)
+js/fx14.js      ← NOVO   O TUBO E O CODEC: CRT / TUBÃO (máscara delta, fenda ou
+                         listras, convergência, halo, bloom — os padrões da
+                         tooooools) e DATAMOSH (busca de bloco em 4 passadas,
+                         resíduo quantizado, blocos intra, quadro-chave)
+js/fx15.js      ← NOVO   PAPEL TÉRMICO / CUPOM — 576 ou 384 pontos, texto pelo
+                         atlas, ruído azul, resistência morta, queima, alfa real
+js/fx16.js      ← NOVO   VISÃO DE MÁQUINA: MAPA DE PROFUNDIDADE (I.A.) e RASTREIO
+                         DE MANCHAS — só o desenho; os analisadores vêm depois
 js/fxfam.js     ← NOVO   AS OITO FAMÍLIAS: define a taxonomia, dá cor a cada uma e
                          reetiqueta os 70 efeitos antigos. Carrega DEPOIS de todo fx*.js
 js/transitions.js        curvas de keyframe (incl. Bézier) + 30 transições
@@ -193,6 +373,10 @@ js/state.js              modelo de edição não linear · VE.srcTime (velocidad
                          · VE.setMaxDur (limite definido pelo usuário) · VE.BLENDS
 js/stab.js      ← NOVO   analisador do estabilizador: perfis de projeção 64×64,
                          casamento por SAD com refino de sub-pixel e controlador
+js/manchas.js   ← NOVO   analisador das MANCHAS: grade 128×72 lida de volta,
+                         componentes conexos, rastreio por número, vizinhas
+js/profundidade.js ← NOVO analisador da PROFUNDIDADE: Depth Anything V2 pela
+                         Transformers.js, WebGPU ou WASM, buscado sob demanda
 js/presets.js            presets (localStorage)
 js/media.js              fontes + geometria de MOTION + plano para a GPU
 js/view.js               viewport: zoom, pan, fit, réguas
@@ -219,6 +403,11 @@ js/type.js               LAB 03 — motor letra a letra + ENTRADA/LAÇO/SAÍDA
 js/comp.js               modelo da COMPOSIÇÃO: modos, camada, máscara, assinatura
 js/compgl.js             GLSL da composição: espaço de cor, 27 modos, faixa, máscaras
 js/compui.js             ficha da composição: seletor com miniatura, máscaras, matte
+js/mesa.js      ← NOVO   MESA DE DIGITALIZAÇÃO, o motor: cabeçote que anda uma
+                         linha por vez e um filme que guarda o que estava embaixo
+                         dele NAQUELE instante. Gravação, não fórmula (§5c)
+js/mesaui.js    ← NOVO   a janela da mesa: bancada à esquerda (arrasta/amplia/gira
+                         durante o scan), filme à direita, quatro grupos de controle
 js/guia.js               os tutoriais de dentro de cada laboratório
 js/shell.js              intro ascii, boot, roteamento, CANAIS, cursor, manual
 js/app.js                LAB 01 — controlador, laço, atalhos, divisores, SOBREPOR
@@ -235,6 +424,12 @@ A ordem vive **só no `index.html`**. O build lê a lista de lá.
 
 **`fxfam.js` tem de ser o último dos fx**: ele varre `VE.FX` inteiro para
 reetiquetar. Um efeito registrado depois dele ficaria fora das famílias.
+É por isso que o item de catálogo da MESA mora em `fx13.js` e não em `mesa.js`:
+`mesa.js` carrega bem depois de `fxfam.js`, e o item ficaria sem família.
+
+`mesa.js` e `mesaui.js` entram depois de `recorteui.js` e antes de `type.js`.
+`mesaui.js` depende de `mesa.js`, de `VE.media` e de `VE.app` — mas só na hora
+do clique, nunca na carga.
 
 ---
 
@@ -1299,6 +1494,24 @@ e ele some quando não vale. A matemática pesada vai para `js/audiodsp.js`.
 **Placa nova no inspetor**: use `VE.panels.plate(titulo, corpo, extra, opts)`.
 Construir `<div class="plate">` à mão deixa o bloco sem a setinha de recolher.
 
+**Efeito que precisa da FONTE de um quadro atrás** (movimento, resíduo,
+qualquer conta de codec): declare `fontePrev: true` e leia `uFontePrev` —
+meia resolução, sem realimentação, e o `uPrev` composto continua lá. Ver
+o datamosh em fx14.js.
+
+**Efeito que precisa de uma ANÁLISE fora do shader** (I.A., visão de
+máquina, texto desenhado): o gancho `atlas(params, fxDef, inTex, time)`
+recebe a imagem de entrada; devolva `{tex, count, cols, rows, total}` e o
+shader lê `uAtlas` / `uAtlasInfo`. O estado por instância se guarda por
+`fxDef.effId`. Rode só em `this === VE.renderer` (a galeria tem
+renderizador próprio). E ponha `tempo: true` na definição, senão uma
+camada parada é guardada em cache antes de a análise chegar. Ver fx16.js,
+manchas.js e profundidade.js.
+
+**Nota viva na ficha**: `nota: function (e, clip) { return texto; }` na
+definição vira um `pnote`; `notaChave: data-x` marca o elemento para o
+módulo trocar o texto sem redesenhar a ficha.
+
 ---
 
 ## 9. Armadilhas que já me morderam
@@ -1378,8 +1591,65 @@ da placa também recolhe — é onde a mão vai antes de procurar a seta.
   ponta em que ELE está — normalize pelo número de amostras de uma ponta.
 - **`fxfam.js` tem de ser o último dos fx.** Ele varre `VE.FX` para reetiquetar;
   qualquer efeito registrado depois fica fora das oito famílias.
+- **Limiar de luma sobre imagem mascarada escolhe uma cor.** O bloom do CRT
+  lido do tubo (já com os pontos R, G, B) só deixava passar os pontos
+  VERDES — a luma pesa 0,72 no verde — e o branco saía verde. Limiar sobre
+  a imagem de ENTRADA, sempre. (5l.2)
+- **Resíduo aplicado por inteiro desfaz qualquer mosh.** Saída = arrastado
+  + (novo − arrastado) = novo, exato, em qualquer corte. O datamosh existe
+  porque o dado do quadro-chave é JOGADO FORA — o bloco que não casa
+  descarta o resíduo. (5l.3)
+- **Evento sintético em `<input>` de React não chega ao estado.** Para
+  mover um controle da página de referência, chame o `onChange` guardado
+  em `__reactProps` do elemento. Foi assim que o bloom deles foi medido
+  em três níveis. (5l.2)
 
 ---
+
+
+**Botão que promete MAIS e entrega MENOS.** Num detector de eventos, subir a
+SENSIBILIDADE baixava o número de notas — 42 no padrão contra 21 no máximo —
+porque limiar mais baixo também atrasa o FECHO do evento, e evento que não
+fecha não pode reabrir. **Todo controle com sentido prometido tem de ser medido
+numa CURVA, não num ponto**: cinco valores do botão, uma cena só, e a coluna de
+resultado lida de cima a baixo. Um valor no meio da faixa não mostra inversão
+nenhuma. (Seção 5g.3.)
+
+
+**Grandeza desenhada como TRANSPARÊNCIA some no fundo escuro.** O piano roll
+pintava a nota com alfa proporcional à intensidade; sobre o quase-preto do rolo
+a nota fraca saía com contraste **1,34** e a forte com **2,84** — abaixo do 3,0
+que um elemento gráfico precisa. Nota que não se vê não informa "intensidade
+baixa", informa AUSÊNCIA, e o desenho passa a mentir sobre quantas coisas
+existem. Mapear em BRILHO com alfa 1, de um piso que já passa o contraste até o
+tom claro. Vale para qualquer valor mapeado em alfa sobre fundo escuro.
+(Seção 5g.5.)
+
+
+**Cor herdada do tema pode não servir à janela que a herda.** As janelas de
+instrumento têm palco preto em QUALQUER tema, e `--ch-video` no modo papel é
+`#1b4fd8` — afinado contra papel. A saída não é copiar um valor fixo (aí a
+janela deixa de acompanhar o tema): é herdar E MEDIR, clareando por MISTURA com
+o tom claro só quando não passa. No noturno e no 2.0 a conta devolve a cor
+intacta. Multiplicar em vez de misturar estoura o canal azul em 255 e a cor
+escorrega para ciano. (Seção 5g.5.)
+
+
+**Índice de POSIÇÃO vira bomba-relógio ao inserir no meio.** A torre do 2.0
+aponta para as seções da coluna por posição (`sec: 0,1,2`). Acrescentar uma
+seção nova no meio do `#sideAudio` empurrou as de baixo: CADEIA passou a abrir
+FERRAMENTAS, PRESETS a abrir CADEIA, e **PRESETS ficou sem porta nenhuma**. Não
+dá erro — cada botão continua abrindo alguma coisa, só a errada. A verificação
+que serve é clicar CADA botão e ler o rótulo do que abriu. (Seção 5g.9.)
+
+
+**`getBBox()` em elemento escondido devolve ZERO — e zero passa no teste.** A
+conferência de um ícone novo ("todas as peças dentro da caixa de 24×24") passou
+limpa medindo nada, porque a seção da coluna estava em `display:none`. Para a
+medida valer, clonar a marcação para um SVG VISÍVEL e, de preferência,
+rasterizar e contar pixels pintados. Irmã da regra de sempre: valide o
+instrumento antes de acusar o código. (Seção 5g.6.)
+
 
 ## 4i. A OITAVA PASSADA — mosaico de emoji, legendas, tinta e sessão guardada
 
@@ -3664,9 +3934,3095 @@ objeto parado ....................... não piorou o que já estava certo
 
 ---
 
+## 5c. TRICÔ, SCANNER E A MESA DE DIGITALIZAÇÃO (décima nona passada)
+
+Três coisas pedidas pelo Bruno, nesta ordem, e uma delas mudou de forma no meio
+do caminho porque a primeira tentativa ficou confusa de usar.
+
+### O que entrou
+
+```
+js/fx12.js    TRICÔ            malha generativa com ALFA REAL (família 05 PIXEL)
+js/fx13.js    SCANNER DE VÍDEO fórmula de slit-scan por linha (família 04 GLITCH)
+              SCANNER DE MESA  a PORTA para a janela — item de catálogo, não shader
+js/mesa.js    o motor da mesa: cabeçote, filme, uma linha por vez
+js/mesaui.js  a janela: bancada à esquerda, filme à direita, 4 grupos de controle
+```
+
+### 1. TRICÔ — a imagem virando malha, com vão transparente
+
+Vinte controles (grade, matéria, cor, simetria, animação, fundo). O ponto que
+faz dele uma ferramenta de composição e não um filtro é o **Fundo =
+Transparente**: entre um ponto de tecido e outro não fica cor nenhuma, fica
+alfa. Usa o mecanismo `alpha:true` / `vec4 fx4(uv)` que já existia — o alfa
+atravessa máscara de camada, matte, modo de mistura e composição sem que nada
+em `comp.js`/`compgl.js` precisasse mudar.
+
+**Isolar o sujeito não é trabalho dele.** Quem faz isso é a máscara CANETA com
+o botão MARCAR OBJETO (I.A.) da 5b. A receita é: Tricô com fundo transparente
+(mata o alfa dos vãos) **+** máscara marcada pela I.A. (mata o alfa de tudo
+fora do sujeito). Foi assim que o pedido de "pessoa virando tecido sobre outro
+vídeo" foi atendido sem construir segmentação nova.
+
+Medido lendo os pixels de volta: alfa variando 0↔255 de verdade; 256 valores
+distintos de alfa na forma Orgânico (a borda suave na ordem certa); simetria
+mudando ~50% dos pixels; animação Fluxo mudando 13.134 pixels entre t=0 e t=2 e
+**Estática mudando ZERO** entre os mesmos instantes.
+
+### 2. SCANNER DE VÍDEO — a fórmula
+
+Efeito comum de pilha: cada linha é deslocada por uma senoide mais o gesto
+gravado, com vãos de alfa real. Nasceu com treze controles e três camadas de
+ruído; o Bruno usou, disse que **em vídeo não convence e em foto sim**, e a
+versão que ficou tem oito controles e o aviso no próprio `desc` (é a primeira
+linha que aparece na ficha e no catálogo).
+
+**O gesto gravado (`rawCurve`) — e a versão que foi jogada fora.** A primeira
+tentativa puxava dois parâmetros animáveis (`offX`/`offY`) e exigia ligar o
+cronômetro antes de arrastar. Era fiel à arquitetura e mesmo assim confusa.
+Agora é **aperte, arraste, solte**: o gesto inteiro é guardado em `e.trilha`
+(128 pares reamostrados **pelo índice**, que é o ritmo da mão — a demora vira
+espaço) e esticado do começo ao fim da digitalização. Clicar sem arrastar apaga.
+
+O caminho genérico ficou de pé para quem vier depois: `rawCurve: true` no
+efeito → `state.js` copia `e.trilha` para `curva`/`curvaN` → `gl.js` sobe numa
+textura própria (`texCurva`, unidade 9) → o shader lê com `curvaEm(t)`.
+
+**Dois bugs que a medida pegou e o olho não pegaria:**
+
+1. **Sem gesto gravado, a imagem saía embaralhada.** O shader lia uma textura
+   NÃO VINCULADA, e isso devolve lixo, não zero. Bastava acrescentar o efeito
+   para a imagem quebrar. Guarda em `curvaEm`: se `uCurvaN < 1.5`, devolve zero.
+2. **Uniform vaza entre clipes.** Uniform é por PROGRAMA e sobrevive ao quadro:
+   um clipe sem gesto herdava o `uCurvaN` do clipe anterior e lia uma curva que
+   não era dele. Agora `gl.js` zera explicitamente no ramo `else`.
+
+Depois das duas: apagar o gesto restaura **exatamente** o estado limpo (0 pixels
+de diferença) e intensidade 0 também — antes davam 369.203 pixels de diferença.
+
+### 3. A MESA DE DIGITALIZAÇÃO — gravação, não fórmula
+
+A distinção que organiza tudo, e que vale para qualquer instrumento futuro:
+
+```
+efeito (fx13)   uma FÓRMULA. Todo quadro recalcula do zero, em qualquer
+                instante -> escrubável, exportável, cabe na pilha do clipe.
+mesa (mesa.js)  uma GRAVAÇÃO. Cada linha guarda o que a fonte mostrava
+                NAQUELE momento, e isso não se recalcula depois.
+```
+
+É por ser gravação que ela mora numa **janela** e que o resultado vira uma
+**FONTE do laboratório**, pelo mesmo caminho do FRAME da câmera
+(`media.js/camGrab` → `VE.media.register` → `VE.addMedia`). Nenhum exportador
+novo, nenhuma timeline nova.
+
+**O site de referência foi estudado por MEDIDA, não de olho.** Rodei
+`yhhydesign.github.io/tools/scanner_glitch_Art.html` com a fila de
+`requestAnimationFrame` bombeada à mão (o código é ofuscado; ler não ia
+resolver) e li os pixels da saída. Isso respondeu a pergunta que decide tudo:
+
+- **a fenda é MÓVEL, não fixa** — lê a linha `y` da fonte, escreve na linha `y`
+  do filme; parado, a saída sai igual à entrada;
+- arrastando 200 px durante o scan, a saída deslocou **exatamente 200 px a
+  partir daquela linha**.
+
+A nossa foi medida do mesmo jeito e deu **300 px para um arrasto de 300 px**.
+
+**Como funciona em foto E em vídeo — a mesma mecânica, duas origens:**
+
+```
+FOTO    a distorção vem da mão: arrastar, ampliar e girar a bancada
+        enquanto o cabeçote anda.
+VÍDEO   a fonte anda sozinha: o vídeo TOCA durante o scan, então cada
+        linha do filme é um QUADRO DIFERENTE. Quem se mexeu vira borrão
+        contínuo, quem ficou parado sai nítido — slit-scan clássico, e
+        saiu de graça: mesmo laço, só que a fonte é um <video>.
+```
+
+Provado com uma fonte que muda entre os passos: linha 250 saiu azul, 350
+amarela, 450 magenta — cada uma capturou o instante certo.
+
+**Desenho interno.** Cada linha é desenhada sozinha, recortada numa faixa de
+1 px (`c.clip()`), com a fonte no estado atual — é o recorte por faixa que faz
+o slit-scan. Desenhar a imagem inteira e recortar parece desperdício e é, mas é
+o único jeito que respeita escala e giro sem reimplementar amostragem à mão, e
+o navegador resolve na GPU.
+
+**Fundo transparente (pedido depois de usar).** `par.transp` troca o `fillRect`
+da faixa por `clearRect` — que respeita o recorte, então só apaga aquela linha.
+No passe de grão/PB, pixel com alfa 0 fica **intocado**: pôr grão nele
+escreveria cor por baixo de alfa zero, e é dessa cor escondida que nascem os
+halos na composição. Medido: 480.924 pixels com alfa 0, 599.076 opacos,
+**zero pixels com cor escondida**.
+
+### A ÚNICA porta que a janela abriu para fora
+
+`js/mesaui.js` expõe **`U.pintar`** — a função que redesenha as duas telas.
+Ela era privada; virou porta porque a repaginação 2.0 acrescentou uma MANIVELA
+que anda com o cabeçote linha a linha (`RGB_LAB-2.0.md`, seção 5aj) e precisa
+mandar as telas se refazerem depois de andar.
+
+É a única linha que o 2.0 escreveu neste arquivo, e ela não muda
+comportamento nenhum: quem não chamar continua vendo o mesmo. `js/mesa.js` —
+o motor — não foi tocado.
+
+A manivela usa `VE.mesa.linha`, a MESMA primitiva que `M.passo` usa a cada
+quadro. Não há caminho paralelo de gravação: girar o knob e deixar o cabeçote
+andar sozinho escrevem a mesma linha pelo mesmo lugar.
+
+### O que o Bruno pegou usando, e que a medida não tinha pegado
+
+1. **"Clico em scanner e não abre a janela."** A porta estava na barra de
+   transporte, com outro nome (ESCANEAR), e ele clicou no CATÁLOGO — que é onde
+   se procura. Virou item de catálogo com `janela: 'mesa'`: o clique abre a
+   janela em vez de acrescentar efeito (tratado em `panels.js/renderFxList`,
+   antes da checagem de projeto, porque a mesa gera fonte e funciona com o
+   laboratório vazio). Arrastar o item para cima de um clipe fica bloqueado.
+   Ele está registrado em **`fx13.js` e não em `mesa.js`** de propósito:
+   `fxfam.js` carrega depois de fx13 e antes de mesa, e um item registrado
+   depois dele fica fora das oito famílias.
+2. **"Usar na composição diz que entrou e não vai pra linha do tempo."**
+   Era bug: o botão registrava a fonte e avisava, mas nunca chamava
+   `VE.addMedia`. Agora faz o caminho inteiro (ensureProject → addMedia →
+   pushHistory → emit → fecha a janela → vai para a vista de vídeo).
+3. **Sessão vazia grudada.** Reabrir preservava a sessão para não perder scan
+   em andamento — e com isso trazia de volta uma mesa SEM FONTE e com filme do
+   tamanho errado. Agora `serveAinda()` só preserva se houver **linha gravada**.
+4. **Botão no lugar certo.** Ele pediu o SCANNER na grade FONTE, ao lado de
+   TESTE. É o lugar certo por arquitetura também: a mesa gera matéria nova,
+   como WEBCAM e TESTE. São três portas para a mesma sala (grade, catálogo,
+   transporte) — a WEBCAM já era assim.
+
+### Uma decisão tomada sem perguntar
+
+O filme nasce do **tamanho da composição**, não de uma folha retrato fixa. A
+metáfora do escâner pedia 900×1200, mas um filme retrato largado numa
+composição 16:9 entra com tarja dos dois lados, e o lugar do resultado é a
+linha do tempo. Sem projeto aberto, cai na folha 900×1200.
+
+### Composição de ponta a ponta, medida
+
+Azul numa pista abaixo, mesa com fundo transparente acima, um quadro
+renderizado e lido: centro deu o vermelho do scan `[238,51,51]`, e **os quatro
+cantos deram azul puro `[0,0,255]`** — sem halo, sem borda cinza.
+
+> Um aviso metodológico que custou meia hora: um valor estranho
+> (`[76,76,117]` num canto) me fez caçar bug no código quando a sujeira estava
+> no MEU TESTE — eu tinha trocado `s.el` na mão e limpado o cache de textura.
+> Refazendo do zero, passou limpo. **Quando o número não fecha, desconfie
+> primeiro do instrumento** (é a mesma lição da seção 9).
+
+### O que NÃO foi feito, e por quê
+
+- **Nada disto foi VISTO por mim em material de verdade.** Formas sintéticas de
+  contorno conhecido é o que dá para medir; se o tecido "parece tecido" e se o
+  scan de uma foto sua fica bonito é olho, e é o seu.
+- **A mesa não guarda o gesto para repetir depois.** Terminado o scan, o que
+  existe é o filme. Regravar é escanear de novo.
+- **Textura externa no Tricô** (imagem de referência para a paleta) ficou de
+  fora: o sistema de parâmetros de efeito não tem tipo "imagem".
+- **A ficha técnica queimada** existe na mesa (canto inferior esquerdo,
+  desligável) mas **não** no efeito `scanner` — lá o lugar disso é uma camada de
+  TEXTO, no canal de tipografia.
+
+---
+
+## 5d. FIAPOS NO TRICÔ, A BARRA DE ZOOM E OS CARTÕES LIMPOS (vigésima passada)
+
+Três pedidos do Bruno, dos três tamanhos: um shader, uma peça de interface e uma
+subtração.
+
+### 1. FIAPOS — microfibras saindo dos pontos de tricô
+
+O tecido do 5c era correto e limpo demais. Malha sem fio solto entrega na hora
+que é grade: o olho lê padrão, não pano. Os fiapos são o que faltava.
+
+Cada ponto emite fios num leque de setores em volta. Para o pixel que está sendo
+desenhado: descubro em que setor ele caiu e testo só esse e os dois vizinhos —
+o fio friza, então pode ter vindo de um setor ao lado. Cada fio tem existência,
+comprimento, direção e torção sorteados por hash da célula, então nada treme
+entre quadros. A varredura é 3x3 células porque o fio mais longo que existe
+(0,85 de célula) somado ao alcance do ponto ainda não alcança a segunda vizinha.
+
+Cinco controles: **Fiapos** (quantos), **Comprimento**, **Finura**, **Frisado**
+e **Clarear**.
+
+**A finura não fazia nada, e só a medida pegou.** Primeira versão: a cobertura
+ia de 0,1393 para 0,1364 de uma ponta à outra do controle — 2%. O motivo é que
+a banda de suavização (0,7 pixel) era mais larga que o próprio fio, e o
+resultado era decidido por ela, não pela largura pedida. Consertado do jeito que
+fio fino se comporta de verdade: a largura para de encolher em meio pixel e o
+que continua caindo é a OPACIDADE. Depois disso a massa de tinta vai de 0,1931
+(grosso) a 0,0852 (fino) — 2,3 vezes.
+
+Medido, com o shader compilado num contexto WebGL2 de teste e os pixels lidos de
+volta:
+
+```
+fiapo em 0        cobertura 0,0642   pixels de alfa parcial: ZERO
+fiapo em 0,5      cobertura 0,1610   parcial 0,0784
+fiapo em 1        cobertura 0,2505   parcial 0,1371
+comprimento 0,05  parcial 0,0193  ·  comprimento 1: parcial 0,3969
+frisado 0 vs 1    12,3% dos pixels mudam  ·  frisado 0 vs 0,02: ZERO mudam
+distância média do fiapo ao ponto mais próximo: 1,75 px (estática),
+                                                1,70 px (animação Deriva)
+```
+
+A última linha é a que importa para a animação: o fiapo tinha que continuar
+grudado no ponto quando a malha anda. Por isso `trCentro()` — a conta de onde
+está o centro do ponto foi aberta para valer também para as células vizinhas.
+Sem ela, o fio nasce no meio da célula enquanto o ponto está deslocado pela
+organicidade, e a microfibra aparece descolada.
+
+**O custo, e o que foi feito com ele.** Em 1080p, primeira versão: 7,7ms sem
+fiapo, 22ms com fiapo no meio. Caro demais. Duas medidas resolveram: um teste
+geométrico barato que joga fora a célula vizinha ANTES de gastar hash calculando
+onde está o ponto dela, e o terceiro sorteio tirado dos dois primeiros em vez de
+mais um `hash21`. Medido com os dois shaders no mesmo teste, mediana de cinco:
+
+```
+                antes    depois
+fiapo 0,5       19,2ms   15,1ms
+fiapo 0,6       19,3ms   15,3ms
+fiapo no talo   31,5ms   28,9ms
+```
+
+O efeito nasce com **fiapo zero** justamente por isso. O que sobra para quem não
+usa é 0,7ms de pressão de registrador (5,5ms sem este código, 6,2ms com ele
+desligado) — anotado, não escondido.
+
+### 2. A BARRA DE ZOOM DA LINHA DO TEMPO
+
+O zoom já existia (`+` `−`, `Ctrl`+roda, `FIT`) mas o Bruno pediu de novo, o que
+é o sintoma de sempre: existe e não se acha. O controle visível era um cursor
+deslizante de 6 a 2400 px/s, linear — 90% do curso ficava numa faixa que ninguém
+usa, e o número que ele mostrava (px/s) não diz nada a quem edita.
+
+Saiu o cursor, entrou a **barra da Premiere**, embaixo da mesa: o bloco cinza é a
+janela visível desenhada sobre a sequência inteira. Isso dá as duas coisas de uma
+vez — arrastar o meio ROLA, arrastar uma ponta faz ZOOM com a outra ponta parada.
+Clique no trilho vazio leva a janela até lá; duplo clique enquadra tudo.
+
+**Toda operação de zoom ganhou ÂNCORA.** Aproximar sem âncora joga para fora da
+tela justamente o trecho que o editor está olhando. Agora o zoom segura um
+instante parado: o cursor do mouse (roda), o ponteiro de reprodução (teclado,
+quando ele está visível) ou o centro da janela. Medido com o ponteiro em 30s e
+três zooms de 2× seguidos: ele fica em 205,0 → 205,2 → 204,8 → 204,8 px da borda,
+e volta em 204,2 depois de desfazer os três.
+
+Medido, disparando os eventos de verdade na barra:
+
+```
+arrastar o meio      janela 25,52–34,89 → 31,95–41,31   px/s NÃO muda (60)
+puxar ponta direita  esquerda fica em 31,95   px/s 60 → 110,7
+puxar ponta esquerda direita fica em 37,02    px/s 110,7 → 48,8
+clique em 80%        janela centrada em 48s de 60      px/s não muda
+duplo clique         0–62,68  ·  px/s 9  (enquadrou)
+Ctrl+roda e Alt+roda o instante sob o cursor: 27,186 nos dois (esperado 27,187)
+```
+
+Também: `Alt`+roda passou a fazer zoom (é o que a Premiere usa no Windows),
+`Shift+\` enquadra a seleção, e o rótulo agora diz **quantos segundos cabem na
+tela** antes do px/s.
+
+**Dois defeitos achados pela medida, não pelo uso.** O primeiro:
+`fitSequence()` com a mesa ainda sem largura (aba escondida, laboratório que não
+abriu) fazia uma conta negativa que o limite mínimo transformava em 6 px/s. O
+editor voltava para a aba e encontrava o zoom no fundo do poço sem ter pedido
+nada. Agora, mesa sem largura, não faz nada.
+
+O segundo: `setZoom(pps, âncora)` com uma âncora que está FORA da tela guardava a
+distância absurda até ela. Medido: estando no fim da sequência, pedir zoom
+ancorado em 0,1s deixava a janela no fim. Pela interface isso não acontece — a
+âncora é sempre o cursor do mouse ou o ponteiro visível —, mas a função é
+pública. Agora a distância fica presa à janela: quem pede um instante fora da
+tela quer VER aquele instante. Depois do conserto, `setZoom(600, 0.1)` a partir
+do fim cai em 0,10s, e a âncora dentro da tela continua exata (o ponteiro fica
+em 269px por quatro zooms para dentro e quatro para fora).
+
+### 3. OS CARTÕES DO ÍNDICE, SEM AS ETIQUETAS
+
+Cada cartão de laboratório tinha uma fileira de quadradinhos — `TIMELINE`,
+`139 EFEITOS`, `8 FAMÍLIAS`, `MÁSCARAS`… Saíram os três (HTML e CSS). Ficaram o
+número, o nome e a linha de descrição. O cartão continua com os mesmos 238px de
+altura e 21px de folga abaixo da descrição: a régua não mudou, só o ruído saiu.
+
+### O que NÃO foi feito, e por quê
+
+- **Nada disto foi visto por mim numa tela.** O painel do navegador estava
+  fechado nesta sessão, então não houve screenshot. O que dá para medir foi
+  medido — pixels lidos de volta da GPU, geometria da barra em px, eventos de
+  ponteiro disparados de verdade. Se o fiapo *parece* microfibra e se a barra
+  *cai bem* embaixo da mesa é olho, e é o seu.
+- **O fiapo usa o `org` do pixel atual, não o da célula vizinha.** O valor exato
+  dependeria do gradiente da imagem naquela célula: oito leituras de textura por
+  vizinha. A distância média do fiapo ao ponto não muda (1,75px); o que aparece
+  são uns poucos pixels soltos na animação ONDA com organicidade alta.
+- **A barra de zoom não tem miniatura da sequência dentro** (a Premiere também
+  não tem; o Resolve tem). Seria desenhar os clipes em escala no trilho.
+
+---
+
+## 5e. AS BARRAS QUE DOBRAM E O MOSAICO (vigésima primeira passada)
+
+Dois pedidos, e o primeiro veio com o diagnóstico já pronto: "o botão de
+original-png-export sempre some porque eu preciso alargar a coluna da direita".
+
+### 1. NENHUM BOTÃO SOME MAIS
+
+A reclamação era sobre alargar a coluna. Medindo, o problema era pior: **as
+larguras PADRÃO, num monitor de 1440px, já cortavam**.
+
+```
+                       largura da barra   conteúdo   sobrando   o que sumia
+barra do viewport            930px         1021px      91px     PNG, EXPORTAR
+barra da linha do tempo      928px         1176px     248px     o grupo de zoom inteiro
+```
+
+Com as duas colunas em 600px, sumiam oito itens da barra do viewport e sete
+grupos da linha do tempo. A barra da linha do tempo tinha `overflow-x:auto` com
+`scrollbar-width:none` — ou seja, rolava, mas sem barra de rolagem visível.
+Rolagem que ninguém vê é a mesma coisa que esconder.
+
+A regra agora é `.barra-dobra`: a barra ganha uma FILEIRA em vez de cortar.
+Três peças fazem funcionar, e cada uma resolve um jeito diferente de quebrar:
+
+1. `flex-wrap:wrap` com `flex:0 0 auto` — a barra cresce em altura;
+2. altura de fileira EXPLÍCITA (`--row`). Sem isso as fileiras despencam para a
+   altura do texto: `height:100%` dentro de um pai de altura automática vira
+   `auto`;
+3. o espaçador cresce com força **1000** e o `::after` com força **1**. Na
+   fileira que tem espaçador é ele que empurra — o grupo da direita continua
+   encostado na direita, como sempre foi. Na última fileira, que não tem
+   espaçador, quem preenche a sobra é o `::after`, e é ele que leva o filete
+   até o fim da barra em vez de a linha terminar no meio, no último botão.
+
+Faltava ainda o caso em que **um item sozinho é mais largo que a barra**: com
+as colunas em 600px, o bloco de timecode e o grupo CORTAR continuavam vazando,
+porque um item de flex não quebra por dentro sem mandar. Resolvido com
+`flex-wrap` nos próprios grupos.
+
+Medido depois, contando controles de verdade (botões, campos, seletores) e
+perguntando de cada um se está dentro do retângulo da barra:
+
+```
+                    padrão   colunas 520/420   colunas 600/600
+viewport (22)         0        0                 0     fora
+transporte (17)       0        0                 0     fora
+linha do tempo (26)   0        0                 0     fora
+altura da barra     61/36/58  91/104/86       211/201/240 px
+```
+
+**A mesa cresce junto.** Se a barra dobrasse dentro da altura fixa da linha do
+tempo, quem pagaria seriam as PISTAS: o botão não sumiria, mas a mesa sumiria
+embaixo dele — a mesma reclamação com outro nome. Então `--tl-h` continua sendo
+a altura que o Bruno arrastou e as fileiras que a barra ganhou entram como
+`--tl-extra`, medido por `ResizeObserver`. As pistas ficam em 194–224px em todas
+as larguras testadas.
+
+Um detalhe que só apareceu arrastando: o observador responde no quadro
+SEGUINTE, e a mesa dava um pulo atrasado atrás do dedo. Durante o arrasto a
+medida é chamada na mão.
+
+### 2. MOSAICO — a grade com um vídeo dentro de cada quadro
+
+A tentação era um shader: uma grade em GLSL sai em meia hora. Mas um mosaico de
+shader é um FILTRO — a grade come o clipe inteiro e nada dentro dela pode ser
+aparado, atrasado, mascarado ou receber efeito próprio. O pedido foi "a opção de
+inserir vídeos dentro desses mosaicos", no plural, e as duas referências que ele
+mandou mostram exatamente isso: na segunda, uma fumaça branca ocupa as colunas
+da esquerda e outro vídeo ocupa as da direita.
+
+Então **cada célula é um CLIPE**. A grade é só geometria: calcula onde o quadro
+cai e escreve no `motion` (posição e escala) e numa máscara de camada em caixa
+(o recorte exato). Feito isso, a célula é um clipe como outro qualquer.
+
+O que a torna reorganizável é uma etiqueta, `c.mosaico = {col, lin}`: por ela
+dá para mudar colunas ou borda DEPOIS de montado e ver tudo se reposicionar.
+
+**Duas descobertas que mudaram o desenho:**
+
+*A primeira, no código que já existia:* `js/media.js` CLONA o elemento de vídeo
+por clipe (`elFor`). Quer dizer que o mesmo arquivo em vinte células, cada uma
+num instante diferente, funciona — e é por isso que a defasagem entre quadros
+existe. Também é por isso que a janela avisa acima de duas dúzias: são duas
+dúzias de decodificadores.
+
+*A segunda, na medida:* a borda é escrita em fração da LARGURA e convertida para
+a vertical multiplicando pela proporção da tela. Sem essa conversão, uma borda
+de 1,2% em 1920×1080 sairia com 23px na horizontal e 13px na vertical. Medido
+depois do conserto: 23px e 23px.
+
+Medido, com os pixels lidos de volta da composição montada:
+
+```
+geometria (8 configurações)  quantidade certa, ZERO sobreposições em todas
+borda 0 / 1,2% / 3%          0px / 23px / 57,6px, iguais nas duas direções
+formato QUADRADO             proporção 1,000 (293×293 px)
+formato LIVRE em 0,35        proporção 0,350 (214×612 px — em pé e fino)
+formato LIVRE em 3           proporção 3,000 (609×203 px)
+12 clipes montados           recorte bate com a célula dentro de 0,5px; imagem
+                             cobre a célula e está centrada nela — 0 erros
+faixas de imagem na tela     [15,312] [328,625] [641,938] [954,1251]
+esperado pela grade          [15,312] [328,625] [641,938] [954,1251]  → erro 0px
+mosaico 11×8 com 2 fontes    32/32 quadros à esquerda com a fonte A,
+                             56/56 à direita com a B, 80/80 vãos transparentes
+reorganizar de 4×3 p/ 2×2    4 quadros reposicionados, 8 devolvidos (não apagados)
+```
+
+**Um defeito que só o teste pegou:** pintar os quadros arrastando chamava o
+redesenho da janela inteira a cada célula tocada. Numa grade de 11×8 isso é
+oitenta e oito remontagens de oitenta e oito botões — a página parou por mais de
+trinta segundos. Agora só o quadro tocado muda de dono e a contagem fica para o
+quadro seguinte do navegador: os mesmos 88 quadros levam **291ms**.
+
+### O botão estava no lugar errado
+
+Ele abriu a lista, não achou, e disse: "NÃO TA DO LADO DE SCANNER NÃO". Estava
+certo. O SCANNER mora em TRÊS lugares — a grade FONTE, o catálogo e a barra de
+transporte — e a grade FONTE é onde se PROCURA, porque é lá que nasce matéria
+nova. O mosaico tinha entrado só na barra de transporte.
+
+Agora está nos mesmos dois lugares da mesa. E ocupa a LINHA INTEIRA da grade,
+por dois motivos que se somam: com ele a grade passou a ter nove botões de meia
+largura, o que deixava um buraco medido na última fileira; e ele não traz UMA
+fonte para dentro, arma uma grade com as que já estão lá. Depois do conserto, o
+buraco na grade é de 0px.
+
+**A lição é a de sempre nesta pasta:** a função existia e estava medida, e mesmo
+assim não servia, porque estava num lugar onde ninguém ia olhar. Medida prova
+que o controle faz o que promete; só o uso prova que a ferramenta serve.
+
+### O que NÃO foi feito, e por quê
+
+- **A borda não tem cor própria.** Ela é VÃO — fora do quadro fica alfa, e o que
+  aparece ali é a camada de baixo ou o fundo da composição. Dar cor a ela seria
+  fechar a porta de empilhar um mosaico sobre outro, que é o que a referência 02
+  pede. Para borda colorida: uma camada de cor sólida embaixo.
+- **A grade não é um objeto.** Ela é a soma dos quadros cheios. Apagar um clipe
+  apaga o quadro, e a grade não reclama — de propósito: uma grade que se defende
+  vira uma coisa que não se pode editar à mão.
+- **Não vi um vídeo de verdade dentro do mosaico.** O que entrou nas células do
+  teste foram imagens sintéticas de cor conhecida, que é o que dá para medir. Se
+  o mosaico de um vídeo SEU fica bonito é olho, e é o seu.
+- **As barras do laboratório de ÁUDIO e de TIPOGRAFIA** usam a mesma
+  `.vp-bar` e já dobram junto; o rack de áudio (`.rack-bar`) não foi mexido
+  porque não chegou a cortar nada nas medidas.
+
+---
+
+## 5f. A CÂMERA POLAROID (vigésima segunda passada)
+
+> ### ESTADO ATUAL — leia só isto se for continuar o polaroid
+>
+> As dezasseis subseções abaixo são o DIÁRIO de seis voltas, e boa parte
+> descreve caminhos que foram desfeitos. O que vale hoje é isto:
+>
+> ```
+> js/polaroid.js     o motor: filme (curva por canal), moldura, legenda, saída
+> js/polaroidui.js   a tela: a câmera É a interface, sem cartão de janela
+> css/polaroid.css   o palco, o recorte da chapa em três faixas, a telinha
+> assets/polaroid/   camera.png · molduras/ · filmes/ · LEIA-ME.md
+> ```
+>
+> **A tela.** Uma câmera flutuando num palco escuro. Fora a telinha de
+> ajustes, todo comando é uma peça da máquina: lente carrega (2 cliques =
+> clipe da linha do tempo), botão vermelho dispara, flash arma, botão
+> esquerdo é a roda claro/escuro, **botão direito abre a telinha**, faixa
+> arco-íris troca o filme, porta do filme leva à página PAPEL, plaqueta é
+> leitura. A foto sai 90% para fora e **fica pendurada**; as duas saídas
+> (baixar PNG, usar na linha do tempo) moram nela, ao passar o rato.
+>
+> **A telinha** desdobra da lateral por duas dobradiças, no desenho do
+> laboratório (monoespaçada, filete de 1px, azul `--ch-video`). Dois
+> níveis: índice de seis linhas → página, com `‹` para voltar.
+>
+> **O papel.** `molduras/papel.png` é a folha padrão e leva `realce: 0` no
+> manifesto: é usada COMO ESTÁ, bit a bit. A reconstrução de trama que o
+> código ainda tem serve só para folhas em JPEG (`realce: 1`), onde o
+> relevo foi comido pela compressão. **Regra: PNG na pasta = nada
+> acrescentado.**
+>
+> **Onde ele mora.** Grade FONTE do laboratório de vídeo e barra de
+> transporte. No 2.0 ele está na aba **TOOLS** — e quem acrescentar outro
+> instrumento tem de o declarar nas duas listas do `lab2.css` (ver 5f.16).
+>
+> **As três armadilhas que custaram voltas inteiras:**
+> `preserve-3d` ignora o `z-index` (5f.10) · medir um sinal que já não
+> existe devolve o ruído dele com cara de resposta (5f.15) · e o relógio
+> de animação do painel é estrangulado, então medir logo depois de uma
+> transição dá números de um elemento a meio do caminho (5f.11).
+
+
+O pedido veio com a regra de desenho junto, e a regra é o que mandou em tudo:
+
+> "O 3D deve estar a serviço da interface: não faça um objeto 3D decorativo.
+> Cada elemento tridimensional deve corresponder a uma função real do polaroid."
+
+Mais três coisas: usar a imagem da câmera do anexo e **fazer o recorte**; a foto
+carregada tem de **sair** da máquina; e um botão abre uma **janelinha** com os
+ajustes. E, separado, um pedido que ele marcou como importante: as fotos
+originais de polaroid e as molduras texturizadas do papel ficam **numa pasta**.
+
+### 1. A JANELA É A CÂMERA — não tem uma câmera dentro
+
+Não há um único ponto de toque que não seja uma peça da máquina, e não há uma
+peça da máquina que não faça o que ela faz na vida real:
+
+```
+peça                função de verdade            função na tela
+lente               por onde a imagem entra      CARREGA a foto; mostra a
+                                                 prévia através do vidro
+disparador          dispara                      revela — a foto SAI pela fenda
+barra do flash      flash                        arma o estouro de luz do disparo
+olho elétrico       a roda claro/escuro do 1000  arrasta em volta: exposição
+faixa arco-íris     a marca do filme             clique troca o filme
+porta do filme      por onde se carrega o pacote ABRE A JANELINHA de ajustes
+plaqueta            o modelo                     contador do pacote; clique
+                                                 põe um pacote novo
+fenda               por onde a foto sai          sai por ali; e aceita arquivo
+                                                 largado em cima
+```
+
+Duas consequências que só apareceram por seguir a regra até o fim: **a porta
+fecha sozinha quando se dispara** (ninguém dispara com o compartimento do filme
+aberto), e **a janelinha fica aberta**, porque ela é útil e a porta não é ela.
+
+### 2. O RECORTE — três faixas da MESMA chapa
+
+`assets/polaroid/camera.png` (798×662, com alfa) aparece **três vezes**, partida
+nas alturas medidas dentro do próprio arquivo:
+
+```
+faixa    altura da chapa    o que é                    profundidade
+corpo    0 → 66,92%         lente, botões, faixa       z4
+porta    66,92 → 87,61%     o painel do filme, gira    z5
+base     87,61 → 100%       a fenda e o lábio          z2
+                            A FOTO SAINDO              z3
+                            a câmara do filme          z1
+```
+
+A ordem não é enfeite, é o mecanismo: a foto sai **entre a base e o corpo**.
+Some por trás da máquina, aparece na fenda e passa por cima do lábio — que é
+como um polaroid sai de verdade. As duas primeiras faixas são `clip-path`; a
+porta não pode ser, porque `clip-path` não gira junto com o elemento: ela é uma
+caixa com `overflow` e a chapa inteira dentro, posicionada para mostrar só a
+faixa dela.
+
+**Dois defeitos que só a tela mostrou, e ambos de mecanismo:**
+
+1. **`transform-style:preserve-3d` mata o `z-index`.** Num contexto 3D o
+   navegador empilha por GEOMETRIA e ignora a ordem declarada — e a foto
+   guardada dentro da máquina aparecia flutuando ACIMA da câmera, no meio do
+   cabeçalho da janela. O `preserve-3d` saiu do conjunto e a porta ganhou a
+   própria `perspective()` na transformação dela. Continua girando em 3D; a
+   ordem das camadas voltou a obedecer.
+
+2. **A foto guardada precisava de uma CALHA.** Mesmo com a ordem certa, a parte
+   dela que fica acima da borda de cima da câmera não tinha nada por cima para
+   escondê-la. A calha (`.pol-tubo`) começa exatamente na borda de cima da
+   fenda: o que está acima dela está DENTRO da máquina, e é o `overflow` da
+   calha que esconde. Medido depois: a folha some inteira dentro da máquina e sai
+   pela fenda, sem boiar em lugar nenhum. (A calha ganhou folga LATERAL na
+   segunda volta — ver 5f.10.)
+
+### 3. O PAPEL É ESCANEADO, E A JANELA FOI MEDIDA
+
+A moldura não é um retângulo branco desenhado: é o escaneamento de uma folha
+polaroid vazia, com trama, sujeira e o amarelado que muda de canto para canto.
+O que o código precisa saber dela é onde termina a borda e começa a emulsão.
+
+Medido nos dois escaneamentos, por varredura (a maior corrida contígua de
+colunas e linhas que destoam da cor do papel — pegar a primeira e a última
+acendia a textura solta das pontas e devolvia a folha inteira):
+
+```
+                    x        y        largura   altura
+creme.jpg        0,0546   0,0543    0,8891    0,7414
+preta.jpg        0,0545   0,0543    0,8875    0,7414
+diferença        0,0001      0      0,0016       0
+```
+
+Dois escaneamentos independentes batendo em 0,2% — e batendo com o polaroid
+600 de verdade, cuja área de imagem é 79×79 mm numa folha de 88×107 (0,898 e
+0,738 contra os 0,889 e 0,741 medidos).
+
+Molduras novas jogadas na pasta são **medidas na hora** pelo mesmo código.
+
+**E o papel volta por cima.** Depois de compor a imagem, o recorte da janela é
+redesenhado em `multiply` a 17% e `screen` a 10%, e a trama do papel reaparece
+através da emulsão. É a diferença entre uma foto com borda branca e um polaroid.
+
+### 4. O FILME É UMA CURVA POR CANAL, NÃO UMA DOMINANTE
+
+O que faz um polaroid parecer polaroid é o **preto levantado**: o canal azul
+começa em 0,42 em vez de 0, e é isso que dá o cinza leitoso no lugar da sombra.
+Uma dominante por cima não faz isso — ela pinta a sombra, não a levanta.
+
+```
+out = lift + (1 − lift) · in^gama · ganho          por canal, tabela de 256
+```
+
+Oito filmes, medidos na mesma foto (percentis dentro da janela da emulsão):
+
+```
+            preto 1%        meio 50%       branco 99%
+600        34  30  32      66  60  64     241 207 193   quente
+SX-70      41  34  38      67  59  73     228 201 202   sombra magenta
+779        30  33  42      55  61  86     217 202 213   frio
+P&B        34  33  32      68  68  66     210 208 205   mono de verdade
+EXPIRADO   42  56  61      72  93 109     213 211 216   dominante ciano
+ESTOURADO 115 120 130     170 171 178     242 236 234   preto em 115
+```
+
+O `vintage` da referência foi implementado como **papel desbotando** — levanta o
+preto e fecha o branco — e não como contraste caindo, que é o que dá cinza
+chapado. Os outros quatro (temperatura, brilho, contraste, saturação) usam a
+mesma escala 0–200 com 100 no meio, que é a que ele já conhece do site.
+
+### 5. AMOSTRAR — por que a pasta de originais importa
+
+A pasta `assets/polaroid/filmes/` não é galeria de exemplo: o laboratório **lê a
+cor** dos escaneamentos. A conta é a inversa da curva — três percentis por canal
+resolvem os três números:
+
+```
+lift  = p1                      (onde o preto passa a começar)
+ganho = (p99 − lift)/(1 − lift) (onde o branco termina)
+gama  = log((p50−lift)/((1−lift)·ganho)) / log(0,5)
+```
+
+Prova do fecho: os percentis dos dois originais foram medidos **fora do
+navegador**, decodificando o JPEG/PNG em Node, e depois lidos de novo pelo
+amostrador dentro da página. Bateram exatos:
+
+```
+                 medido em Node        lido pelo amostrador
+original-01      r106  g133  b180      lift 106 / 133 / 180
+original-02      r 23  g 78  b 85      lift  23 /  78 /  85
+```
+
+Um limite: `lift` é preso em 0,72. Sem a trava, um escaneamento quase todo
+branco devolve uma curva que apaga qualquer foto.
+
+### 6. A JANELINHA
+
+Sai da porta do filme. Seis abas, cobrindo o que a referência tem. (Os nomes
+das abas e o desenho dela mudaram na segunda volta — ver 5f.10.)
+
+```
+FILME     os 8 filmes, com a bolinha mostrando a curva aplicada a um cinza
+          médio — a dominante DE VERDADE, não uma cor escolhida à mão;
+          mais os originais da pasta, para amostrar
+AJUSTES   temperatura, brilho, contraste, vintage, saturação (os cinco da
+          referência) + halo, vinheta, grão, vazamento, desfoque
+LEGENDA   escrita na tarja de baixo, que é para isso que ela existe
+QUADRO    formato (quadrado, retrato, paisagem, wide), giro, enquadramento
+PAPEL     as molduras da pasta + duas desenhadas, para nunca abrir sem papel
+PRESETS   no MESMO cofre de `js/presets.js` (`kind:'polaroid'`), para saírem
+          no mesmo .json quando ele exporta os presets do laboratório
+```
+
+O preset guarda a RECEITA (filme, coloração, papel, jeito da letra) e **não**
+o enquadramento nem o texto — zoom, deslocamento e legenda são daquela foto, e
+aplicar um preset não pode mexer no que já foi enquadrado à mão.
+
+### 7. A PASTA MANDA
+
+Uma promessa do pedido era "jogo os arquivos na pasta". Servidor de arquivo
+estático não sabe listar pasta, então o `server.js` ganhou **duas rotas, e só
+duas**: `api/polaroid/molduras` e `api/polaroid/filmes`, que devolvem os nomes
+de imagem daquelas duas pastas e de mais nenhuma. Sem servidor, o laboratório
+cai nos manifestos `.json` e continua funcionando.
+
+### 8. O QUE FOI MEDIDO
+
+```
+janela da emulsão, dois escaneamentos      batem em 0,2%; e batem com o 600 real
+peças da câmera, 8                         varredura do PNG; ficam em GEO, em fração
+oito filmes                                percentis dentro da janela: distintos
+amostragem, ida e volta                    Node × navegador: exato nos 6 canais
+caminho completo no laboratório real       clipe de 1000×1232 na linha do tempo
+as 6 abas da janelinha                     abrem sem erro, no papel e no darkroom
+fechar por botão e por Esc                 fecham; reabrir mantém a foto
+disparo → revelação → pacote               classe `tem revelado`, pacote 7/8, 1 mini
+```
+
+### 9. O QUE **NÃO** FOI CONFERIDO
+
+- **O laboratório inteiro em foto.** O laço de animação do `index.html`
+  estrangula a captura de tela; a câmera foi vista num banco de prova isolado
+  (com um VE de mentira) e o `index.html` foi conferido por medida no DOM, não
+  por imagem. Se algo do desenho brigar com a folha do 2.0, é aí que aparece.
+- **Impressão.** A referência tem IMPRIMIR; aqui há BAIXAR PNG em tamanho de
+  folha (1000×1232) e USAR NA LINHA DO TEMPO. Imprimir não entrou.
+- **Edição em lote.** A referência baixa um `.zip` com vários; aqui o pacote
+  guarda as 8 últimas para comparar e voltar, mas sai uma de cada vez.
+- **Uma foto de verdade do Bruno.** Os testes de olho usaram uma imagem de
+  referência da pasta e escaneamentos de polaroid. Se o filme fica bonito na
+  foto DELE é olho, e é o dele.
+- **A pasta cheia.** Ela tem dois escaneamentos de moldura e dois originais. O
+  caminho de "muitos arquivos" (rolagem da lista, tempo de carga) nunca rodou
+  com mais do que isso.
+
+---
+
+### 10. A SEGUNDA VOLTA — a janela sumiu
+
+O Bruno olhou a primeira entrega e cortou a metade errada dela:
+
+> "Eu não quero que tenha uma janela com a polaroid e sim a imagem da câmera
+> flutuando entre si — então aumente a imagem da câmera e a foto sai da câmera e
+> fica pendurada, aí você aperta um botão de editar e aí sim vai abrir uma
+> janelinha (usar o mesmo estilo do site). Tirando essa janelinha os botões têm
+> que estar nas câmeras."
+
+O diagnóstico está certo e é o mesmo da repaginação 2.0: eu tinha construído a
+coisa certa dentro da moldura errada. A câmera era o objeto, mas estava presa
+num cartão de janela com cabeçalho, rodapé de seis botões e um painel de mesa
+ao lado — e **três dos comandos moravam no rodapé, não na máquina**. Metade da
+regra que ele mesmo tinha escrito (cada elemento corresponde a uma função real
+do polaroid) estava sendo desobedecida pela casca.
+
+**O que saiu:** `.modal-card`, `.modal-h`, `.modal-f`, o painel da mesa, a tira
+de miniaturas do pacote e os cinco botões do rodapé.
+
+**O que ficou no lugar:** um palco escuro e a câmera flutuando nele.
+
+```
+TROCAR FOTO   → a lente (um clique). Dois cliques: o clipe da linha do tempo
+AJUSTES       → a porta do filme, que gira e abre a janelinha
+BAIXAR PNG    → na PRÓPRIA FOTO pendurada, ao passar o rato
+USAR NA LINHA → idem: são comandos da foto, não da máquina
+PACOTE NOVO   → a plaqueta
+FECHAR        → Esc, clique no fundo, e um × discreto no canto do palco —
+                a única coisa da tela que não é peça de polaroid nenhum
+```
+
+#### A foto agora PENDURA
+
+Ela sai da fenda, para com um tranco, **balança até assentar** e fica ali,
+segura pela ponta de cima. Não vai para mesa nenhuma porque mesa nenhuma
+existe. É nela que se arrasta para reenquadrar, gira a roda para aproximar, e é
+sobre ela que a revelação corre. As anteriores continuam penduradas atrás,
+espiando por baixo como um maço na mão — e clicar numa volta aos ajustes dela.
+
+#### A conta que decide o tamanho da câmera
+
+"Aumente a imagem da câmera" e "a foto fica pendurada" puxam para lados
+opostos: quanto mais folha para fora, menor a câmera cabe. A conta fecha o
+tamanho de uma vez:
+
+```
+altura da folha ÷ altura da câmera = 1,2525
+folha 70% para fora  →  pende 0,6246 × largura da câmera abaixo dela
+conjunto inteiro     =  1,4541 × largura da câmera
+largura da câmera    =  altura disponível × 0,6877
+```
+
+Foi por essa conta que o quanto-fica-de-fora caiu de 78% para **70%**: em 0,78
+a folha era decepada pela beirada numa tela de 900px; em 0,70 sobra respiro e a
+câmera **cresceu**, que era o pedido. Os quatro lugares que dependem dela
+(`--larg`, `PENDURA` no JS, o `margin-bottom` de `.com-folha` e o `bottom` da
+calha) estão marcados um a um no código — mexer num sem os outros corta a
+folha.
+
+**Um desconto que não estava na conta de papel:** `rotateX(7deg)` faz a caixa
+PINTADA ficar ~5% maior que a caixa de layout. A primeira conta, aritmeticamente
+certa, cortava 6px da folha por causa disso. Os 104px descontados de `100vh`
+são respiro mais essa folga.
+
+**E a câmera só reserva o chão quando há foto.** Reservar sempre deixava a
+máquina encostada no alto da tela com meia tela de vazio embaixo, esperando uma
+foto que ainda não existia. Agora ela nasce centrada e SOBE enquanto a folha
+desce — quem abre espaço é a coisa que está saindo.
+
+#### Três defeitos de mecanismo nesta volta
+
+1. **A calha decepava as fotos de trás.** Ela tinha a largura exata da fenda,
+   e as anteriores, que ficam um pouco tortas, saíam pela lateral e eram
+   cortadas na vertical pelo `overflow`. A calha precisa cortar PARA CIMA (o
+   que está acima dela está dentro da máquina) e não para os lados: ganhou 7%
+   de folga de cada lado, e `--pad`/`--folha` recolocam a folha no meio.
+
+2. **Leque lateral não serve para objeto alto.** Girar uma folha de 596px em
+   4,4° em torno da ponta de cima joga a ponta de baixo 45px para o lado. As
+   anteriores passaram a espiar por BAIXO, com 1,5° de torção só para não
+   ficarem alinhadas — que é como um maço de fotos se comporta na mão.
+
+3. **A janelinha tapava a máquina.** Numa tela de 1360px elas mal se encostam,
+   mas de 1100 para baixo a janelinha caía em cima da câmera. Com ela aberta o
+   conjunto anda 12vw para a esquerda — tapar o objeto para mostrar o painel
+   dele é o contrário do que esta tela é.
+
+#### A janelinha, no estilo da referência *(refeita na terceira volta — ver 5f.11)*
+
+É a única coisa da tela que não é câmera, e **parecer outra coisa ajuda a ler
+isso**. Não usa o papel do laboratório: é escura, canto de 16px, cabeçalho
+vermelho, trilho de ícones à esquerda com o ativo marcado em vermelho, título
+grande, uma linha dizendo para que a aba serve, e a linha de controle da
+referência — rótulo, barra com pega vermelha quadrada e caixa numérica ao lado,
+que andam nos dois sentidos.
+
+```
+FILMES   os 8, com a bolinha mostrando a curva aplicada a um cinza médio,
+         mais os originais da pasta para amostrar
+EFEITOS  temperatura, brilho, contraste, vintage, saturação + halo, vinheta,
+         grão, vazamento, desfoque
+LEGENDA  o texto da tarja, a letra, o alinhamento e a cor da tinta
+FORMATO  formato e giro
+PAPEL    as molduras da pasta + duas desenhadas
+PRESETS  no mesmo cofre de `js/presets.js` (`kind:'polaroid'`)
+```
+
+#### O que foi medido nesta volta
+
+```
+conjunto cabe na tela            1360×900: 56px em cima, 28px em baixo, nada cortado
+                                 1180×720: idem, e a janelinha ao lado sem tapar
+o caminho inteiro no lab2        6 abas montam, disparo revela, clipe de 1000×1232
+não sobrou casca de janela       `#polPalco .modal-card` não existe
+```
+
+**Uma armadilha de medição que custou uma volta:** medir o layout logo depois
+de disparar deu a câmera 160px fora do lugar. Não estava fora — a transição de
+`margin-bottom` estava CONGELADA, porque o relógio de animação do painel é
+estrangulado. A captura de tela força um quadro; medir DEPOIS dela devolveu os
+números certos. Está na memória `rgb-lab-ver-a-tela`, e vale para qualquer
+transição CSS medida por aqui.
+
+---
+
+### 11. A TERCEIRA VOLTA — a foto visível, dois botões, e a telinha com dobradiça
+
+Quatro pedidos, e cada um consertou uma coisa que estava errada por decisão
+minha, não por acaso:
+
+> "A foto tem que estar praticamente visível ao sair da polaroid pra pessoa ver
+> o que editar. Sinalizar ao passar o mouse na lente que ali é onde se faz o
+> upload — nos outros é sinalizado, mas nesse não. Crie um segundo botão do lado
+> de exposição, então diminua um pouco o botão pra caber os 2, esse segundo vai
+> ser o botão de editar, na qual surgirá uma animação de tela desdobrando pro
+> lado, como se ela abrisse por trás e viesse pra frente."
+
+#### 1. A folha sai 90%, e a câmera paga por isso
+
+Estava em 70% — o suficiente para *parecer* pendurada, não para se ver o que se
+está editando. Em 90% a janela da emulsão inteira e quase toda a tarja
+aparecem.
+
+A conta é implacável, e é ela que manda no tamanho da câmera:
+
+```
+                  fora   pende abaixo   conjunto    câmera em 940px de tela
+antes             70%    0,6246 × larg  1,4541      508 px
+agora             90%    0,8324 × larg  1,6620      508 px  (a mesma!)
+```
+
+A câmera **não encolheu** porque a conta antiga tinha um desconto de 96px de
+respiro que já cobria a diferença — o que mudou foi o conjunto ficar mais alto
+e usar a tela toda. Medido em 1440×940: nada cortado, 52px em cima.
+
+#### 2. A lente era a única peça muda
+
+Todas as outras avisam o que fazem ao passar o rato. A lente não — e o motivo
+era um `overflow:hidden` nela, posto para arredondar o vidro, que **engolia a
+própria etiqueta** (ela fica 26px abaixo do elemento). O vidro já é redondo pelo
+`border-radius` do canvas; o `overflow` não fazia falta nenhuma e fazia estrago.
+
+Agora a lente é a peça que MAIS sinaliza, porque é por onde tudo começa: anel
+azul, um **＋** dentro do vidro e a etiqueta
+`CARREGAR FOTO · 2 CLIQUES: DO CLIPE`.
+
+#### 3. Dois botões onde a arte tem um — o REMENDO
+
+"Diminua um pouco o botão pra caber os 2" não dá para fazer num desenho que é
+imagem. Mas dá para **remendar a chapa** e desenhar os dois em CSS, e a
+varredura mostrou que ali isso é barato: o corpo da câmera é liso e de uma cor
+só na faixa inteira.
+
+```
+corpo em y=230,250,270,290,306, de x=664 a x=756:   224  224  224 …  constante
+cor exata                                            rgb(224,224,201)
+olho elétrico original                               x 578..660, y 226..308
+sombra dele                                          até y≈322
+borda direita opaca do corpo                         x≈758
+```
+
+O remendo é uma elipse de cor chapada que **desaparece num degradê** nas bordas
+— e como a vizinhança é 224 constante, não há emenda para ver. Por cima dele,
+dois botões de 76px (o original tinha 82) nascem em CSS com a matéria do
+original, lida dos pixels dele: centro escuro (#151514 no topo, #272726 no
+meio), aro claro (#4a4948) e a sombra quente que o corpo faz por baixo.
+
+```
+esquerdo  x 562..638   a roda CLARO/ESCURO — arrasta-se em volta dele
+direito   x 662..738   EDITAR — desdobra a telinha
+```
+
+#### 4. A telinha tem dobradiça, e ela vem de trás
+
+`rotateY(112°)` com a origem na aresta esquerda deixa a telinha **dobrada atrás
+da câmera**, de costas — e `backface-visibility:hidden` a esconde enquanto ela
+está virada para o outro lado. Abrir é animar até `rotateY(0)`: ela aparece de
+perfil, desdobra e vem para a frente. Duas dobradiças na lateral seguram o
+conjunto, e o par inteiro anda 30,5% da largura para a esquerda para ficar
+centrado.
+
+Não é enfeite: **a dobradiça existe porque a tela tem de sair de algum lugar, e
+o lugar é atrás.** É a mesma regra do resto da máquina.
+
+#### 5. O desenho é o do laboratório
+
+O anexo do Bruno era claro: monoespaçada em caixa alta, filete de 1px, ícone à
+esquerda, seta à direita, e uma linha acesa em azul. O azul não foi escolhido
+aqui — é `var(--ch-video)`, `#1b4fd8`, o canal de vídeo do próprio rgb_lab. A
+telinha é uma tela do laboratório, e parece uma.
+
+Dois níveis, como no desenho: um ÍNDICE de seis linhas e a página de cada uma.
+O botão do cabeçalho vira `‹` dentro de uma página e volta um nível; só fecha a
+telinha quando já está no índice. A linha acesa é a **última que ele abriu**,
+para a telinha lembrar onde ele estava.
+
+#### 6. Dois defeitos de caixa, ambos de flexbox
+
+1. **A caixa numérica comia a barra inteira.** `flex:0 0 46px` não bastava: item
+   de flex nasce com `min-width:auto`, e para um `<input>` isso é a largura
+   INTRÍNSECA dele (~170px). Sem `min-width:0` o flex-basis é ignorado. A barra
+   ficava com 60px e a caixa com 166.
+2. **As seis linhas do índice não cabiam em 720px de altura.** A telinha subiu
+   para 84% da altura da câmera e o respiro da linha caiu para 8px: seis linhas
+   em 198px de conteúdo, dentro dos 207 disponíveis. Medido, não estimado.
+
+#### 7. O que a porta do filme faz agora
+
+Ela abria os ajustes; os ajustes mudaram de botão. Em vez de deixá-la fazendo o
+mesmo que o botão novo, ela passou a fazer o que uma porta de filme faz: **abre,
+mostra a câmara e põe um pacote novo**. A plaqueta ficou só com a leitura do
+contador, ao passar o rato. Cada peça, uma função, e nenhuma repetida.
+
+#### 8. O que foi medido
+
+```
+folha inteira na tela            1440×940 e 1280×720: nada cortado
+seis linhas do índice sem rolar  1280×720: 198px de linha em 207 disponíveis
+o remendo não deixa emenda       corpo 224,224,201 constante na faixa toda
+caminho completo no lab2         6 páginas, volta ao índice, clipe 1000×1232
+zero erro de console             no papel e no darkroom
+```
+
+**A armadilha de sempre, de novo:** medir logo depois de abrir a telinha deu a
+barra com 60px e a caixa com 14 — números de um elemento ainda a meio da
+rotação, porque o relógio de animação do painel é estrangulado. A captura de
+tela força um quadro; medir DEPOIS dela devolveu os números certos. Está na
+memória `rgb-lab-ver-a-tela`.
+
+---
+
+### 12. A QUARTA VOLTA — quatro acabamentos, e um deles apagou uma função
+
+> "A dobradiça nem está encostando na câmera. Seja mais detalhista no botão de
+> fechar e voltar, porque o símbolo fica pequeno ou torto. Isso de pacote novo 8
+> poses serve pra quê? Não vi nenhuma utilidade. Faltou a textura do papel."
+
+#### 1. A dobradiça boiava porque a chapa tem alfa
+
+`left:100%` põe a dobradiça na borda da CAIXA, e a borda da caixa não é a borda
+da CÂMERA: a chapa é um PNG com transparência, e na altura das dobradiças o
+corpo termina antes.
+
+```
+altura   borda direita OPACA        altura   borda direita OPACA
+y=100    x=752  (94,2%)             y=300    x=759  (95,1%)
+y=140    x=753                      y=340    x=766
+y=200    x=756                      y=400    x=796  (99,8% — já é a porta preta)
+```
+
+Quarenta pixels de vão, que era exatamente o que ele estava vendo. A dobradiça
+passou a começar em **93,5%** — não encostada, *enfiada* no corpo, com folga
+suficiente para continuar presa em toda a faixa em que ela vive (14%→48%, onde
+a borda anda só de 752 a 759). Do outro lado, ela entra 13px por baixo da
+telinha, como uma folha de dobradiça de verdade. Medido depois: encosta.
+
+#### 2. Glifo de texto não serve para ícone
+
+`✕` e `‹` são caracteres, e cada fonte os desenha num tamanho e numa altura de
+base diferente. Num botão de 22px isso vira "pequeno" num caso e "torto" no
+outro, e não há `line-height` que conserte os dois ao mesmo tempo. Os dois
+viraram **SVG desenhado**, centrado por flex, no botão que cresceu para 26px. O
+× do palco levou a mesma correção.
+
+#### 3. "Pacote novo, 8 poses" não servia para nada — e saiu
+
+Ele perguntou para que servia. Não servia: era um contador que, de oito em oito
+fotos, obrigava a um clique para poder continuar. Atrito sem contrapartida.
+**Saiu inteiro** — o contador, o limite e a mensagem.
+
+Mas a porta do filme não podia ficar sem função, que é a regra desta tela. E a
+função certa estava à vista: **o pacote é que decide em que PAPEL a foto sai.**
+Agora a porta abre, mostra a câmara e leva direto à página PAPEL da telinha. A
+plaqueta ficou com a leitura: filme, papel e nome da foto, ao passar o rato.
+
+#### 4. A trama do papel estava lá — quase invisível
+
+Medido na faixa branca do `creme.jpg`, em tamanho real:
+
+```
+mínimo 227   máximo 244   →  dezessete níveis em duzentos e cinquenta e seis
+amplitude contra a média de janela 7×7 ................ 1,41
+```
+
+O escaneamento é bom e a trama existe (o mapa em ASCII mostra o losango, com
+período de 10 a 14px). O que a come são três coisas em série: a compressão do
+JPEG, a redução para o tamanho de prévia, e a redução que o navegador faz de
+novo ao pintar.
+
+A correção **não inventa textura**: pega a que está lá e aumenta o contraste
+dela. Máscara de nitidez clássica — tira a média de uma janela do tamanho da
+trama e devolve a diferença multiplicada por 3,4:
+
+```
+                      amplitude   média   estourados
+antes, arquivo           1,41      236       —
+depois, prévia 620px     6,61      237      3,8%
+depois, folha 1000px     8,43      237      5,4%   ← ainda insuficiente, ver 5f.13
+```
+
+Custa um passe de pixel, e por isso é **guardado**: só refaz quando a moldura
+ou o tamanho mudam, não a cada mexida num controle. Primeiro render em tamanho
+de folha: 363ms; com o realce em cache, 234ms — e esses 234 são a emulsão, que
+já custavam antes.
+
+Um efeito colateral bom: a folha realçada passou a ser também a fonte dos dois
+passes que devolvem o papel POR CIMA da foto (multiply 19%, screen 12%). Como
+ela já está no tamanho de saída, o recorte é o mesmo retângulo — sumiu a
+conversão de escala que havia ali, que era um lugar a menos para errar.
+
+#### 5. O que foi medido
+
+```
+dobradiça encosta          esquerda em x=796, borda pintada em 809..813 → dentro
+trama na prévia            amplitude 1,41 → 6,61, com 3,8% de estouro
+trama na folha inteira     amplitude 8,43, média 237
+porta do filme             abre a telinha já na página PAPEL
+caminho completo no lab2   6 páginas, volta ao índice, clipe de 1000×1232
+zero erro de console
+```
+
+---
+
+### 13. A TRAMA — primeira tentativa, pela via errada *(corrigida em 5f.14)*
+
+O Bruno voltou com o PNG exportado aberto a 161% e a faixa branca lisa:
+*"a textura ainda não foi inserida"*. Do meu lado o número dizia que estava:
+amplitude 8,4 contra 1,4 do arquivo, seis vezes mais. **Os dois estavam certos,
+e o errado era o número.**
+
+#### O que a medida não via
+
+`amplitude` ali era a média do desvio contra a vizinhança. Ela sobe tanto com
+trama boa quanto com borrão, e não diz nada sobre duas coisas que decidem se o
+olho vê ou não:
+
+1. **o ESTOURO.** Somando detalhe a um papel de média 237, os picos batiam no
+   teto: 5% dos pixels iam a 255 e ficavam chapados — e ficavam chapados
+   justamente nos altos da trama, que é onde ela aparece;
+2. **o RAIO.** Com raio 4 o passa-altas devolvia um relevo mole. A trama do
+   papel tem período medido de 10 a 14 px em 1000 px de largura; raio 3 pega o
+   losango, raio 2 vira grão, raio 5 borra.
+
+A prova só veio quando montei a comparação **na condição em que ele olhou** —
+a mesma faixa, no mesmo zoom de 161%, o arquivo original em cima e as variantes
+embaixo. Aí dá para ver, e o que se vê não é o que o número dizia.
+
+#### O joelho
+
+A correção que destravou foi comprimir o branco em vez de cortá-lo:
+
+```
+v = base·(1 − recuo) + detalhe
+v > 236  →  236 + 19·(1 − e^−(v−236)/19)
+```
+
+Acima de 236 o branco caminha para 255 sem nunca lá chegar. O efeito na
+medição é direto:
+
+```
+                              média   amplitude   estourados
+arquivo original               237       1,9         0,0%
+1ª tentativa (f 3,4 · r 4)     237       8,0         4,3%   ← lia como liso
+sem joelho    (f 7,0 · r 3)    222      13,8         3,7%   ← papel acinzentado
+COM joelho    (f 8,0 · r 3)    230      13,1         0,1%   ← papel claro, trama viva
+```
+
+Os quatro números estão nomeados no cabeçalho de `P.realce`, com o porquê de
+cada um ao lado.
+
+#### E uma brecha que podia ser a causa real
+
+Enquanto investigava, achei um caminho em que o export saía **mesmo** sem
+trama, e sem avisar: `P.moldura(id)` devolve o primeiro item da lista quando
+não acha o pedido. Nos primeiros meio segundo da aba, antes de `carregarPastas`
+responder, a lista só tem as folhas DESENHADAS — então pedir `'creme'` ali
+devolvia a desenhada, e o papel desenhado é liso.
+
+Agora `carregarMoldura` **espera** as pastas, e `carregarPastas` guarda a
+própria promessa para ser lida uma vez só por aba. Conferido: pedir `'creme'`
+na primeira linha de vida da página devolve o escaneamento de 1000×1232.
+
+#### O custo
+
+O realce é um passe de pixel guardado por moldura e tamanho. Em tamanho de
+folha custa ~800 ms na primeira vez e some depois; a prévia usa outro tamanho,
+então exportar paga uma vez. Para um botão de salvar, está pago.
+
+#### O que ficou medido
+
+```
+trama no PNG exportado    média 230,1 · amplitude 13,1 · estourados 0,1%
+vista a 161%              a trama LÊ como trama — conferida em imagem, não em número
+moldura pedida cedo       devolve o escaneamento, não a folha desenhada
+caminho completo no lab2  6 páginas, porta abrindo no PAPEL, clipe de 1000×1232
+zero erro de console
+```
+
+**A lição, para a próxima:** medida prova que uma coisa mudou; não prova que
+ela ficou visível. Quando o pedido é sobre o que se VÊ, a verificação tem de
+ser uma imagem, na condição de quem olha — e de preferência lado a lado com a
+referência. Está junto das outras em [[rgb-lab-armadilhas-medida]].
+
+---
+
+### 14. A TRAMA sintetizada — o caminho longo *(resolvido em 5f.15)*
+
+Duas voltas afinando o realce e o Bruno continuando a dizer que não havia
+textura. Ele tinha razão as duas vezes, e o erro estava na premissa: eu estava
+a tentar **realçar uma trama que já não existia no arquivo**.
+
+#### O que o 1:1 mostrou
+
+Pôr o `creme.jpg` e a saída lado a lado, no tamanho real, sem redução nenhuma:
+
+```
+ARQUIVO creme.jpg 1:1     quase liso — dá para adivinhar um losango, nada mais
+SAÍDA (máscara 1:1)       mancha quadriculada: BLOCO DE JPEG ampliado
+```
+
+A máscara de nitidez faz o que promete — aumenta o contraste local. Só que o
+contraste local que restava no arquivo já não era papel: era o artefacto de
+compressão de 8×8. Ampliar aquilo dava exatamente o que se via.
+
+#### A medida que faltava fazer — e a que enganou
+
+Autocorrelação do passa-altas, na faixa branca:
+
+```
+amplitude do que restou ... desvio padrão 2,35   ← quase nada
+período que ela devolveu .. 23 × 13,5 px
+```
+
+O primeiro número é o veredicto: o relevo foi-se. **E o segundo estava errado.**
+Num sinal cuja amplitude é 2,35, o que a autocorrelação mede é sobretudo o
+bloco de 8×8 do JPEG — ela devolveu o período do RUÍDO com cara de resposta, e
+eu desenhei a trama com ele. Saíram losangos grandes demais, e o Bruno voltou
+a dizer, pela terceira vez, que não era aquilo.
+
+O período bom veio de outro lado: ele mandou um recorte limpo do papel, e foi
+**casar o desenho com a fotografia, lado a lado, no mesmo zoom**, variando o
+período até bater:
+
+```
+23 × 13,5   grande demais — lê como losango desenhado
+14 × 10     ainda grande
+10 × 7,5    BATE com a referência
+ 8 × 6      fino demais, some
+```
+
+**Medir um sinal que já não existe devolve o ruído dele com cara de resposta.**
+Quando a amplitude do que se quer medir é da ordem do erro, a medida não vale —
+e a referência visual passa a ser o único instrumento honesto que sobra.
+
+#### Reconstruir, não realçar
+
+A trama passou a ser gerada com aquela geometria e gravada em RELEVO por cima
+do escaneamento. O escaneamento continua a mandar em tudo o resto — cor,
+amarelado que muda de canto para canto, manchas, a linha da emulsão, as bordas.
+Só volta o que a compressão apagou.
+
+```
+h = cos u + cos v          u,v = as duas diagonais do losango 10×7,5
+s = ∇h · luz               o que se pinta é a INCLINAÇÃO contra a luz
+```
+
+**A luz tem de ser de lado, e isso não é gosto.** A inclinação decompõe-se
+exatamente nas duas famílias de onda, pesadas por (lx+ly) e (lx−ly). Com a luz
+na diagonal (−0,62 −0,78) isso dá 1,40 contra 0,16: uma família nove vezes mais
+forte que a outra, e o resultado são **listras**, não losangos. Só com
+lx·ly = 0 as duas pesam igual e a trama cruza. Foi preciso ver para perceber.
+
+Mais duas coisas para não parecer estampa de impressora: uma 2.ª harmónica que
+aperta o vale entre os losangos (sem ela o relevo é ondulação mole), e duas
+ondas lentas incomensuráveis que entortam a grade de leve.
+
+#### O custo
+
+Seis senos por pixel numa folha de 1000×1232 são sete milhões e meio de
+chamadas: 925 ms. Com tabela de 4096 entradas, **574 ms** no primeiro render e
+273 ms com o realce em cache — e a diferença não se vê num relevo.
+
+#### O que ficou medido
+
+```
+folha 1000px      média 236,4 · trama visível · 0,4% de estouro
+período final     10 × 7,5 px, casado com o recorte que o Bruno mandou
+1.º render        661 ms · com cache 267 ms
+caminho no lab2   clipe de 1000×1232, zero erro de console
+```
+
+#### A nota honesta, para o futuro
+
+O que está no ecrã é a trama do papel DELE, com o período e a proporção medidos
+no ficheiro dele — mas o relevo é reconstruído, não fotografado. Se um dia
+houver um escaneamento com menos compressão, o caminho certo é baixar
+`TRAMA.alt` e deixar o papel de verdade aparecer: quanto mais relevo real vier
+no ficheiro, menos precisa ser reconstruído.
+
+---
+
+### 15. O ARQUIVO CERTO ESTAVA NA PASTA
+
+Cinco tentativas de pôr trama no papel, todas erradas, e a certa era não fazer
+nada: o Bruno pôs `exemplo filme2.png` na pasta de referências — o MESMO papel,
+mas em PNG, 240 KB contra os 55 KB do JPEG. A trama está lá, intacta.
+
+O que as tentativas anteriores fizeram, e por que falharam:
+
+```
+realçar o JPEG        amplificava o bloco de compressão, não a trama
+sintetizar a 23×13,5  período medido no ruído — losango grande demais
+sintetizar a 10×7,5   período contado a olho — errado, e eu a insistir
+```
+
+E a medida no PNG fecha a conta: período **23 × 13 px**, igual ao que a
+autocorrelação do JPEG dizia. O meu erro de olho é que tinha levado aquilo para
+10 × 7,5.
+
+**O que ficou:** a moldura `papel.png` é a folha padrão e leva `realce: 0` no
+manifesto — desenha-se o escaneamento e acabou. Conferido pixel a pixel na
+borda: diferença média 0, diferença máxima 0. A moldura É o arquivo dele.
+
+A reconstrução continua no código, mas só para folhas em JPEG (`realce: 1`),
+onde ela existe porque não sobrou outra coisa. Quem puser um PNG na pasta ganha
+o papel de verdade, sem nada acrescentado — e é isso que o manifesto agora diz,
+em uma linha, para a próxima pessoa não repetir a viagem.
+
+**A lição, e é a mesma de sempre nesta passada:** antes de reconstruir o que
+falta num arquivo, perguntar se existe um arquivo melhor. Eu passei três voltas
+a afinar constantes quando a pergunta certa custava uma frase.
+
+---
+
+### 16. O POLAROID ESTAVA NA ABA ERRADA — e tinha empurrado o scanner
+
+"Jogue essa função para a sessão de tools, onde está o scanner." Fui olhar, e o
+botão POLAROID já estava colado ao SCANNER na grade FONTE do index.html. O que
+não estava certo era o que a pele 2.0 faz com essa grade.
+
+O 2.0 divide a mesma seção em duas abas — a divisão é por natureza, não por
+arrumação: **MÍDIA** é o que TRAZ material de fora, **TOOLS** é o que FABRICA
+material a partir do que já existe. E quem decide não é o HTML: é um punhado de
+regras em `lab2.css` que listam, por id, quais botões aparecem em cada aba.
+
+O POLAROID não estava em nenhuma das duas listas. O resultado:
+
+```
+em MÍDIA   aparecia — e não é importação, é instrumento
+em TOOLS   sumia    — que é justamente onde ele devia estar
+e de quebra  tomou o 8.º lugar da grade de importação e empurrou
+             SCANNER, MOSAICO e SOBREPOR para fora da vista
+```
+
+Daí o sintoma que chegou. O Bruno pediu para pôr o polaroid onde está o
+scanner; o que ele estava vendo era o polaroid **no lugar** do scanner.
+
+A correção são duas linhas — `#srcPolaroid` nas duas listas. Medido depois:
+
+```
+MÍDIA   ARQUIVO, WEBCAM, IMAGEM, TEXTO, LEGENDA, ÁUDIO, TESTE   (os 7 que importam)
+TOOLS   SCANNER, MOSAICO, POLAROID, SOBREPOR                    (os 4 instrumentos)
+Classic os 11 na mesma grade, sem abas — como sempre foi
+```
+
+**A armadilha, anotada no próprio CSS:** acrescentar um instrumento à grade
+FONTE e esquecer de o declarar nas duas listas **não dá erro nenhum**. O botão
+só aparece do lado errado, e o sintoma chega disfarçado de "sumiu outra coisa".
+Está escrito lá em cima das regras, para a próxima pessoa não repetir.
+
+---
+
+## 5g. O SONÓGRAFO E A CIFRA (vigésima terceira passada)
+
+> ### ESTADO ATUAL — leia só isto se for continuar os dois instrumentos
+>
+> ```
+> js/musica.js       O NÚCLEO MUSICAL, novo: escalas, vozes, síntese,
+>                    escritor de .mid e renderização offline
+> js/sonografo.js    o motor do music scanner (detector + geometria da linha)
+> js/sonografoui.js  o aparelho: visor, régua, piano roll, mesa de controle
+> css/sonografo.css  o chassi de metal, o palco escuro
+> js/cifra.js        o motor da cifra (campo harmônico, acordes, gravação)
+> js/cifraui.js      o aparelho: pastilhas, teclado, gravador
+> css/cifra.css      o corpo de marfim
+> ```
+>
+> **O SONÓGRAFO** é o "music scanner": uma linha PARADA sobre o vídeo, e o
+> que atravessa a linha vira nota. Vídeo → linha fixa → sensor → nota →
+> som. Não é a linha que anda; é a imagem. Sai em MIDI, em WAV, ou direto
+> como clipe de áudio na linha do tempo.
+>
+> **A CIFRA** é o campo harmônico à mão: escolhe-se tom e escala e os
+> acordes daquela tonalidade aparecem em pastilhas. Toca-se com o rato ou
+> com o teclado, grava-se, e vai para a linha do tempo **ou para a FONTE
+> do rack de áudio**.
+>
+> **Onde moram.** O sonógrafo tem DUAS portas — aba **TOOLS** do vídeo (é
+> lá que o vídeo está) e **FERRAMENTAS** do áudio (é lá que o resultado
+> vive). A cifra só no áudio. Quem acrescentar instrumento à grade FONTE
+> do vídeo tem de o declarar nas DUAS listas do `lab2.css`; quem
+> acrescentar SEÇÃO ao `#sideAudio` tem de recontar os `sec:` da torre em
+> `lab2.js` (ver 5g.9 — foi assim que o PRESETS do áudio ficou sem porta).
+>
+> **As armadilhas que custaram voltas** (todas anotadas no
+> código): o botão de sensibilidade andava ao CONTRÁRIO (5g.3) · o fundo
+> da subtração tem três laços fechados e nenhum dá erro (5g.3) ·
+> comprimento escrito à mão dentro de `.mid` (5g.3) · intensidade
+> desenhada como transparência some no fundo escuro (5g.5) · `getBBox()`
+> em elemento escondido devolve zero e o teste PASSA (5g.6).
+
+---
+
+### 5g.1 O pedido, e onde os instrumentos foram parar
+
+O pedido do sonógrafo veio com um documento de 23 seções e uma insistência:
+**a linha não se movimenta**. Ela fica parada onde se põe, e quem se mexe é o
+conteúdo do vídeo. Um carro cruza a linha, o sensor lê o que cruzou, nasce uma
+nota. Isso tinha de ficar óbvio na tela — e é o que os três desenhos
+simultâneos fazem: o dente acende na linha, a nota nasce no rolo por baixo
+dele, e cresce enquanto o objeto ainda está passando.
+
+A dúvida dele era a casa: TOOLS do vídeo ou FERRAMENTAS do áudio. **A resposta
+foi as duas**, e não por indecisão: o instrumento come VÍDEO e devolve ÁUDIO.
+No LAB 02 ele é o irmão exótico do botão DO VÍDEO — tira som da IMAGEM em vez
+da trilha. No LAB 01 ele está onde o vídeo está na hora em que a ideia aparece.
+Uma máquina só, duas portas, como a mesa e o mosaico já faziam.
+
+A cifra não tem essa dúvida: não come vídeo nenhum, e mora só no áudio.
+
+### 5g.2 O detector do sonógrafo, e por que ele é barato
+
+Não se analisa o quadro. Só uma BANDA fina em volta da linha, reamostrada para
+**64 células × 6 amostras = 384 pixels por quadro**, qualquer que seja a
+resolução da fonte. Um vídeo 4K custa o mesmo que um 480p.
+
+A banda é lida por **transformação, não por recorte**: a matriz leva o
+retângulo orientado da linha direto para o canvas de leitura. É isso que faz a
+DIAGONAL custar o mesmo que a vertical — sem ela, diagonal viraria varredura
+pixel a pixel em JavaScript.
+
+```
+x_canvas = (LARG/banda) · ( (p−c)·n + banda/2 )
+y_canvas = (CEL/comp)   · ( (p−c)·d + comp/2  )
+```
+
+com `d` ao longo da linha e `n` através dela. A **célula 0 é sempre a ponta de
+cima** (a da esquerda, na horizontal) — é o que permite dizer "topo = agudo"
+sem um `if` por orientação espalhado pelo código.
+
+Três freios impedem o dilúvio de notas, e nenhum é opcional: **limiar com
+histerese**, **refratário por célula** e **teto por quadro** (só as N mais
+ativas viram nota; o resto é descartado, não enfileirado).
+
+**Medido**, com um objeto de 44 px cruzando uma linha vertical:
+
+| travessia real | duração da nota |
+|---|---|
+| 0,18 s | 0,20 s |
+| 0,40 s | 0,43 s |
+| 0,80 s | 0,80 s |
+| 1,57 s | 1,60 s |
+
+Uma travessia = uma nota, com a duração do cruzamento. Ruído estático: **0
+notas**. Ruído em MOVIMENTO (chuva), 5 s: **8 notas**. Corte de cena: **um
+acorde e silêncio** (64 notas, a última aos 2,5 s).
+
+### 5g.3 As quatro armadilhas do sonógrafo, todas medidas
+
+**1. A SENSIBILIDADE andava ao contrário.** Subir o botão baixava o número de
+notas — 42 no padrão contra 21 no máximo — porque limiar mais baixo também
+atrasa o FECHO do evento, e evento que não fecha não pode reabrir. Lição geral:
+**todo controle com sentido prometido tem de ser medido numa CURVA, não num
+ponto.** Cinco valores do botão, uma cena só, e a coluna lida de cima a baixo.
+
+**2. A subtração de fundo tem três laços fechados**, e cada um parece bug de
+outra coisa:
+
+- fundo rápido demais alcança o objeto NO MEIO da travessia e parte uma nota em
+  duas, com duração mentirosa;
+- fundo lento demais deixa resíduo depois da saída e a nota não morre —
+  travessia de 0,4 s soando **1,77 s**;
+- copiar o valor de agora para o fundo ao fechar NÃO resolve, porque no instante
+  do fecho o sinal ainda está CAINDO (medido: 0,096 a caminho de 0,064), e o
+  resíduo abre uma nota nova que congela o fundo que a sustenta.
+
+A saída foi uma **janela de recuperação**: por 0,22 s a célula não dispara e o
+fundo persegue depressa. E o fundo CONGELA durante o evento (5 % do passo), com
+os 5 % que sobram servem para absorver mudança permanente — um corte de cena
+— em uns dez segundos.
+
+**3. Comprimento escrito à mão dentro de formato binário.** O `.mid` tinha
+`vlq(9)` na frente de um texto de 17 bytes. Cabeçalho perfeito (MThd, MTrk,
+formato 0, 480 pulsos), arquivo do tamanho esperado, e **zero notas legíveis**,
+porque o leitor seguia oito bytes adiantado. Arquivo binário só está provado
+depois de ser LIDO DE VOLTA por um analisador que conta os eventos e chega ao
+fim exato da trilha.
+
+**4. Quando a linha ANDA, o fundo não pode congelar.** Todo o raciocínio supõe
+linha parada — o fundo é a memória do que estava naquele lugar antes. No modo
+imagem (a linha varre a foto) o lugar muda a cada quadro. Congelar travava
+tudo: medido, uma varredura de 2 s sobre uma imagem listrada dava **quatro
+notas no total**. Com o passo rápido quando `linha.pos` mudou: 292.
+
+### 5g.4 O vídeo inteiro na vista
+
+A primeira montagem empilhava mesa de controle e rodapé por baixo da cavidade.
+As duas somavam quase 400 px: sobravam **170 px de visor**, e um vídeo 4:3
+entrava como uma tira fina. O Bruno viu na hora.
+
+Três coisas foram necessárias, não uma:
+
+1. **A mesa em coluna à direita** (`clamp(272px, 26vw, 336px)`), que rola por
+   dentro se não couber em pé. O que sobra de largura é do vídeo.
+2. **Altura presa em `94vh`, não `max-height`** — com `max-height` o aparelho
+   encolhia até o conteúdo, e o conteúdo mais alto tinha passado a ser a coluna
+   de controles: sobravam 116 px de palco vazio enquanto o vídeo era espremido.
+3. **A tela virou `position:absolute; inset:0`** — este era o defeito de
+   verdade. Com `height:100%` numa caixa flex que o irmão aperta, o canvas
+   continua MEDINDO a altura que pediu enquanto o visor já foi cortado; a conta
+   de enquadramento usa uma altura que não existe e o quadro sai cortado.
+
+| janela | visor antes | depois | quadro 4:3 |
+|---|---|---|---|
+| 1600×950 | 170 px | **487 px** | 240×180 → **649×487** |
+| 980×880 | 170 px | **426 px** | 240×180 → **568×426** |
+
+**A quebra para pilha desceu de 1040 px para 620 px**, e o número saiu de medir
+os dois arranjos: numa janela de 980, empilhado dá 240×180 e em coluna dá
+568×426. Empilhar cedo devolvia exatamente a tira que a coluna veio consertar.
+
+### 5g.5 A cor, e o piano roll que sumia no modo papel
+
+O roxo saiu; entrou `--ch-video`, **herdado e não copiado** — a variável muda
+com o tema e com a pele, e o instrumento acompanha. As nove cores que estavam
+escritas à mão dentro do canvas passaram a ser lidas da folha
+(`--sg-cor`, `--sg-cor-cl`), para que linha, nota e régua não possam discordar
+dos botões.
+
+Aí apareceu o problema, e só a medida o pegou. No modo **papel** `--ch-video`
+vale `#1b4fd8` — afinado contra papel, escuro demais contra o palco preto desta
+janela. Medido no rolo: nota mais forte com contraste **2,84**, mais fraca com
+**1,34**. O mínimo para um elemento gráfico é 3,0. Metade do piano roll sumia.
+
+Duas correções:
+
+- **O tom sobe só quando precisa**, por MISTURA com o tom claro (multiplicar
+  estoura o canal azul em 255 e a cor escorrega para ciano). No papel mistura
+  15 %: 2,97 → 3,71. No noturno e no 2.0 devolve a cor **intacta**, mistura 0.
+- **A intensidade virou brilho, não transparência.** Nota fraca com alfa baixo
+  sobre quase-preto não informa "intensidade baixa", informa ausência — o rolo
+  mentia sobre quantas notas existem. Agora toda nota é opaca e anda do piso ao
+  tom claro: **4,3 a 6,3** de contraste, contra 1,34–2,84.
+
+O CLARO (`--sg-cor-cl`) é fixo e sempre luminoso de propósito: é ele que desenha
+o fio de 1 px da linha e a cabeça do rolo. Amarrá-lo ao tema faria o fio sumir
+no modo papel — e o fio é o instrumento.
+
+### 5g.6 O nome, e a renomeação por inteiro
+
+Chamou-se LEITORA ÓPTICA por uma volta. O Bruno pediu opções; escolheu
+**SONÓGRAFO** — a máquina que escreve som, nome próprio de aparelho, do mesmo
+tipo de POLAROID e MOSAICO. "Music Scanner" ficou como subtítulo na placa.
+
+Renomeou-se **tudo**: arquivo, namespace, ids e classes (prefixo `sg`).
+Meio-nome é pior que nome nenhum — daqui a três meses ninguém acha `leitora`
+procurando por sonógrafo.
+
+**A armadilha da conferência do ícone:** `getBBox()` num elemento escondido
+devolve zeros, e zeros passam em qualquer teste de "está tudo dentro da caixa".
+O ícone teve de ser clonado para um SVG VISÍVEL e rasterizado (5 peças, todas
+dentro do 24×24, 42 % de cobertura) para a medida valer.
+
+### 5g.7 O NÚCLEO MUSICAL, e por que ele existe
+
+Escalas, vozes, síntese, escritor de `.mid` e renderização nasceram dentro do
+sonógrafo, quando havia um instrumento só. Ao aparecer o segundo, a escolha era
+copiar duzentas linhas ou promovê-las. **Copiar significaria dois bancos de
+timbre que divergem no primeiro conserto, e dois escritores de `.mid` dos quais
+só um teria o comprimento de etiqueta corrigido.** Então promoveu-se, para
+`js/musica.js`.
+
+O sonógrafo continua expondo os mesmos nomes (`VE.sonografo.VOZES`, `.tocar`,
+`.midi`, `.render`): lá dentro são APELIDOS. Nada que já funcionava mudou de
+endereço, e por isso as medições que o provaram continuam válidas — **foram
+repassadas depois da extração, número a número, e deram igual**.
+
+A regra que organiza `musica.js`: **só entra o que MAIS DE UM instrumento usa
+hoje.** Acordes e campo harmônico são teoria tão geral quanto escalas e mesmo
+assim ficaram em `cifra.js`, porque só um instrumento os usa. Quando o segundo
+precisar, sobem — e não antes.
+
+Uma decisão de dentro do núcleo, que vale para o resto: as dez vozes são
+**sintetizadas, não amostras**. É escopo — um banco de sons é muito arquivo — e
+é também o que faz o áudio exportado ser idêntico ao que se ouviu, porque o ao
+vivo e o `OfflineAudioContext` correm o MESMO código.
+
+### 5g.8 A CIFRA
+
+As sete pastilhas saem de **empilhar terças dentro da escala**, não de uma
+tabela de acordes. É isso que faz trocar de escala refazer o campo inteiro
+sozinho, e faz os casos difíceis saírem certos sem ninguém os ter
+escrito:
+
+| escala | campo |
+|---|---|
+| C maior | `C Dm Em F G Am Bdim` |
+| C menor harmônica | `Cm Ddim **D#aug** Fm **G** G# Bdim` |
+| C dórico | `Cm Dm D# **F** Gm Adim A#` |
+| C pentatônica | 5 pastilhas: `C D7sus4 E7sus4 Gsus4 A7sus4` |
+
+O V maior na menor harmônica e o IV maior no dórico são a assinatura de cada
+uma. Escalas de cinco graus dão **cinco** pastilhas — a grade lê o comprimento
+do campo, não um número fixo.
+
+**O nome do acorde é lido de volta dos INTERVALOS**, nunca guardado junto: se a
+conta produzir um acorde, o nome descreve o que a conta produziu. Foi assim que
+apareceram os `sus` das pentatônicas, que ninguém tinha previsto e estão
+certos. (E foi assim que se viu que a ordem estava errada: escreve-se
+**D7sus4**, nunca `Dsus47`.)
+
+**A gravação começa na PRIMEIRA NOTA, não ao armar.** Contar desde o clique
+enche o começo da peça de silêncio para aparar depois. Medido: primeiro acorde
+`[60 64 67]` no tique **zero** do `.mid`.
+
+Três destinos: **USAR NA COMPOSIÇÃO** (clipe de áudio na linha do tempo),
+**MANDAR PRO RACK** (vira a FONTE do lab de áudio, para passar pela cadeia) e
+MIDI/WAV em arquivo.
+
+### 5g.9 A torre do áudio, e uma regressão desta passada
+
+Ao inserir a seção FERRAMENTAS entre FONTE e CADEIA no `#sideAudio`, as seções
+de baixo foram empurradas — **e a torre do 2.0 aponta para elas por POSIÇÃO**
+(`sec: 0,1,2`). Resultado: CADEIA abria FERRAMENTAS, PRESETS abria CADEIA, e
+**PRESETS ficou sem porta nenhuma**. Não dá erro; cada botão continua abrindo
+alguma coisa, só a errada.
+
+A torre do áudio é agora **FONTE · TOOLS · CADEIA · PRESETS**, com os `sec:`
+recontados. A verificação que serve é clicar CADA botão e ler o rótulo do que
+abriu, não olhar o código.
+
+**E as pastilhas do TOOLS ficaram quadradas**, iguais às de MÍDIA. A regra
+antiga dava a linha inteira a cada instrumento — fazia sentido com três; com
+cinco virou uma coluna de faixas deitadas ao lado de uma MÍDIA de pastilhas
+quadradas, dois desenhos para a mesma grade. Foram precisas DUAS correções: a
+grade (`grid-template-columns:1fr` fora) e o `grid-column:1 / -1` que MOSAICO
+(`-larga`) e SOBREPOR (`-hi`) herdam do `css/labs.css`. Só a primeira deixaria
+dois dos cinco ainda esparramados.
+
+### 5g.10 O que NÃO foi feito, e por quê
+
+Do documento do sonógrafo ficaram de fora, de propósito, três coisas — são a
+fase 2 que o próprio §23 dele manda deixar para depois:
+
+- **§7 Banco de áudios** (Audio Library com categorias, busca, favoritos);
+- **§8 Upload de sons do usuário** (WAV/MP3/AIFF/OGG associados a eventos);
+- **§9 Sistema de regras de evento** (condição → resultado, combináveis).
+
+As dez vozes sintetizadas de `musica.js` são o que está no lugar disso, e o
+banco entra por cima delas sem reescrever nada.
+
+**Nada dos dois instrumentos foi visto por mim em material de verdade.** O
+painel do navegador estrangula `requestAnimationFrame` e a decodificação de
+vídeo quando não está exibido; a prova foi por medida, por eventos sintéticos e
+bombeando o laço à mão. Continua a valer o de sempre: **os defeitos graves
+deste projeto foram achados pelo Bruno olhando para a tela.**
+
+---
+
+### Os arquivos que a vigésima quarta tocou
+
+Para quem abrir a próxima sessão e quiser ir direto ao ponto.
+
+```
+NOVO
+  js/audiotl.js      A MONTAGEM DE ÁUDIO — modelo e janela no mesmo arquivo
+                     (o modelo tem quatro campos; separar seria indireção)
+
+MEXIDOS, e onde
+  js/type.js         num()/sel()/chk()/color() → um controle por linha ·
+                     renderInspector com VE.panels.plate() · renderTools em
+                     sete famílias · T.miniatura (motor emprestado) ·
+                     T.arrastavel (painel que se move) · T.zerarTudo ·
+                     a TRAMA (persiana, tiras, brilho, grão) em T.draw
+  js/panels.js       P.initFills (o enchimento, com init PRÓPRIO) ·
+                     P.pintarFills · P.foldDefault
+  js/audio.js        fazerEspectro / desenharEspectro / limparEspectro ·
+                     drawWave tira a altura do espaço que há ·
+                     sendToTimeline com ensureProject · o clique no NOME
+                     abre módulo desligado
+  js/shell.js        renderAudioInspector perdeu a placa CADEIA · S.go troca
+                     #props ↔ #propsAudio · setMode limpa o espectrograma
+  js/app.js          Ctrl+Z da tipografia ACIMA da guarda de projeto ·
+                     ao() tolerante · #auMontagem · redesenho no resize
+  js/motion.js       motion.x: min era `-W` (função) → NaN
+  js/recorteui.js    U.desfazer (não existia) · botão ↶ DESFAZER · --fill
+  js/tintaui.js      T.desfazerTraco · fecha o recorte ao abrir · --fill
+  index.html         #propsAudio (corpo próprio da coluna) · o rack saiu do
+                     pé · #auSpec · #auMontagem · #auToTl · ty-cmds ·
+                     o menu de cinco botões da tipografia saiu
+  css/system.css     .prow + .prow-slider viram UMA caixa
+  css/labs.css       .tctl · .tyfam · .tymini · .mprop-h · #propsAudio ·
+                     .atl-* (a montagem) · onda e espectrograma empilhados
+  css/lab2.css       seções 52 a 56: os mesmos no desenho do 2.0
+```
+
+**`lab2.html` é gerado** — `node build-lab2.js` depois de qualquer mexida no
+`index.html`. Ele confere e diz quantos ids saíram.
+
+---
+
+## 5h. A TIPOGRAFIA REPAGINADA
+
+> As seções **5h, 5i, 5j e 5k** são da MESMA sessão (a vigésima quarta,
+> 30–31/08/2026). Estão separadas por assunto, e não por dia: cada uma nasceu
+> de um pedido dele, e cada pedido nasceu do que o anterior deixou à vista.
+
+> ### ESTADO ATUAL — leia só isto se for continuar
+>
+> ```
+> js/type.js     num()/sel()/chk()/color() emitem UM controle por linha;
+>                renderInspector() usa VE.panels.plate() (as placas recolhem);
+>                renderTools() agrupa as 54 ferramentas em SEIS famílias
+> js/panels.js   VE.panels.foldDefault(chaves) — novo, recolhe na 1ª visita
+> css/labs.css   .tctl / .tnum / .tsel / .tchk / .tcol   e   .tyfam
+> css/lab2.css   seção 52 — os mesmos controles no desenho do 2.0
+> ```
+>
+> **O pedido do Bruno:** *"deixar o lab um pouco menos poluído"*, com o
+> brik.space de referência (Analog Typewriter, Dynamic Typography Studio,
+> Tactile, Dissolve — capturas em `REFERENCIAS/LAB TIPOGRAFIA`).
+>
+> **O diagnóstico, medido antes de tocar em nada:** a ficha da tipografia
+> tinha **2363px de rolagem numa janela de 830** no Classic e **2804px em
+> 808** no 2.0 — três telas e meia. Nenhuma das sete placas recolhia,
+> embora o maquinário de recolher exista em `js/panels.js` desde sempre e
+> a ficha do clipe já o usasse. E cada número ocupava DUAS linhas: o campo
+> numa, o cursor deslizante solto embaixo na outra.
+>
+> **A lição desta passada:** *o 2.0 tinha embelezado a linha sem reduzir o
+> número de linhas.* A seção 14 deixou a `.prow` virar caixa arredondada e
+> encaixou o cursor no pé dela — ficou bonito e a ficha ficou **mais alta**
+> (57px por controle contra 47 do Classic). A calma da referência não vem
+> de linha bonita: vem de **pouca linha na tela**.
+>
+> **Três mudanças, todas de contagem de linhas:**
+>
+> ```
+> 1  a linha É o campo          2 linhas → 1     30 linhas a menos
+> 2  as sete placas recolhem    6 abertas → 0    (só TIPO na 1ª visita)
+> 3  sete famílias na coluna    2 grupos → 7     14 itens à vista, não 56
+> ```
+>
+> **Medido depois (mesma janela, mesma primeira visita):**
+>
+> ```
+>                      CLASSIC              2.0
+>                    antes  depois       antes  depois
+> ficha, padrão       2,80    1,00 tela   3,50    1,00 tela
+> ficha, tudo aberto  2,80    2,07        3,50    2,71
+> ferramentas         4,10    1,16        2,80    1,00
+> ```
+>
+> **O que ficou por medir:** nada foi visto por mim numa peça de verdade —
+> o painel estrangula `requestAnimationFrame` quando não está exibido, e a
+> prova de que os controles chegam ao motor foi por PIXEL (a ONDA espalha
+> a tinta de 172 para 748px de altura; o ALINHAMENTO move o centro de
+> massa de 518 para 546), não por olho.
+
+---
+
+### 5h.1 A LINHA É O CAMPO — e agora também é o cursor
+
+No Classic cada número era assim:
+
+```
+┌─────────────────────────────────────┐
+│ ONDA (ALTURA)              [  70  ] │   .prow          26px
+├─────────────────────────────────────┤
+│ ─────────●──────────────────────    │   .prow-slider   21px
+└─────────────────────────────────────┘
+```
+
+Dois objetos para uma coisa só, 47px. O 2.0 juntou os dois num cartão
+arredondado (seção 14) e chegou a 57px — **mais alto**, porque juntar
+visualmente não é juntar.
+
+Agora é uma caixa só, de 26px no Classic e 30px no 2.0:
+
+```
+┌─────────────────────────────────────┐
+│▓▓▓▓▓▓▓▓▓▓▓▓ ONDA (ALTURA)      70   │   .tnum
+└─────────────────────────────────────┘
+   ↑ o enchimento é a leitura de onde o valor está na faixa
+```
+
+O `<input type=range>` continua lá, do tamanho da caixa inteira e com
+`opacity:0`: é ele que arrasta, é ele que o teclado move com as setas, e é
+ele que o `bind()` do `type.js` já sabia ouvir — **nenhuma linha de lógica
+mudou**. Quem desenha é um `::before` cuja largura vem de `--fill`, escrito
+pelo JS a cada movimento. O número à direita fica por cima do range
+(`z-index:3`) e continua aceitando clique para digitar o valor exato.
+
+**A barra sai do ZERO, não da borda.** Faixa que atravessa o zero —
+DESLOCAR X de −800 a 800, ENTRELETRA de −120 a 300 — enchia da esquerda, e
+o valor 0 aparecia com a caixa 28% cheia. Mentira visual num controle que
+existe para dizer quanto. Agora `fill()` calcula onde o zero cai na faixa e
+cresce de lá para o lado que o valor tomou; faixa que não passa pelo zero
+(CORPO, de 12 a 600) segue enchendo da esquerda, como antes.
+
+Os outros três controles — menu, marca e cor — ganharam a MESMA caixa de
+26px, para a ficha ter um ritmo só. A marca e a cor são `<label>`, então a
+linha inteira é alvo: clicar no rótulo alterna.
+
+### 5h.2 As placas que já sabiam recolher
+
+`VE.panels.plate()`, `initFold()`, `foldAll()`, `unfoldAll()`, o alt+clique
+que deixa só uma aberta, o estado que sobrevive a recarregar — tudo isso
+existe em `js/panels.js` e a ficha do clipe usa desde sempre. A ficha da
+tipografia escrevia as placas à mão, sem o cabeçalho recolhível, e por isso
+as sete ficavam abertas para sempre. Trocar por `PN.plate(título, corpo)`
+foi o conserto mais barato desta passada e o de maior efeito: **2363 → 829px**.
+
+Novo em `panels.js`: **`P.foldDefault(chaves)`**, que recolhe uma lista de
+placas *uma vez*, na primeira visita, antes de o usuário ter opinião. O
+`type.js` chama com as seis que não são TIPO, guardado por uma bandeira
+própria no `localStorage` — a partir daí manda o que ele escolheu, e
+`unfoldAll()` não é desfeito no próximo desenho.
+
+### 5h.3 Seis famílias, um nível só
+
+As 54 ferramentas estavam em dois grupos: FORMA com 12 e **ANIMAÇÃO com 42
+num bloco indiviso** — 2193px de rolagem numa janela de 538, com ENTRA ESQ
+a quatro telas de LAÇO · NEON. O arquivo já separava as famílias, por
+comentário e pelo prefixo do id (`e_`, `s_`, `l_`, `c_`); a lista é que não.
+
+Agora são sete irmãs, todas do mesmo tipo, todas recolhem
+(MESAS chegou depois, em 5h.5):
+
+```
+MESAS       2   abrem uma folha por cima do palco (recortadas, à mão)
+FORMA      12   o desenho da letra
+TRAÇO       5   a letra sendo escrita — só nas famílias LAB
+ENTRADAS   18   como as letras chegam ao quadro
+SAÍDAS      5   como as letras vão embora
+LAÇOS      10   o que fazem enquanto estão no quadro
+PRONTOS     4   entrada, laço e saída num jogo só
+```
+
+**Um nível, não dois.** Grupo dentro de grupo seria uma árvore para
+procurar ferramenta, e ninguém procura ferramenta numa árvore. A distinção
+que importa — a primeira é desenho, as cinco seguintes são tempo — fica na
+ORDEM e num filete antes de TRAÇO.
+
+**O nome no cabeçalho, a frase no título de ajuda.** A primeira versão
+punha a frase inteira na linha e as seis se cortavam no meio: *"TRAÇO · a
+letra son…"*, *"PRONTOS · entrad…"*. Rótulo cortado não explica nada; só suja.
+
+**Procurando, tudo abre.** Esconder resultado de busca atrás de uma
+dobra é o pior que uma lista dobrável pode fazer. Conferido: buscar "onda"
+devolve 2 itens em 2 famílias, nenhuma fechada.
+
+### 5h.4 O que foi medido, e como
+
+O painel estrangula `requestAnimationFrame` e a decodificação de vídeo
+quando não está exibido — então o `canvas` fica em branco e o `toDataURL()`
+não prova nada. A prova de que os controles novos chegam ao motor foi
+chamando `VE.type.draw()` à mão e contando PIXEL DE TINTA:
+
+```
+ONDA          altura ocupada pela tinta   172px → 748px   (waveAmp 0 → 340)
+ALINHAMENTO   centro de massa horizontal  518px → 546px   (esquerda → direita)
+```
+
+Duas armadilhas no caminho da medida, as duas anotadas porque vão voltar:
+
+- **somar alfa não serve**: o fundo é opaco, então os 1.166.400 pixels do
+  quadro têm alfa 255 e a soma é constante. Quem conta é a LUMINÂNCIA;
+- **somar RGB também não serve** quando a letra é preta: preto sobre
+  transparente dá zero dos dois lados.
+
+Mais: `renderTools()` não relê o `localStorage` — o objeto de estado é lido
+uma vez no carregamento e escrito a cada clique. Testar mexendo no
+`localStorage` e chamando `renderTools()` não muda nada; tem de clicar.
+
+E uma armadilha de teste, não de código: o **boot chama `S.go('home')`
+sozinho** ao terminar (`shell.js`, fim da animação de arranque). Script de
+teste que navega antes disso é atropelado, e a vista volta ao índice sem
+que nada esteja quebrado. Espere `#boot` ficar `hidden` antes de navegar.
+
+### 5h.5 O menuzinho de cinco botões tinha duas coisas dentro
+
+Colado ao campo de texto havia uma coluna de cinco botões:
+
+```
+✂ LETRAS RECORTADAS      ← ferramenta: abre uma folha e FICA aberta
+✎ ESCREVER À MÃO         ← ferramenta: idem
+EXPLODIR LETRAS          ← comando: age uma vez e acabou
+ZERAR                    ← comando
+ALEATÓRIO                ← comando
+```
+
+Duas naturezas no mesmo menu. E o pior: as duas ferramentas de verdade — as
+únicas do laboratório em que se trabalha com a mão — estavam **fora do
+catálogo**, num canto onde ninguém procura ferramenta.
+
+**As duas mesas foram para a coluna da esquerda**, na família nova `MESAS`,
+primeira da lista, com o mesmo item das outras 54. São ferramentas de
+ESTADO: o item acende enquanto a mesa está aberta e clicar de novo fecha —
+por isso trazem símbolo (`✂`, `✎`) no lugar do número, que quer dizer "a de
+nº 7 do catálogo", e mesa não é isso.
+
+**Os três comandos foram para a barra do laboratório**, lado a lado, ao lado
+de TELA e ANIMAR. E o campo de texto ficou com a largura inteira.
+
+**Três acoplamentos que isto mexeu, todos anotados no código:**
+
+- `js/recorteui.js` e `js/tintaui.js` procuram `#tyRecorte` / `#tyTinta` para
+  marcar `.active`. Os botões eram estáticos e agora são desenhados por
+  `renderTools()` — o id foi junto, então acende o próprio item da lista, que
+  é onde a mão está olhando. Os dois módulos **não foram tocados**;
+- os mesmos dois prendem um clique naqueles ids ao carregar a página e marcam
+  `__rec` / `__tinta` para não prender duas vezes. A ordem de carregamento diz
+  que `prender()` roda antes e não acha nada; se um dia rodar depois,
+  prenderia um segundo clique e a mesa abriria e fecharia no mesmo gesto.
+  `renderTools()` põe a marca, e fecha essa porta;
+- a terceira coluna do `.fxitem` tem **12px** — a medida do quadradinho de
+  categoria. A etiqueta `MESA` pede 21 e era cortada (a `LAB` das cinco de
+  traço também, desde antes). Em `.tytools` a coluna passou a `auto`, com a
+  do meio em `minmax(0,1fr)` para não repetir a armadilha da seção 5b do 2.0.
+
+**E uma regressão que a medida pegou:** pondo as duas mesas no COMEÇO do
+vetor `TOOLS`, `BASE` — que é a `01` desde sempre — virou `03`, porque o
+número impresso em cada item é `TOOLS.indexOf(t) + 1`. As mesas foram para o
+FIM do vetor; a ordem de exibição vem de `TOOLFAMS`, onde `MESAS` é a
+primeira. Conferido: BASE 01, ONDA 02, ÍMÃ 12, e as mesas sem número.
+
+**Um defeito ANTIGO que só apareceu agora** — e é o argumento a favor de
+mostrar estado na interface. O recorte fechava a tinta ao abrir
+(`recorteui.js`); a tinta **não fechava o recorte**. As duas folhas ficavam
+empilhadas no mesmo palco. Enquanto os dois botões eram um menu solto, nada
+denunciava; com os dois na lista e **acesos os dois ao mesmo tempo**, a
+mentira virou visível no primeiro teste. Uma linha em `js/tintaui.js`.
+Conferido nos dois sentidos, e com as duas fechadas sobram zero folhas.
+
+### 5h.6 A MINIATURA DE CADA FERRAMENTA — e o motor emprestado
+
+O pedido dele: *"cada efeito tenha uma miniatura com o efeito em si, igual ao
+lab visual, porém maior o quadrado de visualização, já que estamos falando de
+letras"*.
+
+**O ponto de método, e é o que faz a peça funcionar: a miniatura sai do MESMO
+motor que desenha o palco.** Um renderizador pequeno escrito à parte teria de
+reimplementar onda, fatia, repetição, escrita de traço, as 40 animações e
+agora as quatro tramas — e mentiria no dia seguinte, na primeira vez que uma
+delas mudasse.
+
+Aqui o motor é **emprestado**. `T.miniatura(id, canvas)` guarda o estado do
+módulo (`cv`, `cx`, `W`, `H`, `P`, `letters`, `selLetter`, `fitScale`), aponta
+tudo para o canvas da miniatura, aplica a ferramenta, chama o `build()` e o
+`draw()` de sempre, e devolve tudo no lugar. Nada é duplicado, e o que a
+miniatura mostra é o que o palco vai fazer — por construção, não por
+disciplina.
+
+Tudo síncrono de propósito: um `await` no meio e o resto do laboratório leria
+o estado emprestado.
+
+**Três detalhes que o empréstimo exigiu:**
+
+- `build()` chama `renderLetterChips()` e `updateInfo()`, que escrevem na tela
+  de verdade. Uma bandeira `emMini` faz as duas voltarem cedo — senão a tira
+  de letras do palco piscava a cada miniatura desenhada;
+- `T.draw()` congela o tempo em 0 quando ANIMAR está desmarcado. Em 0 uma
+  ENTRADA ainda não começou, e a miniatura sairia **em branco**. Na miniatura
+  o tempo vem escolhido de fora, e cada família tem o seu instante:
+  entrada em 55% da duração, saída perto do fim, traço em 62%, laço em 0,9s;
+- `applyTool` misturava "mexer nos parâmetros" com "mexer no DOM e no
+  histórico". Virou `aplicar(t)` + `depois(t)`, sem DOM, e as duas metades
+  servem aos dois caminhos.
+
+**O tamanho.** A lista de estilos do vídeo tem 46×46 (2.0, seção 26), medido
+para reconhecer o pente do VHS e o verde do terminal — coisas de cor e de
+trama, que sobrevivem em quadrado pequeno. Letra é larga e precisa de mais.
+O quadro é 4:3 deitado: **64×48 no Classic, 88×66 no 2.0** (lá a coluna da
+tipografia tem 320px contra os 206 do Classic). O buffer é 176×132 nos dois,
+então nenhum serrilha. Medido: as fileiras ficaram todas com 83px, sem variar.
+
+**Uma armadilha de relógio, e é a parte que vale guardar.** A fila das
+miniaturas de efeito do vídeo usa `requestAnimationFrame`, e eu comecei
+copiando isso. rAF tem um defeito que aqui é fatal: **onde o navegador não
+está pintando, ele PARA** — aba de fundo, painel escondido, janela
+minimizada. Medido neste ambiente: um laço de rAF não completou um segundo em
+quarenta e cinco. A lista ficava em branco e nada no console dizia por quê.
+A fila passou para `setTimeout`, que é estrangulado mas nunca parado.
+
+**E uma segunda, do mesmo tipo.** A coluna tem altura ZERO no instante em que
+o laboratório abre, e um `IntersectionObserver` cuja raiz mede zero não vê
+nada entrar na tela. A primeira correção esperou em laço de `setTimeout(…,25)`
+— e caiu na mesma armadilha ao contrário: temporizador de aba escondida é
+preso em ~1s, então quarenta tentativas viravam quarenta segundos. Agora é um
+`ResizeObserver`, que avisa no instante exato em que a coluna ganha altura,
+sem laço e sem relógio.
+
+### 5h.7 A TRAMA — quatro efeitos de QUADRO, das referências
+
+Das capturas em `REFERENCIAS/LAB TIPOGRAFIA`. Nenhum deles cabe em
+`drawGlyph`, porque nenhum é efeito de LETRA: acontecem sobre a composição
+inteira, depois de todas as letras desenhadas. Um deles (TIRAS) precisa
+recortar o quadro em pedaços e movê-los, o que só se faz com o quadro pronto
+na mão. Por isso as letras vão para um buffer e a composição acontece depois.
+
+```
+PERSIANA   Dynamic Typography Studio — o quadro inteiro vira linha
+           horizontal; onde a linha cruza a letra, ela engrossa. O fundo
+           não fica limpo, fica PAUTADO, que é o que a referência faz
+TIRAS      Tactile Shredder 2 — o papel cortado em tiras verticais que se
+           separam, escorregam e não voltam a encostar. `tirasIrreg` faz a
+           largura variar: tira toda igual lê como grade, não como papel
+BRILHO     Dissolve — três cópias desfocadas em `lighter` por baixo da
+           nítida. Luz fica embaixo do que a emite
+GRÃO       Dissolve / Analog Typewriter — o ruído que tira da letra a
+           limpeza de vetor
+```
+
+**Dois buffers, não um.** TIRAS recorta o quadro e PERSIANA pauta o que
+sobrou; com as duas ligadas, fazer os dois no mesmo buffer é ler dele
+enquanto se escreve nele. A primeira versão fazia isso e funcionava por
+acidente. São dois elos de corrente, cada um com o seu.
+
+**O grão, em duas versões.** A primeira era ruído cinza uniforme composto em
+`overlay`, e sobre papel claro isso é quase a identidade: medido, a variância
+do quadro foi de 2342 para 2363 — vinte e um, em dois mil. Grão que não se vê
+não é grão. Agora são pontos pretos e brancos com alfa esparso (`random²`:
+muitos fracos, poucos fortes), compostos por cima. Medido num retalho liso do
+fundo, **na curva inteira** e não num ponto:
+
+```
+grão      0     0,2     0,45     0,9
+variância 0   169,1    857,2   3428,6      e volta a 0 ao desligar
+```
+
+**E o grão respeita o alpha.** Com FUNDO TRANSPARENTE marcado ele passa a
+`source-atop`: só vale onde já há tinta. Espalhá-lo pelo quadro encheria de
+pontinhos opacos justamente a região que o LAB 03 promete entregar vazia —
+a promessa é png com alpha para entrar por cima do vídeo.
+
+**Custo medido**, quadro de 1080², orçamento de 16,7ms a 60fps:
+
+```
+sem trama 0,11 ms · persiana 1,07 · tiras 1,07 · brilho 0,34 · grão 0,10
+```
+
+**A miniatura do GRÃO saía idêntica à da BASE**, e por um motivo correto: na
+miniatura o fundo é transparente, e com transparência o grão só existe dentro
+da letra, onde não se vê. Duas ferramentas — GRÃO e BRILHO — pedem fundo na
+prévia (`miniFundo`). Prévia que não mostra o efeito não é prévia.
+
+### 5h.8 O Ctrl+Z que nunca funcionou, o ZERAR que zerava pela metade, e as duas mesas de época errada
+
+Três pedidos numa mensagem só, e o primeiro descobriu um defeito antigo.
+
+#### O Ctrl+Z estava morto no LAB 03
+
+`js/app.js`, no `initKeys()`, tinha esta ordem:
+
+```js
+if (!VE.project) return;              ← a guarda
+if (VE.shell.view === 'type') { …Ctrl+Z da tipografia… }
+```
+
+`VE.project` é a **composição de vídeo**. Quem entrasse pelo índice direto na
+tipografia — que é o caminho normal de quem vai fazer um título — não tinha
+projeto nenhum, a guarda devolvia, e Ctrl+Z **não fazia absolutamente nada,
+sem aviso**. O bloco do áudio já estava certo, acima da guarda, com o
+comentário explicando exatamente por quê; o da tipografia não.
+
+O bloco subiu. A tipografia tem histórico próprio (`hist`/`hidx` em
+`js/type.js`) e não depende de projeto de vídeo para coisa nenhuma.
+Conferido com `VE.project` nulo: onda 250 → 0 no Ctrl+Z.
+
+**E Ctrl+Z passou a saber onde a mão está.** Com uma mesa aberta ele desfaz o
+gesto DELA — o traço que acabou de sair da caneta, o arrasto que acabou de
+sair do dedo — e não o parâmetro de antes de a mesa abrir. Duas peças novas:
+
+- `VE.tinta.desfazerTraco()` (`tintaui.js`): o modelo já tinha
+  `T.desfazer(obj)`, faltava o gesto que repinta e recontа;
+- `VE.recorteui.desfazer()` (`recorteui.js`): **o recorte não tinha desfazer
+  nenhum**. Arrastou uma letra para o lugar errado e o único caminho de volta
+  era ENDIREITAR, que devolve TODAS — perdendo as outras vinte que estavam
+  certas. O histórico guarda só o que o gesto muda (posição e giro de UM
+  pedaço), trinta passos. É uma mesa de arrastar letra, não um editor de
+  texto. Ganhou botão `↶ DESFAZER` também: atalho sem botão é atalho que
+  ninguém descobre.
+
+#### O ZERAR zerava um terço
+
+O botão ZERAR chamava `applyTool('reset')`, que é a ferramenta **BASE** do
+catálogo — e BASE limpa a deformação e mantém fonte, cor, animação e agora as
+quatro tramas. Está certo para uma ferramenta de catálogo; está errado para um
+botão chamado ZERAR.
+
+Agora ZERAR é `T.zerarTudo()`: devolve **tudo** ao estado de fábrica menos o
+texto, que é dele e não é efeito. O estado de fábrica é uma cópia de `P`
+tirada no carregamento, e não uma lista escrita à mão de "o que zerar" —
+lista se esquece de crescer, e cresceu quatro vezes só nesta passada.
+
+BASE continua no catálogo, fazendo o que sempre fez. São duas coisas
+diferentes e agora dizem coisas diferentes.
+
+Conferido na cadeia inteira, sem projeto de vídeo aberto:
+
+```
+GRÃO     → onda=70  grão=0.45
+ZERAR    → onda=0   grão=0        (e o texto ficou)
+Ctrl+Z   → onda=70  grão=0.45     (desfaz o ZERAR)
+Ctrl+Z   → onda=70  grão=0
+Ctrl+Y   → onda=70  grão=0.45
+```
+
+#### As duas mesas estavam com o desenho de outra época
+
+O diagnóstico dele: *"esse estilo de menu faz parte do site antigo, não
+atual"*. O motivo é curto de dizer — **`css/lab2.css` não tinha uma única
+regra para `.tinta-bar`**. Os dois painéis caíam inteiros no desenho do
+Classic: filete de 2px, sombra dura deslocada, faixa vermelha de cabeçalho, e
+a fileira de controle em três pedaços (rótulo, trilho fino, número), que é
+exatamente o que a ficha da direita deixou de ser em 5h.1.
+
+Um painel do laboratório com dois vocabulários de controle é um painel de duas
+épocas, e é isso que a captura dele mostrava.
+
+Agora as duas mesas seguem o que o resto já diz:
+
+- **a linha É o campo**, no Classic e no 2.0: caixa de 26/30px, rótulo
+  embutido à esquerda, valor à direita, e a caixa se enche até onde o valor
+  está na faixa. O `<input type=range>` continua por baixo, invisível, e
+  nenhum dos dois arquivos trocou de evento — só passaram a escrever `--fill`;
+- **o que flutua é vidro** (2.0, seção 17): canto de 16px, desfoque, sombra
+  difusa. Estes dois flutuam sobre o palco, então não são chassi opaco;
+- **o cabeçalho é título, não faixa de cor.** A cor do canal aparece no ponto
+  e no botão principal, que é onde ela informa em vez de gritar;
+- a marca virou interruptor e os botões viraram pílula, como na ficha.
+
+**Uma armadilha de três pixels:** a caixa tem o valor preso à direita em 52px,
+e a marca e a cor não têm valor nenhum. Sem `.ti-row:not(:has(input[type=range])) > b {display:none}`
+sobrava um `<b>` vazio ocupando aqueles 52px e o rótulo ficava espremido no
+que restava.
+
+### 5h.9 O painel que se move, e a ficha do vídeo com o controle da tipografia
+
+#### As mesas saíram do canto
+
+As duas mesas nasciam presas no canto de cima à direita do palco, e era onde
+o Bruno esbarrou: com a folha aberta ali, metade das letras fica por baixo do
+painel — e as letras são o que ele foi ver.
+
+`T.arrastavel(painel, chave)` em `js/type.js`, usado pelas duas. A pega é o
+CABEÇALHO, nunca o corpo (que é todo controle) nem o botão SAIR (que fecharia
+no meio do gesto). O lugar fica guardado por painel; duplo clique devolve ao
+canto, que é o mesmo gesto dos divisores da mesa de edição.
+
+**Uma guarda que a medida pediu:** o palco às vezes ainda não foi medido —
+aba recém-aberta, painel escondido — e aí todos os retângulos vêm zero. Sem
+guarda o limite prende tudo em 0,0, o painel salta para o canto de cima à
+esquerda **e guarda essa posição**, que volta na abertura seguinte. É a mesma
+armadilha de medida que a folha das duas mesas já tinha (`medidaDoPalco`), e
+aqui ela custaria o lugar que ele escolheu. Conferido: arrastou de (280,10)
+para (40,256), guardou, e o duplo clique devolveu ao canto limpando o
+registro.
+
+#### A ficha do vídeo ganhou a linha que é o campo
+
+Ele viu o controle da tipografia, gostou, e pediu o mesmo na ficha do vídeo.
+
+**Não dá para refazer os construtores, e não é para refazer.** Quem desenha
+naquela coluna são cinco arquivos, com cronômetro de keyframe, linha de áudio
+reativo, máscara e gráfico pendurados na estrutura exata que eles emitem.
+Mexer nos cinco para mudar DESENHO seria refazer arquitetura para repaginar —
+o erro que o `RGB_LAB-2.0.md` abre dizendo que não se comete.
+
+Então: os cinco continuam emitindo o que sempre emitiram, o CSS junta o par
+numa caixa só, e o JS entra apenas para dizer QUANTO encher.
+
+```
+panels.js   fillDe(range)      calcula --fill e --fill-x
+            P.pintarFills(box) pinta todos de uma vez
+            um MutationObserver no #insp cobre os cinco arquivos
+            sem que nenhum deles saiba que este desenho existe
+```
+
+**São DUAS estruturas, não uma** — e descobri isso ao medir. A ficha do clipe
+faz `.prow` + `.prow-slider` (`panels.js`); a **pilha de efeitos**, que é
+justamente o que o Bruno fotografou, faz `.mprop-h` + `.mrange`
+(`motion.js`). O primeiro CSS pegou só a primeira e a captura dele continuava
+igual. `fillDe` trata as duas: o desenho é o mesmo, a caixa a encher é que
+muda de nome.
+
+**Reservar pixels foi a abordagem errada.** A primeira versão deixava uma
+faixa de 76px à direita fora do cursor invisível, para o número e o
+cronômetro continuarem clicáveis. Funciona quando os dois estão à direita —
+e na pilha de efeitos **o cronômetro fica à ESQUERDA**, antes do rótulo.
+Medido: cronômetro em 1026→1046 debaixo de um cursor que ia de 1014 a 1158.
+O losango de keyframe, que é o controle mais importante da ficha, tinha
+parado de responder ao clique.
+
+Agora o cursor cobre a caixa inteira e quem precisa de clique próprio sobe
+ACIMA dele (`z-index`). Empilhar não depende de onde a peça está. Conferido
+com `elementFromPoint` nos três alvos: número → `mval`, cronômetro →
+`stopw`, resto da barra → `mrange`.
+
+#### Um defeito de dez anos que só apareceu porque o enchimento precisa medir
+
+```js
+'motion.x': { …, min: -W,                       ← W é uma FUNÇÃO
+'motion.y': { …, min: function(){return -H();}, ← escrito certo
+```
+
+Menos-função dá `NaN`. O atributo saía `min="NaN"`, e navegador que recebe
+`min` inválido usa **zero**. O cursor de POSIÇÃO X nunca conseguiu ir para a
+esquerda do centro; o de POSIÇÃO Y, na linha de baixo, sempre funcionou.
+
+Ninguém tinha visto porque o cursor antigo não precisava de `min` e `max`
+para se desenhar — o navegador desenhava a trilha igual de qualquer jeito. O
+enchimento precisa, e por isso a linha apareceu vazia e denunciou. Conferido
+depois: `min="-1280"` numa tela de 2560, do lado de `min="-720"` numa altura
+de 1440.
+
+**A lição, que é a mesma de sempre neste projeto:** controle que não é medido
+mente calado. Foi preciso um desenho que DEPENDE do número para o número
+errado aparecer.
+
+### 5h.10 O POLAROID saiu da barra de transporte
+
+Pedido curto dele: *"esse polaroid e revelar pode tirar dessa barra de player,
+não tem pq estar ali"*. Está certo — aquela barra é onde se ANDA NO TEMPO
+(tocar, avançar quadro, laço, volume), e abrir uma câmera não é andar no
+tempo.
+
+O comentário em `js/app.js` justificava as duas portas dizendo que o polaroid
+"é matéria nova saindo de uma máquina, e não um efeito sobre um clipe". Isso
+justifica a porta na **grade FONTE**, que é onde se procura matéria nova — e é
+a que ficou. Não justificava a segunda.
+
+**O que a remoção quase quebrou.** `initSources()` ligava os ouvintes assim:
+
+```js
+$('#polAbrir').addEventListener('click', abrirPolaroid);
+```
+
+Alvo que saiu do documento devolve `null`; `null.addEventListener` é
+TypeError; e um TypeError no meio de `initSources()` leva junto **tudo que é
+ligado depois dele** — o resto das fontes, o transporte, os atalhos de
+teclado. Tirar um botão da tela derrubaria o laboratório inteiro, e o console
+diria apenas uma linha sobre `polAbrir`.
+
+Entrou `ao(seletor, evento, fn)`, que não reclama de alvo ausente. As portas
+duplicadas da **mesa** e do **mosaico** passaram a usá-lo também: são a mesma
+classe de botão — máquina com porta em dois lugares — e a próxima a sair pode
+ser uma delas.
+
+Conferido: `#polAbrir` fora dos dois HTML (261 ids contra 262), `#srcPolaroid`
+ainda abrindo a câmera, mesa e mosaico de pé na barra, e o arranque inteiro
+sem erro no console.
+
+### 5h.11 O que NÃO foi feito
+
+- **Só o LAB 03.** Os controles novos (`.tctl`) só são emitidos pelo
+  `type.js`. A ficha do vídeo e a do áudio continuam em `.prow` +
+  `.prow-slider`, intactas — conferido: zero `.tctl` vazando para elas. Se
+  a ideia agradar, é o mesmo conserto em `panels.js` e `motion.js`;
+- **o rodapé SAÍDA não foi tocado.** São ~180px presos no pé da coluna, com
+  duas frases de ensino sempre visíveis. Encolhê-lo levaria a coluna de
+  ferramentas de 1,16 para ~1,00 tela, mas as frases são dele e ele não
+  pediu para tirá-las;
+- **o número fica à direita, não centrado.** Na referência o valor é
+  centrado na barra; aqui ele segue a convenção que o próprio 2.0 já tinha
+  (seção 14), e de quebra os 30 números ficam alinhados numa coluna, que é
+  o que serve para varrer a ficha com o olho.
+
+---
+
+## 5i. O LABORATÓRIO DE ÁUDIO — o rack foi para a coluna
+
+> ### ESTADO ATUAL
+>
+> ```
+> index.html    #propsAudio — corpo PRÓPRIO da coluna da direita, permanente
+> js/shell.js   renderAudioInspector escreve só a cabeça (#auFicha);
+>               S.go troca #props ↔ #propsAudio
+> js/audio.js   clicar no NOME abre um módulo desligado sem ligá-lo
+> css/labs.css  o rack numa coluna · desligado mostra só o cabeçalho
+> ```
+>
+> **O diagnóstico dele, e estava certo:** *"repara só o tamanho que o cadeia
+> ocupa, e em questão de hierarquia os efeitos e suas configs são bem mais
+> importantes — olhe como eles estão espremidos no inferior da tela"*.
+>
+> A coluna da direita mostrava os **34 módulos como lista de texto** com
+> ON/OFF ao lado, e os controles de verdade viviam numa faixa no PÉ da tela,
+> em três colunas de 228px. Hierarquia ao contrário: o que não se ajusta
+> ocupava a coluna, o que se ajusta ficava espremido embaixo.
+>
+> ```
+>                          antes            depois
+> coluna da direita        34 linhas mortas  o rack, com os controles
+> pé da tela               o rack espremido  (nada — o centro é a onda)
+> rolagem da coluna        —                 8630px → 1773px  (21,3 → 4,4 telas)
+> ```
+
+---
+
+### 5i.1 Por que um corpo próprio, e não o `#props`
+
+O `#props` é reescrito por `innerHTML` a cada troca de vista. Os módulos do
+rack são construídos uma vez e guardam estado — trilhos, travas de mutação,
+posição na cadeia. Pôr o rack dentro do `#props` significaria destruí-lo toda
+vez que o Bruno fosse ao vídeo e voltasse.
+
+`#propsAudio` é um segundo corpo da mesma coluna, permanente, e o `S.go`
+mostra um ou outro. Conferido na ida e volta: 34 módulos ainda lá.
+
+### 5i.2 O que saiu, e por quê
+
+A placa CADEIA da ficha listava os 34 módulos com ON/OFF ao lado. O rack logo
+abaixo mostra **os mesmos módulos, na mesma ordem, com o interruptor que de
+fato liga** — a lista era uma cópia sem poder. Saiu.
+
+O mapa do caminho do sinal continua no bloco **CADEIA da coluna da esquerda**,
+onde ele tem três linhas (só o que está ligado, na ordem, e clicar leva ao
+módulo). Ali o tamanho é o que aquilo merece.
+
+### 5i.3 Módulo desligado mostra só o cabeçalho
+
+Com o rack na coluna, medi de novo: **8630px de rolagem, e 8040 deles eram os
+trinta módulos DESLIGADOS** — 93% da coluna para controles de coisas que não
+estão na cadeia. Era a mesma parede da lista de texto, agora com trilhos.
+
+Desligado mostra só o cabeçalho (38px); ligar abre (177px). De 21,3 telas para
+4,4.
+
+**E clicar no NOME abre sem ligar.** Às vezes se quer ver o que um módulo tem
+antes de pô-lo na cadeia, e ligá-lo para espiar obrigaria a recalcular o áudio
+inteiro — que, medido na passada anterior, custa segundos.
+
+### 5i.4 O que este trabalho NÃO consertou
+
+**A lentidão continua igual.** Ela é do motor, não do desenho: toda mudança
+chama `A.rerender()`, que recomeça do áudio ORIGINAL e refaz a cadeia inteira
+sobre o arquivo inteiro. Medido num áudio de 1 minuto:
+
+```
+cadeia vazia    389 ms      DISTORÇÃO      2 201 ms
+ATRASO          769 ms      REVERBERAÇÃO   4 445 ms
+BITCRUSH      1 068 ms      ESPECTRAL     14 742 ms
+FILTRO        1 316 ms      seis juntos    3 432 ms
+```
+
+Mais 220ms de espera antes de começar. Mexer no último módulo de uma cadeia de
+seis recalcula os seis.
+
+**O conserto proposto, e ainda não feito:** guardar o buffer de ENTRADA de cada
+passo. Mexer no módulo 6 recalcularia só o 6 — de 3,4s para ~0,5s. Custo:
+memória (um buffer por passo; 60s estéreo a 48k = 23MB cada). Segundo conserto,
+independente: calcular a prévia só no trecho que está tocando enquanto se
+arrasta, e o arquivo inteiro quando se solta.
+
+Não foi feito porque mexe no caminho central do motor de áudio, e o áudio é a
+parte deste projeto que nunca foi OUVIDA por mim — só medida. Erro ali é erro
+que eu não detecto.
+
+---
+
+### 5i.5 Três defeitos que ele achou olhando, e um deles era `:has()` dentro de `:has()`
+
+**1 · A barra de enchimento não aparecia no áudio.** O maquinário que escreve
+`--fill` (ouvinte de arraste + observador de redesenho) estava dentro do
+`P.initFold()` — e `initFold` é chamado pela ficha do vídeo e pela da
+tipografia, **nunca pela do áudio**, que não tem placa para recolher. Quem
+entrasse direto no LAB 02 não tinha nem ouvinte nem observador, e nenhuma
+barra se enchia. Ligar o enchimento a quem dobra placa era acoplar duas coisas
+sem relação nenhuma. Virou `P.initFills()`, com marca própria, chamado pelas
+três fichas.
+
+**2 · O menu ESPAÇO do ATMOSFERA não abria.** A regra que junta o par
+`.prow` + `.prow-slider` numa caixa só juntava TUDO e depois abria exceção
+para o que não é faixa (menu, cor, texto). A exceção tinha especificidade
+MENOR do que a regra que deveria vencer: o menu recebia `height:0` e
+`pointer-events:none`. Aparecia na tela e não abria — que é o pior tipo de
+defeito, porque some da vista e fica só no comportamento.
+
+A condição passou para a PRÓPRIA junção: só junta o par cujo `.prow-slider`
+tem cursor dentro. Sem exceção, não há exceção que perca.
+
+**3 · E a primeira correção do 2 foi escrita com selector inválido.**
+Escrevi `.prow:has(+ .prow-slider:has(> input[type=range]))` — **`:has()`
+dentro de `:has()` é proibido em CSS**. O navegador descarta a regra inteira
+em silêncio, e as vinte e três regras da junção morreram de uma vez: todas as
+linhas de todas as três fichas voltaram ao desenho de duas linhas. O defeito
+apareceu na tela na conferência seguinte, e a chamada a `matches()` no console
+disse o motivo em uma linha: *"is not a valid selector"*.
+
+A forma certa é um `:has()` só, com seletor relativo composto:
+
+```css
+.prow:has(+ .prow-slider > input[type=range])
+```
+
+**A lição:** `:has()` que não casa não avisa. Um seletor inválido não aparece
+no console, não quebra nada e não deixa rastro — a regra simplesmente não
+existe. Vale conferir com `el.matches(seletor)` quando um `:has()` complexo
+"não pega": ali o erro sai escrito.
+
+**4 · A busca e os botões do rack ganharam peso.** Estavam desenhados como
+rodapé — texto miúdo e cinza, sem caixa — no alto de uma coluna com 34
+módulos, que é onde a busca é a ferramenta mais usada. A busca virou campo de
+38px com a lupa na cor do canal; os três graus de mutação viraram pastilhas, e
+o EXTREMO já chega colorido porque é o que mais muda o som; as famílias
+viraram pílulas, e a escolhida fica cheia na cor do canal.
+
+---
+
+### 5i.6 A coluna do áudio perdeu o cabeçalho, e o MANDAR PRA TIMELINE nunca funcionou sozinho
+
+**O pedido:** tirar o bloco *"SEM ÁUDIO / carregue um arquivo, grave o
+microfone…"* do topo da coluna e subir tudo sobre os módulos.
+
+Ele estava certo por um motivo que vale além deste caso: **os dois blocos que
+ficavam ali eram repetição.**
+
+- o cabeçalho com nome, duração, canais e taxa repetia a barra do centro, que
+  já escreve `TOM DE TESTE · 2 CANAIS · 48000 HZ · 4.00S`;
+- o parágrafo de instrução repetia a grade FONTE da coluna ao lado, que diz a
+  mesma coisa com quatro botões grandes: ARQUIVO, MICROFONE, TOM TESTE,
+  DO VÍDEO.
+
+Dois blocos de repetição empurrando para baixo a única coisa daquela coluna
+que se ajusta. O que sobrou do cabeçalho cabe onde já havia lugar: o nome do
+arquivo virou o `#inspId`, que é uma palavra no cabeçalho da coluna.
+
+As duas saídas (MANDAR PRA TIMELINE, EXPORTAR WAV) foram para o **pé da
+coluna da esquerda**, como a SAÍDA do laboratório de tipografia.
+
+**E aí apareceu um defeito que nunca ninguém tinha visto.** `A.sendToTimeline`
+chamava `VE.addMedia`, que lê `VE.project.tracks` — sem checar se existe
+projeto. Quem entra pelo índice direto no LAB 02 e monta um som **não tem
+composição de vídeo nenhuma**, que é o caso normal e não a exceção: o botão
+estourava num `TypeError` dentro de uma promessa, que não aparece na tela.
+O botão simplesmente não fazia nada.
+
+Passou despercebido porque o botão vivia dentro da ficha, que só aparece com
+áudio carregado, e porque erro em promessa é silencioso. Pô-lo num lugar fixo
+e apertá-lo na conferência bastou para ele cair.
+
+Uma linha, e o laboratório de tipografia já fazia exatamente isto na mesma
+situação (`if (!VE.project) VE.app.ensureProject(...)`). Conferido: sem
+projeto aberto, apertar MANDAR PRA TIMELINE cria a composição e põe o clipe.
+
+---
+
+## 5j. A MONTAGEM DE ÁUDIO
+
+> ### ESTADO ATUAL
+>
+> ```
+> js/audiotl.js   modelo + janela. VE.audiotl
+> css/labs.css    .atl-*   ·  css/lab2.css: o mesmo no desenho do 2.0
+> porta           FERRAMENTAS do LAB 02, ao lado do sonógrafo e da cifra
+> ```
+>
+> Uma linha do tempo **só de som** dentro do laboratório de áudio: várias
+> pistas, vários trechos, arrastar, cortar, sobrepor, mudo por pista. Nasce
+> com duas pistas — VOZ e TRILHA.
+>
+> **A saída que ele pediu:** botão direito num trecho → *"Mandar pra ÁUDIO 1
+> — LAB 01"*, uma entrada por pista de áudio existente, com a contagem de
+> clipes ao lado. Não há tipo de pista "voz" no laboratório de vídeo (há
+> VÍDEO, ÁUDIO e EFEITOS), então o destino é uma pista de ÁUDIO escolhida
+> pelo nome — quem decide qual delas é a da voz é ele.
+
+---
+
+### 5j.1 Por que não reaproveitar a linha do tempo do LAB 01
+
+Aquela é uma mesa de VÍDEO. Um clipe dela é fonte com recorte, transição,
+efeitos, máscara, keyframes e modo de mistura, e boa parte daquele código
+existe para desenhar miniatura de quadro. Nada disso vale para um pedaço de
+som.
+
+Aqui um clipe tem **quatro campos**: buffer, começo, duração e de que ponto
+do buffer ele parte. Com quatro campos o desenho pode ser simples, e o
+arquivo inteiro — modelo e janela — cabe em um lugar só.
+
+**O que esta janela NÃO faz, de propósito:** efeito por trecho. O tratamento
+do som é o rack, que já existe e é de onde o material sai. Aqui se ARRUMA no
+tempo; lá se TRATA.
+
+### 5j.2 Cortar sem copiar amostra
+
+`M.cortar` não fatia o buffer: nasce um segundo trecho apontando para o
+**mesmo** buffer, com a `entrada` deslocada. Conferido: depois de cortar,
+`todos[0].buf === todos[1].buf` é verdadeiro, e as entradas ficam 0 e 2 num
+corte no meio de quatro segundos. Cortar dez vezes um arquivo de trinta
+minutos continua custando zero de memória.
+
+O mesmo campo `entrada` é o que faz aparar pela borda direita ser barato, e é
+o que o recorte para o LAB 01 lê para mandar só o pedaço escolhido — mandar o
+buffer inteiro seria mandar o que ele já decidiu não usar.
+
+### 5j.3 Quem mistura é o navegador
+
+`M.mixar()` monta um `OfflineAudioContext`, agenda cada trecho como uma fonte
+com o seu ganho no instante certo, e pede o render. Somar amostra a amostra em
+JavaScript seria reimplementar — mal — o misturador nativo que já existe.
+
+A taxa e o número de canais saem dos próprios trechos, não de um valor fixo:
+mistura a 44,1k quando o material é 44,1k, a 48k quando é 48k.
+
+**Tocar é tocar a MISTURA**, não os trechos soltos. É mais simples de acertar
+e é exatamente o material que sai na exportação e no envio: o que se ouve é o
+que sai.
+
+### 5j.4 O que foi medido
+
+```
+abrir a janela        2 pistas (VOZ, TRILHA)
+pôr o áudio da mesa   2 trechos · 8,00 s
+cortar no meio        3 trechos · 8,00 s  (duração total não muda)
+corte sem copiar      buf compartilhado, entradas 0 e 2
+mover                 start 0 → 3,5
+misturar              8,00 s · 2 canais · 44100 Hz
+botão direito         Cortar · Duplicar · 2 destinos · Apagar
+mandar (sem projeto)  criou a composição e pôs o clipe
+mandar (com projeto)  ÁUDIO 2 foi de 0 para 1 clipe, start 4, dur 4
+```
+
+### 5j.5 O que ficou de fora
+
+- **ganho por trecho** existe no modelo e ainda não tem controle na janela;
+- **encaixe** (snap) ao começo do trecho vizinho e à grade da régua;
+- **desfazer** dentro da janela — hoje o Ctrl+Z do laboratório não alcança a
+  montagem;
+- **onda desenhada dentro do trecho**: o bloco é um retângulo com o nome. Com
+  a onda dentro dá para cortar no lugar certo olhando, que é como se corta
+  som de verdade.
+
+---
+
+## 5k. O ESPECTROGRAMA DO ARQUIVO, E O VAZIO QUE EU MESMO ABRI
+
+> ### ESTADO ATUAL
+>
+> ```
+> js/audio.js    fazerEspectro() · desenharEspectro() · A.limparEspectro()
+> index.html     #auSpec, dentro do mesmo .wave-wrap da onda
+> css/labs.css   onda 2/3 · espectrograma 1/3, mesma largura
+> ```
+
+---
+
+### 5k.1 O vazio era meu
+
+Ele mandou a captura do LAB 02 com um retângulo preto ocupando a tela e
+perguntou o que pôr ali. Medido antes de responder:
+
+```
+centro do LAB 02   874px
+  barra              31
+  onda              187
+  transporte         37
+  analisador        619   ← 71% da tela
+```
+
+Quando o rack saiu do centro (5i), dei a sobra ao **analisador** — e ele foi
+de 52px para 619. Só que espectro em tempo real não melhora com 619px de
+altura: fica um retângulo quase todo vazio. **A sobra tinha ido para a peça
+errada.**
+
+A sobra passou para a **onda**, que é o documento deste laboratório: 187 →
+560px. O analisador voltou a ser faixa (96px), que é o tamanho dele.
+
+**E havia um segundo passo, que só apareceu ao conferir.** `drawWave` tinha
+`var H = 186` escrito à mão e escrevia a altura no `style` do canvas — então
+a onda continuava desenhada numa tira no alto e o resto ficava branco. O
+vazio só tinha trocado de dono. Agora a altura vem do espaço que há.
+
+### 5k.2 Por que um espectrograma NOVO, se já havia um
+
+O analisador da barra de baixo tem um modo `spectrogram`. Ele **rola**: anda
+um pixel por quadro e desenha a coluna nova na direita. Isso quer dizer que
+
+- só existe enquanto toca;
+- não está preso ao tempo do arquivo — a coluna x não é o instante x;
+- some quando se para.
+
+Dá para **acompanhar**, não para **ler**. O que faltava era o mapa tempo ×
+frequência do arquivo INTEIRO, dividindo a régua horizontal com a onda: é
+assim que se acha o sibilante, o zumbido de rede, onde a voz entra, onde o
+ruído de fundo sobe. Olha-se o mapa para achar e corta-se na onda, no mesmo x.
+
+A seleção e o cursor são irmãos absolutos da caixa, então já cobrem os dois
+de graça — não foi preciso escrever nada para eles.
+
+**Nada de FFT nova:** `VE.adsp.fft` e `VE.adsp.hann` já existiam, com
+tabelas memorizadas por tamanho, e são as mesmas que os módulos espectrais
+usam.
+
+### 5k.3 A escala que saturava
+
+Primeira versão: magnitude crua da FFT, faixa `(dB + 90) / 90`. Medido, uma
+senoide dava magnitude 175 — **44,9 dB** — e a escala saturava em 1 para
+quase tudo. O mapa saiu um bloco verde uniforme: **13.713 de 13.715 pixels
+no máximo**. Escala que satura não é escala, é uma cor só.
+
+A magnitude sobe com o tamanho da FFT e precisa ser dividida por `N/2`. Assim
+um seno de fundo de escala dá 1,0 → 0 dB, e a faixa `(dB + 80) / 80` cobre
+oitenta decibéis de verdade. Depois da correção: 88% dos pixels com alguma
+tinta, variância 408 — um mapa com estrutura, e não um retângulo.
+
+**Duas escolhas de leitura**, as duas deliberadas:
+
+- **eixo de frequência comprimido** (`f^2.2`): voz e instrumento vivem
+  embaixo, e uma escala linear joga tudo isso nos primeiros pixels e gasta
+  metade do desenho no agudo, onde quase nada acontece;
+- **densidade, nunca arco-íris**: a cor vai do `--paper` ao `--ch-audio`.
+  Arco-íris inventa fronteira onde a intensidade é contínua.
+
+### 5k.4 O custo, e por que ele não trava a tela
+
+```
+900 colunas × FFT de 1024      301 ms de cálculo
+fatias de 12ms, cedendo a vez  a interface nunca prende
+recalcula quando?              só quando o BUFFER é outro
+```
+
+Arrastar o cursor, mexer na seleção ou redimensionar a janela **não** refazem
+mil FFTs — o desenho na tela é um `drawImage` do que já está pronto.
+
+E os 301ms **não crescem com a duração do áudio**: são sempre 900 colunas,
+seja o arquivo de quatro segundos ou de uma hora. O que muda é quanto tempo
+cada coluna representa.
+
+### 5k.5 A paleta assada, e o botão CLARO/NOTURNO
+
+O mapa é calculado uma vez e guardado como imagem — com as cores de então
+**assadas dentro**. Trocar de tema não o repintaria sozinho: ficaria tinta
+sobre papel dentro de um laboratório escuro. `S.setMode` joga o mapa fora, e
+ele se refaz com as cores de agora. Conferido: fundo 255 no claro, 19 no
+noturno, com o aviso `CALCULANDO O ESPECTROGRAMA…` no intervalo.
+
+### 5k.6 O que ficou de fora
+
+- **régua de tempo com números** sobre a onda. Hoje há dez divisões e nenhum
+  número: não dá para saber onde está 1:20. É a próxima que eu faria;
+- **medidores permanentes** de pico e RMS, que hoje só aparecem se você
+  escolher aquele modo do analisador;
+- **clicar no espectrograma para posicionar o cursor** — hoje ele só lê. A
+  onda acima já faz isso, e no mesmo x, então a falta é pequena.
+
+---
+
+## 5l. O TUBO, O CODEC, O CUPOM E A VISÃO DE MÁQUINA (vigésima quinta passada)
+
+O Bruno mandou seis capturas de uma série de estética audiovisual — Datamosh,
+CRT, Receipt Paper, Depth Map, Blob Tracking, e um CRT verde de Photoshop —
+e duas referências abertas: a ferramenta de CRT da **tooooools.app**
+(`effects/crt`) e o **Supermosh** (`supermosh.github.io`, GPL). O pedido:
+*"insira esses efeitos no site, pesquise, estude o site e as predefinições"*.
+
+Cinco efeitos, três arquivos de catálogo e dois analisadores:
+
+```
+js/fx14.js          CRT / TUBÃO (reconstruído)  ·  DATAMOSH (reconstruído)
+js/fx15.js          PAPEL TÉRMICO / CUPOM
+js/fx16.js          MAPA DE PROFUNDIDADE (I.A.)  ·  RASTREIO DE MANCHAS (blob)
+js/profundidade.js  o analisador da profundidade — Depth Anything V2 no navegador
+js/manchas.js       o analisador das manchas — componentes conexos e rastreio
+```
+
+Os dois primeiros já existiam (`crt` e `datamosh` em fx2.js, filtros de
+aparência de 2025) e foram refeitos PELO MECANISMO com os mesmos ids, como o
+VHS na 4y — projeto salvo continua achando os dois. Os blocos antigos saíram
+de fx2.js; o estilo `mosh` foi reajustado para o vocabulário novo.
+
+### 5l.1 O que foi lido das referências, e o que não foi
+
+**tooooools/crt.** O site é um app Next.js; o shader vive em texto legível
+dentro do bundle, e os padrões de fábrica no estado inicial da página. Foi
+lido o MECANISMO e os NÚMEROS — e escrito daqui, no formato do laboratório
+(GLSL ES 3.0, três passadas, PRELUDE). Os padrões deles:
+
+```
+patternType Monitor · distortion 0,02 · dotScale 0,93 · dotPitch 1,59 px
+falloff 0,12 · brightnessBoost 2,5 (escondido) · glowRadius 0,2 · glowIntensity 0,1
+bloom Screen · bloomThreshold 0,36 · bloomIntensity 0,45 · bloomRadius 1
+convergência R (+0,01, +0,01) · B (−0,01, −0,01) · força 0,1  → ±0,6 px
+saída: pow(cor, 1/2,2)
+```
+
+Três coisas do desenho deles que só a leitura do código mostrou, e que
+importaram: (1) o **bloom é lido da imagem de ENTRADA**, não do tubo
+mascarado — com o limiar aplicado ao tubo, só os pontos VERDES passam (a
+luma pesa 0,72 no verde e 0,21 no vermelho) e o branco sai verde, medido
+85/137/85 onde a referência dá 158/158/158; (2) as **amostras do halo entram
+sem o ganho** de 2,5, e a normalização depende da SOMA dos pesos (32
+amostras) — com oito amostras de peso 1 o meio-tom saía 26% mais claro; (3)
+os buffers de trabalho deles ficam em 800×600 enquanto a tela é 600×337, e o
+resultado é reamostrado — os pontos deles saem mais macios que a conta prevê.
+Isso é artefato da implementação, não do desenho, e não foi copiado.
+
+**Supermosh.** É a coisa real, e é pequeno (1.019 linhas de TypeScript):
+recodifica o vídeo com ffmpeg.wasm em H.264 com **um só quadro-chave**
+(`-g 99999999 -bf 0`), corta os chunks codificados em trechos `{from, to,
+repeat}` e manda para um `VideoDecoder` na ordem que o editor montou. O
+decodificador aplica o movimento de um trecho sobre a imagem que ficou do
+anterior. O laboratório não tem codec — tem shader; então o shader faz o que
+o decodificador faz.
+
+### 5l.2 CRT — a régua é a coluna de fósforo
+
+Vinte e dois controles, três passadas. As chaves antigas `curve`, `scan`,
+`mask`, `flick`, `vig`, `bright` continuam; `slf` (densidade das linhas em
+pixel de tela) foi substituída por `linhas` (quantas linhas na altura).
+
+A régua **não é o pixel**: é a largura em TRÍADES. Os 1,59 px da referência
+numa tela de 600 são 377 colunas, e 377 colunas dão a mesma tela em 320, 960
+ou 1920. Lição da 4y, segunda volta.
+
+**A compensação da máscara segue a presença dela.** Os pontos cobrem uma
+fração da tela e cada cor só um terço deles; a referência corrige com ganho
+2,5 e gama 2,2, e os dois só fazem sentido COM máscara — com o ganho literal,
+SÓ LINHAS saía a 216 de média onde a fonte tinha 133. Agora `crtGanho() =
+mix(1, 2.5, presença)·brilho` e o mesmo para a gama.
+
+**Medido contra a página deles, na mesma imagem** (a de teste, 640×360,
+enviada ao site pelo campo de arquivo; o canvas deles lido de volta; o nosso
+em 600×337 com 377 colunas; os controles deles movidos pelo `onChange` do
+React, porque o evento sintético no `<input>` não chega ao estado):
+
+```
+                     referência              rgb_lab
+bloom             0      0,45     2        0      0,45     2
+branco           78,4   157,8   255       78,2   157,9   255
+cinza-meio       59,5    93,4   209,8     59,7    93,7   210,1
+imagem toda      55,8    89,0   152,3     55,1    88,6   152,1
+vermelho         47,5    47,7    48,2     47,5    47,6    48,2
+```
+
+Cinco regiões, três níveis, diferença máxima 1%. Neutro é neutro: com
+máscara, bloom, convergência, halo, curvatura, vinheta e cintilação em zero,
+diferença **0,00** para a fonte.
+
+```
+CONVERGÊNCIA · borda do retângulo vermelho, canal R, passo de 1,7 px
+  0 → x=80 · 2 → 77 · 4 → 73        (2 pontos = 3,4 px, como pedido)
+LINHAS DE VARREDURA · 90 pedidas → 89 vales medidos
+MÁSCARAS · monitor×TV 81,6 · monitor×LCD 82,3 · monitor×só-linhas 143
+FÓSFORO · verde G=190 (R 134, B 149) · âmbar R>G>B · azul B=187
+CURVATURA · pixels pretos no canto de 20×20: 0 → 8 · 1 → 293 · 2 → 400
+```
+
+**Custo em 1920×1080** (mediana de sete, com `readPixels`): 24–27 ms, com ou
+sem halo — o custo é das três passadas e dos dois borrões de 13 toques, não
+da máscara. A régua sem efeito é 3,6 ms; o VHS, 33,5.
+
+Cinco estilos: MONITOR CRT (a referência), TV DE TUBO, TERMINAL VERDE, TUBO
+AZUL, LCD DE PERTO.
+
+### 5l.3 DATAMOSH — o decodificador em quatro passadas
+
+O que um quadro-P carrega, e o que o shader reproduz: **vetores de
+movimento** por macrobloco, **resíduo** quantizado, **blocos intra**, e o
+**quadro-chave** como único reset. A saída de cada quadro é a saída ANTERIOR
+(`uPrev`, o quadro composto) deslocada pelos vetores, mais o resíduo
+calculado contra a previsão do CODEC (a fonte de ontem).
+
+**A fonte de ontem é uma coisa nova no motor.** `uPrev` é o quadro composto
+(realimentação); o codec precisa da imagem como ela ENTROU, um quadro atrás,
+para medir movimento e resíduo. O anel da fonte já existia (`histFonte`, das
+TIRAS), mas quem o pedia perdia o `uPrev` composto. Agora um efeito declara
+`fontePrev: true` e recebe `uFontePrev` (unidade 10, meia resolução) SEM
+perder `uPrev` — `bindHistory` e `histTexFonteOntem` em gl.js, a declaração
+no PRELUDE. "Ontem" é a vaga anterior à última escrita, porque
+`pushHistFonte` roda antes da passada e `histTexF(1)` é hoje.
+
+**Os vetores são medidos por busca de bloco, em paralelo.** Cada PIXEL do
+macrobloco calcula UM candidato (16×16 por bloco), SAD de 16 amostras contra
+a fonte de ontem deslocada, mais um termo de taxa (0,006·|vetor|, como um
+codificador — 0,02 deixava o fundo em degradê parado enquanto as bordas
+andavam). Duas passadas de redução (16 leituras por linha, 16 por coluna)
+acham o mínimo do bloco; a última passada decodifica. Custo constante por
+pixel em qualquer resolução: ~76 leituras.
+
+**A regra que faz existir o mosh** — e sem ela não há mosh nenhum: com o
+resíduo aplicado por inteiro, saída = arrastado + (novo − arrastado) = novo,
+exato, em qualquer corte. Medido. O datamosh clássico funciona porque o dado
+do quadro-chave é JOGADO FORA. Então: bloco cujo movimento não explica o que
+chegou (SAD acima da tolerância) tem o resíduo descartado — a imagem velha
+continua — ou, na medida de INTRA, o bloco novo entra. E o vetor desse bloco
+é zero: o codec não manda movimento para bloco que codificou inteiro (sem
+isso, o corte embaralhava a imagem velha com vetores de sorteio: 14 de
+diferença contra a saída anterior; com, 3).
+
+**Medido, quadro a quadro, com A → A deslocado 12 px → D (o negativo de A,
+um corte) → D deslocado 12, 24, 36:**
+
+```
+quadro-chave (local 0) ............ saída = A, diferença 0,00
+movimento de 12 px, reconstrução .. 0,27 no miolo (A×B sem compensar: 7,18)
+só o arrasto, sem resíduo ......... 1,06   ← os vetores acham os 12 px
+   com busca curta (4 px) ......... 5,92   ← e o alcance importa
+o corte ........................... 138 contra D · 3,2 contra a saída anterior
+   com intra = 1 .................. 0,08 contra D (o bloco novo entra)
+depois do corte, D anda 12 ........ a imagem velha vai junto: mais perto de
+                                    A@24 (6,6) que de A@12 (8,2)
+```
+
+A borda do retângulo vermelho de A, lida linha a linha depois do corte, anda
++8, +3, +12 e não +12, +12, +12 — e isto NÃO é erro: os vetores seguem as
+bordas do vídeo NOVO, e o bloco onde a borda velha caiu era, para o vídeo
+novo, chapado (vetor zero). A imagem velha só anda onde o vídeo novo tem
+textura. É exatamente o que um datamosh faz, e é por isso que ele parece o
+que parece.
+
+Chaves antigas mantidas: `amt` (blocos travados), `block`, `len` (agora
+GANHO do movimento), `ang`, `edge` (deriva), `decay` (persistência = segura o
+resíduo), `rate`, `scatter`, `chrom`. `follow` saiu (era o gradiente que
+fingia movimento). Novas: `busca`, `quant`, `tol`, `intra`, `gop`.
+
+Custo em 1080p: 25,6 ms. Dois estilos: DATAMOSH CLÁSSICO (persistência 0,
+intra 0 — o codec exato) e DATAMOSH DERRETENDO.
+
+**Limites, para não fingir:** os candidatos são 16 por eixo, então em 1080p
+com bloco 16 o passo da busca é de 5 px (42 px de bloco); movimento fino
+fica quantizado — e o bloco grosso É a estética. Numa FOTO parada não há
+movimento e o efeito só age pela deriva (`edge`/`ang`); está no manual. O
+`uPrev` é o quadro composto INTEIRO — outras camadas entram na
+realimentação, como no eco.
+
+### 5l.4 PAPEL TÉRMICO — um bit por ponto de 203 dpi
+
+A régua é o papel: 80 mm = 576 pontos, 58 mm = 384. O cupom é desenhado em
+pontos e depois posto no quadro pela altura pedida — a mesma imagem em
+qualquer resolução. Um bit por ponto: queimou ou não; o tom vem da trama
+(difusão por ruído azul, Bayer 8×8, ou limiar seco).
+
+O TEXTO (cabeçalho, data, itens com o preço à direita, total somado, código
+de barras sorteado pelo nome da loja, "OBRIGADO") é desenhado num canvas com
+um pixel por ponto e sobe pelo gancho do ATLAS — o mesmo do ASCII —, e o
+ladrilho de ruído azul (128×128, ruído branco reordenado por passa-alta em
+seis voltas, gerado uma vez) vai na mesma textura. O shader lê o ponto exato
+com `texelFetch`. Os campos `titulo` e `linhas` são de texto (`t:'txt'`,
+`uni:false`): o atlas é refeito quando o texto muda, e o anterior é apagado
+da GPU.
+
+Os artefatos, todos de causa física: a resistência morta (coluna branca), a
+fraca (cinza), a faixa onde o papel escorregou, o pontilhado solto, e a
+QUEIMA que engorda o preto e o escorre no sentido do avanço. Alfa real fora
+do papel — a sombra é alfa também.
+
+```
+papel de 0,96 da altura em 640×360 ... 244×344 px, centrado (198..442)
+tinta por faixa (topo → base)
+   fonte branca ..... 5% 4% | 0,2% 0,2% 0,2% | 2% 9% 8% 32% 3%
+   fonte cinza 50% .. 5% 5% | 47% 47% 48% | ...        ← a trama segue o tom
+   fonte preta ...... 5% 7% | 94% 94% 94% | ...
+   (as duas primeiras faixas são o cabeçalho; 32% é o código de barras)
+desgaste 1, fonte preta ......... 15 colunas mortas
+imprimir 400 pontos/s, t=1 s .... as cinco faixas de baixo em 0% (ainda não saiu)
+custo em 1080p .................. 8,2 ms (6,7 sem queima)
+```
+
+### 5l.5 MAPA DE PROFUNDIDADE — a I.A. como atlas
+
+`atlasPara` passou a entregar ao efeito a imagem de ENTRADA e o tempo
+(`def.atlas(params, fxDef, inTex, time)`): um atlas pode ser uma ANÁLISE.
+Os dois efeitos de visão de máquina moram nisso; quem só monta letras ignora
+os dois argumentos.
+
+O modelo é o **Depth Anything V2 small** pela Transformers.js (v3, do
+jsdelivr), `onnx-community/depth-anything-v2-small`, q4f16 em WebGPU (18 MB)
+ou q8 em WASM. Mesmo contrato do MARCAR OBJETO: buscado na primeira vez,
+guardado pelo navegador, e o efeito explica na ficha o estado — um gancho
+novo, `def.nota(e, clip)`, desenhado por motion.js como `pnote`, com
+`notaChave` para o módulo atualizar o texto sem redesenhar a ficha.
+
+**Medido no navegador daqui** (Intel Gen12, WebGPU): carga 5,4 s na primeira
+vez (3,3 s com o cache), primeira inferência 4,6–5,6 s (compilação dos
+shaders), depois **460 ms em 154 px, 715 em 196, 1.090 em 252**. Numa cena
+sintética (céu em degradê, chão, um retângulo escuro na frente) o mapa saiu
+certo: o retângulo a 217 (perto), o céu a 22 (longe), o chão subindo em
+direção à base — o modelo entendeu a perspectiva de uma cena que nunca viu.
+A leitura da entrada inverte as linhas antes de ir ao modelo: o WebGL entrega
+de baixo para cima e um modelo que aprendeu que o céu fica em cima se
+importa com isso.
+
+Seis modos: mapa (perto claro / escuro), cor turbo, névoa pela distância, e
+SÓ O PERTO / SÓ O LONGE — o mapa como matte, com alfa real (medido: 29 mil
+pixels opacos no recorte, o retângulo). Sem I.A., o mapa é pelo brilho, e a
+ficha diz.
+
+### 5l.6 RASTREIO DE MANCHAS — na CPU, como o estabilizador
+
+Grade de 128×72 lida de volta (37 KB), máscara por fonte (claro, escuro,
+movimento contra a grade anterior, ou matiz), componentes conexos de oito
+vizinhos com pilha, filtro por área, as N maiores. RASTREIO: cada mancha
+herda o número da mais próxima do quadro anterior (raio 0,12) e a caixa é
+suavizada. Cada uma guarda as duas vizinhas mais perto — as linhas.
+
+Tudo sobe numa textura de ponto flutuante de 128×20: linha 0 as caixas,
+linha 1 número/área/vizinha 1, linha 18 a vizinha 2 e o centro, linhas 2–17
+os glifos dos dígitos (0-9 : ,), desenhados uma vez — o shader escreve "07"
+e "x,y" sem fonte. O estado é por INSTÂNCIA (`fxDef.effId`): dois rastreios
+não se misturam.
+
+```
+três manchas brancas + uma vermelha, fonte CLARO, limiar 0,6
+   retângulo 80..200 × 60..150 → uv 0,125..0,313 × 0,583..0,833   exato
+   círculo r=60 em (450,200)   → 0,609..0,797 × 0,278..0,611       exato
+   quadrado 40×30              → 0,469..0,531 × 0,111..0,194       exato
+   vizinhas do círculo: o quadrado (0,35) antes do retângulo (0,55)  certo
+fonte UMA COR, matiz 0 ......... só a vermelha (0,813..0,938)
+o círculo anda 20 px ........... os três números ficam (1, 2, 3); o centro
+                                 vai de 0,703 a 0,721 (suavizado, k=0,575)
+custo em 1080p ................. 21 ms (a leitura de volta é o que pesa)
+```
+
+O desenho (cantos, caixa, cruz, círculo, ponto, rótulos, linhas) foi VISTO
+em ASCII — o alfa lido como grade de 128×48 —, e está onde devia.
+
+### 5l.7 O que foi verificado pela interface
+
+Fonte de teste registrada como o polaroid faz, clipe na linha do tempo, os
+cinco efeitos acrescentados por `VE.addEffect` e lidos de volta no clipe;
+os cinco no catálogo com a família e a cor certas; as fichas na pilha; a
+nota da I.A. viva na ficha; o campo `titulo` do cupom escrito pela ficha e
+lido no clipe ("LOJA DO BRUNO"); os onze estilos novos no DOM da galeria;
+três `renderNow()` com os cinco na pilha sem erro de GL; o `lab2.html`
+regenerado carregando os 150 efeitos; o arquivo único com os cinco dentro.
+O clipe e a fonte de teste foram removidos no fim.
+
+### 5l.9 SEGUNDA VOLTA: o datamosh pelas referências dele, e o travamento da I.A.
+
+O Bruno mandou três exemplos de mosh (o casaco vermelho com blocos chapados
+de outra cena; a multidão em retalhos ciano e rosa; a explosão radial em
+raias) e disse que a profundidade *"meio que ficou travando"* num vídeo.
+Pesquisa: datamoshing.com e glitchology (as duas técnicas clássicas —
+remover o quadro-chave para a transição, duplicar quadros-P para o
+"bloom"), o **ffglitch** (edição dos vetores por script: média no tempo,
+"sink and rise", que zera o horizontal), o Datamosh 2 (intensidade,
+aceleração, mosh maps, marcadores) e o Supermosh (trechos e `repeat`).
+
+**A MEMÓRIA PRÓPRIA do efeito (gl.js).** Repetir um quadro-P exige lembrar
+o campo de vetores entre quadros, e o motor não tinha onde. Agora um efeito
+declara `memoria: true` e `memPass: k`: a passada k escreve num alvo
+próprio da INSTÂNCIA (dois alvos, trocados a cada quadro — ler e escrever
+a mesma textura numa passada é proibido), e todas as passadas leem o do
+quadro anterior em `uMem`. Por `fxDef.effId`, até oito vivas, a mais
+antiga cai. É uma GRAVAÇÃO dentro da pilha de FÓRMULAS — a mesma família
+do anel de quadros, só que privada. Serve a qualquer acúmulo futuro.
+
+**O que o datamosh ganhou com ela:**
+
+1. **REPETIR o quadro-P** (`congelar`, com cronômetro): o campo medido
+   fica congelado e é aplicado a cada quadro do codec; a **aceleração**
+   faz cada repetição puxar mais. Medido: a fonte anda 12 px por quadro e
+   PARA; com repetir, a imagem continua (80 → 92 → 103 → 116 → 128) e
+   depois fica onde o campo congelado é zero — o interior chapado do
+   retângulo tinha vetor zero, e a borda que entrou nele parou. Não é
+   erro: é o que uma duplicação de P-frame faz num bloco sem movimento.
+2. **O RELÓGIO DO CODEC** (`fps`, padrão 24): o mosh só avança quando
+   `floor(t·fps)` vira. A fonte de ontem também só vira nesse instante
+   (`fontePrevQuando` em gl.js) — senão a 60 Hz o movimento medido seria
+   o de um sexagésimo, aplicado uma vez a cada vinte e quatro avos.
+   Medido: 12 desenhos a 60 Hz deram 4 passos, exatamente os 4 do relógio.
+   **Um erro no caminho:** o sinal de "quadro novo" era o campo bater com
+   o relógio, e no segundo desenho do mesmo quadro o campo já trazia o
+   índice de agora — dava passo em 6 de 11 desenhos. O sinal certo é o
+   campo ter mudado em relação à MEMÓRIA VELHA (uMem ainda é a de antes).
+3. **O CAMPO editado**: só vertical, só horizontal, negado, ou somado a
+   deriva, zoom ou espiral; e o **rastro** (média no tempo). O zoom
+   PROPORCIONAL ao raio: com módulo constante o centro saía em anéis
+   concêntricos (visto no banco de prova); proporcional, sai em raias.
+4. **Cor em 4:2:0**: a crominância do resíduo é a do bloco.
+
+**Dois defeitos que só a medida pegou:** (a) o resíduo contra a fonte de
+ontem em MEIA resolução era um resíduo de nitidez (novo − borrado) que se
+somava a cada quadro com a cena parada — a borda de um retângulo parado
+andava 1 px por quadro. O novo passou a ser lido no centro do texel de
+meia resolução (o filtro linear devolve a média do 2×2, a mesma que o anel
+guardou): cena parada, resíduo zero — 0,77 → 1,12 de diferença em dois
+segundos, contra crescimento sem fim. (b) A "deriva de cor" girava o matiz
+0,02 por quadro: em 36 repetições a imagem inteira ficou magenta (visto).
+Virou QUEIMA — saturação a subir 1,2% e matiz 0,2% por geração.
+
+**Visto no banco de prova**, com o painel aberto: o corte com os
+macroblocos do vídeo novo entrando em retalhos (o primeiro exemplo dele),
+e a explosão radial com as raias (o terceiro). Presets novos: DATAMOSH
+EXPLODINDO e DATAMOSH AFUNDANDO.
+
+**O travamento da profundidade era real, e era meu.** O modelo rodava na
+linha principal: o JavaScript da biblioteca (despachar os kernels,
+converter tensores) segurava 50–150 ms por análise, e a primeira
+inferência (compilação dos shaders) segurava cinco segundos. Agora o
+modelo vive num **Worker de módulo** (o texto do worker está dentro de
+profundidade.js e vira Blob — entra no arquivo único sem arquivo a mais);
+a linha principal só lê a entrada e manda o buffer por transferência.
+Medido durante a primeira inferência de 5,2 s: a linha principal sentiu
+no máximo 5,4 ms, mediana 0,1. Em regime, 396 ms por análise no worker;
+o que sobra é a GPU dividida — com análise contínua, o pior quadro do
+WebGL esperou 24 ms; a 1 por segundo, 9 ms. Daí o **RITMO** na ficha
+(sempre · 2/s · 1/s · só parado), padrão 2 por segundo.
+
+### 5l.8 O que NÃO foi feito, e por quê
+
+- **Nada foi VISTO por mim em movimento** — o painel estava escondido. O
+  CRT foi medido contra a referência; o datamosh, o cupom e as manchas
+  foram lidos em número e em ASCII; a profundidade, em número. O
+  julgamento do conjunto é do Bruno com o painel aberto.
+- ~~O datamosh não guarda o campo de vetores entre quadros~~ — guarda,
+  desde a segunda volta (5l.9): memória própria do efeito.
+- **A repetição do quadro-P não repete o RESÍDUO**, só o movimento. Numa
+  duplicação real o mesmo resíduo entra de novo a cada cópia e a cor
+  "queima" por isso; aqui a queima é a saturação por geração. Repetir o
+  resíduo pediria uma segunda memória (RGB) por instância.
+- **O cupom não tem o texto em japonês da referência**, de propósito: o
+  laboratório escreve em português e o texto é do usuário.
+- **A profundidade em vídeo atrasa** (meio segundo a um, conforme o
+  tamanho); é o custo do modelo nesta máquina. Não há fila nem
+  interpolação entre mapas. E a GPU é uma só: o ritmo da análise é o
+  controle de quanto o vídeo espera por ela.
+- **A textura da tooooools sai mais macia** pelo buffer de 800×600 deles
+  reamostrado; o nosso ponto é o do desenho, sem essa suavização. Se ele
+  quiser o mesmo aveludado, é subir `suave` ou o halo.
+
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
+**Antes de tudo: a lista do Bruno.** Ele fecha cada sessão usando o que entrou
+e trazendo o que quebrou — foi assim que os três defeitos da 5c apareceram.
+Começar por ela; o que está abaixo é só o que sobra quando ela acaba.
+
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
+
+### O que ficou aberto na VIGÉSIMA QUARTA *(seções 5h a 5k)*
+
+O mais recente. Em ordem de valor.
+
+**Antes de tudo: nada do ÁUDIO foi ouvido.** A montagem, o espectrograma, a
+mistura, os quatro efeitos de TRAMA da tipografia — tudo provado por medida
+(contagem de amostra, variância de pixel, duração de buffer, centro de massa
+de tinta). É a única parte deste projeto em que um erro passa sem ser
+detectado. Peça para ele abrir e escutar antes de qualquer coisa.
+
+1. **A RÉGUA DE TEMPO com números** sobre a onda do LAB 02. Hoje são dez
+   divisões e nenhum número: não dá para saber onde está 1:20. Agora há DOIS
+   gráficos empilhados (onda e espectrograma) olhando para a mesma régua
+   invisível, o que torna a falta maior do que era.
+2. **A onda desenhada dentro do trecho da MONTAGEM** (5j.5). Hoje o bloco é
+   um retângulo com o nome. Com a onda dentro dá para cortar no lugar certo
+   olhando, que é como se corta som de verdade.
+3. **A LENTIDÃO DO RACK**, medida e não consertada (5i.4). Num áudio de um
+   minuto: 3,4s por volta de botão com seis módulos, 14,7s só com o
+   ESPECTRAL. A causa é estrutural — toda mudança chama `A.rerender()`, que
+   recomeça do áudio ORIGINAL e refaz a cadeia inteira sobre o arquivo
+   inteiro. Mexer no último módulo de seis recalcula os seis.
+   **O conserto proposto:** guardar o buffer de ENTRADA de cada passo; mexer
+   no módulo 6 recalcularia só o 6 (de 3,4s para ~0,5s). Custo: memória, um
+   buffer por passo. Segundo conserto, independente: calcular a prévia só no
+   trecho que está tocando enquanto se arrasta.
+4. **PAPEL com `multiply` na tipografia** (5h.7) — o efeito mais forte do
+   Analog Typewriter, e o único das referências que não entrou. Precisa de
+   uma textura de papel escaneada, e isso é decisão dele: o polaroid já tem a
+   convenção de jogar escaneamentos numa pasta (`assets/polaroid/molduras`).
+   Papel pediria a mesma coisa.
+5. **Ganho por trecho, encaixe e desfazer** dentro da MONTAGEM (5j.5). O
+   ganho já existe no modelo, falta o controle. O Ctrl+Z do laboratório não
+   alcança a montagem.
+6. **O rodapé SAÍDA da tipografia** (5h.10): ~180px presos no pé da coluna,
+   com duas frases de ensino sempre visíveis. Encolhê-lo levaria a coluna de
+   ferramentas de 1,15 para ~1,00 tela. As frases são dele, e ele não pediu
+   para tirá-las — perguntar antes.
+7. **Onde mais a repaginação não chegou**, pelo aviso da 5i.5: o áudio
+   reativo e a janela de legendas são as próximas candidatas a estarem com o
+   desenho de outra época, porque também são montadas por JavaScript e não
+   aparecem numa auditoria do `index.html`.
+
+### O que ficou aberto no SONÓGRAFO e na CIFRA *(seção 5g)*
+
+O mais recente, e o que tem mais chão pela frente.
+
+1. **Nem um nem outro foi visto por mim em material de verdade.** A prova foi
+   por medida, por eventos sintéticos e bombeando o laço à mão, porque o painel
+   estrangula `requestAnimationFrame` e a decodificação de vídeo quando não
+   está exibido. Peça para ele abrir, tocar e trazer o que estranhar.
+2. **O BANCO DE ÁUDIOS** (§7 do pedido dele): categorias, busca, prévia,
+   favoritos, forma de onda. Hoje há dez vozes SINTETIZADAS em `js/musica.js`,
+   e o banco entra por cima delas sem reescrever nada — `M.tocar` é o único
+   ponto que precisa saber tocar amostra além de oscilador.
+3. **UPLOAD DE SONS DO USUÁRIO** (§8): WAV/MP3/AIFF/OGG, nomeados e associados
+   a um sensor ou evento. Depende do item 2.
+4. **SISTEMA DE REGRAS DE EVENTO** (§9): condição → resultado, combináveis
+   ("objeto azul → sintetizador", "brilho > 80 % → velocity 100"). Hoje o
+   mapeamento é fixo em quatro seletores; as regras seriam a versão aberta
+   disso.
+5. **A cauda de 2 s do render** é boa para o sonógrafo (o sino ainda soa quando
+   o vídeo acaba) e desproporcional para uma gravação curta da cifra — numa
+   peça de 1,8 s ela dobra o clipe. `M.render` já aceita `opc.cauda`; falta
+   decidir o número por instrumento, ou tirá-lo do release da voz escolhida.
+6. **O nome CIFRA foi escolha minha**, não dele — ele nomeou o SONÓGRAFO mas
+   não este. Alternativas que cabem no vocabulário da casa: CAMPO HARMÔNICO,
+   HARMÔNIO, ACORDEIRO. É uma troca de rótulo em quatro lugares.
+7. **A cifra não tem metrônomo nem quantização.** O sonógrafo tem GRADE; aqui
+   o que se toca é gravado como se tocou. Para casar com a linha do tempo, um
+   dia isso vai fazer falta.
+8. **Nenhum dos dois entrou no LEIA-ME.md.** O manual ainda não os conhece.
+
+### O que ficou aberto na CÂMERA POLAROID *(seção 5f)*
+
+Nada disto impede usar; é o que eu sei que falta.
+
+1. **Nenhuma foto do Bruno passou por lá.** Os testes de olho usaram um
+   escaneamento de polaroid e uma imagem de referência da pasta. Se o filme
+   fica bonito nas fotos DELE é olho, e é o dele.
+2. **Imprimir** — a referência tem; aqui há BAIXAR PNG em tamanho de folha
+   (1000×1231) e USAR NA LINHA DO TEMPO.
+3. **Edição em lote** — a referência baixa um `.zip` com vários; aqui o maço
+   guarda as três últimas para comparar, mas sai uma de cada vez.
+4. **A pasta cheia nunca rodou.** Há dois escaneamentos de moldura e dois
+   originais. O caminho de "muitos arquivos" — rolagem da lista, tempo de
+   carga — não foi exercitado.
+5. **`preta.jpg` e `creme.jpg` continuam em JPEG**, e portanto ainda dependem
+   da trama reconstruída (`realce: 1`). Se aparecerem em PNG, é trocar o
+   arquivo e pôr `realce: 0` — nada de código.
+6. **A folha desenhada** (`branco`, `velho`) é lisa de propósito e só existe
+   para o laboratório nunca abrir sem papel. Se um dia incomodar, o caminho é
+   apagá-la da lista, não texturizá-la.
 
 ### Consertos
 

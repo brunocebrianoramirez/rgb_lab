@@ -545,9 +545,6 @@ input[type=color]::-webkit-color-swatch{border:none}
 .lab-no{font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.2em;color:var(--ink-3)}
 .lab-nm{font-weight:700;font-size:40px;letter-spacing:-.035em;text-transform:uppercase;margin-top:auto;line-height:.9;position:relative}
 .lab-desc{font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.06em;line-height:1.7;color:var(--ink-2);margin-top:10px;text-transform:uppercase;position:relative}
-.lab-tools{display:flex;flex-wrap:wrap;gap:3px;margin-top:12px;position:relative}
-.lab-tools i{font-family:var(--mono);font-size:8px;letter-spacing:.1em;border:var(--line) solid var(--rule-2);padding:1px 4px;font-style:normal;text-transform:uppercase}
-.lab-card:hover .lab-tools i{background:var(--ink);color:var(--paper)}
 /* filete do canal — grosso o bastante para ser lido de longe (12px) */
 .lab-bar{position:absolute;left:0;top:0;bottom:0;width:12px}
 .lab-card{padding-left:30px}
@@ -663,6 +660,63 @@ input[type=color]::-webkit-color-swatch{border:none}
 .prow.wide{grid-template-columns:1fr}
 .prow > label{font-family:var(--mono);font-size:var(--t-label);letter-spacing:.05em;color:var(--ink-2);text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prow-slider{padding:0 10px 6px}
+
+/* ==================== A LINHA É O CAMPO, TAMBÉM AQUI ====================
+   O par `.prow` + `.prow-slider` sai assim de cinco arquivos diferentes —
+   campo em cima, cursor deslizante solto embaixo — e o olho lê dois
+   objetos onde há um. É o mesmo defeito que a ficha da tipografia
+   resolveu (PROJETO.md 5h.1), e o Bruno pediu o mesmo aqui.
+
+   O par continua saindo igual dos cinco: quem junta é esta regra. O
+   `.prow-slider` sobe 26px e passa a COBRIR a linha de cima; o cursor
+   dentro dele fica invisível e do tamanho da faixa, e o enchimento
+   (`--fill`, escrito por js/panels.js) mostra onde o valor está.
+
+   O cursor cobre a caixa INTEIRA, e quem precisa de clique próprio sobe
+   acima dele — o campo de digitar e o losango de keyframe. Reservar uma
+   faixa de pixels para eles foi a primeira tentativa e estava errada:
+   depende de onde cada peça está na linha, e na pilha de efeitos o
+   cronômetro fica à esquerda. Empilhar não depende de posição.
+   ======================================================================= */
+.prow:has(+ .prow-slider > input[type=range]){
+  position:relative;border:var(--line) solid var(--rule);background:var(--paper);
+  margin:3px 10px 0;padding:0 6px 0 8px;min-height:26px;overflow:hidden;
+}
+.prow:has(+ .prow-slider > input[type=range])::before{
+  content:"";position:absolute;left:var(--fill-x,0);top:0;bottom:0;width:var(--fill,0%);
+  background:color-mix(in srgb,var(--accent) 22%,transparent);pointer-events:none;z-index:0;
+}
+.prow:has(+ .prow-slider > input[type=range]) > *{position:relative;z-index:1}
+.prow:has(+ .prow-slider > input[type=range]):hover{border-color:var(--ink-3)}
+.prow:has(+ .prow-slider > input[type=range]) > label{pointer-events:none}
+.prow:has(+ .prow-slider > input[type=range]) .field.num{border:none;background:none;text-align:right;padding:0 2px}
+.prow:has(+ .prow-slider > input[type=range]) .field.num:focus{background:var(--accent);color:var(--on-accent)}
+
+.prow:has(+ .prow-slider > input[type=range]) + .prow-slider{
+  position:relative;height:0;padding:0;margin:0 10px;z-index:2;pointer-events:none;
+}
+.prow:has(+ .prow-slider > input[type=range]) + .prow-slider > input[type=range]{
+  position:absolute;left:0;right:0;bottom:0;height:26px;width:auto;
+  margin:0;padding:0;opacity:0;pointer-events:auto;cursor:ew-resize;
+}
+/* o que precisa de clique proprio sobe acima do cursor */
+.prow:has(+ .prow-slider > input[type=range]) .field.num,
+.prow:has(+ .prow-slider > input[type=range]) .kf{position:relative;z-index:3}
+/* a caixa acende quando o cursor invisível recebe o teclado */
+.prow:has(+ .prow-slider > input[type=range]:focus-visible){
+  border-color:var(--ink);outline:2px solid var(--accent);outline-offset:-3px;
+}
+/* O que NÃO é número — menu, cor, texto, paleta — não é tocado por nenhuma
+   das regras acima, porque a condição está na PRÓPRIA junção: só junta o
+   par cujo `.prow-slider` tem um cursor dentro.
+
+   A primeira versão fazia o contrário — juntava tudo e depois abria
+   exceção — e a exceção tinha especificidade MENOR do que a regra que ela
+   deveria vencer. Resultado medido: o menu ESPAÇO do módulo ATMOSFERA
+   recebia `height:0` e `pointer-events:none`. Ele aparecia na tela, mas
+   não abria. Exceção que perde é pior do que exceção nenhuma: some o
+   defeito de vista e fica só o comportamento. */
+
 .kf{
   width:16px;height:16px;font-size:9px;line-height:1;color:var(--ink-4);border:var(--line) solid transparent;
   display:flex;align-items:center;justify-content:center;
@@ -689,3 +743,148 @@ input[type=color]::-webkit-color-swatch{border:none}
 .reactrow .field{min-width:0;font-size:var(--t-micro)}
 .reactarrow{font-family:var(--mono);font-size:9px;color:var(--ink-4);text-align:center}
 .reactrow .cmd-sm{padding:2px 5px;min-width:0}
+
+/* ============================================ 09b MESA DE DIGITALIZAÇÃO
+   A janela do slit-scan. Larga porque são duas telas lado a lado — a
+   bancada (onde a mão trabalha) e o filme (o que o cabeçote gravou).
+   Fora a largura, é a mesma janela de EXPORTAR COMPOSIÇÃO: papel,
+   traço de 1 px, sombra dura, monoespaçada em caixa alta.            */
+.mesa-card{width:min(1180px,96vw);max-height:94vh}
+.mesa-b{padding:0;display:flex;flex-direction:column;gap:0}
+
+.mesa-topo{
+  display:grid;grid-template-columns:1fr 1fr;gap:var(--line);
+  background:var(--rule);border-bottom:var(--line) solid var(--rule);
+}
+.mesa-cx{background:var(--paper);display:flex;flex-direction:column;min-width:0}
+.mesa-cxh{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:var(--paper-2);border-bottom:var(--line) solid var(--rule);
+}
+.mesa-cxh .micro{margin-left:auto;text-align:right}
+.mesa-cxf{display:flex;gap:4px;padding:6px 8px;border-top:var(--line) solid var(--rule);flex-wrap:wrap}
+.mesa-cxf .cmd{flex:1;justify-content:center;min-width:64px}
+
+/* a tela: o canvas nunca estica, sempre cabe inteiro — proporção de
+   folha preservada, senão o que se vê não é o que se grava          */
+.mesa-tela{
+  height:min(46vh,420px);background:var(--paper-3);
+  display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden;
+}
+.mesa-tela canvas{
+  max-width:100%;max-height:100%;object-fit:contain;
+  border:var(--line) solid var(--ink);background:var(--paper);
+  image-rendering:auto;
+}
+#mesaBancada{cursor:grab}
+#mesaBancada:active{cursor:grabbing}
+
+.mesa-ctrl{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:var(--line);
+  background:var(--rule);overflow-y:auto;
+}
+.mesa-col{background:var(--paper);padding:2px 0 8px;min-width:0}
+.mesa-col .subhead{margin-top:0}
+.mesa-col .prow label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mesa-grande{width:100%;justify-content:center;padding:9px 8px;font-size:var(--t-label)}
+
+@media (max-width:900px){
+  .mesa-topo{grid-template-columns:1fr}
+  .mesa-ctrl{grid-template-columns:repeat(2,1fr)}
+  .mesa-tela{height:min(32vh,280px)}
+}
+
+/* ==================================================== 09c MOSAICO
+   A janela da grade. O mapa em cima ocupa a largura inteira porque ele
+   É o controle principal: mexer em qualquer número embaixo redesenha o
+   mapa na hora, e é olhando para ele que se decide. Os cinco blocos de
+   controle repetem a divisão da mesa — mesma janela, outra ferramenta. */
+.mos-card{width:min(1060px,96vw);max-height:94vh}
+.mos-b{padding:0;display:flex;flex-direction:column;gap:0}
+.mos-cx{background:var(--paper);display:flex;flex-direction:column;border-bottom:var(--line) solid var(--rule)}
+.mos-cxh{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:var(--paper-2);border-bottom:var(--line) solid var(--rule);
+}
+.mos-cxh .micro{margin-left:auto;text-align:right}
+.mos-cxf{display:flex;gap:4px;padding:6px 8px;border-top:var(--line) solid var(--rule);flex-wrap:wrap}
+.mos-cxf .cmd{flex:1;justify-content:center;min-width:82px}
+
+/* o mapa: fundo de xadrez porque o VÃO entre os quadros é transparente
+   de verdade — quem olha tem de ver que ali não vai ficar tinta      */
+.mos-mapa{
+  position:relative;margin:10px;max-height:min(42vh,380px);
+  border:var(--line) solid var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%),
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%);
+  background-size:14px 14px;background-position:0 0,7px 7px;
+  touch-action:none;user-select:none;
+  /* o mapa é a TELA: quadro que passa da borda tem de sumir aqui também,
+     senão o mapa promete um quadro que o vídeo vai cortar             */
+  overflow:hidden;
+}
+.mos-q{
+  position:absolute;background:var(--paper-2);border:var(--line) solid var(--rule-2);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;
+  box-sizing:border-box;cursor:crosshair;
+}
+.mos-q i{
+  font-family:var(--mono);font-size:8px;letter-spacing:.06em;font-style:normal;
+  color:var(--paper);text-transform:uppercase;pointer-events:none;
+  white-space:nowrap;overflow:hidden;text-shadow:0 1px 0 rgba(0,0,0,.45);
+}
+.mos-q:not(.cheio) i{color:var(--ink-4)}
+.mos-q:hover{outline:2px solid var(--accent);outline-offset:-2px;z-index:2}
+
+.mos-ctrl{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:var(--line);
+  background:var(--rule);overflow-y:auto;
+}
+.mos-col{background:var(--paper);padding:2px 0 8px;min-width:0}
+.mos-col .subhead{margin-top:0}
+.mos-col .prow label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* `.cmd` é `nowrap` por natureza, e numa coluna estreita o rótulo saía do
+   botão e caía por cima do vizinho — "PREENCHER A TELA" atravessando o
+   "QUADRADO" ao lado. Aqui o rótulo quebra em duas linhas dentro do
+   próprio botão: cresce para baixo, que é onde há espaço.            */
+.mos-col .pbtns .cmd{
+  white-space:normal;line-height:1.3;text-align:center;min-width:0;flex:1 1 88px;
+}
+/* o resumo do rodapé encolhe com reticências em vez de empilhar palavra
+   por palavra e empurrar os dois botões para fora da janela           */
+.mos-card .modal-f{align-items:center}
+#mosResumo{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* a paleta de fontes: a cor à esquerda é a mesma que o quadro recebe no
+   mapa, e é ela que responde "onde este vídeo está" de relance      */
+.mos-fontes{display:flex;flex-direction:column;gap:2px;padding:0 8px;max-height:180px;overflow-y:auto}
+.mos-f{
+  display:flex;align-items:center;gap:7px;padding:4px 6px;width:100%;
+  border:var(--line) solid var(--rule);background:var(--paper);
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-2);text-align:left;
+}
+.mos-f i{width:12px;height:12px;flex:0 0 12px;border:var(--line) solid var(--ink);display:block}
+.mos-f span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mos-f b{font-weight:500;color:var(--ink-3)}
+.mos-f:hover{background:var(--paper-2);color:var(--ink)}
+.mos-f.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.mos-f.on b{color:var(--paper)}
+
+@media (max-width:900px){
+  .mos-ctrl{grid-template-columns:repeat(2,1fr)}
+  .mos-mapa{max-height:30vh}
+}
+
+/* o xadrez de transparência das telas da mesa — mesmo código visual que
+   qualquer editor usa para dizer "aqui não tem nada"                  */
+.mesa-tela canvas.xadrez{
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%),
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%);
+  background-size:16px 16px;
+  background-position:0 0,8px 8px;
+}

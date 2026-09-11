@@ -54,7 +54,13 @@
       applyQuality();
       if (VE.view.mode !== 'free') VE.view.applyMode(); else VE.view.apply();
     });
-    window.addEventListener('resize', function () { VE.panels.renderMaskOverlay(); });
+    window.addEventListener('resize', function () {
+      VE.panels.renderMaskOverlay();
+      /* a onda passou a tirar a altura do espaço que há (js/audio.js,
+         drawWave): sem redesenhar ao redimensionar, ela fica com a medida
+         da janela anterior e some ou sobra */
+      if (VE.audio && VE.shell && VE.shell.view === 'audio') VE.audio.drawWave();
+    });
 
     /* sessão guardada: liga a gravação e pergunta se quer a de antes.
        Perguntar, nunca restaurar sozinho — quem abriu para começar
@@ -82,6 +88,18 @@
     return p;
   };
 
+  /* Liga um ouvinte SÓ SE o alvo existir. As máquinas (mesa, mosaico,
+     polaroid, sonógrafo) têm porta em mais de um lugar da tela, e mover ou
+     tirar uma dessas portas é decisão de desenho — não pode derrubar o
+     arranque. Com `addEventListener` direto num alvo que saiu do
+     documento, `initSources()` morre num TypeError e leva junto tudo que
+     é ligado depois: as fontes, o transporte e os atalhos.            */
+  function ao(sel, ev, fn) {
+    var el = $(sel);
+    if (el) el.addEventListener(ev, fn);
+    return !!el;
+  }
+
   /* ================= fontes ================= */
   function initSources() {
     $('#srcFile').addEventListener('click', function () { $('#fileInput').click(); });
@@ -106,6 +124,59 @@
     $('#camToggle').addEventListener('click', toggleCam);
     $('#camGrab').addEventListener('click', grabCam);
     $('#camRec').addEventListener('click', recCam);
+    /* A mesa de digitalização é uma FONTE, não um efeito: ela grava
+       matéria nova, como a webcam e o padrão de teste. Por isso o lugar
+       dela é a grade FONTE — e o atalho na barra de transporte fica ao
+       lado da câmera pela mesma razão (ver o cabeçalho de mesa.js).   */
+    var abrirMesa = function () { VE.mesaui.abrir(); };
+    ao('#srcMesa', 'click', abrirMesa);
+    ao('#mesaAbrir', 'click', abrirMesa);
+
+    /* O MOSAICO fica nos MESMOS DOIS lugares da mesa, e não em um só:
+       na grade FONTE (é lá que se procura, porque é lá que nasce matéria
+       nova) e na barra de transporte. Ter posto só na barra foi engano —
+       o Bruno foi procurar ao lado do SCANNER, que é onde faz sentido. */
+    var abrirMosaico = function () { VE.mosaicoui.abrir(); };
+    ao('#srcMosaico', 'click', abrirMosaico);
+    ao('#mosAbrir', 'click', abrirMosaico);
+
+    /* O POLAROID tinha as mesmas duas portas da mesa e do mosaico, e o
+       Bruno tirou a da BARRA DE TRANSPORTE: aquela barra é onde se anda no
+       tempo — tocar, avançar quadro, laço, volume — e abrir uma câmera não
+       é andar no tempo. Ele fica na grade FONTE, que é onde se procura por
+       matéria nova, e onde as outras máquinas continuam.
+
+       A porta some do HTML mas a ligação fica TOLERANTE: `ao()` não
+       reclama de alvo que não existe. Sem isso, tirar um botão do
+       documento derruba `initSources()` num TypeError e leva junto tudo
+       que é ligado depois dele — as fontes, o transporte, os atalhos.  */
+    var abrirPolaroid = function () { VE.polaroidui.abrir(); };
+    ao('#srcPolaroid', 'click', abrirPolaroid);
+
+    /* O SONÓGRAFO tem DUAS portas, e não é duplicação — é uma
+       máquina só, aberta de dois lados. Ela come VÍDEO e devolve
+       ÁUDIO, então cai bem nos dois laboratórios por motivos
+       diferentes:
+         · no LAB 02 (FERRAMENTAS, ao lado de DO VÍDEO) porque é lá
+           que o resultado dela vive, e é a irmã exótica daquele
+           botão — tira som da IMAGEM em vez da trilha;
+         · no LAB 01 (grade FONTE, ao lado do scanner, do mosaico e
+           do polaroid) porque é lá que o vídeo está na hora em que
+           a ideia aparece, e é onde ele já procura por máquina. */
+    var abrirSonografo = function () { VE.sonografoui.abrir(); };
+    $('#srcSonografo').addEventListener('click', abrirSonografo);
+    $('#auSonografo').addEventListener('click', abrirSonografo);
+
+    /* A CIFRA mora só no LAB 02, e aqui não há a dúvida que houve com o
+       sonógrafo: ela não come vídeo nenhum. É um instrumento que se
+       toca, grava e manda para a linha do tempo ou para o rack — tudo
+       do lado do áudio, do começo ao fim. */
+    $('#auCifra').addEventListener('click', function () { VE.cifraui.abrir(); });
+
+    /* A MONTAGEM DE ÁUDIO fica ao lado do sonógrafo e da cifra porque é
+       da mesma natureza: uma máquina do LAB 02 que abre em janela. Só que
+       ela não FABRICA som — ela arruma no tempo o que já existe. */
+    ao('#auMontagem', 'click', function () { VE.audiotl.abrir(); });
 
     $('#fileInput').addEventListener('change', function () {
       var f = this.files[0]; this.value = '';
@@ -144,7 +215,11 @@
         VE.shell.renderAudioInspector();
       }).catch(function () { A.toast('não consegui decodificar o áudio desse arquivo', 'err'); });
     });
-    $('#auExport').addEventListener('click', VE.audio.exportWav);
+    ao('#auExport', 'click', VE.audio.exportWav);
+    /* MANDAR PRA TIMELINE morava na ficha da direita e veio para o pé da
+       coluna, ao lado do EXPORTAR WAV — as duas saídas juntas, como no
+       laboratório de tipografia */
+    ao('#auToTl', 'click', function () { VE.audio.sendToTimeline(); });
 
     /* arrastar arquivos para dentro */
     ['dragover', 'drop'].forEach(function (ev) {
@@ -579,9 +654,13 @@
     on('#inBtn', function () { VE.project.inPoint = VE.project.time; commit(); });
     on('#outBtn', function () { VE.project.outPoint = VE.project.time; commit(); });
     on('#clearIOBtn', function () { VE.project.inPoint = null; VE.project.outPoint = null; commit(); });
-    on('#snapBtn', function () {
+    /* O ÍMÃ e o PNG dividiam o id `snapBtn`. Os dois addEventListener caíam
+       no MESMO elemento — o primeiro do documento, que é o PNG. Resultado: o
+       botão ÍMÃ da mesa não fazia nada, e apertar PNG ligava e desligava o
+       ímã junto com a foto. Achado ao montar o 2.0, que recusa id repetido. */
+    on('#imaBtn', function () {
       TLB.snap = !TLB.snap;
-      $('#snapBtn').classList.toggle('on', TLB.snap);
+      $('#imaBtn').classList.toggle('on', TLB.snap);
       A.toast('ímã ' + (TLB.snap ? 'ligado' : 'desligado'));
     });
     on('#tcBtn', function () {
@@ -589,9 +668,10 @@
       $('#tcBtn').classList.toggle('on', TLB.tcMode === 'seconds');
       TLB.render();
     });
-    on('#zoomInBtn', function () { TLB.setZoom(TLB.pps * 1.5); });
-    on('#zoomOutBtn', function () { TLB.setZoom(TLB.pps / 1.5); });
+    on('#zoomInBtn', function () { TLB.zoomBy(1.5); });
+    on('#zoomOutBtn', function () { TLB.zoomBy(1 / 1.5); });
     on('#fitSeqBtn', function () { TLB.fitSequence(); });
+    on('#zoomSelBtn', function () { TLB.zoomToSelection(); });
     $('#savePreset').addEventListener('click', function () {
       if (!VE.project) return;
       var n = prompt('nome do preset (cadeia inteira de efeitos):', 'CADEIA');
@@ -758,18 +838,32 @@
         return;
       }
 
-      if (!VE.project) return;
+      /* ------------------------------------------ LABORATÓRIO DE TIPOGRAFIA
+         ANTES da checagem de projeto, como o áudio — e por um defeito que
+         durou até alguém tentar: o bloco vinha DEPOIS de `if (!VE.project)
+         return`, então Ctrl+Z na tipografia só funcionava se houvesse uma
+         composição de vídeo aberta. Quem entrasse pelo índice direto no
+         LAB 03 apertava Ctrl+Z e não acontecia nada, sem aviso nenhum. A
+         tipografia tem histórico próprio e não depende de projeto nenhum. */
       if (VE.shell.view === 'type') {
+        var tintaOn = VE.tinta && VE.tinta.ligada && VE.tinta.ligada();
+        var recorteOn = VE.recorteui && VE.recorteui.ligada && VE.recorteui.ligada();
         if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
           e.preventDefault();
-          if (!VE.type.undo()) A.toast('nada para desfazer na tipografia');
+          /* com a mesa aberta, Ctrl+Z desfaz o gesto DELA — o traço que
+             acabou de sair da caneta, não o parâmetro de antes de abrir */
+          if (tintaOn) { if (!VE.tinta.desfazerTraco()) A.toast('nada para desfazer no traço'); }
+          else if (recorteOn) { if (!VE.recorteui.desfazer()) A.toast('nada para desfazer no recorte'); }
+          else if (!VE.type.undo()) A.toast('nada para desfazer na tipografia');
         }
         if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
           e.preventDefault();
-          if (!VE.type.redo()) A.toast('nada para refazer na tipografia');
+          if (!tintaOn && !recorteOn && !VE.type.redo()) A.toast('nada para refazer na tipografia');
         }
         return;
       }
+
+      if (!VE.project) return;
       if (VE.shell.view !== 'video') {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); VE.undo(); }
         return;
@@ -814,12 +908,15 @@
         case 'i': case 'I': VE.project.inPoint = VE.project.time; commit(); break;
         case 'o': case 'O': VE.project.outPoint = VE.project.time; commit(); break;
         case 'f': case 'F': VE.view.fit(); break;
-        case '\\': VE.tl.fitSequence(); break;   /* barra invertida: enquadrar sequência */
+        /* barra invertida enquadra a sequência; com SHIFT (que no teclado
+           ABNT2 e no americano dá "|"), enquadra o que está selecionado  */
+        case '\\': VE.tl.fitSequence(); break;
+        case '|': VE.tl.zoomToSelection(); break;
         case '0': VE.view.setZoom(1); VE.view.center(); break;
         /* + e - mexem no zoom da LINHA DO TEMPO, como numa mesa de edição.
            Com SHIFT, mexem no zoom da PRÉVIA — o comportamento antigo.     */
-        case '+': case '=': VE.tl.setZoom(VE.tl.pps * 1.5); break;
-        case '-': VE.tl.setZoom(VE.tl.pps / 1.5); break;
+        case '+': case '=': VE.tl.zoomBy(1.5); break;
+        case '-': VE.tl.zoomBy(1 / 1.5); break;
         case '_': VE.view.zoomBy(0.8); break;
         case '*': VE.view.zoomBy(1.25); break;
       }
@@ -892,11 +989,34 @@
       try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(saved)); } catch (e) { }
     }
     function settle() {
+      medirBarraDaMesa();
       VE.tl.render();
       if (VE.view.mode !== 'free') VE.view.applyMode(); else VE.view.apply();
       if (VE.audio) VE.audio.drawWave();
       VE.panels.renderMaskOverlay();
     }
+
+    /* ---- a barra da linha do tempo dobrou? a mesa cresce junto ----
+       As barras horizontais dobram sozinhas por CSS (`.barra-dobra`), e isso
+       basta para nenhum botão sumir. Mas a mesa tem altura fixa: se a barra
+       ganhasse uma fileira ali dentro, quem pagaria seriam as PISTAS. Então
+       a altura arrastada (`--tl-h`) fica intacta e o que a barra ganhou entra
+       como `--tl-extra`, medido aqui e somado no CSS.                    */
+    function medirBarraDaMesa() {
+      var tb = $('#viewVideo .tl-toolbar');
+      if (!tb) return;
+      var uma = parseFloat(getComputedStyle(tb).getPropertyValue('--row')) || 28;
+      var extra = Math.max(0, Math.round(tb.getBoundingClientRect().height - uma));
+      var atual = parseFloat(root.style.getPropertyValue('--tl-extra')) || 0;
+      if (extra === atual) return;
+      root.style.setProperty('--tl-extra', extra + 'px');
+      VE.tl.render();
+    }
+    if (window.ResizeObserver) {
+      var tbEl = $('#viewVideo .tl-toolbar');
+      if (tbEl) new ResizeObserver(medirBarraDaMesa).observe(tbEl);
+    }
+    A.medirBarraDaMesa = medirBarraDaMesa;
 
     /* colunas laterais */
     document.querySelectorAll('.vsplit').forEach(function (sp) {
@@ -913,6 +1033,9 @@
           w = Math.max(120, Math.min(maxW, Math.round(w)));
           root.style.setProperty(cssVar, w + 'px');
           store(cssVar, w);
+          /* na mão, durante o arrasto: o observador só responde no quadro
+             seguinte, e a mesa daria um pulo atrasado atrás do dedo     */
+          medirBarraDaMesa();
           VE.view.drawRulers();
         }
         function up() {
@@ -938,7 +1061,11 @@
       h.setPointerCapture(e.pointerId);
       h.classList.add('drag');
       var y0 = e.clientY;
-      var h0 = $('#timeline').getBoundingClientRect().height;
+      /* a altura na tela já inclui as fileiras que a barra ganhou; o que se
+         arrasta é `--tl-h`, então o extra sai da conta — senão cada arrasto
+         somaria de novo o que a barra dobrada acrescentou.               */
+      var extra = parseFloat(root.style.getPropertyValue('--tl-extra')) || 0;
+      var h0 = $('#timeline').getBoundingClientRect().height - extra;
       function mv(ev) {
         var nh = Math.max(120, Math.min(window.innerHeight - 240, Math.round(h0 - (ev.clientY - y0))));
         root.style.setProperty('--tl-h', nh + 'px');

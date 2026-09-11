@@ -78,6 +78,16 @@
 .srcbtn:hover{background:var(--ink);color:var(--paper)}
 .srcbtn:hover .micro{color:var(--paper)}
 .srcbtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.25}
+/* MOSAICO também ocupa a linha inteira, e por dois motivos que se somam:
+   com ele a grade passou a ter NOVE botões de meia largura, o que deixa
+   um buraco na última fileira; e ele não traz UMA fonte para dentro —
+   arma uma grade inteira com as que já estão aqui. Meia largura mentiria
+   sobre as duas coisas.                                               */
+.srcbtn-larga{
+  grid-column:1 / -1;flex-direction:row;align-items:center;gap:8px;
+  border-right:none;
+}
+
 /* SOBREPOR ocupa a linha inteira: é uma ação diferente das outras —
    não acrescenta um plano, põe uma imagem POR CIMA de outra.        */
 .srcbtn-hi{
@@ -87,16 +97,63 @@
 .srcbtn-hi svg rect:last-child{fill:var(--ch);stroke:var(--ch);opacity:.55}
 .srcbtn-hi:hover svg rect:last-child{fill:var(--paper);stroke:var(--paper);opacity:.7}
 
+/* ===================================== BARRA QUE DOBRA (não come botão)
+   Toda barra horizontal do miolo — viewport, transporte, linha do tempo —
+   fica espremida quando as colunas laterais são alargadas. Antes elas
+   simplesmente cortavam o que não coubesse: com as larguras PADRÃO num
+   monitor de 1440px, a barra do viewport já perdia PNG e EXPORTAR, e a da
+   linha do tempo perdia 248px inteiros (todo o grupo de zoom). Alargando as
+   colunas, sumiam oito e sete itens.
+
+   A regra agora é: a barra DOBRA em mais uma fileira. Botão nenhum some.
+
+   As três peças que fazem isso funcionar:
+
+   · `flex-wrap:wrap` com `flex:0 0 auto` — a barra cresce em altura em vez
+     de espremer o conteúdo;
+   · altura de fileira EXPLÍCITA (`--row`) nos filhos — `height:100%` dentro
+     de um pai de altura automática vira `auto`, e as fileiras despencariam
+     para a altura do texto;
+   · o `.spacer` cresce com força 1000 e o `::after` com força 1. Assim, na
+     fileira que tem espaçador, é ele que empurra (o grupo da direita
+     continua encostado na direita, como sempre foi); na última fileira, que
+     não tem espaçador, quem preenche a sobra é o `::after` — e é ele que
+     leva o filete até o fim da barra, senão a linha de baixo terminaria no
+     meio, no último botão.                                                */
+.barra-dobra{
+  flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:stretch;align-content:flex-start;
+  gap:0;min-height:var(--row);
+}
+/* `min-height` em vez de `height`, e o próprio GRUPO também dobra: um grupo
+   de botões pode, sozinho, ser mais largo que a barra inteira quando as
+   colunas apertam o miolo. Medido: com as duas colunas em 600px, o bloco de
+   timecode e o grupo CORTAR ainda vazavam — dobrar só a barra não bastava,
+   porque um item de flex não quebra por dentro sem mandar.              */
+.barra-dobra > *{
+  min-height:var(--row);height:auto;max-width:100%;
+  box-sizing:border-box;flex:0 0 auto;flex-wrap:wrap;
+}
+.barra-dobra > .spacer{flex:1000 1 0;min-width:0}
+/* os botões voltam a ter altura de fileira: dentro de um pai que agora é de
+   altura automática, `height:100%` viraria a altura do texto              */
+.barra-dobra .zbtn,
+.barra-dobra .tbtn{height:var(--row)}
+.barra-dobra::after{content:"";flex:1 1 0;height:var(--row);min-width:0}
+/* o filete de fileira vai nos FILHOS: assim ele separa uma fileira da
+   outra, e não só o fim da barra                                        */
+.barra-dobra > *,
+.barra-dobra::after{border-bottom:var(--line) solid var(--rule)}
+
 /* ========================================================== 02 VIEWPORT */
 .vp-bar{
-  flex:0 0 30px;display:flex;align-items:center;gap:0;background:var(--paper);
-  border-bottom:var(--line) solid var(--rule);
+  --row:30px;
+  background:var(--paper);
 }
-.vp-bar > *{border-right:var(--line) solid var(--rule);height:100%;display:flex;align-items:center;gap:6px;padding:0 9px}
+.vp-bar > *{border-right:var(--line) solid var(--rule);display:flex;align-items:center;gap:6px;padding:0 9px}
 .vp-bar > .spacer{border-right:none;padding:0}
 .zbtn{
   font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;color:var(--ink-3);padding:0 7px;
-  height:100%;border-right:var(--line) solid var(--rule);
+  border-right:var(--line) solid var(--rule);
 }
 .zbtn:hover{background:var(--paper-2);color:var(--ink)}
 .zbtn.on{background:var(--ch);color:var(--on-ch)}
@@ -139,10 +196,10 @@
 
 /* transporte */
 .transport{
-  flex:0 0 34px;display:flex;align-items:center;background:var(--paper);
-  border-top:2px solid var(--rule-2);
+  --row:34px;
+  background:var(--paper);border-top:2px solid var(--rule-2);
 }
-.transport > *{height:100%;display:flex;align-items:center;gap:7px;padding:0 9px;border-right:var(--line) solid var(--rule)}
+.transport > *{display:flex;align-items:center;gap:7px;padding:0 9px;border-right:var(--line) solid var(--rule)}
 .transport > .spacer{border-right:none;padding:0}
 .tp{
   font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-2);padding:4px 7px;
@@ -164,8 +221,15 @@
      · o canal do clipe (azul/verde/vermelho) só na aba lateral e no rótulo
      · nenhum ícone decorativo: indicadores são letras e sinais de 8px
    ========================================================================== */
+/* A altura da mesa é a que o Bruno arrastou (`--tl-h`) MAIS as fileiras que a
+   barra de ferramentas ganhou ao dobrar (`--tl-extra`, escrito por
+   `js/app.js`). Sem essa soma, alargar uma coluna faria a barra dobrar e as
+   PISTAS encolherem na mesma medida — o botão não sumiria, mas a mesa
+   sumiria embaixo dele, que é a mesma reclamação com outro nome.        */
 .timeline{
-  flex:0 0 var(--tl-h);height:var(--tl-h);background:var(--paper);border-top:2px solid var(--rule-2);
+  flex:0 0 calc(var(--tl-h) + var(--tl-extra, 0px));
+  height:calc(var(--tl-h) + var(--tl-extra, 0px));
+  background:var(--paper);border-top:2px solid var(--rule-2);
   display:flex;flex-direction:column;position:relative;min-height:150px;
 }
 .tl-resize{position:absolute;top:-3px;left:0;right:0;height:6px;cursor:ns-resize;z-index:9}
@@ -173,15 +237,13 @@
 
 /* ---------------------------------------------------------------- barra */
 .tl-toolbar{
-  flex:0 0 28px;display:flex;align-items:center;border-bottom:var(--line) solid var(--rule);
-  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+  --row:28px;
 }
-.tl-toolbar::-webkit-scrollbar{height:0}
 .tl-toolbar > *{
-  height:100%;display:flex;align-items:center;gap:6px;padding:0 8px;
-  border-right:var(--line) solid var(--rule);flex:0 0 auto;
+  display:flex;align-items:center;gap:6px;padding:0 8px;
+  border-right:var(--line) solid var(--rule);
 }
-.tl-toolbar > .spacer{border-right:none;padding:0;flex:1 1 auto}
+.tl-toolbar > .spacer{border-right:none;padding:0}
 .tgroup{gap:0 !important;padding:0 !important}
 .tbtn{
   font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.1em;text-transform:uppercase;
@@ -389,6 +451,34 @@
   pointer-events:none;text-transform:uppercase;
 }
 
+/* ------------------------------------------------------ barra de zoom
+   O bloco cinza é a JANELA: sua largura conta quanto da sequência cabe na
+   tela e sua posição, onde ela está. Por isso ela é ao mesmo tempo o
+   controle de zoom e a barra de rolagem — como numa mesa de edição.
+   O recuo da esquerda casa com a largura das cabeças das pistas.      */
+.tl-zoombar{
+  flex:0 0 15px;height:15px;display:flex;align-items:center;
+  border-top:var(--line) solid var(--rule);background:var(--paper-2);
+  padding-left:196px;user-select:none;
+}
+.tl-zb-track{
+  /* sem recuo lateral: o trilho tem que começar e terminar exatamente onde
+     a mesa começa e termina, senão o bloco mente sobre o que está na tela */
+  position:relative;flex:1;height:9px;margin:0;
+  background:var(--paper);border:var(--line) solid var(--rule);
+}
+.tl-zb-thumb{
+  position:absolute;top:0;bottom:0;left:0;width:100%;min-width:16px;
+  background:var(--ink-4);cursor:grab;
+}
+.tl-zb-thumb:hover{background:var(--ink-3)}
+.tl-zb-thumb.grab{cursor:grabbing;background:var(--ch)}
+/* as pontas são o zoom: puxar para dentro aproxima, para fora afasta */
+.tl-zb-thumb .zb-h{position:absolute;top:0;bottom:0;width:6px;cursor:ew-resize;background:var(--ink-2)}
+.tl-zb-thumb .zb-h.l{left:0}
+.tl-zb-thumb .zb-h.r{right:0}
+.tl-zb-thumb .zb-h:hover{background:var(--ink)}
+
 /* menu de contexto da linha do tempo */
 .ctxmenu{
   position:fixed;z-index:300;background:var(--paper);border:var(--line) solid var(--ink);
@@ -458,13 +548,13 @@
    duas fileiras. Herdar o "duas por linha" da coluna estreita do LAB 01
    as empilhava em seis fileiras dentro de uma caixa de 52 px: sobrava
    uma tira em que quase nada era legível.                             */
-.audio-main .chips{flex:0 0 auto;padding:5px 8px;gap:4px;background:var(--paper-2)}
-.audio-main .chips .fam-chip{
+#propsAudio .chips{flex:0 0 auto;padding:6px 8px;gap:4px;background:var(--paper-2);border-bottom:var(--line) solid var(--rule)}
+#propsAudio .chips .fam-chip{
   flex:0 0 auto;font-size:9px;letter-spacing:.12em;padding:5px 9px 5px 7px;
   border:var(--line) solid var(--rule);border-left-width:3px;
 }
-.audio-main .chips .fam-chip .chip-n{margin-left:7px;font-size:9px}
-.audio-main .chips .fam-chip.on{border-color:var(--ch);border-left-color:var(--ch)}
+#propsAudio .chips .fam-chip .chip-n{margin-left:7px;font-size:9px}
+#propsAudio .chips .fam-chip.on{border-color:var(--ch);border-left-color:var(--ch)}
 
 /* ---- ferramentas do cabeçalho de cada módulo ---- */
 .module-h .mops{display:flex;gap:1px}
@@ -520,7 +610,15 @@
   border:none;background:none;letter-spacing:-.01em;
 }
 .type-input textarea:focus{outline:none;background:var(--paper-2)}
-.type-tools{display:flex;flex-direction:column;border-left:var(--line) solid var(--rule)}
+
+/* OS TRÊS COMANDOS, lado a lado na barra do laboratório.
+   Estavam numa coluna de cinco botões colada ao campo de texto, junto
+   das duas MESAS — e mesa é ferramenta, comando é comando. As mesas
+   foram para o catálogo da esquerda; estes três, que agem sobre o que
+   já está no quadro, ficaram na barra de ação. De quebra, o campo de
+   texto passou a ter a largura inteira. */
+.ty-cmds{gap:5px !important}
+.ty-cmds .cmd{padding:3px 9px;letter-spacing:.1em}
 .letters{
   display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;border-bottom:var(--line) solid var(--rule);
   max-height:74px;overflow-y:auto;background:var(--paper);
@@ -603,9 +701,50 @@
    navegação de keyframes, valor numérico e trilho — na mesma gramática
    das fichas técnicas do resto do sistema.                              */
 
-.mprop{border-bottom:var(--line) solid var(--rule);padding:4px 10px 6px}
+/* ================ A LINHA É O CAMPO — os parâmetros de EFEITO ================
+   Esta é a estrutura da PILHA DE EFEITOS (js/motion.js), e é outra: não é o
+   par `.prow` + `.prow-slider` da ficha do clipe, é `.mprop-h` com um
+   `.mrange` solto embaixo. Mesmo defeito, então mesma cura — a caixa vira o
+   cursor, e o cursor invisível cobre a caixa.
+
+   Num efeito de sete parâmetros isto é o que decide se a pilha cabe na
+   coluna: 26px por parâmetro em vez de 26 mais 16 mais os vãos.
+   ============================================================================ */
+.mprop{border-bottom:var(--line) solid var(--rule);padding:3px 10px 4px;position:relative}
 .mprop.focus{background:color-mix(in srgb,var(--ch) 7%,var(--paper))}
-.mprop-h{display:flex;align-items:center;gap:6px}
+.mprop-h{
+  position:relative;display:flex;align-items:center;gap:6px;
+  height:26px;border:var(--line) solid var(--rule);background:var(--paper);
+  padding:0 5px 0 6px;overflow:hidden;
+}
+.mprop-h::before{
+  content:"";position:absolute;left:var(--fill-x,0);top:0;bottom:0;width:var(--fill,0%);
+  background:color-mix(in srgb,var(--accent) 22%,transparent);pointer-events:none;z-index:0;
+}
+.mprop-h > *{position:relative;z-index:1}
+.mprop:hover .mprop-h{border-color:var(--ink-3)}
+.mprop .mval{border:none;background:none;padding:0 2px}
+.mprop .mval:focus{background:var(--accent);color:var(--on-accent)}
+/* O CURSOR COBRE A CAIXA INTEIRA, e quem precisa de clique próprio sobe
+   ACIMA dele — o número para digitar, o cronômetro para animar.
+
+   A primeira versão reservava uma faixa de pixels à direita para os dois.
+   Errado por medida: nesta estrutura o cronômetro fica à ESQUERDA, antes
+   do rótulo, e ficou inteiro debaixo do cursor — medido, 1026→1046 dentro
+   de um cursor que ia de 1014 a 1158. O losango de keyframe, que é o
+   controle mais importante da ficha, tinha parado de responder.
+
+   Empilhar em vez de medir não depende de onde cada peça está. */
+.mprop > .mrange{
+  position:absolute;left:10px;right:10px;top:3px;height:26px;width:auto;
+  margin:0;padding:0;opacity:0;z-index:2;cursor:ew-resize;
+}
+.mprop .mval,
+.mprop .stopw,
+.mprop .stopw-off{z-index:3}
+.mprop:has(> .mrange:focus-visible) .mprop-h{
+  border-color:var(--ink);outline:2px solid var(--accent);outline-offset:-3px;
+}
 .mprop-h > label{
   font-family:var(--mono);font-size:var(--t-label);letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;
@@ -1104,21 +1243,155 @@
 .out-lbl{
   display:block;color:var(--ink-3);letter-spacing:.16em;margin-bottom:5px;
 }
-.out-group .cmd{width:100%;justify-content:center}
+/* O botão do rodapé NÃO pode depender de folga.
+   `.cmd` traz `white-space:nowrap`, e MANDAR PRA TIMELINE ↗ pedia 214px
+   num botão de 216: dois pixels de sobra. Numa coluna um pouco mais
+   estreita — que é a do Bruno — o texto saía por fora do fundo verde,
+   dos dois lados. O mesmo valia para o ENVIAR PRA TIMELINE ↗ da
+   tipografia, que só não tinha caído ainda.
+
+   Deixar quebrar em duas linhas é o que faz o botão caber em QUALQUER
+   largura, em vez de caber na largura de hoje.                       */
+.out-group .cmd{
+  width:100%;justify-content:center;text-align:center;
+  white-space:normal;line-height:1.35;letter-spacing:.08em;
+  padding:7px 8px;
+}
 .out-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
 .out-btns .cmd{padding:5px 4px;font-size:8px;letter-spacing:.06em}
 .out-note{
   display:block;color:var(--ink-4);line-height:1.55;margin-top:5px;letter-spacing:.05em;
 }
 
-/* separador de grupo dentro da lista de ferramentas */
-.tygroup{
-  display:flex;align-items:center;gap:7px;padding:7px 9px 5px;
-  background:var(--paper-2);border-bottom:var(--line) solid var(--rule);
-  font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--ink-3);position:sticky;top:0;z-index:2;
+/* ===================================== 14b A FICHA DA TIPOGRAFIA
+   A LINHA É O CAMPO. Um controle, uma caixa de 26px: rótulo embutido à
+   esquerda, valor à direita. Antes cada número ocupava DUAS linhas — o
+   campo numa, o cursor deslizante solto embaixo na outra — e a ficha
+   media 2804px de rolagem numa janela de 808. Três telas e meia para
+   achar um controle não é ficha, é lista de texto.
+
+   No número a própria caixa se ENCHE até onde o valor está na faixa: o
+   cursor deslizante deixou de ser um segundo objeto e virou a leitura do
+   primeiro. Arrastar em qualquer ponto muda o valor; o número à direita
+   fica por cima e aceita clique para digitar o valor exato.
+   ========================================================================= */
+.tctl{
+  position:relative;display:flex;align-items:center;height:26px;
+  margin:3px 10px;border:var(--line) solid var(--rule);background:var(--paper);
+  overflow:hidden;
 }
-.tygroup i{flex:1;height:var(--line);background:var(--rule);font-style:normal}
+.tctl + .tctl{margin-top:0}
+.tctl:hover{border-color:var(--ink-3)}
+.tctl .tlbl{
+  flex:1 1 auto;min-width:0;padding-left:7px;position:relative;z-index:1;pointer-events:none;
+  font-family:var(--mono);font-size:var(--t-label);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tctl:hover .tlbl{color:var(--ink)}
+
+/* ---- número: a caixa é o cursor deslizante ---- */
+.tnum::before{
+  content:"";position:absolute;left:var(--fill-x,0);top:0;bottom:0;width:var(--fill,0%);
+  background:color-mix(in srgb,var(--accent) 22%,transparent);pointer-events:none;z-index:0;
+}
+/* o <input type=range> cobre a caixa inteira, invisível: é ele que arrasta.
+   Some o trilho e o pino do sistema — quem desenha o valor é o ::before. */
+.tnum > input[type=range]{
+  position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;
+  opacity:0;z-index:2;cursor:ew-resize;
+}
+.tnum .tval{
+  position:relative;z-index:3;flex:0 0 58px;width:58px;text-align:right;padding:0 7px 0 0;
+  border:none;background:none;color:var(--ink);
+  font-family:var(--mono);font-size:var(--t-label);font-variant-numeric:tabular-nums;
+  cursor:text;
+}
+.tnum .tval:focus{outline:none;background:var(--accent);color:var(--on-accent)}
+/* teclado: o pino é invisível, então quem mostra o foco é a caixa */
+.tnum:has(> input[type=range]:focus-visible){border-color:var(--ink);outline:2px solid var(--accent);outline-offset:-3px}
+
+/* ---- menu ---- */
+.tsel > select{
+  position:relative;z-index:1;flex:0 1 auto;min-width:0;max-width:64%;
+  border:none;background:none;padding:0 6px 0 4px;cursor:pointer;
+  font-family:var(--mono);font-size:var(--t-label);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink);text-align:right;text-align-last:right;
+}
+.tsel > select:focus{outline:none;background:var(--accent);color:var(--on-accent)}
+
+/* ---- marca e cor: a linha inteira é o alvo ---- */
+.tchk,.tcol{cursor:pointer}
+.tchk > input[type=checkbox]{margin-right:8px;flex:0 0 11px}
+.tcol > input[type=color]{width:46px;height:16px;flex:0 0 46px;margin-right:6px;border-color:var(--rule)}
+.tcol:hover > input[type=color]{border-color:var(--ink)}
+
+/* a nota e os botões seguem a mesma margem dos controles */
+.plate-b > .pnote{padding:2px 11px 7px}
+.plate-b > .subhead{margin-top:4px}
+
+/* ------------------------------------------------- AS SEIS FAMÍLIAS
+   A coluna era FORMA com 12 e ANIMAÇÃO com 42 num bloco indiviso —
+   2193px de rolagem numa janela de 538, quatro telas. Agora são seis
+   famílias irmãs, num nível só, e cada uma recolhe: clique fecha,
+   alt+clique deixa só ela aberta — o mesmo gesto das placas da ficha.
+   Procurando, todas abrem.                                          */
+.tyfam{
+  display:flex;align-items:center;gap:6px;width:100%;padding:7px 9px 6px 7px;
+  background:var(--paper-2);border-bottom:var(--line) solid var(--rule);
+  font-family:var(--mono);font-size:8px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-2);
+  /* grudam no alto enquanto a família rola: com a lista aberta, saber
+     em que família a mão está vale mais do que os 22px que custa */
+  position:sticky;top:0;z-index:2;
+}
+.tyfam + .fxitem{border-top:none}
+.tyfam:hover{background:var(--paper-3);color:var(--ch)}
+.tyfam .tyfam-arrow{
+  font-style:normal;font-size:9px;line-height:1;color:var(--ink-4);flex:0 0 9px;
+  transition:transform .12s linear;
+}
+.tyfam .tyfam-nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tyfam:hover .tyfam-arrow{color:var(--ch)}
+.tyfam.shut{color:var(--ink-3)}
+.tyfam.shut .tyfam-arrow{transform:rotate(-90deg)}
+.tyfam .l{flex:1 1 auto;min-width:6px;height:var(--line);background:var(--rule);font-style:normal}
+.tyfam em{font-style:normal;color:var(--ink-4);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.tyfam:hover em{color:var(--ch)}
+/* a primeira é FORMA — desenho; as cinco seguintes são tempo. O vão
+   marca a divisão que o cabeçalho duplo marcava antes. */
+.tyfam[data-tyfam="traco"]{margin-top:7px;border-top:var(--line) solid var(--rule)}
+
+/* ======================================== A MINIATURA DE CADA FERRAMENTA
+   Nome mais uma linha de descrição não bastam para escolher entre ESCADA
+   e CASCATA. Cada item mostra o efeito ACONTECENDO numa amostra de letras,
+   desenhado pelo mesmo motor do palco (js/type.js, T.miniatura).
+
+   MAIOR que a dos estilos do vídeo, que tem 46×46: aqui o assunto é
+   LETRA, e letra precisa de largura. O quadro é 4:3 deitado — 64×48 no
+   Classic, 88×66 na folha do 2.0, onde a coluna da tipografia tem 320px
+   e sobra espaço. O buffer é 176×132 nos dois, então nenhum dos dois
+   serrilha.                                                            */
+.tytools .fxitem{
+  grid-template-columns:auto 20px minmax(0,1fr) auto;
+  gap:8px;padding:7px 9px;
+}
+.tymini{
+  width:64px;height:48px;flex:0 0 64px;display:block;
+  border:var(--line) solid var(--rule);background:var(--paper-2);
+  /* xadrez de transparência, como o palco: a miniatura sai com alpha */
+  background-image:
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%),
+    linear-gradient(45deg,var(--paper-3) 25%,transparent 25%,transparent 75%,var(--paper-3) 75%);
+  background-size:8px 8px;background-position:0 0,4px 4px;
+}
+.tytools .fxitem:hover .tymini{border-color:var(--on-accent)}
+/* a mesa não tem prévia: ela ABRE uma folha, não aplica um efeito */
+.tymini-icone{
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--ch-type);background:var(--paper-2);background-image:none;
+}
+/* sem miniatura o número é o único índice; com ela, ele recua */
+.tytools .fxitem .fxno{align-self:center}
 
 /* ferramenta que precisa de família LAB fica marcada */
 .tytools .fxitem .fxreq{
@@ -1126,6 +1399,18 @@
   color:var(--ch-type);padding:0 3px;flex:0 0 auto;
 }
 .tytools .fxitem:hover .fxreq{border-color:var(--on-accent);color:var(--on-accent)}
+
+/* ------------------------------------------------------------- AS MESAS
+   As duas que abrem uma folha por cima do palco. São ferramentas de
+   ESTADO, não de aplicar-e-pronto: enquanto a mesa está aberta o item
+   fica aceso, e clicar de novo fecha. Por isso trazem símbolo no lugar
+   do número — o número diz "a de nº 7 do catálogo", e mesa não é isso. */
+.tytools .fxmesa .fxno{font-size:11px;color:var(--ch-type);text-align:center}
+.tytools .fxmesa.active{background:var(--ch-type)}
+.tytools .fxmesa.active,
+.tytools .fxmesa.active *{color:var(--on-ch)}
+.tytools .fxmesa.active .fxreq{border-color:var(--on-ch);color:var(--on-ch)}
+.tytools .fxmesa.active .fxds{opacity:.8}
 
 /* ================================== 15 CARTÃO DO MANUAL NA COLUNA (ÍNDICE)
    O tutorial saiu do corpo do índice — ele ocupava uma faixa inteira entre
@@ -1448,26 +1733,73 @@ body.tinta-on #tyCanvas{opacity:.28;filter:grayscale(1)}
 .tinta-bar .ti-h b{font-weight:700;flex:0 0 auto}
 .tinta-bar .ti-h span{flex:1;min-width:0;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tinta-bar .ti-h .cmd{background:transparent;border-color:currentColor;color:inherit;padding:2px 5px}
-.tinta-bar .ti-body{flex:1;overflow:auto;padding:6px 7px}
+.tinta-bar .ti-body{flex:1;overflow:auto;padding:6px 6px}
+
+/* ---------------------------------- A LINHA É O CAMPO, AQUI TAMBÉM
+   As duas mesas tinham ficado com o desenho antigo: rótulo, trilho fino e
+   número, três objetos numa fileira de grade — que é exatamente o que a
+   ficha da direita deixou de ser. Painel do laboratório com dois
+   vocabulários de controle é painel de duas épocas.
+
+   Mesmo desenho do `.tctl`: uma caixa de 26px, rótulo embutido à
+   esquerda, valor à direita, e a caixa se enche até onde o valor está na
+   faixa. Arrastar em qualquer ponto muda; o `<input type=range>` continua
+   por baixo, invisível, e nenhum dos dois arquivos precisou trocar de
+   evento — só passaram a escrever `--fill`.                          */
 .tinta-bar .ti-row{
-  display:grid;grid-template-columns:1fr 78px 34px;align-items:center;gap:5px;
-  padding:2px 0;color:var(--ink-2);
+  position:relative;display:flex;align-items:center;height:26px;margin:3px 0;
+  border:var(--line) solid var(--rule);background:var(--paper);overflow:hidden;
+  color:var(--ink-2);
 }
-.tinta-bar .ti-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tinta-bar .ti-row b{font-weight:400;color:var(--ink-3);text-align:right;font-size:8px}
-.tinta-bar .ti-row input[type=range]{width:100%}
-.tinta-bar .ti-row input[type=color]{width:100%;height:16px;padding:0;border:var(--line) solid var(--rule)}
-.tinta-bar .ti-row input[type=checkbox]{justify-self:start}
+.tinta-bar .ti-row:hover{border-color:var(--ink-3)}
+.tinta-bar .ti-row > span{
+  flex:1 1 auto;min-width:0;padding-left:7px;position:relative;z-index:1;pointer-events:none;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.tinta-bar .ti-row:hover > span{color:var(--ink)}
+.tinta-bar .ti-row > b{
+  position:relative;z-index:3;flex:0 0 52px;width:52px;
+  font-weight:400;color:var(--ink);text-align:right;padding-right:7px;
+  font-variant-numeric:tabular-nums;
+}
+/* o enchimento: a leitura de onde o valor está na faixa */
+.tinta-bar .ti-row::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:var(--fill,0%);
+  background:color-mix(in srgb,var(--accent) 22%,transparent);pointer-events:none;z-index:0;
+}
+.tinta-bar .ti-row input[type=range]{
+  position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;
+  opacity:0;z-index:2;cursor:ew-resize;
+}
+.tinta-bar .ti-row:has(input[type=range]:focus-visible){
+  border-color:var(--ink);outline:2px solid var(--accent);outline-offset:-3px;
+}
+/* marca, cor e menu: mesma caixa, controle à direita */
+.tinta-bar .ti-row input[type=color]{
+  position:relative;z-index:3;width:46px;height:16px;flex:0 0 46px;margin-right:6px;
+  padding:0;border:var(--line) solid var(--rule);
+}
+.tinta-bar .ti-row input[type=checkbox]{position:relative;z-index:3;margin-right:8px;flex:0 0 11px}
+.tinta-bar .ti-row select{
+  position:relative;z-index:3;flex:0 1 auto;min-width:0;max-width:62%;
+  border:none;background:none;padding:0 6px 0 4px;color:var(--ink);cursor:pointer;
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.05em;
+  text-align:right;text-align-last:right;
+}
+/* a marca e a cor não têm faixa; sem isto a caixa fica com um valor vazio
+   ocupando 52px à direita e o rótulo espremido */
+.tinta-bar .ti-row:not(:has(input[type=range])) > b{display:none}
+
 /* linha que o estilo escolhido não usa: apagada e desligada, para não ficar
    um trilho aceso prometendo o que não acontece */
 .tinta-bar .ti-row.off{opacity:.32}
 .tinta-bar .ti-row.off input{pointer-events:none}
 .tinta-bar .ti-sep{
-  margin:7px 0 3px;padding-top:5px;border-top:var(--line) solid var(--rule);
-  font-weight:700;color:var(--ink);letter-spacing:.08em;
+  margin:11px 0 4px;padding-top:7px;border-top:var(--line) solid var(--rule);
+  font-weight:700;color:var(--ink);letter-spacing:.14em;
 }
-.tinta-bar .ti-btns{display:flex;gap:3px;padding:5px 7px;border-top:var(--line) solid var(--rule-2);flex-wrap:wrap}
-.tinta-bar .ti-btns .cmd{flex:1 1 auto}
+.tinta-bar .ti-btns{display:flex;gap:4px;padding:6px;border-top:var(--line) solid var(--rule-2);flex-wrap:wrap}
+.tinta-bar .ti-btns .cmd{flex:1 1 auto;justify-content:center}
 
 /* ═════════════════════════════════════════ CANETA DE MÁSCARA ═══════════
    A lista de vértices: número, coordenada, cronômetro e remover. Quem tem
@@ -1588,3 +1920,171 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   font-size:8px;line-height:1.5;color:var(--ink-3);letter-spacing:.03em;
 }
 .tinta-bar .ti-nota b{color:var(--ink-2);font-weight:700}
+
+/* a etiqueta TRAMA — efeito de quadro, não de letra. Filete mais fraco
+   que o da LAB: LAB é uma EXIGÊNCIA (só funciona em família de código),
+   TRAMA é só uma natureza. */
+.tytools .fxitem .fxtrama{border-color:var(--ink-3);color:var(--ink-3)}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   O RACK DO ÁUDIO NA COLUNA DA DIREITA
+   --------------------------------------------------------------------------
+   Ele morava numa faixa no PÉ da tela, com os controles espremidos em três
+   colunas de 228px, e a coluna da direita mostrava os mesmos 34 módulos como
+   LISTA DE TEXTO com ON/OFF ao lado — trinta e quatro linhas mortas ocupando
+   a coluna inteira. Hierarquia ao contrário: o que se ajusta estava embaixo,
+   o que não se ajusta estava em cima.
+
+   Agora é como nos outros dois laboratórios: quem se AJUSTA vai para a
+   coluna da direita, quem se OLHA fica no centro. O áudio ganhou o centro
+   inteiro para a onda, o transporte e o analisador.
+   ══════════════════════════════════════════════════════════════════════════ */
+#propsAudio{display:flex;flex-direction:column;min-height:0;padding:0;overflow:hidden}
+#propsAudio.hidden{display:none}
+#auFicha{flex:0 0 auto}
+
+/* a barra do rack numa coluna estreita: a busca ocupa a linha, a mutação
+   vai para a de baixo. Empilhada é melhor do que apertada. */
+#propsAudio .rack-bar{
+  display:block;height:auto;padding:8px 10px;
+  border-top:var(--line) solid var(--rule);
+}
+#propsAudio .rack-bar .cat-search{width:100%;margin-bottom:6px}
+#propsAudio .rack-mut{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+#propsAudio .rack-mut .tbtn{padding:3px 7px;font-size:8px}
+
+/* uma coluna de módulos, e é ela que rola */
+#propsAudio .rack{
+  flex:1 1 auto;min-height:0;overflow-y:auto;
+  grid-template-columns:1fr;
+  border-top:var(--line) solid var(--rule);
+}
+#propsAudio .module{border-right:none}
+/* o módulo LIGADO se anuncia: numa coluna de 34, achar os que estão em uso
+   é a primeira coisa que se faz ao voltar para o laboratório */
+#propsAudio .module:has(.mtog.on) > .module-h{
+  background:color-mix(in srgb,var(--ch-audio) 14%,var(--paper-2));
+}
+#propsAudio .module:has(.mtog.on) > .module-h .mnm{color:var(--ink)}
+
+/* o centro do laboratório de áudio ficou só com o que se OLHA, então o
+   analisador deixa de ser uma tira de 52px e ocupa o que sobrou */
+/* Quando o rack saiu do centro, dei a sobra ao ANALISADOR — e ele foi de
+   52px para 619, 71% da tela. Espectro em tempo real nao melhora com 619px
+   de altura: fica um retangulo preto quase todo vazio, que foi o que o
+   Bruno fotografou. Ele e uma FAIXA de leitura, e faixa tem altura de faixa.
+
+   Quem cresce e a ONDA, que e o documento deste laboratorio: e nela que se
+   seleciona, se corta e se escuta. 187px numa tela de 874 era o resto que
+   sobrava de um centro ocupado pelo rack; agora ela fica com o que sobra. */
+.audio-main .wave-wrap{flex:1 1 auto;min-height:180px;display:flex}
+.audio-main .wave-wrap canvas{height:auto;flex:1 1 auto;min-height:180px}
+.audio-main .analyser{height:96px;flex:0 0 96px;border-bottom:none;border-top:var(--line) solid var(--rule)}
+
+/* MÓDULO DESLIGADO MOSTRA SÓ O CABEÇALHO.
+   Medido com quatro módulos em uso: a coluna tinha 8630px de rolagem e
+   8040 deles eram os TRINTA módulos desligados — 93% da coluna dedicada a
+   controles de coisas que não estão na cadeia. É a mesma parede que a
+   lista de texto era, só que com trilhos.
+
+   Ligar abre. E clicar no NOME abre sem ligar, para quem quer só ver o que
+   o módulo tem antes de pô-lo na cadeia — ligar para espiar obrigaria a
+   recalcular o áudio inteiro. */
+#propsAudio .module:not(:has(.mtog.on)):not(.aberto) > .module-b{display:none}
+#propsAudio .module:not(:has(.mtog.on)) > .module-h{opacity:.72}
+#propsAudio .module:not(:has(.mtog.on)):hover > .module-h{opacity:1}
+#propsAudio .module.aberto > .module-h .mnm{color:var(--ch)}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   A MONTAGEM DE ÁUDIO — a linha do tempo do LAB 02
+   --------------------------------------------------------------------------
+   Mesma janela das outras máquinas (papel, filete, sombra dura), com o
+   miolo de uma mesa de edição: cabeçalhos à esquerda, régua em cima, pistas
+   que rolam juntas. O que muda em relação à mesa do LAB 01 é o que um clipe
+   É: aqui ele tem quatro campos, e o desenho pode ser simples.
+   ══════════════════════════════════════════════════════════════════════════ */
+.atl-card{width:min(1080px,96vw);max-height:92vh}
+.atl-b{padding:0;display:flex;flex-direction:column;min-height:0}
+
+.atl-bar{
+  display:flex;align-items:center;gap:6px;padding:8px 10px;
+  border-bottom:var(--line) solid var(--rule);background:var(--paper-2);
+}
+.atl-bar .atl-play{min-width:44px;justify-content:center;font-size:12px}
+
+.atl-corpo{display:flex;min-height:0;flex:1;overflow:hidden}
+.atl-heads{
+  flex:0 0 132px;border-right:var(--line) solid var(--rule-2);background:var(--paper-2);
+  padding-top:22px;  /* a altura da régua, para as pistas casarem */
+}
+.atl-head{
+  height:46px;display:flex;align-items:center;gap:6px;padding:0 8px;
+  border-bottom:var(--line) solid var(--rule);
+  font-family:var(--mono);font-size:var(--t-label);letter-spacing:.08em;text-transform:uppercase;
+}
+.atl-head .atl-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.atl-mudo{
+  width:18px;height:18px;flex:0 0 18px;border:var(--line) solid var(--rule);
+  font-family:var(--mono);font-size:8px;color:var(--ink-3);
+  display:flex;align-items:center;justify-content:center;
+}
+.atl-mudo.on{background:var(--sys-orange);color:var(--paper);border-color:var(--sys-orange)}
+
+.atl-rolo{flex:1;overflow:auto;position:relative;min-width:0;background:var(--paper)}
+.atl-regua{
+  height:22px;position:sticky;top:0;z-index:3;background:var(--paper-2);
+  border-bottom:var(--line) solid var(--rule);
+}
+.atl-regua i{
+  position:absolute;top:0;bottom:0;width:var(--line);background:var(--rule);font-style:normal;
+}
+.atl-regua i b{
+  position:absolute;left:3px;top:5px;font-family:var(--mono);font-size:8px;
+  color:var(--ink-3);font-weight:400;letter-spacing:.06em;
+}
+.atl-lane{
+  height:46px;border-bottom:var(--line) solid var(--rule);position:relative;
+  background:repeating-linear-gradient(90deg,transparent 0,transparent calc(var(--z,60px) - 1px),var(--paper-2) calc(var(--z,60px) - 1px),var(--paper-2) var(--z,60px));
+}
+.atl-lane.mudo{opacity:.4}
+.atl-clipe{
+  position:absolute;top:4px;bottom:4px;
+  background:var(--ch-audio);border:var(--line) solid var(--ink);
+  display:flex;align-items:center;overflow:hidden;cursor:grab;
+}
+.atl-clipe.on{outline:2px solid var(--accent);outline-offset:-2px;z-index:2}
+.atl-clipe .atl-cnm{
+  font-family:var(--mono);font-size:8px;letter-spacing:.06em;color:var(--on-ch);
+  padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;
+}
+/* a alça de aparar: 7px na borda direita, com cursor próprio */
+.atl-apara{
+  position:absolute;right:0;top:0;bottom:0;width:7px;cursor:ew-resize;
+  background:linear-gradient(90deg,transparent,rgba(0,0,0,.35));
+}
+.atl-cursor{
+  position:absolute;top:22px;bottom:0;width:2px;background:var(--sys-orange);
+  pointer-events:none;z-index:4;
+}
+.atl-vazio{padding:12px 8px;color:var(--ink-4)}
+.atl-nota{
+  padding:7px 10px;border-top:var(--line) solid var(--rule);color:var(--ink-3);
+  line-height:1.6;letter-spacing:.04em;
+}
+.atl-nota b{color:var(--ink-2)}
+
+/* ---------------- A ONDA E O ESPECTROGRAMA, na mesma régua ----------------
+   Empilhados dentro da mesma caixa e com a MESMA largura: a coluna de
+   pixels 340 é o mesmo instante nos dois. É isso que faz o mapa servir para
+   trabalhar — olha-se o espectrograma para achar o chiado e corta-se na
+   onda, no mesmo x. A seleção e o cursor, que são irmãos absolutos da
+   caixa, já cobrem os dois de graça.
+
+   Dois terços para a onda, um terço para o mapa: a onda é onde a mão
+   trabalha, o mapa é onde o olho procura.                                */
+.audio-main .wave-wrap{flex-direction:column}
+.audio-main .wave-wrap canvas#auWave{flex:2 1 0;min-height:120px}
+.audio-main .wave-wrap canvas#auSpec{
+  flex:1 1 0;min-height:80px;display:block;width:100%;
+  border-top:var(--line) solid var(--rule);cursor:text;
+}

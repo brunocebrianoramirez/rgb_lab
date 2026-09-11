@@ -564,6 +564,17 @@
       if (d) d.params.forEach(function (pr) { s.push(e.params[pr.k]); });
       var m = e.mask;
       if (m) s.push(m.shape, m.x, m.y, m.w, m.h, m.ang, m.feather, m.invert ? 1 : 0);
+      /* o gesto gravado não é parâmetro: sem isto na assinatura, redesenhar
+         o traçado não invalidaria o cache e a prévia ficaria congelada no
+         gesto anterior. Soma ponderada pelo índice — dois gestos com os
+         mesmos pontos em ordem trocada não podem dar a mesma soma.     */
+      if (e.curvaN) {
+        var soma = 0;
+        for (var ci = 0; ci < e.curvaN; ci++) {
+          soma += (e.curva[ci * 4] * 7919 + e.curva[ci * 4 + 1] * 104729) * (ci + 1);
+        }
+        s.push('G', e.curvaN, soma.toFixed(3));
+      }
     });
     var L = op.layer;
     if (L) {

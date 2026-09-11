@@ -1,0 +1,7 @@
+{
+  "_leia": "Fotos ORIGINAIS de polaroid. Não são enfeite: o laboratório LÊ a cor delas (percentis por canal) e monta um filme com a mesma assinatura — preto levantado, branco leitoso, dominante. Jogue os escaneamentos nesta pasta; se o servidor local estiver no ar (node server.js) eles aparecem sozinhos e esta lista nem é consultada. A lista existe para quando o site é aberto direto do arquivo, sem servidor.",
+  "originais": [
+    { "arquivo": "original-01.jpg", "nome": "ESTOURADO" },
+    { "arquivo": "original-02.jpg", "nome": "LAVADO" }
+  ]
+}

@@ -109,7 +109,9 @@ ENTRADA (ascii ao vivo) → BOOT → ÍNDICE → [ MANUAL 01 ] → LABORATÓRIO 
 
 ### Fontes
 Arquivo de vídeo, imagem, **webcam** (ao vivo, congelar frame, gravar trecho),
-texto vindo do laboratório de tipografia, áudio e uma carta de teste procedural.
+texto vindo do laboratório de tipografia, áudio, uma carta de teste procedural
+e o **SCANNER** — a mesa de digitalização, que grava matéria nova em vez de
+tratar a que já existe (tem seção própria mais abaixo).
 Arrastar arquivo para dentro da janela também funciona.
 
 E **SOBREPOR**, que ocupa a linha inteira porque faz outra coisa: põe o arquivo
@@ -175,10 +177,23 @@ com parâmetros. A duração se arrasta pela borda hachurada do clipe.
 **Marcadores, entrada e saída.** `M` marca (clique duplo nomeia), `I` e `O`
 definem o trecho. Sem seleção, `Del` apaga o que estiver entre entrada e saída.
 
-**Zoom e navegação.** `+` `−` ou `Ctrl`+roda dão zoom horizontal, de visão geral
-até frame a frame. `FIT` enquadra a sequência. `↑` `↓` pulam de corte em corte.
-Rolagem horizontal e vertical independentes. O ímã encaixa em bordas de clipe,
-cursor, marcadores e keyframes.
+**Zoom e navegação.** Embaixo da mesa há uma **barra de zoom** igual à da
+Premiere: o bloco cinza é o pedaço da sequência que está na tela. Arraste o
+**meio** para navegar, as **pontas** para aproximar ou afastar (a ponta que você
+não está puxando fica parada), clique no trilho vazio para levar a janela até
+lá, dê **duplo clique** para enquadrar tudo.
+
+Pelo teclado: `+` `−` dão zoom, `\` enquadra a sequência, `Shift+\` enquadra o
+que está selecionado. `Ctrl`+roda ou `Alt`+roda aproximam no cursor. Os botões
+`−` `+` `FIT` `SEL` na barra de cima fazem o mesmo.
+
+Todo zoom tem **âncora**: o instante embaixo do cursor — ou o ponteiro de
+reprodução, quando é pelo teclado — fica parado no mesmo lugar da tela. Sem
+isso, cada passo de zoom jogaria o trecho que você está olhando para fora da
+janela. O rótulo à direita diz quantos segundos cabem na tela.
+
+`↑` `↓` pulam de corte em corte. Rolagem horizontal e vertical independentes.
+O ímã encaixa em bordas de clipe, cursor, marcadores e keyframes.
 
 **Estado do clipe** aparece em indicadores pequenos no próprio clipe: `fx3`
 (três efeitos), `◆` (tem keyframe), `⇥` (tem transição), `▪` (travado),
@@ -187,7 +202,7 @@ cursor, marcadores e keyframes.
 **Composições.** `Ctrl+G` transforma a seleção numa composição aninhada, que entra
 na sequência como um clipe só. Os originais continuam vivos lá dentro.
 
-### Efeitos (144), em oito famílias
+### Efeitos (150), em oito famílias
 
 O catálogo cresceu e deixou de ser uma lista de categorias soltas. Agora são
 **oito famílias**, e cada uma é uma maneira diferente de tratar a imagem:
@@ -195,16 +210,16 @@ O catálogo cresceu e deixou de ser uma lista de categorias soltas. Agora são
 | | família | o que é | quantos |
 |---|---|---|---|
 | 01 | **COR / MATÉRIA** | o que a cor é, e o que sobra quando ela vai | 37 |
-| 02 | **TEMPO** | o quadro como janela sobre vários instantes | 12 |
-| 03 | **ESPAÇO / DISTORÇÃO** | a imagem como superfície deformável | 21 |
-| 04 | **GLITCH** | mecanismos de falha, digitais e analógicos | 16 |
-| 05 | **PIXEL / DIGITAL** | a imagem como grade de valores discretos | 14 |
-| 06 | **PINTURA / MATERIALIDADE** | comportamentos de pigmento e de impressão | 16 |
-| 07 | **PERCEPÇÃO** | ver o que o olho não vê: borda, calor, relevo | 12 |
+| 02 | **TEMPO** | o quadro como janela sobre vários instantes | 13 |
+| 03 | **ESPAÇO / DISTORÇÃO** | a imagem como superfície deformável | 23 |
+| 04 | **GLITCH** | mecanismos de falha, digitais e analógicos | 18 |
+| 05 | **PIXEL / DIGITAL** | a imagem como grade de valores discretos | 16 |
+| 06 | **PINTURA / MATERIALIDADE** | comportamentos de pigmento e de impressão | 17 |
+| 07 | **PERCEPÇÃO** | ver o que o olho não vê: borda, calor, relevo | 15 |
 | 08 | **INSTRUMENTOS** | não são filtros: são máquinas de videoarte | 11 |
 
 Cada família tem cor própria, e essa cor aparece no filete de cada item da
-lista — o catálogo inteiro lê como um sistema em vez de 144 cores soltas.
+lista — o catálogo inteiro lê como um sistema em vez de 150 cores soltas.
 
 #### As cinco ferramentas assinatura
 
@@ -373,6 +388,24 @@ sobrar só o título.
 Serve exatamente para o que você pediu: deixar só MOTION aberto, ou só a pilha
 de efeitos, e trabalhar num de cada vez.
 
+### As barras horizontais dobram — nenhum botão some
+
+Alargar as colunas laterais espreme o miolo, e as barras horizontais que moram
+nele (viewport, transporte, linha do tempo) simplesmente **cortavam** o que não
+coubesse. Não era só nas larguras extremas: com as colunas no padrão, num
+monitor de 1440px, a barra do viewport já perdia `PNG` e `EXPORTAR`, e a da
+linha do tempo perdia 248px — o grupo de zoom inteiro.
+
+Agora essas barras **dobram numa fileira a mais** em vez de esconder. Arraste a
+coluna até onde quiser: a barra vira duas, três, sete fileiras, e todo botão
+continua clicável. Medido nas duas colunas em 600px cada: 65 controles nas três
+barras, **zero fora da tela**.
+
+A linha do tempo cresce junto. A altura que você arrastou continua sendo a
+altura das PISTAS; as fileiras que a barra ganhou entram por fora dela. Sem
+isso, o botão não sumiria mas a mesa sumiria embaixo dele, que é a mesma
+reclamação com outro nome.
+
 ### A coluna da esquerda tem abas
 
 São quatro catálogos, e empilhados eles se espremiam até um colapsar e vazar por
@@ -525,6 +558,165 @@ medido em três tamanhos, e a cor cai sempre a 2,5% da largura.
 Dois pontos de partida na galeria de filtros: **VHS 1994** e **FITA RUIM** —
 o segundo é a fita judiada de uma vez só, com o rasgo e os riscos no alto.
 
+### CRT — o tubo pelo mecanismo, com os padrões da referência
+
+O **CRT / Tubão** foi reconstruído a partir da ferramenta aberta da
+tooooools (effects/crt), e nasce com os **padrões de fábrica dela**: máscara
+MONITOR, 377 colunas de fósforo, ponto 0,93, halo 0,1, bloom em TELA com
+limiar 0,36 e intensidade 0,45, convergência de meio ponto. Foi medido lado a
+lado com a página deles, na mesma imagem: cinco regiões e três níveis de
+bloom batem com diferença de 1%.
+
+* **Máscara** — MONITOR (pontos redondos em trio vertical, coluna sim coluna
+  não descida: a máscara delta), TV (listras com o trio vizinho descido meia
+  altura: a máscara de fenda), LCD (três listras por célula) ou SÓ LINHAS.
+* **Colunas de fósforo** — a régua. Não é pixel de tela: 377 colunas dão a
+  mesma tela em 320, 960 ou 1920 de largura.
+* **Tamanho** e **suavidade do ponto**, **força da máscara**.
+* **Fósforo** — RGB, ou um fósforo só: VERDE (P1), ÂMBAR (P3), BRANCO (P4),
+  AZUL — todos os pontos acesos com a mesma cor, pelo brilho da imagem.
+* **Brilho** e **gama da máscara** — a máscara cobre uma fração da tela, e a
+  referência compensa com ganho 2,5 e saída em gama 2,2. Aqui a compensação
+  segue a presença da máscara: sem máscara (força 0, ou SÓ LINHAS) ela some.
+* **Convergência** e a **direção** dela — o canhão vermelho e o azul chegam
+  desalinhados em direções opostas, a distância em pontos.
+* **Halo do ponto** e o **raio** — o fósforo aceso ilumina o vizinho.
+* **Bloom**, **limiar**, **raio**, e **como volta** (TELA, CLAREAR, HDR,
+  SOMA) — o que passa do limiar vaza num borrão largo. Ele é lido da imagem
+  de entrada, não do tubo — foi assim que o branco deixou de sair verde.
+* **Curvatura do vidro**, **linhas de varredura** e **quantas**, **grão**,
+  **cintilação**, **vinheta**.
+
+Cinco pontos de partida na galeria: **MONITOR CRT** (a referência),
+**TV DE TUBO**, **TERMINAL VERDE**, **TUBO AZUL** e **LCD DE PERTO**.
+
+### DATAMOSH — o codec, não o filtro de codec
+
+O **Datamosh** deixou de ser um borrão com blocos e passou a fazer o que um
+decodificador faz quando lhe roubam o quadro-chave — que é exatamente o que
+o Supermosh (supermosh.github.io) faz com H.264 de verdade. Cada quadro
+carrega:
+
+* **vetores de movimento** por macrobloco, MEDIDOS aqui por busca de bloco
+  (16×16 deslocamentos testados por bloco, na GPU, como um codificador);
+* o **resíduo** — a diferença entre o novo e a previsão, quantizada em
+  blocos de DCT;
+* **blocos intra** — quando o movimento não explica o bloco.
+
+A saída de cada quadro é a saída ANTERIOR arrastada pelos vetores, mais o
+resíduo. Como o resíduo é calculado contra a previsão do codec, a imagem velha
+viaja com o movimento do vídeo novo e nunca se apaga. Num **corte** o
+movimento não casa, o dado daquele quadro é jogado fora — e a imagem velha
+fica, para viajar quando o vídeo novo se mexer. É o datamosh clássico, e foi
+medido: no corte, 138 de diferença contra o quadro novo e 3 contra o
+anterior.
+
+* **Macrobloco** — contado numa linha de 720, como o codec.
+* **Quadros por segundo do codec** — o mosh avança a 24 por segundo (ou o
+  que você pedir), e não a cada desenho da tela. É o tranco de vídeo que o
+  mosh tem, e é o que faz a prévia e a exportação darem o mesmo resultado.
+* **Alcance da busca** — até onde o bloco procura o parecido.
+* **Ganho do movimento** — 1 é o movimento medido; 2 arrasta em dobro.
+* **REPETIR o quadro-P** — o "bloom" clássico: o efeito congela o campo de
+  vetores que acabou de medir e o aplica de novo a cada quadro do codec, e a
+  imagem escorre sem parar na direção em que estava indo — mesmo com o vídeo
+  parado. É um interruptor **com cronômetro**: ponha keyframes nele para
+  marcar onde o bloom começa e onde termina, que é o fluxo de marcadores
+  das ferramentas de datamosh. **Aceleração da repetição** faz cada quadro
+  repetido puxar um pouco mais que o anterior.
+* **Campo de vetores** — o movimento medido, editado como o ffglitch edita
+  por script: MEDIDO; somado a uma **DERIVA** constante (força e direção), a
+  um **ZOOM** (a explosão do centro para fora) ou a uma **ESPIRAL**; **SÓ
+  VERTICAL** (o "sink and rise": tudo afunda e sobe); SÓ HORIZONTAL; ou
+  NEGADO. **Força da deriva / zoom** e **direção** valem para esses.
+* **Rastro dos vetores** — a média do campo no tempo: o movimento demora a
+  mudar e deixa rasto, como o mv_average do ffglitch.
+* **Persistência** — segura o resíduo: 0 é o codec exato, 1 é só arrasto.
+* **Quantização do resíduo** — só o grosso do bloco sobrevive. **Cor em
+  blocos (4:2:0)** — a cor do resíduo é sempre a do bloco inteiro: são os
+  retalhos coloridos que todo mosh tem.
+* **Tolerância do casamento** e **blocos intra** — o que fazer quando o
+  movimento não explica: jogar fora (mosh) ou deixar o bloco novo entrar.
+* **Blocos travados** e a **troca** deles — macroblocos que nunca recebem
+  resíduo.
+* **Bagunça dos vetores**, **queima da cor por geração** (a cor satura a
+  cada quadro que passa pela realimentação).
+* **Quadro-chave a cada N s** — 0 é só no início do clipe.
+
+A **região** do efeito (retângulo, elipse, traçado) é o "mosh map": o mosh
+só onde a região deixa.
+
+Na galeria: **DATAMOSH CLÁSSICO** (o codec exato, quadro-chave removido),
+**DATAMOSH DERRETENDO** (movimento amplificado e resíduo segurado),
+**DATAMOSH EXPLODINDO** (quadro-P repetido com zoom no campo) e **DATAMOSH
+AFUNDANDO** (só o vertical, com rasto).
+
+### PAPEL TÉRMICO — a foto no cupom fiscal
+
+A **impressora de cupom** não tem tinta: tem uma linha de resistências que
+queimam o papel ponto a ponto. O efeito é contado em **pontos de 203 dpi** —
+80 mm são 576 pontos, 58 mm são 384 — e é um bit por ponto: queimou ou não.
+Fora do papel é **transparente** (a sombra também), então o cupom se compõe
+sobre o que estiver embaixo na linha do tempo.
+
+* **Papel** (80 ou 58 mm), **altura do cupom** no quadro, **posição X**.
+* **Cabeçalho** (o nome da loja, escrito por você) e **itens** — separe com
+  `|`; o último pedaço de cada linha vai para a direita se for um número, e
+  o TOTAL soma os preços. Há a data, um número de cupom, os separadores e
+  o **código de barras** (sorteado pelo nome da loja).
+* **Trama** — DIFUSÃO (orgânica, por ruído azul), ORDENADA (grade 8×8) ou
+  LIMIAR SECO. **Contraste**, **gama**, **cinza do preto**, **cor do papel**.
+* **Desgaste** — a resistência morta (a coluna branca vertical de todo cupom
+  velho), a resistência fraca (imprime cinza), a faixa onde o papel
+  escorregou, o pontilhado solto.
+* **Queima** — o ponto quente aquece o vizinho: o preto engorda e escorre no
+  sentido do avanço.
+* **Sombra do cupom** e **imprimir ao vivo** — em pontos por segundo, o
+  cabeçote avança e o cupom sai da máquina no ritmo do clipe.
+
+Na galeria: **CUPOM FISCAL** e **CUPOM DESBOTADO**.
+
+### MAPA DE PROFUNDIDADE (I.A.) — perto claro, longe escuro
+
+Um modelo de profundidade monocular (**Depth Anything V2**, small) roda
+**dentro do navegador**: perto claro, longe escuro, como a estética do TOP de
+profundidade do TouchDesigner. Mesmo contrato do MARCAR OBJETO: o modelo
+(18 MB) é buscado na primeira vez que o efeito entra no ar, fica guardado no
+navegador, nenhum quadro sai da máquina, e a ficha do efeito diz o estado —
+carregando, pronta (e em quê: WebGPU ou CPU), ou indisponível e por quê.
+Sem I.A., o mapa é de mentira, pelo brilho.
+
+* **Mostrar** — MAPA (perto claro ou perto escuro), COR (turbo), NÉVOA pela
+  distância, SÓ O PERTO ou SÓ O LONGE — os dois últimos são o mapa como
+  **matte**, com alfa real: o recorte do perto vira uma camada.
+* **Análise** — RÁPIDA (154 px), MÉDIA (252) ou FINA (378). Em vídeo o mapa
+  atrasa (meio segundo a dois, conforme a máquina); em foto é imediato.
+* **Ritmo da análise** — SEMPRE QUE DER, 2 POR SEGUNDO, 1 POR SEGUNDO ou SÓ
+  COM O VÍDEO PARADO. O modelo roda num trabalhador, fora da linha principal
+  — mas a placa de vídeo é uma só, e enquanto ela pensa a profundidade o
+  quadro do vídeo espera um pouco. Se o vídeo engasgar, baixe o ritmo; para
+  fotos, SEMPRE.
+* **Contraste**, **gama** e **deslocar** do mapa; **cor da névoa**; **onde
+  corta** e a **borda** do recorte.
+
+### RASTREIO DE MANCHAS — a visão de máquina
+
+O **Blob Track**: as manchas viram caixas numeradas, com coordenadas, ligadas
+por linhas — a sobreposição de visão de máquina. O número **acompanha o
+objeto** enquanto ele anda (cada mancha herda o número da mais próxima do
+quadro anterior), e as caixas são suavizadas para não tremer.
+
+* **O que é mancha** — O CLARO, O ESCURO, O QUE SE MEXE (contra o quadro
+  anterior) ou UMA COR (por matiz, com tolerância).
+* **Limiar**, **tamanho mínimo** (% do quadro), **quantas manchas** (até 32),
+  **suavizar as caixas**.
+* **Desenho** — CAIXA, CANTOS, CRUZ ou CÍRCULO; **ligar as manchas** (cada
+  uma às duas vizinhas mais próximas); **número e coordenadas**; **ponto no
+  centro**; **cor**, **espessura**, **tamanho do rótulo**; **preencher a
+  caixa**; **escurecer o vídeo**.
+
+Na galeria: **VISÃO DE MÁQUINA** e **PROFUNDIDADE (I.A.)**.
+
 ### MARCAR OBJETO — a I.A. desenha o contorno para você
 
 Dentro do painel do traçado há um botão de **I.A.**. Ele faz duas coisas,
@@ -546,6 +738,327 @@ igual.
 
 Ele é **por quadro**: não adivinha o movimento sozinho. O que ele tira de você
 é o trabalho de desenhar o primeiro contorno de cada quadro-chave.
+
+### TRICÔ — o vídeo virando malha, com vão transparente
+
+Família 05 PIXEL. Cada célula da grade olha um pedaço da imagem e decide que
+PONTO de tecido desenhar ali. Não é pixelização: entre um ponto e outro pode
+não haver **nada**, e é daí que vem o uso dele.
+
+Oito tipos de ponto — quadrado, redondo, losango, cruz, linha, **tricô** (duas
+fileiras de "V" entrelaçadas), ponto-cruz e orgânico. Mais organicidade
+(0 = geométrico, 1 = tecido feito à mão), sensibilidade de contorno, quatro
+modos de cor, cinco simetrias (incluindo caleidoscópio) e cinco animações.
+
+**Fiapos.** Cinco controles no meio da lista soltam microfibras de cada ponto:
+fios finos que escapam para o vão, cada um com comprimento, torção e direção
+sorteados. **Fiapos** é quantos; **comprimento**, quanto avançam no vão;
+**finura**, a espessura (fio mais fino que um pixel não encolhe mais — fica
+mais fraco, que é como microfibra se comporta); **frisado**, o quanto entortam
+no caminho; **clarear**, se pegam luz (positivo) ou ficam mais escuros que a
+malha (negativo). Nas animações, os fiapos balançam junto com o ponto.
+
+É o controle que tira a malha do lugar de esquema: grade limpa demais entrega
+na hora que é grade. Vem **desligado** — em 1080p o efeito custa 6ms sem fiapo,
+15ms com fiapo no meio e 29ms com tudo no talo, então quem não pediu não paga.
+
+**FUNDO = TRANSPARENTE é o controle que importa.** Com ele, os vãos entre os
+pontos ficam com alfa de verdade — a camada deixa ver o que está embaixo dela
+na linha do tempo, e funciona com opacidade, modo de mistura e keyframes como
+qualquer outra.
+
+**Para transformar só uma pessoa (e não a cena inteira) em tecido:**
+
+1. aplique o TRICÔ no clipe e ajuste o padrão;
+2. ponha **Fundo = Transparente** — isso abre os vãos entre os pontos;
+3. na ficha da camada, crie uma máscara **CANETA** e use **MARCAR OBJETO
+   (I.A.)** para traçar a pessoa;
+4. ponha outro vídeo numa pista abaixo.
+
+O passo 2 tira o fundo de dentro do tecido; o passo 3 tira tudo que está fora
+da pessoa. Os dois juntos é que dão o resultado.
+
+### SCANNER DE VÍDEO — o cabeçote trepidando
+
+Família 04 GLITCH. Cada linha da imagem é deslocada por uma senoide, com os
+vãos em alfa real. Oito controles: direção, velocidade, oscilação, intensidade
+do arraste, cor/preto e branco, grão e fundo.
+
+O aviso está na descrição dele: **funciona melhor em foto**. Em vídeo o
+resultado fica instável, porque o desenho se refaz a cada quadro.
+
+**O arraste gravado.** Com o efeito aberto na ficha, a prévia inteira vira
+superfície: **aperte, arraste, solte**. O gesto inteiro é esticado do começo ao
+fim da digitalização — arrastar devagar num trecho faz aquele trecho ocupar
+mais linhas. Clicar sem arrastar apaga o gesto.
+
+### SCANNER DE MESA — o escâner de verdade
+
+Está em três lugares, e os três abrem a mesma janela: o botão **SCANNER** na
+grade FONTE, o item **Scanner de mesa (foto)** no catálogo de efeitos, e
+**ESCANEAR** na barra de transporte.
+
+Ele **não é um efeito**. É uma gravação: um cabeçote anda uma linha por vez e o
+filme guarda o que estava embaixo dele **naquele instante**. Por isso mora numa
+janela, e por isso o resultado vira uma fonte do laboratório — como o FRAME
+congelado da câmera.
+
+```
+A. BANCADA                        B. FILME
+a fonte, viva.                    o que o cabeçote já gravou.
+arraste, role para ampliar,       vai enchendo linha a linha
+gire, R reenquadra                enquanto o scan anda
+```
+
+**A distorção vem do movimento, e ele pode ser seu ou do vídeo:**
+
+* **foto** — a distorção é da sua mão. Comece o scan e arraste, amplie ou gire
+  a bancada enquanto o cabeçote anda. Cada linha guarda a posição daquele
+  instante, e a imagem escorre, rasga, estica.
+* **vídeo** — a fonte anda sozinha: o vídeo **toca** durante o scan, então cada
+  linha do filme é um quadro diferente. Quem se mexeu vira um borrão contínuo,
+  quem ficou parado sai nítido. É o slit-scan clássico.
+
+Os dois somam: arraste um vídeo enquanto ele toca.
+
+**Controles.** Velocidade (0,5 a 8 linhas por quadro), direção vertical ou
+horizontal, cor ou preto e branco, fundo (cor sólida ou **transparente**), grão,
+onda do cabeçote, e a ficha técnica queimada no canto — que dá para desligar.
+
+**FUNDO TRANSPARENTE.** O que o cabeçote não cobrir fica com alfa de verdade —
+o recorte irregular que ele deixa nas bordas passa a deixar ver a camada de
+baixo. As duas telas ganham xadrez para você enxergar o vazio. Só dá para
+trocar o fundo com a folha em branco; no meio de um scan a troca é ignorada,
+senão apagaria o que já foi gravado.
+
+**Como levar o resultado para a linha do tempo:**
+
+| botão | o que faz |
+|---|---|
+| **USAR NA COMPOSIÇÃO** | o filme vira camada na linha do tempo, a janela fecha e o laboratório volta para a vista de vídeo |
+| **BAIXAR PNG** | salva o filme no disco (com alfa, se o fundo for transparente) |
+| **FOLHA NOVA** | joga o filme fora e recomeça |
+| **VOLTAR O CABEÇOTE** | leva o cabeçote ao início sem apagar o filme |
+
+Fechar a janela **não** perde o scan: reabrindo, o filme continua onde estava.
+O que não sobrevive é uma sessão vazia — se você abriu sem fonte e depois
+escolheu um clipe, a mesa recomeça com ele.
+
+### MOSAICO — uma grade de quadros, com um vídeo dentro de cada um
+
+Está em dois lugares, e os dois abrem a mesma janela: o botão **MOSAICO** na
+grade FONTE, logo abaixo do SCANNER, e **MONTAR** na barra de transporte.
+
+Não é um efeito de grade. **Cada quadro do mosaico é um CLIPE de verdade** —
+com corte, efeito, máscara, keyframe e transição próprios. É a diferença entre
+uma grade desenhada por cima do vídeo e uma grade em que o quadro 3 tem um
+vídeo, o 7 tem outro e o 11 está vazio.
+
+A janela é um mapa da grade, na proporção da sua composição:
+
+| Controle | O que faz |
+|---|---|
+| **1. Quantos quadrados** | colunas e linhas, de 1 a 16 cada |
+| **2. Formato do quadrado** | `PREENCHER A TELA` divide o quadro todo · `QUADRADO` faz quadrado de verdade em pixels · `LIVRE` abre a proporção largura÷altura: abaixo de 1 o quadro fica **em pé e fino**, acima fica deitado |
+| **3. Borda entre os quadrados** | espessura de 0 a 12% da largura, mais a moldura em volta da grade |
+| **4. O vídeo dentro do quadro** | `PREENCHER` corta o que sobra · `CABER INTEIRO` deixa o vídeo inteiro dentro · `ESTICAR` deforma para ocupar tudo. E a **defasagem**, que faz cada quadro mostrar o mesmo vídeo num momento diferente |
+| **5. Qual vídeo em qual quadro** | escolha uma fonte e **pinte arrastando** no mapa. A borracha esvazia. `ALTERNAR` faz xadrez, `SORTEAR VAZIOS` deixa buracos |
+
+**A borda não é pintada: é VÃO.** Fora do quadro não fica imagem nenhuma, fica
+alfa — o que aparece ali é a camada de baixo, ou o fundo da composição. É por
+isso que dá para pôr um mosaico por cima de outro.
+
+**REORGANIZAR O QUE JÁ EXISTE** muda colunas, formato ou borda de um mosaico
+já montado, sem desmontar. Encolhendo a grade, os quadros que ficaram de fora
+**não são apagados** — continuam na linha do tempo, e a janela avisa quantos.
+
+Duas coisas para saber antes:
+
+* **cada quadro cheio é um vídeo tocando.** Doze quadros são doze
+  decodificadores. Acima de umas duas dúzias a prévia engasga (a exportação
+  continua exata) — a janela avisa quando você passa disso;
+* nos formatos de proporção fixa a grade pode ficar **mais alta que a tela**.
+  Ela fica centrada e as pontas saem cortadas; a janela também avisa.
+
+### POLAROID — não há janela, há uma câmera
+
+Está nos mesmos dois lugares do scanner e do mosaico: o botão **POLAROID** na
+grade FONTE e **REVELAR** na barra de transporte.
+
+A tela é uma câmera flutuando no escuro. **Não existe cartão de janela, nem
+cabeçalho, nem barra de botões embaixo** — fora a telinha de ajustes, todo
+comando é uma peça da máquina:
+
+| Peça | O que ela faz |
+|---|---|
+| **a lente** | é por onde a imagem entra: clique e escolha a foto. **Dois cliques** trazem o clipe escolhido na linha do tempo. Depois de carregada, você a vê **através do vidro** |
+| **o botão vermelho** | dispara. A foto sai pela fenda e **fica pendurada** na câmera |
+| **a barra do flash** | arma o flash. Acesa, a próxima foto sai com estouro de luz |
+| **o botão esquerdo** (dos dois redondos, à direita da lente) | é a roda claro/escuro do 1000. **Arraste em volta dele**; dois cliques voltam ao meio |
+| **o botão direito** | **EDITAR** — a telinha se desdobra para o lado |
+| **a faixa arco-íris** | é a marca do filme. Clique e ela troca de filme |
+| **a porta preta do filme** | é por onde se carrega o pacote — e o pacote é que decide em que papel a foto sai. Ela abre, mostra a câmara e leva direto à página **PAPEL** |
+| **a plaqueta Supercolor** | é a leitura. Passe o rato para ver o filme, o papel e a foto que estão carregados |
+| **a fenda** | é por onde a foto sai — e onde você pode **largar um arquivo** |
+
+Chegando perto da lente, ela **avisa** que é ali: um anel azul, um **＋** dentro
+do vidro e a etiqueta. Você também pode largar uma imagem em cima da câmera
+inteira.
+
+Para sair: **Esc**, um clique no fundo, ou o **×** no canto — a única coisa da
+tela que não é peça de polaroid nenhum.
+
+#### A foto fica pendurada — e é nela que se trabalha
+
+Ela sai com tranco, balança até assentar e fica ali, segura pela ponta —
+**praticamente inteira para fora**, com a imagem toda à vista, que é o que
+importa na hora de editar. É sobre ela que a revelação corre, do cinza do
+reagente até a imagem.
+
+* **arraste a foto** para reenquadrar; **roda do rato** para aproximar;
+* **passe o rato** por cima e aparecem as duas saídas, na própria foto:
+  **BAIXAR PNG** (folha inteira, 1000×1232) e **USAR NA LINHA DO TEMPO**;
+* dispare de novo e a anterior **continua pendurada atrás**, espiando por
+  baixo. Clique numa delas para voltar aos ajustes daquela.
+
+Se você disparar de novo com a telinha aberta, ela continua aberta — é lá que
+você está trabalhando.
+
+#### O filme não é um filtro por cima
+
+O que faz um polaroid parecer polaroid é o **preto levantado** — a sombra vira
+um cinza leitoso em vez de fechar. Cada um dos oito filmes é uma curva por
+canal, não uma cor jogada em cima:
+
+| Filme | Como ele é |
+|---|---|
+| **600** | o de todo mundo: quente, contraste médio, preto que nunca fecha |
+| **SX-70** | macio, sombra puxando para o magenta, branco sem estourar |
+| **TIME-ZERO** | esmaecido e quente, como quem guardou a foto na gaveta |
+| **779** | frio, azulado, o mais limpo da caixa |
+| **669** | peel-apart: contraste alto, preto quase fechado |
+| **P&B** | preto e branco de verdade, com o creme do papel por baixo |
+| **EXPIRADO** | pacote fora da validade: dominante ciano e vazamento pela borda |
+| **ESTOURADO** | luz demais no disparo — o branco come a foto pelas bordas |
+
+#### A telinha, em seis linhas
+
+O botão direito abre a telinha: ela está **dobrada atrás da câmera** e
+desdobra para o lado, presa por duas dobradiças. O desenho é o do laboratório —
+monoespaçada em caixa alta, filete fino, e o azul do canal de vídeo na linha
+acesa.
+
+São dois níveis. Primeiro o **índice**, com as seis linhas; clicando numa você
+entra nela, e o botão do cabeçalho vira **‹** para voltar. Só fecha a telinha
+quando você já está no índice.
+
+| Linha | O que tem |
+|---|---|
+| **FILME** | os oito, mais os originais da sua pasta para **amostrar** |
+| **AJUSTES** | temperatura, brilho, contraste, vintage e saturação (0 a 200, com 100 no meio), mais halo, vinheta, grão, vazamento de luz e desfoque |
+| **LEGENDA** | escrita na tarja de baixo — à mão, Archivo ou monoespaçada; tamanho, alinhamento e cor da tinta |
+| **QUADRO** | formato (quadrado, retrato, paisagem, wide) e giro. O que sobra do formato **não fica preto: fica papel** |
+| **PAPEL** | qual moldura. A folha padrão é o `papel.png` da sua pasta — o escaneamento em PNG, usado **como está**, sem nada acrescentado |
+| **PRESETS** | guarda a receita e reaplica. Ficam no mesmo cofre dos outros presets do laboratório |
+
+#### A pasta é sua, e ela manda
+
+```
+assets/polaroid/molduras/   escaneamentos de papel polaroid VAZIO
+assets/polaroid/filmes/     fotos ORIGINAIS de polaroid
+```
+
+Jogue arquivos lá dentro e eles aparecem — com o servidor no ar (`node
+server.js`) a lista vem da pasta, sem precisar editar nada.
+
+**As molduras** dão trama, sujeira e o amarelado que muda de canto para canto,
+coisa que retângulo branco desenhado não tem. O laboratório **mede sozinho**
+onde termina a borda e começa a emulsão. E depois de revelar, o papel volta por
+cima da foto — é o que faz a imagem parecer revelada *dentro* da folha, e não
+colada sobre ela.
+
+**Os originais não são exemplo: o laboratório lê a cor deles.** Clicando num
+original na linha FILME, ele monta um filme com a assinatura daquela foto —
+preto, branco e meio-tom medidos, canal por canal. É por isso que essa pasta
+importa. Quem preferir não mexer em pasta tem **AMOSTRAR UM ARQUIVO…**, que faz
+a mesma leitura num arquivo solto.
+
+### SONÓGRAFO — o vídeo virando música
+
+Abre pelo botão **SONÓGRAFO**, na aba **TOOLS**. O mesmo botão existe em
+**TOOLS** do laboratório de áudio, e abre a mesma janela: ele come vídeo e
+devolve som, então tem porta dos dois lados.
+
+A ideia cabe numa frase: **a linha fica parada e a imagem passa por ela.** Não
+é a linha que varre o vídeo — é o vídeo que atravessa a linha. Um carro entra
+no quadro, cruza a linha, e naquele instante nasce uma nota.
+
+```
+vídeo  →  linha parada  →  o que cruza  →  sensor  →  nota  →  som
+```
+
+**Como começar, em cinco passos:**
+
+1. **FONTE…** abre um arquivo, ou **DO CLIPE** usa o que estiver escolhido na
+   linha do tempo. Arrastar um arquivo para cima do visor também funciona.
+2. **Arraste a linha** com o dedo no visor, ou use POSIÇÃO. Ela pode ficar
+   vertical, horizontal ou nas duas diagonais.
+3. Escolha os **SENSORES** — o que conta como acontecimento.
+4. Escolha **ESCALA** e **TOM** no rodapé: toda nota sai afinada nessa
+   tonalidade, sem exceção.
+5. **▶**.
+
+**Três desenhos contam a mesma história ao mesmo tempo**, e é aí que se entende
+a máquina: na linha, um traço curto acende na altura exata de onde alguma coisa
+cruzou; no piano roll, a nota nasce embaixo desse traço, no mesmo instante; e
+ela **cresce enquanto o objeto ainda está passando**. A duração da nota é o
+tempo de travessia, de verdade — objeto lento dá nota longa.
+
+**Os quatro sensores** decidem o que é acontecimento. Podem ser combinados, e
+pelo menos um fica sempre ligado:
+
+* **BRILHO** — a coisa que cruzou é mais clara ou mais escura do que o que
+  costumava estar ali. É o mais previsível, e o padrão.
+* **COR** — a mudança de matiz. Bom para objeto colorido em cena neutra.
+* **MOVIMENTO** — a variação de um quadro para o outro. Bom para água, folhagem,
+  multidão.
+* **BORDA** — o contorno passando pela linha. Bom para vulto, poste, grade.
+
+**Os três botões giratórios**, e é neles que se acerta o resultado:
+
+* **SENSIBILIDADE** — quanto uma mudança precisa ser grande para virar nota.
+  Mais alta, mais coisa vira música. Mais baixa, só o que é forte.
+* **DENSIDADE** — quantas notas cabem ao mesmo tempo e quão rápido a mesma
+  altura pode repetir. É o botão de "está demais" / "está de menos".
+* **SUAVIZAÇÃO** — o quanto o sensor ignora tremor. Suba se o vídeo tem grão ou
+  câmera na mão.
+
+**MAPEAMENTO** é onde se decide o que vira o quê: a altura pode vir da posição
+na linha (o padrão — em cima é agudo), do brilho, da cor ou do movimento; a
+duração, do tempo de travessia; a intensidade, do brilho ou do contraste. E o
+instrumento pode ser fixo ou **decidido pelo matiz**: vermelho percute, verde é
+madeira, azul é eletrônico, magenta é corda.
+
+No rodapé ficam **ESCALA** (14), **TOM**, **ALCANCE** (de que oitava a que
+oitava), **GRADE** (encaixa o início das notas em 1/4, 1/8, 1/16 — o som ao
+vivo sai na hora do cruzamento, e é o gravado que encaixa), **INSTRUMENTO** (10
+vozes) e **INTENSIDADE**.
+
+**O ● grava.** Desligado, você ouve e ajusta sem sujar a gravação; ligado,
+guarda. **LIMPAR** apaga tudo.
+
+**As saídas, no alto:** **MIDI** salva a sequência para abrir num DAW,
+preservando altura, duração, intensidade e canal. **WAV** salva o áudio
+renderizado. **USAR NA COMPOSIÇÃO** rende e põe direto na linha do tempo como
+clipe de áudio, já no lugar.
+
+**Imagem parada também funciona.** Sem vídeo não há tempo, então quem anda é a
+linha: aparece o controle **VARREDURA DA IMAGEM** com quantos segundos a
+travessia leva, e a foto vira partitura da esquerda para a direita.
+
+> **Se sair ruído em vez de música:** baixe a SENSIBILIDADE e a DENSIDADE, e
+> deixe só o sensor BRILHO ligado. Se sair silêncio, faça o contrário — e
+> confira se a linha está em cima de alguma coisa que se mexe.
 
 ### A região de um efeito pode ser um traçado
 
@@ -666,17 +1179,137 @@ alcançar uma pista que está fora da tela. Solta, para.
 
 ## 02 · LABORATÓRIO DE ÁUDIO
 
-> É o **mesmo laboratório de sempre** — a mesma onda, a mesma barra de
-> transporte, o mesmo rack, a mesma coluna. Nada mudou de lugar. O que
-> mudou é o que ele consegue fazer.
+> **O rack mudou de lugar.** Os módulos e seus controles agora ficam na
+> **coluna da direita**, como a pilha de efeitos do vídeo e a ficha da
+> tipografia — quem se ajusta vai para a coluna. O centro ficou só com o que
+> se olha: a onda, o transporte e o analisador.
+>
+> **Módulo desligado mostra só o nome.** Ligar abre os controles; clicar no
+> **nome** abre sem ligar, para espiar o que ele tem antes de pô-lo na cadeia.
+> Com 34 módulos e três ou quatro em uso, é a diferença entre uma coluna
+> navegável e uma parede.
 
 Carrega arquivo, grava o **microfone**, gera um tom de teste ou puxa o áudio
 de um vídeo já carregado no laboratório 01. Arrastar arquivo para dentro
 também funciona.
 
+Debaixo da onda fica o **espectrograma do arquivo inteiro**: o mapa de tempo
+× frequência, na mesma régua da onda. A coluna de pixels que você olha é o
+mesmo instante nos dois, e a seleção vale para os dois. É onde se enxerga o
+sibilante, o zumbido de rede, onde a voz entra e onde o ruído de fundo sobe —
+acha-se no mapa e corta-se na onda, no mesmo lugar.
+
+Não confundir com o modo `ESPECTROGRAMA` do **analisador**, na barra de baixo:
+aquele rola em tempo real e só existe enquanto toca. Este fica.
+
 Arrastar na onda seleciona um trecho; `CORTAR NA SELEÇÃO` apara. Toda a
 cadeia é reprocessada a partir do **áudio original**, sempre — nada é
 destrutivo até você cortar.
+
+### MONTAGEM — a linha do tempo do som
+
+Na aba **TOOLS** da coluna, ao lado do sonógrafo e da cifra. É uma linha do
+tempo **só de áudio**: várias pistas, vários trechos, arrastar para mover,
+arrastar a borda direita para aparar, e sobrepor à vontade. Nasce com duas
+pistas, `VOZ` e `TRILHA`, e dá para acrescentar quantas quiser.
+
+`+ O ÁUDIO DA MESA` põe na montagem o som que está no laboratório, **já com a
+cadeia de módulos aplicada**. O `M` de cada pista muda ela.
+
+**Botão direito num trecho** abre o menu: cortar, duplicar, apagar e — o que
+interessa — **mandar aquele trecho para uma pista de áudio do LAB 01**,
+escolhendo qual pela lista (cada uma mostra quantos clipes já tem). Vai só o
+pedaço aparado, na posição em que ele está na montagem. Se não houver
+composição de vídeo aberta, ela é criada.
+
+No pé, `MANDAR A MONTAGEM PRA TIMELINE` manda tudo de uma vez, misturado, e
+`EXPORTAR WAV` salva a mistura no disco.
+
+O que se ouve no ▶ é a **mistura inteira** — o mesmo material que sai nas duas
+saídas.
+
+**Cortar não copia som.** Os dois pedaços continuam olhando para o mesmo
+áudio na memória, cada um com o seu ponto de entrada. Cortar dez vezes um
+arquivo de trinta minutos não custa nada.
+
+### FERRAMENTAS — os dois instrumentos que fabricam som
+
+A coluna do laboratório de áudio tem uma aba **TOOLS**, ao lado de FONTE,
+CADEIA e PRESETS. Ali não estão módulos do rack: estão máquinas que **fabricam
+material novo**, e o que sai delas entra na linha do tempo ou na FONTE do rack,
+para depois passar pela cadeia como qualquer outro som.
+
+* **SONÓGRAFO** — transforma um vídeo em música: a linha fica parada e o que
+  atravessa ela vira nota. Está descrito no laboratório 01, porque é lá que o
+  vídeo está; o botão daqui abre a mesma janela.
+* **CIFRA** — o instrumento abaixo.
+
+### CIFRA — o campo harmônico à mão
+
+Escolha um tom e uma escala, e **os acordes daquela tonalidade aparecem nas
+pastilhas**. Aperte uma e sai o acorde inteiro, afinado. Não é preciso saber
+qual é o acorde: se está na pastilha, está no tom.
+
+```
+TOM  C     ESCALA  Maior
+┌──────┬──────┬──────┬──────┬──────┬──────┬──────┐
+│ 1/I  │ 2/ii │3/iii │ 4/IV │ 5/V  │ 6/vi │7/vii°│
+│  C   │  Dm  │  Em  │  F   │  G   │  Am  │ Bdim │
+└──────┴──────┴──────┴──────┴──────┴──────┴──────┘
+```
+
+O rótulo de cima é o **grau**: o número e o algarismo romano dizem onde aquele
+acorde mora na tonalidade — maiúsculo é maior, minúsculo é menor, `°` é
+diminuto. É a mesma linguagem de qualquer songbook, e serve para você transpor
+depois: `I – V – vi – IV` continua sendo a mesma progressão em qualquer tom.
+
+**Trocar a escala refaz o campo inteiro.** Em Dó menor harmônica saem
+`Cm Ddim D#aug Fm G G# Bdim` — repare no **G maior** no quinto grau, que é a
+assinatura dessa escala. Em escalas de cinco graus aparecem cinco pastilhas, e
+os acordes saem com `sus` em vez de terça: é o que aquela escala tem para dar.
+
+**As três fileiras embaixo das pastilhas:**
+
+* **TIPO** — quantas notas o acorde empilha: `tri` (tríade), `7`, `9`, `11`,
+  `13`. Quanto mais alto, mais denso e mais jazz.
+* **INVERSÃO** — a mesma harmonia com outro baixo. Trocar de acorde invertendo
+  faz as vozes andarem pouco, e é o que deixa a sequência ligada em vez de
+  saltada.
+* **SECUNDÁRIA** — o empréstimo. `/V` põe a dominante daquele grau, `/IV` a
+  subdominante, `/vii` a sensível. É a saída elegante do tom por um compasso —
+  aperte `/V` sobre o segundo grau e depois toque o quinto: você acabou de
+  fazer o caminho mais usado da música popular.
+
+**No alto:** TOM, ESCALA, **OITAVA** (`–` e `+`), **LEGATO** e **INSTRUMENTO**
+(as mesmas dez vozes do sonógrafo).
+
+**LEGATO ligado**, a pastilha fica presa: o acorde continua soando até você
+apertar outro. É o que permite trocar de harmonia com uma mão só e tocar a
+melodia com a outra, no teclado. Desligado, soa só enquanto o dedo está nela.
+
+**O teclado embaixo** toca nota solta, com o rato ou com o teclado do
+computador. Os pontinhos verdes marcam as notas que pertencem à escala — quem
+não sabe onde pisar, pisa nos pontinhos.
+
+```
+atalhos:  1 a 7            as pastilhas
+          a w s e d f t g y h u j    o teclado, meia oitava
+```
+
+**Gravar e usar.** O **● GRAVAR** arma; o relógio só começa a contar **na
+primeira nota**, para a peça não nascer com silêncio na frente. Toque à
+vontade, aperte de novo para parar, e escolha o destino:
+
+* **USAR NA COMPOSIÇÃO** — vira clipe de áudio na linha do tempo.
+* **MANDAR PRO RACK** — vira a **FONTE** deste laboratório, e aí passa pela
+  cadeia de efeitos que você já montou. É o caminho para gravar um piano limpo
+  e devolvê-lo com reverberação, granular ou o que estiver no rack.
+* **MIDI** e **WAV** salvam arquivo.
+
+> **Uma progressão para experimentar:** deixe em Dó maior, TIPO `7`, e toque
+> `2 → 5 → 1` (Dm7, G7, Cmaj7). Depois aperte `/V` e toque `2` antes de tudo:
+> aparece um A7 que não é do tom e que puxa o Dm7 com força. É assim que se
+> escreve música popular há cem anos.
 
 ### O rack: 34 módulos em onze famílias
 
@@ -1000,15 +1633,77 @@ ao fim do traço, com a ponta da caneta acompanhando. Junto vêm `MARCADOR`
 quatro só funcionam nas famílias `LAB`, desenhadas por código — escolher uma
 delas troca a família sozinha e avisa.
 
-São **54 ferramentas**, separadas na coluna em dois grupos, com busca:
+São **60 ferramentas**, na coluna da esquerda, em **sete famílias que abrem e
+fecham** — com busca por cima de todas. **Cada uma mostra o próprio efeito
+numa miniatura ao vivo**, desenhada pelo mesmo motor que desenha o palco: o
+que a prévia mostra é o que vai acontecer.
 
-* **FORMA · desenho da letra** (12) — base · onda · explosão · escada · rastro ·
-  contorno · corte · rgb · pilha · espelho · peso · ímã
-* **ANIMAÇÃO · a letra no tempo** (42) — as cinco de traço, as nove antigas de
-  entrada, mais as entradas, laços e saídas novos, e quatro **combinações
-  prontas**: `TÍTULO` (entra do desfoque, respira, some), `LEGENDA` (datilografa
-  e apaga), `IMPACTO` (estoura, treme e explode) e `CARTAZ` (persiana,
-  arco-íris e cortina).
+| família | quantas | o que é |
+|---|---|---|
+| **MESAS** | 2 | abrem uma folha por cima do palco, para trabalhar com a mão: `✂ LETRAS RECORTADAS` (cada letra é um pedaço de papel; clique e arraste) e `✎ ESCREVER À MÃO` (desenhe o traço com o mouse, a caneta ou o dedo, e a animação o escreve de volta). São as únicas que **ficam ligadas**: o item acende enquanto a mesa está aberta, e clicar de novo fecha. Abrir uma fecha a outra. |
+| **FORMA** | 16 | o desenho da letra — base · onda · explosão · escada · rastro · contorno · corte · rgb · pilha · espelho · peso · ímã, mais as quatro de **TRAMA** (abaixo) |
+| **TRAÇO** | 5 | a letra sendo escrita; só nas famílias `LAB` |
+| **ENTRADAS** | 18 | como as letras chegam ao quadro |
+| **SAÍDAS** | 5 | como as letras vão embora |
+| **LAÇOS** | 10 | o que fazem enquanto estão no quadro |
+| **PRONTOS** | 4 | entrada, laço e saída num jogo só: `TÍTULO` (entra do desfoque, respira, some) · `LEGENDA` (datilografa e apaga) · `IMPACTO` (estoura, treme e explode) · `CARTAZ` (persiana, arco-íris e cortina) |
+
+**Clique no nome da família** para abrir ou fechar. **Alt+clique** deixa só
+aquela aberta e fecha as outras seis. O que estiver aberto continua aberto
+quando você voltar. Buscando, todas abrem — resultado de busca nunca fica
+escondido atrás de uma dobra.
+
+Na barra do laboratório, ao lado de `TELA` e `ANIMAR`, ficam os três
+**comandos** — `EXPLODIR`, `ZERAR` e `ALEATÓRIO`. Não são ferramentas: agem
+uma vez sobre o que já está no quadro.
+
+### Desfazer, e voltar ao começo
+
+**`Ctrl+Z` desfaz e `Ctrl+Y` refaz**, dentro da tipografia, sem precisar de
+composição de vídeo aberta. Com uma **mesa** aberta, `Ctrl+Z` desfaz o gesto
+dela — o último traço da caneta, o último arrasto de letra recortada — e não
+o que você tinha mexido antes de abri-la.
+
+**`ZERAR`** volta **tudo** ao estado inicial: fonte, corpo, peso, cor,
+animação, deformação e trama. O texto fica — ele é seu, não é efeito. E o
+próprio ZERAR entra no histórico, então `Ctrl+Z` traz tudo de volta.
+
+**As duas mesas se movem.** Arraste pelo CABEÇALHO para tirá-las de cima das
+letras; o lugar fica guardado. Duplo clique no cabeçalho devolve ao canto.
+
+Para limpar só o desenho e manter fonte, cor e animação, use a ferramenta
+**BASE** do catálogo — é outra coisa, e continua lá. Para zerar **uma letra
+só**, selecione-a (na tira de baixo ou na tela) e use `ZERAR LETRA` no bloco
+`LETRA` da ficha.
+
+### TRAMA — quatro efeitos de quadro inteiro
+
+Marcados com a etiqueta `TRAMA` na lista, e com placa própria na ficha. Não
+são efeitos de LETRA como a onda ou a fatia: acontecem sobre a composição
+inteira, depois de todas as letras desenhadas. Valem para **qualquer** família
+tipográfica, e se somam entre si.
+
+| | o que faz |
+|---|---|
+| **PERSIANA** | o quadro inteiro vira linha horizontal; onde a linha cruza a letra, ela engrossa. O fundo não fica limpo, fica pautado. Controles: espaço entre linhas, grossura na letra, grossura no fundo |
+| **TIRAS** | o papel cortado em tiras verticais que se separam e escorregam. Controles: quantas, vão, escorregão, e **corte torto** — tira toda igual lê como grade, não como papel |
+| **BRILHO** | a borda acende e o miolo fica no escuro. Controles: raio e força |
+| **GRÃO** | ruído de impressão. Com **FUNDO TRANSPARENTE** marcado, o grão vale só onde há tinta — o fundo continua limpo para o png com alpha |
+
+### A ficha da direita
+
+Os controles vivem em **sete blocos que recolhem** — `TIPO`, `ANIMAÇÃO`,
+`DEFORMAÇÃO`, `REPETIÇÃO`, `TRATAMENTO`, `COR` e `CURSOR` (mais `LETRA`, que
+aparece quando há uma letra selecionada). Na primeira vez, só `TIPO` está
+aberto; a partir daí manda o que você deixou. Os mesmos gestos da ficha do
+clipe: clique no título recolhe, **alt+clique** deixa só aquele aberto, e as
+setas `⌃` `⌄` no alto da coluna fecham e abrem todos.
+
+**Cada número é uma linha só, e a linha é o controle.** A caixa se enche até
+onde o valor está na faixa — **arraste em qualquer ponto dela** para mudar, ou
+**clique no número** à direita para digitar o valor exato. Nos controles que
+vão de negativo a positivo (entreletra, deslocar X, sombra X…), a barra sai do
+**zero** e cresce para o lado que o valor tomou.
 
 Controles: fonte, corpo com ajuste automático ao quadro, peso, entreletra,
 entrelinha, alinhamento, caixa, onda (altura/frequência/velocidade), rotação e
@@ -1126,9 +1821,10 @@ lista só.
 
 **Zoom**
 `+` `−` zoom da linha do tempo · `\` enquadrar a sequência ·
-`F` enquadrar a prévia · `0` prévia em 100% ·
-`Ctrl`+roda zoom no cursor · `Shift`+roda rolagem horizontal ·
-`ESPAÇO`+arrastar move a tela
+`Shift+\` enquadrar a seleção · `F` enquadrar a prévia · `0` prévia em 100% ·
+`Ctrl`+roda (ou `Alt`+roda) zoom no cursor · `Shift`+roda rolagem horizontal ·
+`ESPAÇO`+arrastar move a tela · barra de zoom embaixo da mesa: meio navega,
+pontas aproximam, duplo clique enquadra
 
 ---
 
@@ -1143,6 +1839,11 @@ css/labs.css                  viewport, timeline, rack de áudio, mesa de tipo
 js/fx.js  fx2.js  fx3.js      catálogo de efeitos (GLSL) e estilos prontos
 js/fx4.js                     efeitos das referências: lego, gravura, cianotipia…
 js/fx5.js                     película: janela 8/S8/16/35mm, vazamento, grão, filtro
+js/fx14.js                    CRT (o tubo, com os padrões da referência) e DATAMOSH (o codec)
+js/fx15.js                    PAPEL TÉRMICO: a foto no cupom, em pontos de 203 dpi
+js/fx16.js                    visão de máquina: MAPA DE PROFUNDIDADE (I.A.) e MANCHAS
+js/profundidade.js            o analisador da profundidade: Depth Anything V2 no navegador
+js/manchas.js                 o analisador das manchas: componentes conexos e rastreio
 js/transitions.js             curvas de keyframe + 30 transições (família MOTION)
 js/typefaces.js               12 famílias tipográficas desenhadas por código
 js/gl.js                      motor WebGL2: plano de composição, cadeia por clipe
@@ -1150,6 +1851,15 @@ js/state.js                   modelo de edição não linear (pistas, clipes, ke
 js/media.js                   fontes, geometria de MOTION, plano para a GPU
 js/view.js                    viewport: zoom, pan, fit, réguas
 js/timeline.js                a mesa de edição
+js/mosaico.js                 a grade do mosaico: geometria e montagem dos quadros
+js/mosaicoui.js               a janela do mosaico: mapa, pincel de fontes, controles
+js/musica.js                  núcleo musical: escalas, vozes, síntese, .mid, render
+js/sonografo.js               sonógrafo: a linha parada e o detector do que cruza
+js/sonografoui.js             a janela do sonógrafo: visor, régua, piano roll, mesa
+css/sonografo.css             o chassi de metal do sonógrafo, no palco escuro
+js/cifra.js                   cifra: campo harmônico, acordes, inversões, gravação
+js/cifraui.js                 a janela da cifra: pastilhas, teclado, gravador
+css/cifra.css                 o corpo de marfim da cifra
 js/panels.js                  catálogo, ficha da composição, máscara na prévia
 js/motion.js                  MOTION, Effect Controls, gráficos, caixa na prévia
 js/filters.js                 galeria de filtros com miniatura ao vivo
@@ -1162,6 +1872,10 @@ js/shell.js                   entrada ascii, boot, roteamento, cursor, status
 js/app.js                     controlador do laboratório de vídeo
 server.js                     servidor local sem dependências
 build-arquivo-unico.js        gera a versão de arquivo único
+build-lab2.js                 gera o lab2.html — a repaginação 2.0
+lab2.html                     RGB_LAB 2.0: o index inteiro + 4 linhas
+css/lab2.css                  o desenho do 2.0, sob :root[data-ui="2"]
+js/lab2.js                    2.0: miniatura no clipe, etiqueta de pista
 ```
 
 ## Manual 01 — como fazer uma videoarte

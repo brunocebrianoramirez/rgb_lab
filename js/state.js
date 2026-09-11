@@ -994,8 +994,27 @@
         fxPts = alvo ? VE.maskPtsAnimados(clip, 'masks.' + (m.path | 0) + '.', alvo, local) : null;
         if (!fxPts) fxShape = 0;
       }
+      /* GESTO GRAVADO (ver a nota em fx.js/PRELUDE e o cabeçalho de
+         fx13.js): um efeito com `rawCurve` guarda o arraste inteiro em
+         `e.trilha` — pares x,y já reamostrados na hora da gravação, do
+         começo ao fim do gesto. Aqui eles só são copiados para o formato
+         que a GPU lê (RGBA, x no .r e y no .g).
+
+         Não passa por `valueAt` de propósito: o gesto NÃO é uma
+         propriedade animada por keyframe, é um traçado só. Foi assim que
+         deixou de precisar de cronômetro para gravar.                 */
+      var curva = null, curvaN = 0;
+      if (def.rawCurve && e.trilha && e.trilha.length >= 4) {
+        curvaN = e.trilha.length >> 1;
+        curva = new Float32Array(curvaN * 4);
+        for (var ci = 0; ci < curvaN; ci++) {
+          curva[ci * 4] = e.trilha[ci * 2];
+          curva[ci * 4 + 1] = e.trilha[ci * 2 + 1];
+        }
+      }
       out.push({
         id: e.fx, effId: e.id, params: params, amount: Math.min(1, amt), local: local,
+        curva: curva, curvaN: curvaN,
         mask: {
           shape: fxShape, pts: fxPts,
           x: VE.valueAt(clip, 'fx.' + e.id + '.mask.x', local),

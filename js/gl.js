@@ -430,10 +430,14 @@
      Antes o motor perguntava `id === 'ascii'` em dois lugares. Agora
      pergunta ao próprio efeito: quem declara `atlas` na definição ganha
      um, e nenhum outro arquivo precisa saber que ele existe.           */
-  Renderer.prototype.atlasPara = function (fxDef) {
+  /* `inTex` e `time` chegam junto porque um atlas pode ser uma ANÁLISE
+     da imagem que está entrando (mapa de profundidade, rastreio de
+     manchas): o efeito lê a entrada, calcula fora do shader e devolve o
+     resultado como textura. Quem só monta letras ignora os dois.      */
+  Renderer.prototype.atlasPara = function (fxDef, inTex, time) {
     var def = VE.FXBY[fxDef.id];
     if (!def || !def.atlas) return null;
-    try { return def.atlas.call(this, fxDef.params || {}, fxDef); }
+    try { return def.atlas.call(this, fxDef.params || {}, fxDef, inTex, time); }
     catch (e) { return null; }
   };
 
@@ -490,6 +494,15 @@
       gl.activeTexture(gl.TEXTURE5);
       gl.bindTexture(gl.TEXTURE_2D, hist(4));
       gl.uniform1i(p.u.uH4, 5);
+    }
+    /* a FONTE de um quadro atrás, para quem declarou `fontePrev`. O
+       anel da fonte acabou de receber o quadro de agora (`pushHistFonte`
+       roda antes da passada), então "ontem" é a vaga anterior à última
+       escrita — e não `histTexF(1)`, que é hoje.                     */
+    if (p.u.uFontePrev) {
+      gl.activeTexture(gl.TEXTURE10);
+      gl.bindTexture(gl.TEXTURE_2D, this.histTexFonteOntem());
+      gl.uniform1i(p.u.uFontePrev, 10);
     }
     if (p.u.uAudio) {
       var a = VE.reactive || {};
@@ -602,6 +615,13 @@
        que é exatamente o que se quer quando não há mais lembrança.  */
     var vaga = Math.min(V, Math.max(n, Math.round(n * Math.max(1, this.distHist | 0) / sub)));
     return anel[((this.ringFIdx - vaga) % V + V) % V].tex;
+  };
+
+  /* a vaga escrita ANTES da última: a fonte de um quadro atrás */
+  Renderer.prototype.histTexFonteOntem = function () {
+    var anel = this.garantirRingF(this.vagasPedidas);
+    var V = anel.length;
+    return anel[((this.ringFIdx - 2) % V + V) % V].tex;
   };
 
   /* O anel COMPOSTO guarda todo quadro, sempre. Ele serve ao eco e ao
@@ -733,9 +753,9 @@
       if (!prog) continue;
       var def = VE.FXBY[cl.id];
       var target = this.fbo[cur];
-      var atlas = this.atlasPara(cl);
+      var atlas = this.atlasPara(cl, inputTex, time);
       var defFonte = !!(def && def.histFonte);
-      if (defFonte) this.pushHistFonte(inputTex, this.marcaQuadro || 0);
+      if (defFonte || (def && def.fontePrev)) this.pushHistFonte(inputTex, this.marcaQuadro || 0);
       (function (cl, def, atlas, inTex, target) {
         self.pass(prog, inTex, target, function (p) {
           if (p.u.uRes) gl.uniform2f(p.u.uRes, self.w, self.h);
@@ -802,18 +822,63 @@
      Uma operação de AJUSTE roda a cadeia sobre a composição inteira montada
      até ali: é exatamente o alcance de uma adjustment layer.              */
 
+  /* ---------------------------------------------- MEMÓRIA PRÓPRIA
+     Um efeito de FÓRMULA recalcula tudo do zero a cada quadro. Um efeito
+     que precisa LEMBRAR de algo que ele mesmo calculou (o campo de vetores
+     do datamosh, para repetir um quadro-P; qualquer acúmulo) declara
+     `memoria: true` e `memPass: k`: a passada k escreve num alvo
+     PRÓPRIO da instância em vez do quadro de trabalho, e todas as passadas
+     leem o alvo do quadro anterior em `uMem`. São dois alvos por
+     instância, trocados no fim de cada quadro — ler e escrever a mesma
+     textura numa passada é proibido.
+
+     Por INSTÂNCIA (`fxDef.effId`): dois datamoshes em dois clipes não
+     dividem memória. Até oito instâncias vivas; a mais antiga é apagada
+     quando entra a nona. Mudar o tamanho do quadro apaga o conteúdo —
+     lembrança de outro tamanho não é a mesma lembrança.              */
+  Renderer.prototype.memoriaDe = function (chave) {
+    var gl = this.gl, self = this;
+    this.memorias = this.memorias || {};
+    this.memTick = (this.memTick || 0) + 1;
+    var m = this.memorias[chave];
+    if (m && m.w === this.w && m.h === this.h) { m.tick = this.memTick; return m; }
+    if (m) { this.delTarget(m.a); this.delTarget(m.b); delete this.memorias[chave]; }
+    var chaves = Object.keys(this.memorias);
+    if (chaves.length >= 8) {
+      chaves.sort(function (x, y) { return self.memorias[x].tick - self.memorias[y].tick; });
+      var velha = this.memorias[chaves[0]];
+      this.delTarget(velha.a); this.delTarget(velha.b);
+      delete this.memorias[chaves[0]];
+    }
+    m = { a: this.mkTarget(), b: this.mkTarget(), w: this.w, h: this.h, tick: this.memTick };
+    [m.a, m.b].forEach(function (t) {
+      gl.bindTexture(gl.TEXTURE_2D, t.tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, self.w, self.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      self.clearTarget(t, 0, 0, 0, 0);
+    });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.memorias[chave] = m;
+    return m;
+  };
+
   Renderer.prototype.fxPass = function (fxDef, inTex, target, time) {
     var gl = this.gl, self = this;
     var prog = this.progFor(fxDef.id);
     if (!prog) return false;
     var def = VE.FXBY[fxDef.id];
     if (!def) return false;
-    var atlas = this.atlasPara(fxDef);
+    var mem = def.memoria ? this.memoriaDe('m:' + (fxDef.effId || fxDef.id)) : null;
+    var atlas = this.atlasPara(fxDef, inTex, time);
     var aspect = this.w / this.h;
     /* efeito que quer ver OUTRO MOMENTO recebe a memória da FONTE, e é
-       aqui que ela é alimentada: `inTex` é a imagem como ela entrou. */
+       aqui que ela é alimentada: `inTex` é a imagem como ela entrou.
+       Quem declara `fontePrev` também alimenta o anel — só lê de outra
+       vaga (a de ontem) e continua com a memória composta em uPrev. */
     var daFonte = !!def.histFonte;
-    if (daFonte) this.pushHistFonte(inTex, this.marcaQuadro || 0);
+    /* `fontePrevQuando` deixa o efeito dizer QUANDO a fonte de ontem vira:
+       o datamosh só quer um quadro novo quando o relógio do codec vira */
+    var querFonte = daFonte || (def.fontePrev && (!def.fontePrevQuando || def.fontePrevQuando(fxDef, time)));
+    if (querFonte) this.pushHistFonte(inTex, this.marcaQuadro || 0);
 
     /* REGIÃO POR TRAÇADO: o contorno chega em vértices com alça, é picado
        em segmentos aqui (uma vez por efeito, não uma por passada) e sobe
@@ -853,6 +918,12 @@
           gl.bindTexture(gl.TEXTURE_2D, inTex);
           gl.uniform1i(p.u.uOrig, 6);
         }
+        /* a memória do quadro anterior: lida por todas as passadas */
+        if (mem && p.u.uMem) {
+          gl.activeTexture(gl.TEXTURE11);
+          gl.bindTexture(gl.TEXTURE_2D, mem.a.tex);
+          gl.uniform1i(p.u.uMem, 11);
+        }
         var m = fxDef.mask || {};
         if (p.u.uMaskA) gl.uniform4f(p.u.uMaskA, m.x != null ? m.x : 0.5, m.y != null ? m.y : 0.5,
           m.w != null ? m.w : 0.5, m.h != null ? m.h : 0.5);
@@ -863,6 +934,17 @@
           gl.bindTexture(gl.TEXTURE_2D, self.texPontos(ptsFx, POOL));
           gl.uniform1i(p.u.uMaskPts, 8);
           if (p.u.uMaskC) gl.uniform4f(p.u.uMaskC, 0, nPtsFx, 0, 0);
+        }
+        if (fxDef.curva && p.u.uCurva) {
+          gl.activeTexture(gl.TEXTURE9);
+          gl.bindTexture(gl.TEXTURE_2D, self.texCurva(fxDef.curva, fxDef.curvaN));
+          gl.uniform1i(p.u.uCurva, 9);
+          if (p.u.uCurvaN) gl.uniform1f(p.u.uCurvaN, fxDef.curvaN);
+        } else if (p.u.uCurvaN) {
+          /* uniform é POR PROGRAMA e sobrevive ao quadro: sem zerar aqui, um
+             clipe sem gesto herdaria o tamanho de curva do clipe anterior e
+             leria uma textura que não é dele.                            */
+          gl.uniform1f(p.u.uCurvaN, 0);
         }
         self.bindHistory(p, daFonte);
         if (atlas && p.u.uAtlas) {
@@ -898,16 +980,20 @@
        multiplica o passo, então quatro passadas de quatro amostras
        cobrem 256 posições — e nenhum ponto de luz cai no vão.          */
     var N = def.passes | 0;
+    var memPass = mem ? (def.memPass | 0) : -1;
     if (N > 1) {
       var src = inTex;
       for (var i = 0; i < N; i++) {
-        var dst = (i === N - 1) ? target : this.mp[i & 1];
+        /* a passada da memória escreve no alvo NOVO da instância; a
+           passada seguinte lê dele como leria de um quadro de trabalho */
+        var dst = (i === N - 1) ? target : ((i === memPass) ? mem.b : this.mp[i & 1]);
         uma(src, dst, i, N);
         src = dst.tex;
       }
-      return true;
+    } else {
+      uma(inTex, target, 0, 1);
     }
-    uma(inTex, target, 0, 1);
+    if (mem && memPass >= 0 && memPass < N - 1) { var tr = mem.a; mem.a = mem.b; mem.b = tr; }
     return true;
   };
 
@@ -1094,6 +1180,32 @@
     }
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, largura, 1, gl.RGBA, gl.FLOAT, dados);
     return this.ptsTex;
+  };
+
+  /* Mesma ideia de `texPontos` (uma linha de texels, NEAREST, ponto
+     flutuante), mas com armazenamento PRÓPRIO — um efeito que usa
+     `rawCurve` pode, ao mesmo tempo, ter uma região de traçado (que já
+     ocupa `uMaskPts`/`this.ptsTex`), e as duas texturas não podem ser a
+     mesma sem uma apagar a outra no meio do quadro.                    */
+  Renderer.prototype.texCurva = function (dados, largura) {
+    var gl = this.gl;
+    if (!this.curvTex) {
+      this.curvTex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, this.curvTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, largura, 1, 0, gl.RGBA, gl.FLOAT, null);
+      this.curvW = largura;
+    }
+    gl.bindTexture(gl.TEXTURE_2D, this.curvTex);
+    if (this.curvW !== largura) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, largura, 1, 0, gl.RGBA, gl.FLOAT, null);
+      this.curvW = largura;
+    }
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, largura, 1, gl.RGBA, gl.FLOAT, dados);
+    return this.curvTex;
   };
 
   /* =================================================== A CAMADA ISOLADA =====

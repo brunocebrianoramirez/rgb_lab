@@ -116,22 +116,22 @@
     elRuler = $('#tlRuler'); elLanes = $('#tlLanes'); elPlayhead = $('#playhead');
     elMarq = $('#tlMarquee');
 
-    var zr = $('#zoomRange');
-    if (zr) zr.addEventListener('input', function () { TL.pps = +zr.value; TL.render(); });
+    initZoomBar();
 
     elScroll.addEventListener('scroll', function () {
       elHeads.scrollTop = elScroll.scrollTop;
       TL.cull();
+      TL.renderZoomBar();
     });
 
+    /* roda: com CTRL (ou ALT, como na Premiere) aproxima no ponteiro;
+       com SHIFT rola de lado. O instante embaixo do cursor não sai do lugar. */
     elScroll.addEventListener('wheel', function (e) {
-      if (e.ctrlKey || e.metaKey) {
+      if (e.ctrlKey || e.metaKey || e.altKey) {
         e.preventDefault();
         var rect = elScroll.getBoundingClientRect();
-        var mx = e.clientX - rect.left + elScroll.scrollLeft;
-        var tAt = mx / TL.pps;
-        TL.setZoom(TL.pps * (e.deltaY < 0 ? 1.18 : 0.85), false);
-        elScroll.scrollLeft = Math.max(0, tAt * TL.pps - (e.clientX - rect.left));
+        var tAt = (e.clientX - rect.left + elScroll.scrollLeft) / TL.pps;
+        TL.setZoom(TL.pps * (e.deltaY < 0 ? 1.18 : 0.85), tAt);
       } else if (e.shiftKey) {
         e.preventDefault(); elScroll.scrollLeft += e.deltaY;
       }
@@ -243,19 +243,63 @@
     TL.markSelection();
   }
 
-  /* =============================================================== ZOOM === */
-  TL.setZoom = function (pps, keepLeft) {
-    TL.pps = Math.max(6, Math.min(2400, pps));
-    var zr = $('#zoomRange');
-    if (zr) zr.value = Math.min(zr.max, Math.max(zr.min, TL.pps));
-    TL.render();
-    if (keepLeft === false) return;
+  /* =============================================================== ZOOM ===
+     Zoom de mesa de edição: quem manda é a ÂNCORA. Aproximar sem âncora
+     joga a imagem para fora da tela — o editor perde o lugar onde estava
+     olhando e tem que rolar de volta a cada passo. Então todo zoom aqui
+     escolhe um instante para segurar parado: o cursor do mouse (roda), o
+     ponteiro de reprodução (teclado, quando ele está visível) ou, na
+     falta dos dois, o centro do que está na tela.                       */
+
+  TL.PPS_MIN = 6;
+  TL.PPS_MAX = 2400;
+
+  /* janela visível, em segundos */
+  TL.janela = function () {
+    var a = elScroll.scrollLeft / TL.pps;
+    return { a: a, b: a + elScroll.clientWidth / TL.pps };
   };
 
+  /* o instante que o zoom deve segurar quando ninguém disse qual */
+  function ancoraPadrao() {
+    var j = TL.janela();
+    var t = (VE.project && VE.project.time) || 0;
+    if (t >= j.a && t <= j.b) return t;
+    return (j.a + j.b) / 2;
+  }
+
+  TL.setZoom = function (pps, ancoraT) {
+    var antes = TL.pps;
+    var novo = Math.max(TL.PPS_MIN, Math.min(TL.PPS_MAX, pps));
+    if (!isFinite(novo) || novo <= 0) return;
+    if (ancoraT == null) ancoraT = ancoraPadrao();
+    /* Onde a âncora está na tela AGORA — é essa distância que se preserva.
+       Preso à janela visível: quem chama pedindo um instante que está fora
+       da tela quer VER aquele instante, não guardar a distância absurda até
+       ele. Sem isto, `setZoom(600, 0.1)` a partir do fim da sequência deixa
+       a janela no fim — foi o que a medida mostrou.                      */
+    var px = ancoraT * antes - elScroll.scrollLeft;
+    px = Math.max(0, Math.min(elScroll.clientWidth, px));
+    TL.pps = novo;
+    TL.render();
+    elScroll.scrollLeft = Math.max(0, ancoraT * TL.pps - px);
+    TL.renderZoomBar();
+  };
+
+  TL.zoomBy = function (f, ancoraT) { TL.setZoom(TL.pps * f, ancoraT); };
+
+  /* Enquadrar com a mesa ainda sem largura (aba escondida, laboratório que
+     não abriu) daria uma conta negativa, que o limite mínimo transforma em
+     6 px/s — o editor volta para a aba e encontra o zoom no fundo do poço,
+     sem ter pedido nada. Melhor não fazer nada e deixar para quando a mesa
+     existir.                                                             */
   TL.fitSequence = function () {
     var w = elScroll.clientWidth - 24;
-    TL.setZoom(w / Math.max(0.5, VE.duration()));
+    if (w < 40) return;
+    TL.pps = Math.max(TL.PPS_MIN, Math.min(TL.PPS_MAX, w / Math.max(0.5, VE.duration())));
+    TL.render();
     elScroll.scrollLeft = 0;
+    TL.renderZoomBar();
   };
 
   TL.zoomToSelection = function () {
@@ -264,9 +308,102 @@
     var a = Infinity, b = -Infinity;
     cs.forEach(function (c) { a = Math.min(a, c.start); b = Math.max(b, c.start + c.dur); });
     var w = elScroll.clientWidth - 40;
-    TL.setZoom(w / Math.max(0.2, b - a));
+    if (w < 40) return;
+    TL.pps = Math.max(TL.PPS_MIN, Math.min(TL.PPS_MAX, w / Math.max(0.2, b - a)));
+    TL.render();
     elScroll.scrollLeft = Math.max(0, TL.timeToX(a) - 20);
+    TL.renderZoomBar();
   };
+
+  /* ------------------------------------------------- barra de zoom ------
+     O bloco é a janela visível desenhada sobre a sequência inteira. Isso
+     dá as duas coisas de uma vez: arrastar o meio ROLA (a janela anda),
+     arrastar uma ponta faz ZOOM (a janela muda de largura, e a outra
+     ponta fica parada). É a barra da Premiere, e é o motivo de o
+     controle deslizante antigo ter saído: ele dizia px/s, um número que
+     não conta nada; a barra mostra QUANTO da sequência você está vendo. */
+
+  var zbTrack, zbThumb;
+
+  /* a extensão que a barra representa: a sequência, ou a janela se ela
+     já passou do fim (é possível rolar para depois do último clipe)     */
+  function zbSpan() {
+    var j = TL.janela();
+    return Math.max(0.5, VE.duration(), j.b);
+  }
+
+  TL.renderZoomBar = function () {
+    if (!zbThumb || !elScroll) return;
+    var span = zbSpan(), j = TL.janela();
+    var w = zbTrack.clientWidth || 1;
+    /* bloco muito estreito vira invisível e não dá para pegar: tem um mínimo
+       de 16px, e é por isso que a posição é recuada em vez de deixar o bloco
+       vazar para fora do trilho quando a janela está no fim da sequência.  */
+    var lw = Math.max(Math.min(1, (j.b - j.a) / span), 16 / w);
+    var x = Math.max(0, Math.min(1 - lw, j.a / span));
+    zbThumb.style.left = (x * 100).toFixed(3) + '%';
+    zbThumb.style.width = (lw * 100).toFixed(3) + '%';
+  };
+
+  function initZoomBar() {
+    zbTrack = $('#tlZbTrack'); zbThumb = $('#tlZbThumb');
+    if (!zbTrack || !zbThumb) return;
+
+    zbTrack.addEventListener('dblclick', function () { TL.fitSequence(); });
+
+    zbTrack.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      var r = zbTrack.getBoundingClientRect();
+      if (r.width < 4) return;
+      var alvo = e.target.classList.contains('zb-h')
+        ? (e.target.classList.contains('l') ? 'l' : 'r') : null;
+
+      /* clicar no trilho vazio: leva a janela para lá, sem mudar o zoom */
+      if (!alvo && !e.target.closest('.tl-zb-thumb')) {
+        var j0 = TL.janela();
+        var tc = (e.clientX - r.left) / r.width * zbSpan();
+        elScroll.scrollLeft = Math.max(0, (tc - (j0.b - j0.a) / 2) * TL.pps);
+        TL.renderZoomBar();
+        return;
+      }
+
+      /* a extensão fica CONGELADA durante o arrasto: se ela acompanhasse o
+         zoom, a barra fugiria do dedo — o alvo se move junto com a mão   */
+      var span = zbSpan();
+      var jan = TL.janela();
+      var x0 = e.clientX;
+      var largura = elScroll.clientWidth;
+      zbThumb.classList.add('grab');
+      try { zbTrack.setPointerCapture(e.pointerId); } catch (err) { /* ponteiro já solto */ }
+
+      function mv(ev) {
+        var dt = (ev.clientX - x0) / r.width * span;   /* deslocamento em segundos */
+        if (!alvo) {
+          elScroll.scrollLeft = Math.max(0, (jan.a + dt) * TL.pps);
+          TL.renderZoomBar();
+          return;
+        }
+        var a = jan.a, b = jan.b;
+        if (alvo === 'l') a = Math.min(jan.a + dt, jan.b - 0.05);
+        else              b = Math.max(jan.b + dt, jan.a + 0.05);
+        var pps = Math.max(TL.PPS_MIN, Math.min(TL.PPS_MAX, largura / Math.max(0.05, b - a)));
+        TL.pps = pps;
+        TL.render();
+        /* a ponta que não está sendo puxada é que fica parada */
+        elScroll.scrollLeft = Math.max(0, (alvo === 'l' ? b * pps - largura : a * pps));
+        TL.renderZoomBar();
+      }
+      function up() {
+        zbTrack.removeEventListener('pointermove', mv);
+        zbTrack.removeEventListener('pointerup', up);
+        zbThumb.classList.remove('grab');
+      }
+      zbTrack.addEventListener('pointermove', mv);
+      zbTrack.addEventListener('pointerup', up);
+    });
+
+    window.addEventListener('resize', function () { TL.renderZoomBar(); });
+  }
 
   /* ============================================================ DESENHO === */
 
@@ -277,13 +414,17 @@
     elContent.style.width = w + 'px';
 
     var dur = $('#tlDur'); if (dur) dur.textContent = TL.tc(total);
-    var zl = $('#tlZoomLbl'); if (zl) zl.textContent = TL.pps.toFixed(0) + ' PX/S';
+    /* o rótulo conta o que interessa a quem edita: quanto tempo cabe na
+       tela agora. O px/s vem junto, menor, para quem quiser o número.  */
+    var zl = $('#tlZoomLbl');
+    if (zl) zl.textContent = (elScroll.clientWidth / TL.pps).toFixed(1) + 'S NA TELA · ' + TL.pps.toFixed(0) + ' PX/S';
 
     renderRuler(total, w);
     renderHeads();
     renderLanes(w);
     TL.setTime(p.time);
     TL.cull();
+    TL.renderZoomBar();
   };
 
   function renderRuler(total, w) {

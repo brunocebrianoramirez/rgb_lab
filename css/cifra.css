@@ -1,0 +1,293 @@
+/* ================================================================
+   rgb_lab — A CIFRA · a folha do aparelho
+   ----------------------------------------------------------------
+   Instrumento CLARO num palco escuro — o mesmo arranjo do polaroid,
+   e pela mesma razão: o objeto é de marfim, e marfim sobre preto é
+   o que faz o olho entender que aquilo é uma coisa pousada e não
+   uma janela do programa.
+
+   Isto explica por que esta folha não usa nenhuma variável de tema
+   do laboratório para o CORPO. O corpo é sempre o mesmo marfim, com
+   papel ou com noturno, porque é matéria do objeto e não pintura da
+   sala. O que vem do tema é só o VERDE do canal de áudio, que diz a
+   que laboratório o instrumento pertence — e ele aparece em fundo
+   claro com texto escuro por cima, onde verde nenhum tem problema
+   de contraste.
+
+   AS PEÇAS
+     .cf-palco   o palco escuro
+     .cf-maq     o corpo de marfim
+     .cf-topo    tom, escala, oitava, legato, instrumento
+     .cf-pads    o campo harmônico, uma pastilha por grau
+     .cf-linha2  tipo · inversão · secundária
+     .cf-baixo   o gravador à esquerda, o teclado à direita
+   ================================================================ */
+
+.cf-palco{
+  position:fixed;inset:0;z-index:150;
+  display:flex;align-items:center;justify-content:center;padding:22px;
+  background:radial-gradient(120% 100% at 50% 26%, rgba(26,24,21,.90), rgba(5,5,4,.975));
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+
+  --cf-corpo:#efece5;
+  --cf-corpo-2:#e4e0d7;
+  --cf-alto:#fbfaf7;
+  --cf-tinta:#2b2a27;
+  --cf-tinta-2:#8a877f;
+  --cf-tinta-3:#b3afa5;
+  --cf-linha:rgba(0,0,0,.09);
+  --cf-verde:var(--ch-audio,#35c072);
+  --cf-menta:#d6f2e2;
+  --cf-menta-tx:#1d6b43;
+  --cf-lilas:#e8ddf7;
+  --cf-lilas-tx:#5b3f8c;
+  --cf-mono:"JetBrains Mono",ui-monospace,monospace;
+  --cf-sans:Archivo,"Helvetica Neue",system-ui,sans-serif;
+}
+.cf-palco.hidden{display:none}
+
+.cf-sair{
+  position:absolute;top:16px;right:20px;z-index:12;
+  width:38px;height:38px;border-radius:50%;padding:0;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.55);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.cf-sair svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;display:block}
+.cf-sair:hover{background:rgba(255,255,255,.10);color:#fff;border-color:rgba(255,255,255,.34)}
+
+/* ═══════════════════════════════════════════════ O CORPO ═══════ */
+.cf-maq{
+  width:min(1080px,96vw);max-height:94vh;
+  display:flex;flex-direction:column;gap:14px;
+  padding:20px 22px 22px;
+  border-radius:26px;
+  overflow:auto;
+  background:linear-gradient(180deg,var(--cf-alto) 0%, var(--cf-corpo) 26%, var(--cf-corpo-2) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    inset 0 -1px 0 rgba(0,0,0,.10),
+    0 1px 0 rgba(0,0,0,.35),
+    0 40px 80px -22px rgba(0,0,0,.85),
+    0 12px 34px rgba(0,0,0,.55);
+  scrollbar-width:thin;scrollbar-color:#c9c5bb transparent;
+}
+.cf-maq::-webkit-scrollbar{width:9px}
+.cf-maq::-webkit-scrollbar-thumb{background:#c9c5bb;border-radius:5px}
+
+/* ═══════════════════════════════════════════════ O TOPO ════════ */
+.cf-topo{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap}
+.cf-marca{display:flex;flex-direction:column;line-height:1;flex:0 0 auto;padding-bottom:3px}
+.cf-nome{font-family:var(--cf-sans);font-size:27px;font-weight:300;letter-spacing:-.01em;color:var(--cf-tinta)}
+.cf-pro{font-family:var(--cf-mono);font-size:7.5px;letter-spacing:.34em;color:var(--cf-tinta-3);text-transform:uppercase;margin-top:5px}
+
+.cf-campos{display:flex;align-items:flex-end;gap:12px;flex:1 1 auto;flex-wrap:wrap;justify-content:flex-end}
+.cf-campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cf-campo-w{min-width:118px}
+.cf-campo > label{
+  font-family:var(--cf-mono);font-size:7px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--cf-tinta-2);
+}
+
+/* controles claros: pastilha branca, filete fino, sem peso */
+.cf-sel{
+  -webkit-appearance:none;appearance:none;width:100%;min-width:74px;
+  font-family:var(--cf-sans);font-size:12.5px;color:var(--cf-tinta);
+  padding:8px 26px 8px 11px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--cf-linha);
+  background:
+    var(--cf-alto)
+    no-repeat right 9px center/8px 5px
+    linear-gradient(45deg,transparent 47%,var(--cf-tinta-2) 47%);
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+}
+.cf-sel:focus{outline:none;border-color:var(--cf-verde)}
+
+.cf-oit{display:flex;align-items:center;gap:6px}
+.cf-oit span{
+  font-family:var(--cf-sans);font-size:13px;color:var(--cf-tinta);
+  min-width:20px;text-align:center;
+}
+.cf-mini{
+  width:28px;height:30px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--cf-linha);background:var(--cf-alto);
+  color:var(--cf-tinta-2);font-size:15px;line-height:1;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+}
+.cf-mini:hover{color:var(--cf-tinta)}
+.cf-mini:active{background:var(--cf-corpo-2);box-shadow:inset 0 1px 3px rgba(0,0,0,.14)}
+
+/* a chave do legato: pastilha com a bolinha que desliza */
+.cf-chave{
+  width:52px;height:30px;border-radius:15px;padding:0;cursor:pointer;
+  border:1px solid var(--cf-linha);background:var(--cf-corpo-2);
+  position:relative;transition:background .16s;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.10);
+}
+.cf-chave i{
+  position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:var(--cf-alto);
+  box-shadow:0 1px 3px rgba(0,0,0,.28);
+  transition:transform .16s;
+}
+.cf-chave.on{background:var(--cf-verde)}
+.cf-chave.on i{transform:translateX(22px)}
+
+/* ═══════════════════════════════════════════════ AS PASTILHAS ══ */
+.cf-pads{display:grid;gap:9px}
+.cf-pad{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  min-height:78px;padding:12px 6px;cursor:pointer;
+  border-radius:14px;
+  border:1px solid var(--cf-linha);
+  background:linear-gradient(180deg,var(--cf-alto),#eeebe4);
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 2px 4px rgba(0,0,0,.07);
+  transition:transform .06s, box-shadow .12s, background .12s;
+  touch-action:none;user-select:none;
+}
+.cf-pad-grau{
+  font-family:var(--cf-mono);font-size:8px;letter-spacing:.14em;
+  color:var(--cf-tinta-3);text-transform:none;
+}
+.cf-pad-nome{
+  font-family:var(--cf-sans);font-size:21px;font-weight:500;color:var(--cf-tinta);
+  line-height:1;white-space:nowrap;
+}
+.cf-pad:hover{box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 3px 8px rgba(0,0,0,.11)}
+/* apertada, ela AFUNDA: sombra por dentro e um pixel para baixo. É a
+   única forma de um botão de tela parecer que recebeu o dedo.      */
+.cf-pad.tocando,.cf-pad:active{
+  transform:translateY(1px);
+  background:linear-gradient(180deg,#e6e2da,#efece5);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.16);
+}
+.cf-pad.preso{
+  border-color:var(--cf-verde);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.13), 0 0 0 2px rgba(53,192,114,.28);
+}
+
+/* ═══════════════════════════════════════════════ OS GRUPOS ═════ */
+.cf-linha2{
+  display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end;
+  padding:12px 14px;border-radius:14px;
+  background:rgba(255,255,255,.5);
+  border:1px solid var(--cf-linha);
+}
+.cf-grupo{display:flex;flex-direction:column;gap:7px;align-items:center}
+.cf-grupo > label{
+  font-family:var(--cf-mono);font-size:7px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--cf-tinta-2);
+}
+.cf-seg{display:flex;gap:5px}
+.cf-seg-b{
+  min-width:38px;padding:7px 10px;cursor:pointer;
+  font-family:var(--cf-sans);font-size:11.5px;color:var(--cf-tinta-2);
+  border-radius:8px;border:1px solid var(--cf-linha);
+  background:var(--cf-alto);
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  transition:color .12s,background .12s,border-color .12s;
+}
+.cf-seg-b:hover{color:var(--cf-tinta)}
+/* cada grupo acende na sua cor, como na referência: o TIPO em menta,
+   a INVERSÃO em menta clara e a SECUNDÁRIA em lilás — três famílias
+   de escolha que não se confundem de relance                       */
+#cfTipo .cf-seg-b.on,#cfInv .cf-seg-b.on{
+  background:var(--cf-menta);color:var(--cf-menta-tx);border-color:rgba(53,192,114,.35);
+}
+#cfSec .cf-seg-b.on{
+  background:var(--cf-lilas);color:var(--cf-lilas-tx);border-color:rgba(120,80,190,.28);
+}
+
+/* ═══════════════════════════════════════════════ O BAIXO ═══════ */
+.cf-baixo{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;align-items:stretch}
+
+.cf-grav{
+  display:flex;flex-direction:column;gap:8px;
+  padding:14px;border-radius:14px;
+  background:rgba(255,255,255,.55);
+  border:1px solid var(--cf-linha);
+}
+.cf-grav-h{
+  font-family:var(--cf-mono);font-size:7px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--cf-tinta-2);
+}
+.cf-grav-mostra{display:flex;gap:16px}
+.cf-med{display:flex;flex-direction:column;gap:3px}
+.cf-med label{font-family:var(--cf-mono);font-size:6.5px;letter-spacing:.2em;color:var(--cf-tinta-3)}
+.cf-med b{font-family:var(--cf-mono);font-size:13px;font-weight:500;color:var(--cf-tinta)}
+.cf-grav-bts{display:flex;gap:6px}
+.cf-bt{
+  flex:1 1 auto;padding:9px 10px;cursor:pointer;white-space:nowrap;
+  font-family:var(--cf-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--cf-tinta-2);
+  border-radius:9px;border:1px solid var(--cf-linha);background:var(--cf-alto);
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:color .12s,background .12s,border-color .12s;
+}
+.cf-bt:hover{color:var(--cf-tinta)}
+.cf-bt:active{background:var(--cf-corpo-2);box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
+.cf-bt-solido{
+  background:var(--cf-verde);color:#08160e;border-color:rgba(0,0,0,.12);font-weight:600;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 3px rgba(0,0,0,.16);
+}
+.cf-bt-solido:hover{color:#000}
+.cf-rec svg{width:13px;height:13px;fill:#c3bfb6}
+.cf-rec.on svg{fill:#e0384a}
+.cf-rec.on{border-color:rgba(224,56,74,.4);color:#b32b3b}
+.cf-dica{
+  font-family:var(--cf-sans);font-size:10.5px;line-height:1.5;color:var(--cf-tinta-2);
+  margin-top:auto;padding-top:6px;
+}
+.cf-dica b{color:var(--cf-tinta);font-weight:600}
+
+/* ═══════════════════════════════════════════════ O TECLADO ═════
+   As brancas são a régua e as pretas ficam POR CIMA, cada uma
+   posicionada em fração da largura da branca. Doze colunas iguais
+   fariam um teclado torto — num piano de verdade as pretas não
+   estão no meio das brancas, e é essa assimetria que o dedo lê. */
+.cf-tecl{
+  border-radius:14px;padding:12px;
+  background:rgba(255,255,255,.55);
+  border:1px solid var(--cf-linha);
+  display:flex;align-items:stretch;
+}
+.cf-tecl-cx{position:relative;width:100%;height:100%;min-height:132px;display:flex}
+.cf-tb{
+  position:relative;height:100%;padding:0;cursor:pointer;
+  border:1px solid rgba(0,0,0,.13);border-radius:0 0 6px 6px;
+  background:linear-gradient(180deg,#fff 0%,#f6f4ef 76%,#e9e5dc 100%);
+  box-shadow:inset 0 -3px 5px rgba(0,0,0,.06);
+  touch-action:none;user-select:none;
+}
+.cf-tb + .cf-tb{margin-left:-1px}
+.cf-tp{
+  position:absolute;top:0;height:62%;padding:0;cursor:pointer;z-index:2;
+  border:none;border-radius:0 0 5px 5px;
+  background:linear-gradient(180deg,#3a3833 0%,#22211d 72%,#151412 100%);
+  box-shadow:0 3px 5px rgba(0,0,0,.42), inset 0 -2px 3px rgba(255,255,255,.10);
+  touch-action:none;user-select:none;
+}
+/* as notas da escala ganham um ponto discreto: ajuda a achar o tom
+   sem pintar o teclado inteiro, que é o que o instrumento NÃO é  */
+.cf-tb.na-escala::after,.cf-tp.na-escala::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;
+}
+.cf-tb.na-escala::after{bottom:9px;background:rgba(53,192,114,.42)}
+.cf-tp.na-escala::after{bottom:7px;background:rgba(53,192,114,.62)}
+.cf-tb.soando{background:linear-gradient(180deg,var(--cf-menta),#bde8cf);box-shadow:inset 0 2px 5px rgba(0,0,0,.14)}
+.cf-tp.soando{background:linear-gradient(180deg,#2f7d55,#1d5b3c)}
+
+/* ═══════════════════════════════════════ TELAS ESTREITAS ══════ */
+@media (max-width:900px){
+  .cf-baixo{grid-template-columns:1fr}
+  .cf-pad-nome{font-size:17px}
+  .cf-linha2{gap:16px}
+}
+@media (max-height:760px){
+  .cf-tecl-cx{min-height:104px}
+  .cf-pad{min-height:64px}
+}

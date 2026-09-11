@@ -25,6 +25,28 @@
   U.estado = function () { return P; };
   U.ligada = function () { return ligado; };
 
+  /* ---------------- DESFAZER O ARRASTO ----------------
+     O recorte não tinha desfazer nenhum: arrastou uma letra para o lugar
+     errado e o único caminho de volta era ENDIREITAR, que devolve TODAS —
+     perdendo as outras vinte que estavam certas. O histórico aqui guarda
+     só o que o gesto muda (posição e giro de UM pedaço), que é barato e é
+     exatamente o que se quer de volta. Trinta passos: é uma mesa de
+     arrastar letra, não um editor de texto.                            */
+  var passos = [];
+  function marcar(p) {
+    if (!p) return;
+    passos.push({ p: p, dx: p.dx, dy: p.dy, giro: p.giroMao, preso: p.preso });
+    if (passos.length > 30) passos.shift();
+  }
+  U.desfazer = function () {
+    var s = passos.pop();
+    if (!s) return false;
+    s.p.dx = s.dx; s.p.dy = s.dy; s.p.giroMao = s.giro; s.p.preso = s.preso;
+    escolhido = -1;
+    pintar();
+    return true;
+  };
+
   /* ---------------- a folha ---------------- */
   function medidaDoPalco(base) {
     var r = base.getBoundingClientRect();
@@ -121,6 +143,10 @@
       if (i < 0) { pintar(); return; }
       try { folha.setPointerCapture(e.pointerId); } catch (err) { }
       var it = itens[i];
+      /* guarda ONDE a letra estava antes deste arrasto. É o passo do
+         desfazer: quem move um pedaço de papel e erra quer o pedaço de
+         volta onde estava, não o sorteio inteiro refeito. */
+      marcar(it.p);
       arrasto = {
         i: i, p0: p,
         dx0: it.p.dx, dy0: it.p.dy, g0: it.p.giroMao,
@@ -163,10 +189,18 @@
   /* ---------------- a barra ---------------- */
   /* `suf` é a unidade escrita ao lado do número. Sem ela, "velocidade 1"
      não dizia a ninguém que aquilo eram doze passos por segundo.     */
+  /* `--fill` é o que faz a caixa ser também o cursor deslizante — mesmo
+     controle da ficha da direita e da mesa da tinta. */
+  function pct(v, min, max) {
+    var p = (v - min) / (max - min) * 100;
+    return (p < 0 ? 0 : p > 100 ? 100 : p).toFixed(2) + '%';
+  }
   function trilho(k, rot, min, max, passo, suf) {
     var u = suf || '';
-    return '<label class="ti-row" data-recrow="' + k + '"><span>' + rot + '</span>' +
-      '<input type="range" data-rec="' + k + '" min="' + min + '" max="' + max +
+    return '<label class="ti-row" data-recrow="' + k + '" style="--fill:' + pct(P[k], min, max) + '">' +
+      '<span>' + rot + '</span>' +
+      '<input type="range" data-rec="' + k + '" data-min="' + min + '" data-max="' + max +
+      '" min="' + min + '" max="' + max +
       '" step="' + passo + '" value="' + P[k] + '"><b data-recv="' + k + '" data-recsuf="' + u + '">' +
       P[k] + u + '</b></label>';
   }
@@ -227,8 +261,9 @@
       marca('dessinc', 'Dessincronizar') +
       '</div>' +
       '<div class="ti-btns">' +
+      '<button class="cmd cmd-sm" id="recUndo" title="Desfaz o último arrasto — Ctrl+Z faz o mesmo">↶ DESFAZER</button>' +
       '<button class="cmd cmd-sm" id="recDado" title="Sorteia tudo de novo">SORTEAR</button>' +
-      '<button class="cmd cmd-sm" id="recSoltar" title="Devolve as letras arrastadas para a linha">ENDIREITAR</button>' +
+      '<button class="cmd cmd-sm" id="recSoltar" title="Devolve TODAS as letras arrastadas para a linha">ENDIREITAR</button>' +
       '<button class="cmd cmd-sm" id="recPrev">ANIMAR</button>' +
       '</div>' +
       '<div class="ti-btns">' +
@@ -238,12 +273,15 @@
       '<div class="ti-nota">clique numa letra e <b>arraste</b> · <b>shift</b> arrastando gira · ' +
       '<b>duplo clique</b> re-sorteia só ela</div>';
     palco.appendChild(barra);
+    if (VE.type && VE.type.arrastavel) VE.type.arrastavel(barra, 'recorte');
 
     barra.querySelectorAll('[data-rec]').forEach(function (el) {
       el.addEventListener('input', function () {
         P[el.dataset.rec] = parseFloat(el.value);
         var b = barra.querySelector('[data-recv="' + el.dataset.rec + '"]');
         if (b) b.textContent = el.value + (b.dataset.recsuf || '');
+        var linha = el.closest('.ti-row');
+        if (linha) linha.style.setProperty('--fill', pct(parseFloat(el.value), +el.dataset.min, +el.dataset.max));
         pintar();
       });
     });
@@ -267,6 +305,9 @@
     linhasDoEstilo();
 
     barra.querySelector('#recSair').addEventListener('click', function () { U.desligar(); });
+    barra.querySelector('#recUndo').addEventListener('click', function () {
+      if (!U.desfazer()) VE.app.toast('nada para desfazer — arraste uma letra primeiro');
+    });
     barra.querySelector('#recDado').addEventListener('click', function () {
       R.resortear(P); escolhido = -1; pintar();
       VE.app.toast('novo sorteio — as letras que você arrastou ficaram onde estavam');

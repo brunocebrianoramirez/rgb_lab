@@ -231,6 +231,13 @@
     $('#railView').textContent = VIEWS[view].rail;
     $('#stLab').textContent = VIEWS[view].lab;
 
+    /* a coluna da direita tem DOIS corpos: o `#props` que os outros
+       laboratórios reescrevem, e o `#propsAudio`, que é permanente porque
+       guarda o rack montado. Um de cada vez. */
+    var pa = $('#propsAudio'), pp = $('#props');
+    if (pa) pa.classList.toggle('hidden', view !== 'audio');
+    if (pp) pp.classList.toggle('hidden', view === 'audio');
+
     if (view === 'video') {
       if (VE.view) { VE.view.apply(); if (VE.view.mode !== 'free') VE.view.applyMode(); }
       VE.tl.render();
@@ -363,33 +370,33 @@
       '<span class="micro" style="color:var(--ink)">' + v + '</span></div>';
   }
 
+  /* A FICHA DO ÁUDIO é a cabeça do painel próprio (#propsAudio), e não o
+     `#props` dos outros laboratórios — o rack mora ali embaixo, construído
+     uma vez e guardando estado, e `#props` é reescrito a cada troca.
+
+     O que saiu daqui: a placa CADEIA, que listava os TRINTA E QUATRO
+     módulos como texto com ON/OFF ao lado. Trinta e quatro linhas mortas
+     ocupando a coluna inteira, enquanto os controles de verdade ficavam
+     espremidos numa faixa no pé da tela. O rack logo abaixo já mostra os
+     mesmos módulos NA MESMA ORDEM, com o interruptor que de fato liga —
+     e o mapa do caminho do sinal continua no bloco CADEIA da esquerda,
+     em três linhas, que é o tamanho que aquilo merece.               */
+  /* A COLUNA DA DIREITA DO ÁUDIO NÃO TEM CABEÇALHO.
+     Tinha: nome do arquivo, duração, canais e taxa — tudo o que a barra do
+     centro já escreve — e, sem áudio, um parágrafo mandando carregar um
+     arquivo, que é o que a grade FONTE ao lado faz com quatro botões. Dois
+     blocos de repetição empurrando para baixo a única coisa desta coluna
+     que se ajusta: os módulos.
+
+     As duas saídas (MANDAR PRA TIMELINE, EXPORTAR WAV) foram para o pé da
+     coluna da esquerda, como a SAÍDA do laboratório de tipografia. O que
+     sobrou aqui é o estado no cabeçalho da coluna, que é uma palavra.   */
   function renderAudioInspector() {
     $('#inspTitle').textContent = 'FICHA · ÁUDIO';
-    $('#inspId').textContent = VE.audio.hasAudio() ? 'CARREGADO' : 'VAZIO';
-    var b = VE.audio.buffer();
-    var h = '<div class="plate"><div class="plate-h"><span class="lbl">' + (VE.audio.name() || 'SEM ÁUDIO') + '</span><i class="l"></i></div>';
-    if (b) {
-      h += kv('DURAÇÃO', b.duration.toFixed(2) + ' s');
-      h += kv('CANAIS', b.numberOfChannels);
-      h += kv('TAXA', b.sampleRate + ' Hz');
-      h += kv('AMOSTRAS', b.length.toLocaleString('pt-BR'));
-    } else {
-      h += '<div class="pnote">carregue um arquivo, grave o microfone, gere um tom de teste ou puxe o áudio de um vídeo já carregado</div>';
-    }
-    h += '</div>';
-    h += '<div class="plate"><div class="plate-h"><span class="lbl">CADEIA</span><i class="l"></i></div>';
-    VE.audio.modules.forEach(function (m, i) {
-      h += '<div class="prow" style="grid-template-columns:1fr auto"><label>' + String(i + 1).padStart(2, '0') + ' ' + m.name + '</label>' +
-        '<span class="micro" style="color:' + (m.on ? 'var(--sys-green)' : 'var(--ink-4)') + '">' + (m.on ? 'ON' : 'OFF') + '</span></div>';
-    });
-    h += '<div class="pnote">os módulos são renderizados na ordem acima, sempre a partir do áudio original</div></div>';
-    h += '<div class="plate"><div class="plate-h"><span class="lbl">SAÍDAS</span><i class="l"></i></div>' +
-      '<div class="pbtns"><button class="cmd cmd-sm" id="auSend">MANDAR PRA TIMELINE</button>' +
-      '<button class="cmd cmd-sm" id="auWav">EXPORTAR WAV</button></div></div>';
-    $('#props').innerHTML = h;
-    var s1 = $('#auSend'), s2 = $('#auWav');
-    if (s1) s1.addEventListener('click', VE.audio.sendToTimeline);
-    if (s2) s2.addEventListener('click', VE.audio.exportWav);
+    $('#inspId').textContent = VE.audio.hasAudio() ? (VE.audio.name() || 'CARREGADO') : 'VAZIO';
+    /* o enchimento das barras do rack: aqui não há placa para recolher, e
+       por isso esta ficha nunca chamava o `initFold` que ligava aquilo */
+    if (VE.panels && VE.panels.initFills) VE.panels.initFills();
   }
   S.renderAudioInspector = renderAudioInspector;
 
@@ -498,6 +505,11 @@
       });
       try { localStorage.setItem('videorte.mode', mode); } catch (e) { }
       glyphs = null;                       /* o atlas do ascii da entrada é redesenhado */
+      /* o espectrograma tem a paleta ASSADA dentro dele: ele é calculado
+         uma vez e guardado como imagem, então trocar de tema não o repinta
+         sozinho — ficaria tinta sobre papel dentro de um laboratório
+         escuro. Jogar fora obriga a refazer, com as cores de agora. */
+      if (VE.audio && VE.audio.limparEspectro) VE.audio.limparEspectro();
       if (VE.audio) VE.audio.drawWave();
       if (VE.view) VE.view.drawRulers();
       if (VE.type && VE.shell.view === 'type') VE.type.draw();

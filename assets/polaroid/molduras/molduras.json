@@ -1,0 +1,42 @@
+{
+  "_leia": "Cada moldura é um ESCANEAMENTO de papel polaroid vazio. A janela é o retângulo da emulsão dentro da folha, em fração da imagem (0..1) — medido, não chutado; deixe null e o laboratório mede ao carregar. `realce` diz se a trama do papel precisa de ajuda: 0 quando o arquivo já a traz (PNG sem compressão), 1 quando ela foi comida pelo JPEG e tem de ser reconstruída.",
+  "molduras": [
+    {
+      "id": "papel",
+      "nome": "PAPEL 600",
+      "arquivo": "papel.png",
+      "nota": "o escaneamento em PNG — a trama do papel vem NELE, sem nada acrescentado",
+      "janela": null,
+      "papel": "#e9eaea",
+      "realce": 0
+    },
+    {
+      "id": "creme",
+      "nome": "PAPEL CREME",
+      "arquivo": "creme.jpg",
+      "nota": "o 600 clássico: papel branco de trama fina, emulsão marfim",
+      "janela": {
+        "x": 0.0546,
+        "y": 0.0543,
+        "w": 0.8891,
+        "h": 0.7414
+      },
+      "papel": "#e4e8e7",
+      "realce": 1
+    },
+    {
+      "id": "preta",
+      "nome": "PAPEL PRETO",
+      "arquivo": "preta.jpg",
+      "nota": "mesma folha, emulsão não revelada — o preto profundo do 600 virgem",
+      "janela": {
+        "x": 0.0545,
+        "y": 0.0543,
+        "w": 0.8875,
+        "h": 0.7414
+      },
+      "papel": "#dcdcda",
+      "realce": 1
+    }
+  ]
+}

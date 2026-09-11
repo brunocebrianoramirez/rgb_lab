@@ -60,6 +60,16 @@ window.VE = window.VE || {};
     'uniform sampler2D uH2;',
     'uniform sampler2D uH3;',
     'uniform sampler2D uH4;',
+    /* A FONTE DE ONTEM: a imagem como ela ENTROU na cadeia, um quadro
+       atrás, em meia resolução. Diferente de uPrev (o quadro composto,
+       com os efeitos dentro), esta não tem realimentação — é o que um
+       CODEC vê quando procura movimento entre dois quadros. Só recebe
+       quem declara `fontePrev: true` na definição; quem não declara não
+       paga o anel da fonte. Ver `bindHistory` em gl.js.               */
+    'uniform sampler2D uFontePrev;',
+    /* MEMÓRIA PRÓPRIA do efeito: o que a passada `memPass` escreveu no
+       quadro anterior. Só para quem declara `memoria: true` — ver gl.js. */
+    'uniform sampler2D uMem;',
     /* som do instante: x = nível, y = grave, z = médio, w = agudo */
     'uniform vec4  uAudio;',
     /* correção do estabilizador: xy = deslocamento medido, z = confiança */
@@ -81,6 +91,18 @@ window.VE = window.VE || {};
        diz onde a fatia deste efeito começa e quantos pontos tem.       */
     'uniform highp sampler2D uMaskPts;',
     'uniform vec4  uMaskC;',   // início, nº de pontos, —, —
+    /* GESTO GRAVADO: um efeito pode declarar `rawCurve: true`. O arraste
+       feito na prévia é guardado inteiro em `e.trilha` (pares x,y, já
+       reamostrados no ritmo em que a mão andou) e chega aqui como uma
+       pequena textura: cada texel é um ponto do percurso, xy é o
+       deslocamento naquele ponto. Existe para o Scanner (o arraste que
+       "puxa a folha" enquanto a linha é escaneada — cada linha tem de
+       mostrar o gesto de QUANDO ELA foi capturada, não o gesto de
+       agora), mas qualquer efeito futuro que precise de "isto foi
+       gravado à mão e cada ponto lembra seu lugar no percurso" pode usar
+       o mesmo caminho.                                                 */
+    'uniform highp sampler2D uCurva;',
+    'uniform float uCurvaN;',
     'uniform vec4  uAtlasInfo;', // count, cols, rows, altura total do atlas
     /* Tabela de cor → figura. Um cubo 16×16×16 achatado em 256×16: dado
        um RGB, uma leitura devolve QUAL figura do atlas é a mais parecida.
@@ -234,6 +256,24 @@ window.VE = window.VE || {};
     '    b = a;',
     '  }',
     '  return s*sqrt(d);',
+    '}',
+    /* lê a curva gravada no instante em que ESTA LINHA foi capturada —
+       `t` normalizado 0..1 ao longo da duração do clipe. NEAREST não
+       filtra entre texels, então a interpolação é feita à mão aqui,
+       entre os dois instantes vizinhos.                                */
+    'vec2 curvaEm(float t){',
+    /* SEM gesto gravado não há textura vinculada — e ler uma textura que
+       não foi vinculada devolve LIXO, não zero. Sem esta guarda, um
+       efeito recém-acrescentado à pilha já nascia com a imagem
+       embaralhada, antes de a pessoa desenhar qualquer coisa.        */
+    '  if(uCurvaN < 1.5) return vec2(0.0);',
+    '  float n = max(uCurvaN, 2.0);',
+    '  float f = clamp(t, 0.0, 1.0)*(n - 1.0);',
+    '  float i0 = floor(f);',
+    '  float fr = f - i0;',
+    '  vec2 a = texelFetch(uCurva, ivec2(int(i0), 0), 0).xy;',
+    '  vec2 b = texelFetch(uCurva, ivec2(int(min(i0 + 1.0, n - 1.0)), 0), 0).xy;',
+    '  return mix(a, b, fr);',
     '}',
     'float maskValue(vec2 uv){',
     '  float shape = uMaskB.w;',

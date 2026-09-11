@@ -46,7 +46,13 @@
   function H() { return VE.project ? VE.project.canvas.h : 1080; }
 
   var CONV = {
-    'motion.x': { to: function (v) { return (0.5 + v) * W(); }, from: function (px) { return px / W() - 0.5; }, dec: 0, unit: 'px', min: -W, max: function () { return W() * 2; }, step: 1 },
+    /* `min: -W` era o que estava escrito, e `W` é uma FUNÇÃO: menos-função
+       dá NaN, o atributo saía `min="NaN"`, e navegador que recebe min
+       inválido usa ZERO. O cursor de POSIÇÃO X nunca conseguiu ir para a
+       esquerda do centro — o de POSIÇÃO Y, escrito certo na linha de
+       baixo, sempre funcionou. Apareceu ao medir o enchimento da linha
+       nova, que precisa de min e max válidos para saber quanto encher. */
+    'motion.x': { to: function (v) { return (0.5 + v) * W(); }, from: function (px) { return px / W() - 0.5; }, dec: 0, unit: 'px', min: function () { return -W(); }, max: function () { return W() * 2; }, step: 1 },
     'motion.y': { to: function (v) { return (0.5 - v) * H(); }, from: function (px) { return 0.5 - px / H(); }, dec: 0, unit: 'px', min: function () { return -H(); }, max: function () { return H() * 2; }, step: 1 },
     'motion.scale': { to: function (v) { return v * 100; }, from: function (p) { return p / 100; }, dec: 1, unit: '%', min: 1, max: 600, step: 0.5 },
     'motion.sx': { to: function (v) { return v * 100; }, from: function (p) { return p / 100; }, dec: 1, unit: '%', min: 1, max: 400, step: 0.5 },
@@ -383,6 +389,13 @@
       h += '<div class="fxbody">';
       h += '<div class="pnote">' + esc(def.desc) + '</div>';
       h += effProp(clip, e, { k: 'amount', label: 'INTENSIDADE', min: 0, max: 1, step: 0.01, def: 1 }, true);
+      /* um efeito pode ter uma NOTA viva — o estado da I.A., por exemplo.
+         `notaChave` marca o elemento para o módulo atualizar o texto sem
+         redesenhar a ficha inteira.                                     */
+      if (typeof def.nota === 'function') {
+        var txtNota = ''; try { txtNota = def.nota(e, clip) || ''; } catch (er) { }
+        if (txtNota) h += '<div class="pnote" ' + (def.notaChave ? esc(def.notaChave) : '') + '>' + esc(txtNota) + '</div>';
+      }
       def.params.forEach(function (pr) {
         if (pr.t === 'txt' && e.fx === 'ascii') {
           var cs = VE.CHARSETS[e.params.set | 0];

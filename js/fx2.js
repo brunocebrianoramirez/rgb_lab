@@ -262,75 +262,9 @@
     ].join('\n')
   });
 
-  D({
-    id: 'datamosh', name: 'Datamosh', cat: 'glitch', color: '#ff2e63',
-    desc: 'macroblocos travados arrastando o frame anterior',
-    params: [
-      { k: 'amt', label: 'Blocos travados', min: 0, max: 1, def: 0.55 },
-      { k: 'block', label: 'Tamanho do bloco', min: 2, max: 160, step: 1, def: 24 },
-      { k: 'len', label: 'Comprimento do arrasto', min: 0, max: 3, def: 0.5 },
-      { k: 'ang', label: 'Direção (°)', min: 0, max: 360, step: 1, def: 0 },
-      { k: 'follow', label: 'Seguir o contorno', min: 0, max: 2, def: 0.45 },
-      { k: 'decay', label: 'Persistência', min: 0, max: 1, def: 0.92 },
-      { k: 'rate', label: 'Troca de blocos (Hz)', min: 0.5, max: 30, step: 0.5, def: 8 },
-      { k: 'scatter', label: 'Bagunça dos blocos', min: 0, max: 2, def: 0.4 },
-      { k: 'chrom', label: 'Deriva de cor', min: 0, max: 2, def: 0.3 },
-      { k: 'edge', label: 'Arrasto geral', min: 0, max: 1, def: 0.15 }
-    ],
-    glsl: [
-      'vec3 fx(vec2 uv){',
-      '  vec3 cur = srccol(uv);',
-      '  vec2 px = 1.0/uRes;',
-      '  float a = radians(u_ang);',
-      '  vec2 dir = vec2(cos(a), sin(a));',
-      /* vetor de movimento aproximado pelo gradiente da imagem */
-      '  float lx = luma(srccol(uv + vec2(px.x*2.0, 0.0))) - luma(srccol(uv - vec2(px.x*2.0, 0.0)));',
-      '  float ly = luma(srccol(uv + vec2(0.0, px.y*2.0))) - luma(srccol(uv - vec2(0.0, px.y*2.0)));',
-      '  vec2 flow = (dir + vec2(lx, ly)*u_follow*10.0)*u_len*0.045*vec2(1.0/uAspect, 1.0);',
-      /* macroblocos: alguns travam e continuam repetindo o frame anterior */
-      '  vec2 blk = floor(uv*uRes/max(u_block, 2.0));',
-      '  float t = floor(uTime*u_rate);',
-      '  vec2 jit = (hash22(blk + t*3.1) - 0.5)*u_scatter*0.02;',
-      '  vec3 prev = texture(uPrev, clamp(uv - flow + jit, 0.0, 1.0)).rgb;',
-      '  if(u_chrom > 0.001){ vec3 h = rgb2hsv(prev); h.x = fract(h.x + u_chrom*0.02); prev = hsv2rgb(h); }',
-      '  float lock = step(1.0 - u_amt, hash21(blk*1.7 + t));',
-      '  vec3 smear = mix(cur, prev, u_decay);',
-      '  return mix(cur, smear, clamp(max(lock, u_edge), 0.0, 1.0));',
-      '}'
-    ].join('\n')
-  });
-
-  D({
-    id: 'crt', name: 'CRT / Tubão', cat: 'glitch', color: '#ff2e63',
-    desc: 'tela curva, linhas e máscara de fósforo',
-    params: [
-      { k: 'curve', label: 'Curvatura', min: 0, max: 2, def: 0.6 },
-      { k: 'scan', label: 'Linhas', min: 0, max: 1, def: 0.5 },
-      { k: 'slf', label: 'Densidade das linhas', min: 0.1, max: 2, def: 0.5 },
-      { k: 'mask', label: 'Máscara RGB', min: 0, max: 1, def: 0.4 },
-      { k: 'flick', label: 'Cintilação', min: 0, max: 1, def: 0.1 },
-      { k: 'vig', label: 'Vinheta', min: 0, max: 1, def: 0.6 },
-      { k: 'bright', label: 'Brilho', min: 0.2, max: 3, def: 1.35 }
-    ],
-    glsl: [
-      'vec3 fx(vec2 uv){',
-      '  vec2 p = uv*2.0 - 1.0;',
-      '  float r2 = dot(p, p);',
-      '  p *= 1.0 + r2*u_curve*0.22;',
-      '  vec2 t = p*0.5 + 0.5;',
-      '  if(t.x < 0.0 || t.x > 1.0 || t.y < 0.0 || t.y > 1.0) return vec3(0.0);',
-      '  vec3 c = srccol(t);',
-      '  float sl = 0.5 + 0.5*sin(t.y*uRes.y*PI*u_slf);',
-      '  c *= 1.0 - u_scan*0.55*sl;',
-      '  float m = mod(floor(t.x*uRes.x), 3.0);',
-      '  vec3 grille = vec3(step(m, 0.5), step(abs(m-1.0), 0.5), step(abs(m-2.0), 0.5))*0.6 + 0.7;',
-      '  c *= mix(vec3(1.0), grille, u_mask);',
-      '  c *= 1.0 + (hash11(floor(uTime*30.0))-0.5)*u_flick;',
-      '  c *= mix(1.0, 1.0 - smoothstep(0.55, 1.4, length(p)), u_vig);',
-      '  return c*u_bright;',
-      '}'
-    ].join('\n')
-  });
+  /* DATAMOSH e CRT / TUBÃO moraram aqui até 11/09/2026. Foram
+     reconstruídos pelo MECANISMO (o codec e o tubo) e vivem em fx14.js,
+     com os mesmos ids — projeto salvo continua achando os dois.      */
 
   /* ================= TEMPO / MOVIMENTO ================= */
 
@@ -817,7 +751,7 @@
     {
       id: 'mosh', name: 'Datamosh', desc: 'vídeo derretendo e arrastando',
       fx: [
-        ['datamosh', { amt: 0.7, block: 32, len: 0.9, follow: 0.8, decay: 0.95, rate: 6, chrom: 0.8, scatter: 0.6 }],
+        ['datamosh', { amt: 0.5, block: 24, len: 1.8, decay: 0.75, quant: 0.8, intra: 0.2, rate: 6, chrom: 0.8, scatter: 0.6 }],
         ['noisedisp', { amt: 0.5, scale: 3, spd: 0.4 }],
         ['echo', { decay: 0.6, zoom: 1.01, mode: 0 }]
       ]

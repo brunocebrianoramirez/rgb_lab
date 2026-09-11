@@ -771,12 +771,148 @@
     return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + '.' + (c < 10 ? '0' : '') + c;
   }
 
+  /* ================= O ESPECTROGRAMA DO ARQUIVO INTEIRO =================
+     O mapa tempo × frequência do som que está na mesa, na MESMA régua da
+     onda: as duas dividem a escala horizontal, a seleção e o cursor.
+
+     Não confundir com o modo `spectrogram` do analisador da barra de
+     baixo. Aquele ROLA — anda um pixel por quadro e desenha a coluna nova
+     na direita. Existe só enquanto toca, não está preso ao tempo do
+     arquivo, e some quando se para: dá para ACOMPANHAR, não para LER.
+     Este é para ler — onde está o sibilante, o zumbido de rede, onde a voz
+     entra, onde o ruído de fundo sobe.
+
+     Calculado UMA VEZ por áudio e guardado num canvas fora da tela. Mil e
+     duzentas FFTs não podem acontecer a cada quadro nem a cada arraste do
+     cursor; o desenho na tela é um `drawImage` do que já está pronto.
+
+     E calculado EM PEDAÇOS, cedendo a vez entre eles: fazer as 1200 de uma
+     vez tranca a página pelo tempo que durar, e travar a interface para
+     desenhar um gráfico é trocar o problema de lugar.                  */
+  var espFolha = null, espDe = null, espFazendo = false;
+
+  A.limparEspectro = function () { espFolha = null; espDe = null; };
+
+  function fazerEspectro(buf) {
+    if (!buf || !VE.adsp || !VE.adsp.fft) return;
+    if (espFazendo || espDe === buf) return;
+    espFazendo = true;
+
+    var N = 1024, meia = N / 2;
+    var COLS = 900, LINHAS = 256;
+    var folha = document.createElement('canvas');
+    folha.width = COLS; folha.height = LINHAS;
+    var fc = folha.getContext('2d');
+    var img = fc.createImageData(1, LINHAS);
+
+    var dados = buf.getChannelData(0);
+    var total = dados.length;
+    var jan = VE.adsp.hann(N);
+    var re = new Float32Array(N), im = new Float32Array(N);
+    var col = 0;
+
+    /* A cor sai das MESMAS variáveis do sistema, e não de uma paleta
+       escrita aqui: no modo papel o mapa é tinta sobre papel, no noturno é
+       luz sobre preto. Escala de densidade, nunca arco-íris — arco-íris
+       inventa fronteira onde a intensidade é contínua. */
+    var css = getComputedStyle(document.documentElement);
+    var fundo = corDe(css.getPropertyValue('--paper'));
+    var frente = corDe(css.getPropertyValue('--ch-audio'));
+
+    function passo() {
+      var t0 = performance.now();
+      while (col < COLS && performance.now() - t0 < 12) {
+        var ini = Math.floor(col / COLS * Math.max(0, total - N));
+        for (var i = 0; i < N; i++) { re[i] = (dados[ini + i] || 0) * jan[i]; im[i] = 0; }
+        VE.adsp.fft(re, im, false);
+        for (var y = 0; y < LINHAS; y++) {
+          /* eixo de frequência comprimido: a informação de voz e de
+             instrumento vive embaixo, e uma escala linear joga tudo isso
+             nos primeiros pixels e desperdiça metade do desenho no agudo */
+          var f = 1 - y / LINHAS;
+          var bin = Math.min(meia - 1, Math.floor(Math.pow(f, 2.2) * meia));
+          /* NORMALIZAR PELA JANELA. Sem dividir por N/2 a magnitude sobe
+             com o tamanho da FFT: medido, uma senoide dava 175 — 44,9 dB —
+             e a escala `(db+90)/90` saturava em 1 para quase tudo. O mapa
+             saía um bloco verde uniforme: 13.713 de 13.715 pixels no
+             máximo. Escala que satura não é escala, é uma cor só.
+             Dividido por N/2, um seno de fundo de escala dá 1,0 → 0 dB. */
+          var mag = Math.hypot(re[bin], im[bin]) / meia;
+          var db = 20 * Math.log10(mag + 1e-9);
+          var m = Math.max(0, Math.min(1, (db + 80) / 80));
+          var p = y * 4;
+          img.data[p] = fundo[0] + (frente[0] - fundo[0]) * m;
+          img.data[p + 1] = fundo[1] + (frente[1] - fundo[1]) * m;
+          img.data[p + 2] = fundo[2] + (frente[2] - fundo[2]) * m;
+          img.data[p + 3] = 255;
+        }
+        fc.putImageData(img, col, 0);
+        col++;
+      }
+      if (col < COLS) { setTimeout(passo, 0); return; }
+      espFolha = folha; espDe = buf; espFazendo = false;
+      desenharEspectro();
+    }
+    setTimeout(passo, 0);
+  }
+
+  function corDe(s) {
+    s = String(s).trim();
+    if (s.charAt(0) === '#') {
+      if (s.length === 4) s = '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+      return [parseInt(s.substr(1, 2), 16), parseInt(s.substr(3, 2), 16), parseInt(s.substr(5, 2), 16)];
+    }
+    var m = s.match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : [0, 0, 0];
+  }
+
+  function desenharEspectro() {
+    var cv = $('#auSpec'), wrap = $('#auWaveWrap');
+    if (!cv || !wrap) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = wrap.clientWidth || 800;
+    var H = Math.max(60, Math.round(cv.clientHeight || 120));
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+      cv.width = W * dpr; cv.height = H * dpr;
+    }
+    var c = cv.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var css = getComputedStyle(document.documentElement);
+    c.fillStyle = css.getPropertyValue('--paper').trim();
+    c.fillRect(0, 0, W, H);
+    if (!espFolha) {
+      if (espFazendo) {
+        c.fillStyle = css.getPropertyValue('--ink-4').trim();
+        c.font = '9px "JetBrains Mono", monospace';
+        c.fillText('CALCULANDO O ESPECTROGRAMA…', 10, H / 2);
+      }
+      return;
+    }
+    c.imageSmoothingEnabled = true;
+    c.drawImage(espFolha, 0, 0, W, H);
+    /* três marcas de frequência: sem elas o mapa é bonito e mudo */
+    var sr = (espDe && espDe.sampleRate) || 48000;
+    c.fillStyle = css.getPropertyValue('--ink-3').trim();
+    c.font = '8px "JetBrains Mono", monospace';
+    [0.25, 0.5, 0.75].forEach(function (fy) {
+      var f = Math.pow(1 - fy, 2.2) * (sr / 2);
+      c.fillText(f >= 1000 ? (f / 1000).toFixed(1) + 'k' : Math.round(f) + '', 4, fy * H + 3);
+    });
+  }
+  A.desenharEspectro = desenharEspectro;
+
   /* ---------------- desenho ---------------- */
   A.drawWave = function () {
     var cv = $('#auWave'), wrap = $('#auWaveWrap');
     if (!cv || !wrap) return;
     var dpr = Math.min(2, window.devicePixelRatio || 1);
-    var W = wrap.clientWidth || 800, H = 186;
+    /* A ALTURA VEM DO ESPAÇO QUE HÁ, e não de um 186 escrito à mão. O rack
+       saiu do centro e sobraram 560px onde antes havia 187; com a medida
+       fixa a onda continuava desenhada numa tira no alto e o resto ficava
+       branco — o vazio só tinha mudado de dono. A onda é o documento deste
+       laboratório: é nela que se seleciona, se corta e se escuta. */
+    var W = wrap.clientWidth || 800;
+    var H = Math.max(120, Math.round(wrap.clientHeight || 186));
     cv.width = W * dpr; cv.height = H * dpr;
     cv.style.height = H + 'px';
     var c = cv.getContext('2d');
@@ -793,6 +929,11 @@
     }
     c.beginPath(); c.moveTo(0, H / 2 + .5); c.lineTo(W, H / 2 + .5); c.stroke();
     var bDraw = bufAtual();
+    /* o espectrograma acompanha a onda: mesmo buffer, mesma largura. Só
+       recalcula quando o buffer é OUTRO — arrastar o cursor, mudar a
+       seleção ou redimensionar a janela não refazem mil FFTs. */
+    if (bDraw) fazerEspectro(bDraw);
+    desenharEspectro();
     if (!bDraw) {
       c.fillStyle = css.getPropertyValue('--ink-3').trim();
       c.font = '10px "JetBrains Mono", monospace';
@@ -1053,8 +1194,29 @@
         var m = porUid(b.dataset.tog);
         m.on = !m.on;
         b.classList.toggle('on', m.on);
+        /* módulo desligado mostra só o cabeçalho (ver `.module-b` no CSS):
+           ligar abre, e a marca de aberto-à-mão sai do caminho */
+        var card = b.closest('.module');
+        if (card) card.classList.remove('aberto');
         A.renderChain();
         A.queueRender();
+      });
+    });
+
+    /* ESPIAR UM MÓDULO DESLIGADO.
+       Com 34 módulos e quatro em uso, mostrar os controles de todos era
+       8040px de coluna para coisas que não estão na cadeia — 93% da
+       rolagem. Desligado mostra só o cabeçalho; ligar abre.
+
+       Mas às vezes se quer VER o que um módulo tem antes de pô-lo na
+       cadeia, e ligá-lo para isso obriga a recalcular o áudio inteiro só
+       para espiar. Clicar no NOME abre sem ligar.                     */
+    rack.querySelectorAll('.mnm').forEach(function (nm) {
+      nm.style.cursor = 'pointer';
+      nm.title = nm.textContent + ' — clique para ver os controles sem ligar';
+      nm.addEventListener('click', function () {
+        var card = nm.closest('.module');
+        if (card) card.classList.toggle('aberto');
       });
     });
     rack.querySelectorAll('[data-move]').forEach(function (b) {
@@ -1452,6 +1614,13 @@
     if (!outBuf) { VE.app.toast('nada para enviar'); return; }
     var blob = A.encodeWav(outBuf);
     VE.media.loadAudioBlob(blob, name.replace(/\.[^.]+$/, '') + '.wav').then(function (id) {
+      /* SEM COMPOSIÇÃO ABERTA isto explodia em `VE.project.tracks` — um
+         TypeError dentro de uma promessa, que não aparece na tela: o botão
+         parecia não fazer nada. Quem entra pelo índice direto no LAB 02 e
+         monta um som não tem composição de vídeo nenhuma, que é o caso
+         normal, não a exceção. O laboratório de tipografia já fazia isto
+         na mesma situação (`sendToTimeline` em js/type.js).            */
+      if (!VE.project) VE.app.ensureProject(1920, 1080, outBuf.duration);
       VE.addMedia({ kind: 'audio', name: name, src: id, dur: Math.min(outBuf.duration, VE.MAXDUR) });
       VE.pushHistory(); VE.emit('project');
       VE.app.toast('áudio enviado para a linha do tempo', 'ok');

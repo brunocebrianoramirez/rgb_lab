@@ -415,6 +415,40 @@
     if (pending) { pending = false; setTimeout(F.refreshThumbs, 40); }
   };
 
+  /* ================================== A MÁQUINA DE MINIATURA, EXPOSTA ====
+     Tudo que está acima — o renderizador pequeno, a carta de referência, o
+     quadro do cursor — serve para QUALQUER catálogo, não só para os filtros.
+     O 2.0 usa isto para dar miniatura aos 147 efeitos sem duplicar uma linha
+     do que já funciona aqui.
+
+     É só uma porta: nada acima mudou de comportamento.                   */
+  F.mini = {
+    W: TW, H: TH,
+    /* o renderizador pequeno (ou null se a GPU recusar) */
+    renderer: thumbRenderer,
+    /* o canvas onde ele desenha — de onde sai o toDataURL */
+    canvas: function () { return tcv; },
+    /* a fonte: o quadro do cursor se houver mídia, senão a carta */
+    fonte: function () {
+      var live = hasFrame();
+      if (live) {
+        var keep = F.preview; F.preview = null;
+        try { VE.app.renderNow(); } catch (e) { live = false; }
+        F.preview = keep;
+      }
+      return { el: live ? document.getElementById('gl') : refChart(), live: live };
+    },
+    /* desenha UMA cadeia de efeitos sobre a fonte e devolve o jpeg */
+    render: function (r, tex, cadeia, t) {
+      var FULL = { x: 0.5, y: 0.5, w: TW / TH, h: 1 };
+      r.renderPlan([
+        { kind: 'clip', tex: tex, rect: FULL, angle: 0, opacity: 1, blend: 0, effects: [] },
+        { kind: 'adjust', effects: cadeia }
+      ], t || 0, {});
+      try { return tcv.toDataURL('image/jpeg', 0.78); } catch (e) { return null; }
+    }
+  };
+
   /* ============================================ PRÉVIA AO PASSAR ==========
      Passar o mouse mostra o filtro na prévia GRANDE, sem aplicar nada. Sair
      desfaz. É a diferença entre escolher no escuro e escolher vendo.      */

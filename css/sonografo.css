@@ -1,0 +1,454 @@
+/* ================================================================
+   rgb_lab — O SONÓGRAFO · a folha do aparelho
+   ----------------------------------------------------------------
+   Uma MÁQUINA num palco escuro, irmã do polaroid e da estação de
+   digitalização. Por isso esta folha vive fora de system.css e de
+   lab2.css: o aparelho é o mesmo no Classic e no 2.0. Um instrumento
+   não muda de carcaça porque a sala mudou de papel de parede.
+
+   AS PEÇAS, de fora para dentro
+     .sg-palco    o palco: o resto do laboratório sai de cena
+     .sg-maq      o CHASSI — metal escovado, quatro parafusos, sombra
+     .sg-placa    a placa de cima: marca, mostradores, saídas
+     .sg-corpo    o corpo: cavidade à esquerda, mesa à direita
+     .sg-cav      a CAVIDADE de grafite onde as telas assentam
+     .sg-visor    o visor · .sg-regua a régua fina · .sg-roll o rolo
+     .sg-mesa     a MESA DE CONTROLE, em coluna, à direita
+     .sg-rodape   a fita musical, presa embaixo
+
+   O VÍDEO INTEIRO NA VISTA, que é o que decidiu a forma. A primeira
+   montagem empilhava mesa e rodapé por baixo da cavidade, e as duas
+   somavam quase 400 px: num monitor comum sobravam 170 px de visor, e
+   um vídeo 4:3 entrava como uma tira fina no meio de um retângulo
+   larguíssimo — dava para ver a nuvem, não o quadro. Pondo a mesa
+   numa COLUNA ao lado, a altura toda do aparelho é do vídeo.
+
+   SOBRE A PERSPECTIVA, e é a mesma decisão da estação de
+   digitalização: nenhuma superfície que recebe toque é girada. A
+   linha do visor é arrastada com o dedo, e a conta que leva pixel
+   de tela a pixel de vídeo é linear — num plano em `rotateX` ela
+   deixa de ser, e o arrasto escorrega. A leitura de "visto um pouco
+   de cima" fica com as peças em que a mão nunca toca: a espessura
+   da tampa e o pé.
+
+   A COR é o AZUL DO CANAL DE VÍDEO (`--ch-video`), e não uma cor
+   própria: o sonógrafo lê imagem, e imagem é o canal azul. Vale o tom
+   do modo noturno, que é o que o system.css já afinou para fundo
+   escuro — o palco aqui é sempre escuro, com papel ou sem.
+   ================================================================ */
+
+.sg-palco{
+  position:fixed;inset:0;z-index:150;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  background:radial-gradient(120% 100% at 50% 30%, rgba(22,20,28,.90), rgba(4,4,6,.975));
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
+
+  /* O AZUL DO CANAL DE VÍDEO, herdado e não copiado: `--ch-video` muda
+     com o tema (papel, noturno) e com a pele (o 2.0 tem o próprio
+     tom), e o sonógrafo acompanha — é o mesmo azul da pasta 01, do
+     cartão do laboratório e da barra de canal. A reserva é o tom
+     noturno, para o caso de a folha do sistema não ter carregado.
+
+     O CLARO é fixo e sempre luminoso de propósito: é ele que desenha o
+     fio da linha de leitura e a cabeça do rolo, traços de 1 px sobre
+     quase-preto. Amarrá-lo ao tema faria o fio sumir no modo papel,
+     onde o canal escurece — e o fio é o instrumento.              */
+  --sg-cor:var(--ch-video,#5b86ff);
+  --sg-cor-cl:#bcd0ff;
+  --sg-metal-1:#f1f3f6; --sg-metal-2:#9aa0a8; --sg-metal-3:#43474e;
+  --sg-cav:#0a0b0d;
+  --sg-tx:#e6e8ec; --sg-tx2:#8b919b; --sg-tx3:#5d636c;
+  --sg-linha:rgba(255,255,255,.07);
+  --sg-mono:"JetBrains Mono",ui-monospace,monospace;
+  --sg-sans:Archivo,"Helvetica Neue",system-ui,sans-serif;
+}
+.sg-palco.hidden{display:none}
+
+/* o × é a única coisa aqui que não é peça da máquina, e por isso
+   fica no canto do palco e não no aparelho                        */
+.sg-sair{
+  position:absolute;top:16px;right:20px;z-index:12;
+  width:38px;height:38px;border-radius:50%;padding:0;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.55);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.sg-sair svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;display:block}
+.sg-sair:hover{background:rgba(255,255,255,.10);color:#fff;border-color:rgba(255,255,255,.34)}
+
+/* ══════════════════════════════════════════════ O CHASSI ═══════ */
+.sg-maq{
+  width:min(1440px,97vw);
+  /* ALTURA PRESA, e não `max-height`. Com `max-height` o aparelho
+     encolhe até o conteúdo, e o conteúdo mais alto passou a ser a
+     COLUNA de controles — o vídeo ficava com a sobra dela e deixava
+     116 px de palco vazio embaixo. Presa em 94vh, quem recebe todo o
+     espaço que sobra é o visor, que é o ponto do aparelho. A coluna,
+     se não couber em pé, rola por dentro.                          */
+  height:94vh;max-height:94vh;
+  display:flex;flex-direction:column;
+  padding:10px;
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  background-image:
+    radial-gradient(circle 2.4px at 14px 14px,                     rgba(255,255,255,.5) 0 42%, rgba(0,0,0,.55) 44% 100%),
+    radial-gradient(circle 2.4px at calc(100% - 14px) 14px,        rgba(255,255,255,.5) 0 42%, rgba(0,0,0,.55) 44% 100%),
+    radial-gradient(circle 2.4px at 14px calc(100% - 14px),        rgba(255,255,255,.32) 0 42%, rgba(0,0,0,.6) 44% 100%),
+    radial-gradient(circle 2.4px at calc(100% - 14px) calc(100% - 14px), rgba(255,255,255,.32) 0 42%, rgba(0,0,0,.6) 44% 100%),
+    linear-gradient(180deg,
+      var(--sg-metal-1) 0%, #cfd4da 2.5%, var(--sg-metal-2) 12%,
+      #767c85 38%, #5c616a 62%, var(--sg-metal-3) 82%, #2e3136 94%, #1b1d20 100%);
+  background-repeat:no-repeat;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.8),
+    inset 1px 0 0 rgba(255,255,255,.22),
+    inset -1px 0 0 rgba(0,0,0,.4),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    0 2px 0 rgba(0,0,0,.5),
+    0 46px 92px -26px rgba(0,0,0,.95),
+    0 14px 44px rgba(0,0,0,.7);
+}
+
+/* ═══════════════════════════════════════════ A PLACA DE CIMA ═══ */
+.sg-placa{
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:18px;
+  padding:11px 16px;margin-bottom:9px;
+  border-radius:14px;
+  background:linear-gradient(180deg,#292c31,#1e2126 60%,#191b1f);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.65);
+}
+.sg-marca{display:flex;flex-direction:column;gap:3px;line-height:1;flex:0 0 auto}
+.sg-nome{font-family:var(--sg-sans);font-size:15px;font-weight:500;letter-spacing:.01em;color:#8e949e}
+.sg-nome b{color:#f2f4f8;font-weight:700}
+.sg-sub{font-family:var(--sg-mono);font-size:7px;letter-spacing:.30em;color:#5f656e;text-transform:uppercase}
+
+.sg-mostra{display:flex;align-items:center;gap:22px;flex:1 1 auto;min-width:0;justify-content:center}
+.sg-med{display:flex;flex-direction:column;gap:4px;min-width:0}
+.sg-med label{font-family:var(--sg-mono);font-size:7px;letter-spacing:.24em;color:var(--sg-tx3);text-transform:uppercase}
+.sg-med-v{font-family:var(--sg-sans);font-size:14px;color:var(--sg-tx);display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.sg-med-v.mono{font-family:var(--sg-mono);font-size:11.5px;letter-spacing:.04em;color:var(--sg-cor-cl)}
+.sg-med-v span{font-family:var(--sg-mono);font-size:8px;color:var(--sg-tx3);letter-spacing:.16em}
+.sg-med-v input{
+  width:52px;background:transparent;border:none;border-bottom:1px solid var(--sg-linha);
+  color:var(--sg-tx);font-family:var(--sg-sans);font-size:14px;padding:0 0 2px;
+}
+.sg-med-v input:focus{outline:none;border-bottom-color:var(--sg-cor)}
+
+.sg-saidas{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+
+/* botão de comando: chapa fina, sem canto redondo de aplicativo   */
+.sg-bt{
+  font-family:var(--sg-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--sg-tx2);
+  padding:8px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;
+  border:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(180deg,#26282d,#1b1d21);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 1px 2px rgba(0,0,0,.5);
+  transition:color .13s,border-color .13s,background .13s;
+}
+.sg-bt:hover{color:var(--sg-tx);border-color:rgba(255,255,255,.20)}
+.sg-bt:active{background:linear-gradient(180deg,#17181c,#212327);box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
+.sg-bt.on{color:#fff;border-color:var(--sg-cor);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 0 1px rgba(91,134,255,.28)}
+.sg-bt-solido{
+  color:#fff;border-color:rgba(91,134,255,.55);
+  background:linear-gradient(180deg,#2a5be0,#1b3fae);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 2px 8px rgba(40,80,210,.35);
+}
+.sg-bt-solido:hover{color:#fff;border-color:rgba(150,180,255,.8)}
+.sg-bt-perigo:hover{color:#ff8b8b;border-color:rgba(255,110,110,.45)}
+.sg-bt-mini{padding:6px 9px;font-size:8px;letter-spacing:.12em}
+
+/* ══════════════════════════════════ O CORPO: DUAS COLUNAS ══════ */
+.sg-corpo{
+  flex:1 1 auto;min-height:0;min-width:0;
+  display:flex;align-items:stretch;gap:9px;
+}
+
+/* ══════════════════════════════════════════════ A CAVIDADE ═════ */
+.sg-cav{
+  flex:1 1 auto;min-height:0;min-width:0;
+  display:flex;flex-direction:column;
+  padding:9px;gap:7px;
+  overflow:hidden;
+  border-radius:16px;
+  background:linear-gradient(180deg,#101115 0%,var(--sg-cav) 45%,#0e0f12 100%);
+  box-shadow:
+    inset 0 3px 8px rgba(0,0,0,.95),
+    inset 0 0 0 1px rgba(255,255,255,.055),
+    inset 0 -2px 5px rgba(0,0,0,.7);
+}
+
+/* O VISOR é o elemento principal da tela (§11): ele fica com toda a
+   altura que sobra, e a régua e o rolo têm altura fixa.           */
+.sg-visor{
+  position:relative;flex:1 1 auto;min-height:0;
+  border-radius:9px;overflow:hidden;
+  background:#08080a;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 2px 12px rgba(0,0,0,.9);
+}
+/* A TELA É ABSOLUTA, e isso não é capricho de posicionamento: com
+   `height:100%` numa caixa flex que o irmão aperta, o canvas continua
+   a MEDIR a altura pedida enquanto o visor já foi cortado. A conta de
+   enquadramento usa então uma altura que não existe na tela, e o
+   quadro sai maior que a moldura — o vídeo aparece cortado em cima e
+   embaixo em vez de caber inteiro. `inset:0` prende as duas caixas
+   uma na outra: o que se mede é o que se vê.                      */
+.sg-visor canvas{
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  cursor:crosshair;touch-action:none;
+}
+.sg-visor.largando{box-shadow:inset 0 0 0 2px var(--sg-cor)}
+
+.sg-vazio{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px;text-align:center;padding:20px;
+  pointer-events:none;
+}
+.sg-vazio b{font-family:var(--sg-mono);font-size:11px;letter-spacing:.30em;color:var(--sg-tx2)}
+.sg-vazio span{font-family:var(--sg-sans);font-size:12px;color:var(--sg-tx3);max-width:380px;line-height:1.5}
+.sg-vazio.hidden{display:none}
+
+.sg-fonte-nome{
+  position:absolute;left:10px;bottom:8px;
+  font-family:var(--sg-mono);font-size:8px;letter-spacing:.14em;
+  color:rgba(255,255,255,.42);pointer-events:none;text-transform:uppercase;
+  text-shadow:0 1px 3px rgba(0,0,0,.9);
+}
+
+.sg-regua{
+  display:block;flex:0 0 auto;height:22px;width:100%;
+  border-radius:5px;background:#0d0d11;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.sg-roll{
+  display:block;flex:0 0 auto;height:clamp(130px,21vh,190px);width:100%;
+  border-radius:9px;background:#0a0a0d;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 2px 10px rgba(0,0,0,.8);
+}
+
+/* ══════════════════════════════════════ A MESA DE CONTROLE ═════ */
+/* A mesa é uma COLUNA à direita, de largura fixa. Fixa e não elástica
+   porque o que ela guarda tem tamanho próprio — knob, botão, chapa —
+   e esticar não melhora nada; o que sobra de largura é do vídeo, que
+   é quem sabe usar. Se a coluna não couber em pé, ela rola por dentro
+   e o visor não perde um pixel por isso.                          */
+.sg-mesa{
+  flex:0 0 clamp(272px,26vw,336px);min-height:0;
+  display:flex;flex-direction:column;gap:11px;
+  padding:12px 14px;
+  overflow-y:auto;overflow-x:hidden;
+  border-radius:14px;
+  background:linear-gradient(180deg,#23252a 0%,#1a1c20 40%,#141518 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.7),0 6px 18px -8px rgba(0,0,0,.8);
+  scrollbar-width:thin;scrollbar-color:#3a3d44 transparent;
+}
+.sg-mesa::-webkit-scrollbar{width:8px}
+.sg-mesa::-webkit-scrollbar-thumb{background:#3a3d44;border-radius:4px}
+.sg-mesa::-webkit-scrollbar-track{background:transparent}
+.sg-posto{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sg-posto-h{
+  font-family:var(--sg-mono);font-size:7.5px;letter-spacing:.30em;text-transform:uppercase;
+  color:var(--sg-tx3);display:flex;align-items:center;gap:8px;
+}
+.sg-posto-h::after{content:"";flex:1 1 auto;height:1px;background:var(--sg-linha)}
+.sg-posto-h2{margin-top:3px}
+
+/* ---- orientação da linha: quatro chapas ---- */
+.sg-orients{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:250px}
+.sg-orient{
+  height:42px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg,#26282d,#1a1c20);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.5);
+  transition:border-color .13s,background .13s;
+}
+.sg-orient svg{width:19px;height:19px;fill:none;stroke:var(--sg-tx2);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sg-orient:hover{border-color:rgba(255,255,255,.20)}
+.sg-orient:hover svg{stroke:var(--sg-tx)}
+.sg-orient.on{border-color:var(--sg-cor);background:linear-gradient(180deg,#1c2740,#141b2b);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 0 1px rgba(91,134,255,.25)}
+.sg-orient.on svg{stroke:var(--sg-cor-cl)}
+
+.sg-lin{display:flex;align-items:baseline;gap:8px}
+.sg-lin label{font-family:var(--sg-mono);font-size:7.5px;letter-spacing:.22em;color:var(--sg-tx3);text-transform:uppercase}
+.sg-val{margin-left:auto;font-family:var(--sg-mono);font-size:10px;color:var(--sg-tx);letter-spacing:.04em}
+.sg-passo{display:flex;align-items:center;gap:7px}
+.sg-passo input[type=range]{flex:1 1 auto;min-width:0}
+.sg-nota{font-family:var(--sg-sans);font-size:10.5px;line-height:1.45;color:var(--sg-tx3)}
+.sg-diag,.sg-img{display:flex;flex-direction:column;gap:6px}
+.sg-diag.hidden,.sg-img.hidden{display:none}
+
+/* trilho comum a todos os deslizadores do aparelho                */
+.sg-palco input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:16px;background:transparent;cursor:pointer;
+}
+.sg-palco input[type=range]::-webkit-slider-runnable-track{
+  height:3px;border-radius:2px;
+  background:linear-gradient(180deg,#0c0d10,#1b1d21);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.05);
+}
+.sg-palco input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:13px;height:13px;margin-top:-5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#f4f5f7,#9aa0a8 60%,#5a5f67);
+  box-shadow:0 1px 3px rgba(0,0,0,.8),inset 0 -1px 1px rgba(0,0,0,.4);
+}
+.sg-palco input[type=range]::-moz-range-track{height:3px;border-radius:2px;background:#14161a}
+.sg-palco input[type=range]::-moz-range-thumb{
+  width:13px;height:13px;border:none;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#f4f5f7,#9aa0a8 60%,#5a5f67);
+}
+
+/* ---- o núcleo: knobs e transporte ---- */
+/* na coluna, o núcleo separa-se dos vizinhos por cima e por baixo —
+   eram as laterais quando ele ficava no meio de três colunas      */
+.sg-nucleo{
+  flex:0 0 auto;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:11px 0;
+  border-top:1px solid var(--sg-linha);border-bottom:1px solid var(--sg-linha);
+}
+.sg-knobs{display:flex;align-items:flex-end;gap:20px}
+.sg-knob-cx{display:flex;flex-direction:column;align-items:center;gap:5px;--d:46px}
+.sg-knob-cx-g{--d:74px}
+.sg-knob-cx label{font-family:var(--sg-mono);font-size:6.5px;letter-spacing:.20em;color:var(--sg-tx3);text-transform:uppercase}
+.sg-knob-cx span{font-family:var(--sg-mono);font-size:10px;color:var(--sg-cor-cl)}
+
+/* O KNOB. O corpo gira; o arco não — é `stroke-dashoffset`, então
+   não há trigonometria por quadro nem um canvas a mais.           */
+.sg-knob{
+  position:relative;width:var(--d);height:var(--d);
+  cursor:ns-resize;touch-action:none;outline:none;
+}
+.sg-knob-corpo{
+  position:absolute;inset:11%;border-radius:50%;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,0) 46%),
+    radial-gradient(circle at 50% 18%,#4b4f57,#2a2d32 58%,#191b1e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -2px 4px rgba(0,0,0,.7),
+    0 3px 7px rgba(0,0,0,.65);
+  transition:transform .05s linear;
+}
+.sg-knob-marca{
+  position:absolute;left:50%;top:11%;width:2px;height:26%;
+  transform:translateX(-50%);border-radius:1px;
+  background:var(--sg-cor-cl);
+  box-shadow:0 0 6px rgba(91,134,255,.7);
+}
+.sg-knob-arco{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.sg-knob-arco path{fill:none;stroke-linecap:round;stroke-width:5}
+.sg-arco-tr{stroke:rgba(255,255,255,.07)}
+.sg-arco-on{stroke:var(--sg-cor);filter:drop-shadow(0 0 3px rgba(91,134,255,.5))}
+.sg-knob:focus-visible .sg-knob-corpo,.sg-knob.pegando .sg-knob-corpo{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 2px rgba(91,134,255,.4),0 3px 7px rgba(0,0,0,.65)}
+
+.sg-transp{display:flex;align-items:center;gap:10px}
+.sg-tb{
+  width:40px;height:34px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(180deg,#2a2d32,#1b1d21);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 2px 4px rgba(0,0,0,.55);
+  transition:border-color .13s,background .13s;
+}
+.sg-tb svg{width:17px;height:17px;fill:var(--sg-tx2);stroke:none}
+.sg-tb:hover{border-color:rgba(255,255,255,.22)}
+.sg-tb:hover svg{fill:var(--sg-tx)}
+.sg-tb:active{box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
+.sg-tb-g{width:56px;height:44px}
+.sg-tb-g svg{width:21px;height:21px}
+.sg-tb.on svg{fill:var(--sg-cor-cl)}
+.sg-tb.on{border-color:rgba(91,134,255,.5)}
+.sg-tb-rec svg{fill:#4b4f57}
+.sg-tb-rec.on svg{fill:#ff4d5e}
+.sg-tb-rec.on{border-color:rgba(255,77,94,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 0 0 1px rgba(255,77,94,.22)}
+.sg-transp2{display:flex;align-items:center;gap:6px}
+
+/* ---- sensores ---- */
+.sg-sens{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sg-sensor{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:9px 4px 7px;border-radius:8px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg,#26282d,#1a1c20);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.5);
+  transition:border-color .13s,background .13s;
+}
+.sg-sensor svg{width:17px;height:17px;fill:none;stroke:var(--sg-tx2);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.sg-sensor span{font-family:var(--sg-mono);font-size:6.5px;letter-spacing:.14em;color:var(--sg-tx3)}
+.sg-sensor:hover{border-color:rgba(255,255,255,.20)}
+.sg-sensor.on{border-color:var(--sg-cor);background:linear-gradient(180deg,#1c2740,#141b2b)}
+.sg-sensor.on svg{stroke:var(--sg-cor-cl)}
+.sg-sensor.on span{color:var(--sg-cor-cl)}
+
+.sg-mapa{display:flex;flex-direction:column;gap:5px}
+.sg-mrow{display:grid;grid-template-columns:88px 1fr;align-items:center;gap:8px}
+.sg-mrow label{font-family:var(--sg-sans);font-size:11px;color:var(--sg-tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---- selects: a mesma chapa dos botões ---- */
+.sg-sel{
+  -webkit-appearance:none;appearance:none;width:100%;min-width:0;
+  font-family:var(--sg-sans);font-size:11.5px;color:var(--sg-tx);
+  padding:7px 24px 7px 9px;border-radius:7px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.09);
+  background:
+    linear-gradient(180deg,#26282d,#1b1d21),
+    no-repeat right 8px center/8px 5px
+      linear-gradient(45deg,transparent 47%,var(--sg-tx3) 47%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  transition:border-color .13s;
+}
+.sg-sel:hover{border-color:rgba(255,255,255,.20)}
+.sg-sel:focus{outline:none;border-color:var(--sg-cor)}
+.sg-sel option{background:#1b1d21;color:var(--sg-tx)}
+.sg-sel-mini{font-size:10px;padding:5px 20px 5px 8px;width:auto}
+
+/* ══════════════════════════════════════════════ O RODAPÉ ══════ */
+.sg-rodape{
+  flex:0 0 auto;
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,1.4fr);
+  gap:12px;margin-top:9px;padding:11px 16px;
+  border-radius:14px;
+  background:linear-gradient(180deg,#1e2024,#15171a);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -1px 0 rgba(0,0,0,.6);
+}
+.sg-campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sg-campo label{
+  font-family:var(--sg-mono);font-size:7px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--sg-tx3);display:flex;justify-content:space-between;gap:6px;
+}
+.sg-campo label i{font-style:normal;color:var(--sg-cor-cl);letter-spacing:.06em}
+.sg-campo-w{justify-content:center}
+
+/* ═══════════════════════════════════════ TELAS ESTREITAS ══════
+   A QUEBRA É TARDE DE PROPÓSITO, e o número saiu de medir os dois
+   arranjos com o mesmo vídeo 4:3 na mesma janela. Empilhar parece o
+   certo assim que a tela aperta, e não é: empilhado, mesa e rodapé
+   somam ~380 px e o visor cai para 180, o que devolve um quadro de
+   240×180 — exatamente a tira que a coluna veio consertar. Em coluna,
+   na MESMA janela de 980, o quadro sai perto de 485×364.
+
+   A conta vira só quando a coluna passa a comer mais largura do que
+   devolve em altura, e isso é lá por 620 px. Até lá, coluna.      */
+@media (max-width:620px){
+  /* empilhado, a mesa é mais alta do que o corpo — então quem rola é
+     o CORPO inteiro, e não a mesa por dentro. Sem isto a coluna de
+     controles atravessa o fundo do chassi e some por trás dele. */
+  .sg-corpo{flex-direction:column;overflow-y:auto;overflow-x:hidden}
+  .sg-cav{flex:0 0 auto}
+  .sg-mesa{flex:0 0 auto;max-height:none;overflow:visible;
+           display:flex;flex-direction:column;gap:12px}
+  .sg-visor{min-height:200px;height:38vh}
+  .sg-rodape{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-height:720px){
+  .sg-roll{height:clamp(90px,16vh,140px)}
+  .sg-regua{height:16px}
+}

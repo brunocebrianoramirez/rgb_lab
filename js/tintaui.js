@@ -20,6 +20,17 @@
   T.estado = function () { return obj; };
   T.ligada = function () { return ligado; };
 
+  /* O DESFAZER DA MESA. `T.desfazer(obj)` (js/tinta.js) é o modelo e pede o
+     objeto; este é o gesto — Ctrl+Z com a folha aberta tira o último traço
+     e repinta. Sem ele, Ctrl+Z na mesa mexia no histórico da tipografia
+     por baixo, que não é o que a mão acabou de fazer.                   */
+  T.desfazerTraco = function () {
+    if (!ligado || !obj) return false;
+    var ok = T.desfazer(obj);
+    if (ok) { repintar(); contar(); }
+    return ok;
+  };
+
   /* ---------------- a folha de captura ---------------- */
   function montarFolha() {
     palco = $('#tyStage');
@@ -108,9 +119,18 @@
   }
 
   /* ---------------- a barra de controles ---------------- */
+  /* `--fill` é o que faz a caixa ser também o cursor deslizante: a linha
+     se enche até onde o valor está na faixa. Mesmo controle da ficha da
+     direita (`.tctl`, em js/type.js) — o painel do laboratório não pode
+     ter dois vocabulários de controle. */
+  function pct(v, min, max) {
+    var p = (v - min) / (max - min) * 100;
+    return (p < 0 ? 0 : p > 100 ? 100 : p).toFixed(2) + '%';
+  }
   function trilho(k, rot, val, min, max, passo) {
-    return '<label class="ti-row"><span>' + rot + '</span>' +
-      '<input type="range" data-ti="' + k + '" min="' + min + '" max="' + max +
+    return '<label class="ti-row" style="--fill:' + pct(val, min, max) + '"><span>' + rot + '</span>' +
+      '<input type="range" data-ti="' + k + '" data-min="' + min + '" data-max="' + max +
+      '" min="' + min + '" max="' + max +
       '" step="' + passo + '" value="' + val + '"><b data-tiv="' + k + '">' + val + '</b></label>';
   }
   function marca(k, rot) {
@@ -152,12 +172,15 @@
       '<button class="cmd cmd-sm" id="tintaSvg">SVG</button>' +
       '</div>';
     palco.appendChild(barra);
+    if (VE.type && VE.type.arrastavel) VE.type.arrastavel(barra, 'tinta');
 
     barra.querySelectorAll('[data-ti]').forEach(function (el) {
       el.addEventListener('input', function () {
         obj[el.dataset.ti] = parseFloat(el.value);
         var b = barra.querySelector('[data-tiv="' + el.dataset.ti + '"]');
         if (b) b.textContent = el.value;
+        var linha = el.closest('.ti-row');
+        if (linha) linha.style.setProperty('--fill', pct(parseFloat(el.value), +el.dataset.min, +el.dataset.max));
         repintar();
       });
     });
@@ -220,6 +243,11 @@
   /* ---------------- ligar e desligar ---------------- */
   T.ligar = function () {
     if (ligado) { T.desligar(); return false; }
+    /* uma folha de cada vez sobre o palco. O recorte já fechava a tinta ao
+       abrir; a volta faltava, e as duas ficavam empilhadas no mesmo palco.
+       Passou despercebido enquanto os dois botões eram um menu solto; com
+       eles na lista de ferramentas, ACESOS os dois, a mentira aparece. */
+    if (VE.recorteui && VE.recorteui.ligada && VE.recorteui.ligada()) VE.recorteui.desligar();
     if (!obj) obj = T.novo();
     if (!montarFolha()) return false;
     montarBarra();
