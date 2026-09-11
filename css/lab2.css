@@ -4248,3 +4248,36 @@
   font-family:var(--l2-sans);font-size:10.5px;letter-spacing:0;color:var(--l2-ink-3);
 }
 :root[data-ui="2"] .atl-nota b{color:var(--l2-ink-2);font-weight:600}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   57 AS DUAS BARRAS DA ESQUERDA, MAIS MAGRAS
+   --------------------------------------------------------------------------
+   Pedido do Bruno (11/09/2026), depois de testar os cinco efeitos: o trilho
+   do canal e a torre de ícones tomavam 40 + 72 px mais os vãos — 122 px de
+   uma janela antes de qualquer conteúdo. Ficam com 28 + 54.
+
+   O que segue junto, porque depende das duas medidas:
+     · o texto vertical do trilho, de 12 para 10,5 px (o corpo cabe em 28);
+     · os botões da torre: ícone de 26 para 21, rótulo de 9 para 8,
+       recuo menor, canto menor;
+     · a barrinha do canal no item ativo encosta na borda do cartão — o
+       recuo lateral da torre caiu de 7 para 5 px, então ela anda 2 px;
+     · o piso da coluna (`.side{min-width}`): a torre mais um cartão de
+       94 — de 196 para 178;
+     · a largura da coluna da esquerda (`--side-w`): a torre emagreceu 18
+       px, e esses 18 vão para a prévia em vez de sobrar no painel.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root[data-ui="2"]{--rail-w:28px;--side-w:250px}
+:root[data-ui="2"] .rail{padding:14px 0}
+:root[data-ui="2"] .rail-txt{font-size:10.5px;letter-spacing:.18em}
+:root[data-ui="2"] .rail > .rail-txt:first-child{font-size:9px;letter-spacing:.2em}
+:root[data-ui="2"] .rail-punch{gap:11px}
+:root[data-ui="2"] .rail-punch i{width:6px;height:6px}
+
+:root[data-ui="2"] .l2rail{flex:0 0 54px;padding:8px 5px;gap:3px}
+:root[data-ui="2"] .l2r{gap:6px;padding:10px 1px 8px;border-radius:11px}
+:root[data-ui="2"] .l2r svg{width:21px;height:21px;stroke-width:1.5}
+:root[data-ui="2"] .l2r span{font-size:8px;letter-spacing:.04em}
+:root[data-ui="2"] .l2r.on::before{left:-6px;height:22px}
+
+:root[data-ui="2"] .side{min-width:178px}

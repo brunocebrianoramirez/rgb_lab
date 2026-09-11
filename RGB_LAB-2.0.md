@@ -1571,6 +1571,20 @@ cobre a caixa inteira e quem precisa de clique próprio sobe acima dele.
 
 ---
 
+## 5ao. AS DUAS BARRAS DA ESQUERDA, MAIS MAGRAS (11/09/2026)
+
+Depois de testar os cinco efeitos novos, o Bruno pediu o trilho do canal e a
+torre de ícones "mais magrinhos". Seção 57 do `lab2.css`: o trilho de 40
+para **28 px** (texto vertical de 12 para 10,5), a torre de 72 para
+**54 px** (ícone 21, rótulo 8, recuo 5). Seguem junto a barrinha do item
+ativo (recuo −6), o piso da coluna (178) e a largura padrão da coluna
+(250 — os 18 px da torre vão para a prévia; quem já arrastou a coluna
+mantém a largura que guardou).
+
+Medido a 1400×820: trilho 28 · torre 54 · texto do trilho com 12–14 px de
+corpo dentro dos 28 · os seis rótulos cabem (o maior, PRESETS, com 40 dos
+42 px do botão) · nada vaza.
+
 ## 6. Verificado
 
 ```
