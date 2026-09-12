@@ -1082,12 +1082,19 @@ ajustes é a única coisa que não é câmera.
 | **SOM** | grava em **tempo real, com o áudio** (o gravador do navegador). Desligado, grava **exato**, quadro a quadro, sem som — o arquivo sai certo mesmo com efeito pesado |
 | **a engrenagem** | a telinha de ajustes |
 
-**As quatro máquinas.** A bitola é a máquina inteira: o 8 MM é couro
-preto, o SUPER 8 couro marrom, o 16 MM a pintura rugosa de câmera de
-documentário com os glifos laranja, o 35 MM a pintura martelada cinza das
-câmeras de cinema. As texturas não são fotos: são relevo calculado e
-iluminado na hora (mapa de altura periódico, luz de cima e da esquerda,
-brilho de superfície) — por isso o arquivo único não carrega imagem nenhuma.
+**As quatro máquinas.** A bitola é a máquina inteira: o 8 MM vem em couro
+preto, o SUPER 8 em couro marrom, o 16 MM na pintura rugosa de câmera de
+documentário com os glifos laranja, o 35 MM na pintura martelada cinza das
+câmeras de cinema.
+
+**A carcaça** (12/09/2026) é escolhida na gaveta BITOLA, na linha de baixo:
+os três couros de verdade da pasta `assets/filmadora/couro/` — preto,
+marrom, bege —, a textura CALCULADA (relevo iluminado na hora, sem arquivo;
+é a pele de fábrica do 16 e do 35 mm) e **SUBIR DO PC**: qualquer imagem do
+seu computador vira a carcaça (é reduzida a 1200 px e fica guardada no
+navegador). Cada bitola lembra a sua. Numa carcaça clara os glifos ficam
+pretos, em plaquetas; numa escura, creme. Para acrescentar um couro à pasta
+de fábrica, ponha o arquivo e registre-o em `F.CARCACAS` (js/filmadora.js).
 
 **A película** é o pacote da bitola em ESTILOS (`8 MM CASEIRO`, `SUPER 8`,
 `16 MM DOCUMENTÁRIO`, `35 MM`), calibrado pela régua do 8mm Vintage Camera.
@@ -1146,6 +1153,16 @@ não quebra nada: a região volta a ser o quadro inteiro.
 > quadro no ritmo pedido), a **SOMBRA DA BORDA** e a **CINTILAÇÃO** na
 > janela, a **FORMA DA JANELA** (larga ou da bitola, 4:3), e a
 > **SUAVIDADE** do grão.
+>
+> **12/09/2026 — o grão parou de voar.** O grão andava na diagonal, de um
+> canto ao outro, a 60 px/s: o número do quadro era somado à coordenada do
+> sorteio, e a rede de ruído inteira se deslocava uma célula por quadro.
+> Agora cada quadro é OUTRO sorteio, parado no lugar (medido: o quadro
+> seguinte era o anterior deslocado 3 px, correlação 0,80; hoje, 0,03 em
+> qualquer deslocamento). O grão ficou fino — célula de 1,8 px no 8 mm, era
+> 3,3 — e ganhou **GRÃO VIVO**: desligado, o grão não é sorteado de novo e
+> fica fixo no filme (anda com ele no tremor, não com a tela). A poeira
+> também encolheu (metade do tamanho, mais rara) e deixou de se deslocar.
 
 O grupo `película` reconstrói a câmera antiga inteira:
 

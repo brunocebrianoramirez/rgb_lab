@@ -87,6 +87,9 @@
   color:var(--fil-tinta, #e8d9a8);
 }
 /* a vinheta da peça: mais clara onde a luz bate, mais escura em baixo */
+/* carcaça de FOTO: uma imagem só, esticada sobre a máquina (as fotos de
+   couro não emendam como ladrilho; a calculada emenda e repete)      */
+.fil-cam.foto{background-size:cover;background-position:center}
 .fil-cam::before{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
   border-radius:inherit;
@@ -421,11 +424,33 @@
 /* a das BITOLAS sobe do chão do palco: plástico claro pontilhado, as
    quatro máquinas em miniatura, a escolhida com o nome numa pastilha */
 .fil-gaveta-pel{
-  left:0;right:0;bottom:0;height:176px;transform:translateY(103%);
+  left:0;right:0;bottom:0;height:262px;transform:translateY(103%);
   background:var(--fil-plastico) center / 160px repeat, #dcdcd8;
   box-shadow:0 -12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.75);
-  display:flex;align-items:center;justify-content:center;gap:30px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
 }
+.fil-gav-linha{display:flex;align-items:center;justify-content:center;gap:30px}
+/* a linha da CARCAÇA: pastilhas redondas com o material, o nome embaixo */
+.fil-carcacas{gap:10px;padding-top:12px;border-top:1px solid rgba(0,0,0,.08);width:min(860px, 94vw)}
+.fil-carcacas > b{font-size:8.5px;letter-spacing:.22em;color:#555;font-weight:600;margin-right:8px;white-space:nowrap}
+.fil-carc{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  border:0;background:transparent;cursor:pointer;padding:4px 6px;
+}
+.fil-carc i{
+  display:block;width:40px;height:40px;border-radius:50%;
+  background:var(--pele) center / 90px repeat, #333;
+  box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.25);
+  transition:transform .15s;
+}
+.fil-carc i.foto{background-size:cover}
+.fil-carc:hover i{transform:translateY(-2px)}
+.fil-carc span{font-size:8px;letter-spacing:.16em;color:#2a2a2a;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.fil-carc.on i{box-shadow:0 3px 8px rgba(0,0,0,.35), 0 0 0 2px #161616}
+.fil-carc.on span{background:#161616;color:#fff}
+.fil-carc-subir i{background:#f4f4f1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.25)}
+.fil-carc-subir i svg{width:20px;height:20px;fill:#222;display:block}
+.fil-mini i.foto{background-size:cover}
 .fil-gaveta-pel.aberta{transform:translateY(0)}
 .fil-mini{
   display:flex;flex-direction:column;align-items:center;gap:8px;
@@ -460,6 +485,7 @@
   display:flex;flex-direction:column;
 }
 .fil-gaveta-rolos.aberta{transform:translateX(0)}
+.fil-gaveta-rolos.foto{background-size:cover;background-position:center}
 .fil-gav-h{
   display:flex;align-items:center;gap:10px;padding:18px 18px 12px;
   color:var(--fil-creme);font-size:10px;letter-spacing:.26em;
@@ -513,6 +539,7 @@
 /* em tela baixa a máquina encolhe pela altura (já está na conta de
    `--larg`); a gaveta das bitolas fica mais baixa para não a cobrir */
 @media (max-height:640px){
-  .fil-gaveta-pel{height:140px;gap:18px}
+  .fil-gaveta-pel{height:224px;gap:8px}
+  .fil-gav-linha{gap:18px}
   .fil-mini i{width:96px;height:58px}
 }

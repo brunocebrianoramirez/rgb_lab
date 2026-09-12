@@ -17,13 +17,15 @@
        escovado — que são RELEVO calculado e iluminado, não foto
      · a gravação pelo exportador e os ROLOS que saem dela
 
-   POR QUE AS TEXTURAS SÃO CALCULADAS
-   O polaroid usa uma foto de câmera de verdade, que o Bruno mandou.
-   Aqui as referências são capturas de tela de aplicativos, e isso
-   não se copia. Um mapa de altura periódico (o ladrilho emenda sem
-   costura) iluminado por uma luz de cima e da esquerda, com brilho
-   de superfície, dá couro de verdade a 320 px — e custa 60 ms uma
-   vez, sem arquivo nenhum para o arquivo único carregar.
+   A CARCAÇA
+   O couro da máquina vem de FOTO — os três couros que o Bruno mandou
+   (assets/filmadora/couro/), preto, marrom e bege — ou de uma que ele
+   sobe do PC pela gaveta (reduzida a 1200 px e guardada no navegador).
+   A textura CALCULADA (mapa de altura periódico iluminado por uma luz
+   de cima e da esquerda, com brilho de superfície) continua existindo
+   como quarta opção e como pele das bitolas de 16 e 35 mm, que são
+   pintura e não couro. Ele não gostou da calculada como couro — e a
+   foto ganha, sempre: é o que o polaroid já ensinou.
    ============================================================ */
 (function (VE) {
   'use strict';
@@ -85,6 +87,9 @@
     vazamento: true,       /* o botão do relâmpago */
     som: false,            /* o botão da grade: grava em tempo real, com o áudio */
     cadencia: true,        /* o tranco da bitola; desligado, o vídeo anda como veio */
+    /* a carcaça de cada bitola: um id de F.CARCACAS, ou 'propria' */
+    carcaca: { '8mm': 'couro-preto', 's8': 'couro-marrom', '16mm': 'calculada', '35mm': 'calculada' },
+    propria: null,         /* a que subiu do PC: { url (data:), tinta } */
     aj: {},
     gravando: null,        /* { ini, dur, thumb } enquanto o rolo roda */
     rolos: []
@@ -103,15 +108,74 @@
       if (g.aj) Object.keys(AJ_PADRAO).forEach(function (k) {
         var v = parseFloat(g.aj[k]); if (isFinite(v)) est.aj[k] = Math.max(0, Math.min(2, v));
       });
+      if (g.carcaca) Object.keys(est.carcaca).forEach(function (k) { if (typeof g.carcaca[k] === 'string') est.carcaca[k] = g.carcaca[k]; });
+      if (g.propria && typeof g.propria.url === 'string' && g.propria.url.indexOf('data:image/') === 0) est.propria = g.propria;
     } catch (e) { /* sem memória: a máquina abre como nova */ }
   };
   F.guardar = function () {
     try {
       localStorage.setItem(CHAVE, JSON.stringify({
         bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
-        som: est.som, cadencia: est.cadencia, aj: est.aj
+        som: est.som, cadencia: est.cadencia, aj: est.aj,
+        carcaca: est.carcaca, propria: est.propria
       }));
-    } catch (e) { /* sem espaço: paciência */ }
+    } catch (e) {
+      /* a foto do PC pode não caber (o limite do navegador anda em 5 MB):
+         guarda o resto sem ela, e ela vale só nesta sessão            */
+      try {
+        localStorage.setItem(CHAVE, JSON.stringify({
+          bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
+          som: est.som, cadencia: est.cadencia, aj: est.aj, carcaca: est.carcaca
+        }));
+      } catch (e2) { /* sem espaço: paciência */ }
+    }
+  };
+
+  /* ================================================================
+     A CARCAÇA
+     `tinta` diz se a máquina é escura (glifos creme) ou clara (glifos
+     pretos em plaquetas). A foto que sobe do PC decide isso pela própria
+     luminância média.                                                */
+  F.CARCACAS = [
+    { id: 'couro-preto', nome: 'COURO PRETO', url: 'assets/filmadora/couro/couro-preto.jpg', tinta: 'escura' },
+    { id: 'couro-marrom', nome: 'COURO MARROM', url: 'assets/filmadora/couro/couro-marrom.jpg', tinta: 'escura' },
+    { id: 'couro-bege', nome: 'COURO BEGE', url: 'assets/filmadora/couro/couro-bege.jpg', tinta: 'clara' },
+    { id: 'calculada', nome: 'CALCULADA', url: null, tinta: null }
+  ];
+  /* a carcaça de uma bitola, resolvida: { id, nome, url|null, tinta|null } */
+  F.carcacaDe = function (bitolaId) {
+    var id = est.carcaca[bitolaId] || 'calculada';
+    if (id === 'propria') {
+      if (est.propria) return { id: 'propria', nome: 'DO PC', url: est.propria.url, tinta: est.propria.tinta || 'escura' };
+      id = 'calculada';
+    }
+    return F.CARCACAS.filter(function (c) { return c.id === id; })[0] || F.CARCACAS[3];
+  };
+  F.escolherCarcaca = function (bitolaId, id) {
+    est.carcaca[bitolaId] = id; F.guardar();
+  };
+  /* a foto do PC: reduzida a 1200 px num canvas, JPEG, e a luminância
+     média decide a tinta. Devolve uma promessa com a carcaça pronta.   */
+  F.subirCarcaca = function (file) {
+    return new Promise(function (res, rej) {
+      if (!file || file.type.indexOf('image/') !== 0) { rej(new Error('escolha uma imagem (jpg, png, webp)')); return; }
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var s = Math.min(1, 1200 / Math.max(img.width, img.height));
+        var cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(img.width * s)); cv.height = Math.max(1, Math.round(img.height * s));
+        var c = cv.getContext('2d');
+        c.drawImage(img, 0, 0, cv.width, cv.height);
+        var d = c.getImageData(0, 0, cv.width, cv.height).data, soma = 0, n = 0, i;
+        for (i = 0; i < d.length; i += 64) { soma += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114; n++; }
+        est.propria = { url: cv.toDataURL('image/jpeg', 0.84), tinta: (soma / n) > 128 ? 'clara' : 'escura', nome: (file.name || 'foto').slice(0, 40) };
+        F.guardar();
+        res(est.propria);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('não consegui ler essa imagem')); };
+      img.src = url;
+    });
   };
   F.reporAjustes = function () {
     Object.keys(AJ_PADRAO).forEach(function (k) { est.aj[k] = AJ_PADRAO[k]; });

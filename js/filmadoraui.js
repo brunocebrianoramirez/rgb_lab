@@ -34,9 +34,19 @@
   var est = null;
 
   function el(id) { return document.getElementById(id); }
+  /* url() dentro de uma variável CSS resolve pela FOLHA que a usa, não pelo
+     documento: 'assets/…' virava 'css/assets/…' e a foto não aparecia.
+     A variável recebe sempre o endereço absoluto.                     */
+  /* aspas SIMPLES: o valor também vai dentro de style="…" nas gavetas */
+  function urlCss(u) { return "url('" + (u.indexOf('data:') === 0 ? u : new URL(u, document.baseURI).href) + "')"; }
   function $(s, raiz) { return (raiz || document).querySelector(s); }
 
   /* a cor dos glifos, dos botões e da tinta gravada, por pele */
+  /* a tinta de uma carcaça de FOTO: escura (creme) ou clara (preta, em plaquetas) */
+  var TINTAS = {
+    escura: { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
+    clara: { glifo: '#1a1c1e', bt1: '#efefed', bt2: '#b9bab6', tinta: '#111', bisel: 'rgba(255,255,255,.55)', sombraTinta: 'rgba(255,255,255,.5)', halo: 'rgba(255,255,255,.9)', placa: 'rgba(238,238,234,.88)' }
+  };
   var PELES = {
     '8mm':  { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
     's8':   { glifo: '#f1e2b4', bt1: '#5c4b3e', bt2: '#1a1410', tinta: '#f1e2b4', bisel: 'rgba(255,255,255,.18)', sombraTinta: 'rgba(0,0,0,.7)' },
@@ -149,8 +159,14 @@
      A PELE — a bitola veste a máquina                               */
   function vestir() {
     var b = F.bitola(F.est.bitola), p = PELES[b.id] || PELES['8mm'], cam = el('filCam');
-    cam.className = 'fil-cam pele-' + b.id;
-    cam.style.setProperty('--fil-pele', F.pele(b.pele, b.cor));
+    /* a carcaça: foto (os couros do Bruno, ou a do PC) ou a calculada */
+    var carc = F.carcacaDe(b.id);
+    if (carc.url) p = TINTAS[carc.tinta] || TINTAS.escura;
+    cam.className = 'fil-cam pele-' + b.id + (carc.url ? ' foto' : '');
+    cam.style.setProperty('--fil-pele', carc.url ? urlCss(carc.url) : F.pele(b.pele, b.cor));
+    /* a gaveta dos rolos veste o mesmo couro, quando é foto escura */
+    el('filPalco').style.setProperty('--fil-couro', (carc.url && carc.tinta === 'escura') ? urlCss(carc.url) : F.pele('couro', [30, 29, 28]));
+    el('filGavetaRolos').classList.toggle('foto', !!(carc.url && carc.tinta === 'escura'));
     cam.style.setProperty('--fil-glifo', p.glifo);
     cam.style.setProperty('--fil-bt1', p.bt1);
     cam.style.setProperty('--fil-bt2', p.bt2);
@@ -159,9 +175,8 @@
     cam.style.setProperty('--fil-sombra-tinta', p.sombraTinta);
     cam.style.setProperty('--fil-halo', p.halo || 'rgba(0,0,0,0)');
     cam.style.setProperty('--fil-op', p.halo ? '1' : '');
-    cam.style.setProperty('--fil-placa', p.placa || 'transparent');
+    cam.style.setProperty('--fil-placa', p.placa || (carc.url ? 'rgba(8,8,8,.62)' : 'transparent'));
     el('filPlacaTxt').textContent = b.nome + ' · ' + b.fps + ' Q/S';
-    el('filPalco').style.setProperty('--fil-couro', F.pele('couro', [30, 29, 28]));
     el('filPalco').style.setProperty('--fil-plastico', F.pele('pontilhada', [224, 224, 220]));
     /* o disco torneado do seletor, no tamanho em que aparece */
     var disco = el('filDisco'), D = Math.round(Math.min(2, window.devicePixelRatio || 1) * disco.getBoundingClientRect().width) || 240;
@@ -392,13 +407,30 @@
     el('filGavetaRolos').classList.remove('aberta');
   }
 
+  function peleDe(b) {
+    var c = F.carcacaDe(b.id);
+    return c.url ? urlCss(c.url) : F.pele(b.pele, b.cor);
+  }
   function pintarBitolas() {
-    var g = el('filGavetaPel');
-    g.innerHTML = F.BITOLAS.map(function (b) {
-      return '<button class="fil-mini' + (b.id === F.est.bitola ? ' on' : '') + '" data-bitola="' + b.id + '" title="' + b.desc + '">' +
-        '<i style="--pele:' + F.pele(b.pele, b.cor) + ';--ar:' + b.visor.toFixed(3) + '"></i>' +
-        '<span>' + b.nome + '</span><em>' + b.rotulo + ' · ' + b.fps + ' Q/S</em></button>';
-    }).join('');
+    var g = el('filGavetaPel'), atual = F.bitola(F.est.bitola), esc = F.carcacaDe(atual.id);
+    var lista = F.CARCACAS.slice();
+    if (F.est.propria) lista.splice(3, 0, { id: 'propria', nome: 'DO PC', url: F.est.propria.url });
+    g.innerHTML =
+      '<div class="fil-gav-linha">' + F.BITOLAS.map(function (b) {
+        return '<button class="fil-mini' + (b.id === F.est.bitola ? ' on' : '') + '" data-bitola="' + b.id + '" title="' + b.desc + '">' +
+          '<i style="--pele:' + peleDe(b) + ';--ar:' + b.visor.toFixed(3) + '"' + (F.carcacaDe(b.id).url ? ' class="foto"' : '') + '></i>' +
+          '<span>' + b.nome + '</span><em>' + b.rotulo + ' · ' + b.fps + ' Q/S</em></button>';
+      }).join('') + '</div>' +
+      /* a CARCAÇA da máquina escolhida: os couros da pasta, a do PC, a
+         calculada — e o botão que sobe uma foto nova                  */
+      '<div class="fil-gav-linha fil-carcacas"><b>CARCAÇA · ' + atual.nome + '</b>' + lista.map(function (c) {
+        var pele = c.url ? urlCss(c.url) : F.pele(atual.pele, atual.cor);
+        return '<button class="fil-carc' + (c.id === esc.id ? ' on' : '') + '" data-carcaca="' + c.id + '" title="' + (c.id === 'calculada' ? 'relevo calculado, sem arquivo' : c.nome) + '">' +
+          '<i style="--pele:' + pele + '"' + (c.url ? ' class="foto"' : '') + '></i><span>' + c.nome + '</span></button>';
+      }).join('') +
+      '<button class="fil-carc fil-carc-subir" id="filSubir" title="Uma foto de couro, tecido, metal — qualquer imagem do seu computador">' +
+        '<i><svg viewBox="0 0 24 24"><path d="M12 3.5l5 5.2h-3.2v6.3h-3.6V8.7H7z"/><path d="M4.5 15.5v4.2h15v-4.2h-2.2v2h-10.6v-2z"/></svg></i><span>SUBIR DO PC</span></button>' +
+      '<input type="file" id="filSubirArq" accept="image/*" hidden></div>';
     g.querySelectorAll('[data-bitola]').forEach(function (bt) {
       bt.addEventListener('click', function () {
         if (F.est.gravando) { VE.app.toast('termine a gravação antes de trocar a bitola', 'err'); return; }
@@ -407,6 +439,22 @@
         if (VE.app.clearFeedback) VE.app.clearFeedback();
         if (est.tela === 'sobre') paginaSobre();
       });
+    });
+    g.querySelectorAll('[data-carcaca]').forEach(function (bt) {
+      bt.addEventListener('click', function () {
+        F.escolherCarcaca(F.est.bitola, bt.dataset.carcaca);
+        vestir(); pintarBitolas();
+      });
+    });
+    var arq = el('filSubirArq');
+    el('filSubir').addEventListener('click', function () { arq.value = ''; arq.click(); });
+    arq.addEventListener('change', function () {
+      var f = arq.files && arq.files[0]; if (!f) return;
+      F.subirCarcaca(f).then(function (p) {
+        F.escolherCarcaca(F.est.bitola, 'propria');
+        vestir(); pintarBitolas();
+        VE.app.toast('carcaça nova: ' + p.nome + (p.tinta === 'clara' ? ' (clara — glifos pretos)' : ''), 'ok');
+      }).catch(function (e) { VE.app.toast(e.message, 'err'); });
     });
   }
 
@@ -536,7 +584,7 @@
         linha('CONTADOR', 'pés de filme desta bitola. A ' + b.fps + ' q/s, ' + b.ppf + ' quadros fazem um pé.') +
         linha('PORTA', 'os rolos gravados: baixar, usar na linha do tempo, apagar.') +
         linha('SELETOR', 'o filme: PURO é a película da bitola; os outros são os olhares 8 MM do catálogo. Arraste, role ou toque. ← → também.') +
-        linha('BITOLA', 'a gaveta das máquinas: 8 mm, Super 8, 16 mm, 35 mm.') +
+        linha('BITOLA', 'a gaveta das máquinas: 8 mm, Super 8, 16 mm, 35 mm. Embaixo, a CARCAÇA: os couros da pasta, a calculada, ou uma foto que você sobe do PC.') +
         linha('REBOB.', 'volta ao início.') +
         linha('LUZ', 'o vazamento pelo chassi, liga e desliga.') +
         linha('SOM', 'grava em tempo real com o áudio; desligado, grava exato, sem som.') +

@@ -247,21 +247,33 @@
       /* o "smoothness" do Super 16: grão duro é ruído de sensor; grão de
          prata é uma nuvem — o suave mistura o ruído de valor, contínuo */
       { k: 'suave', label: 'Suavidade do grão', min: 0, max: 1, def: 0.4 },
-      { k: 'fps', label: 'Cadência do grão', min: 6, max: 60, step: 1, def: 18 }
+      { k: 'fps', label: 'Cadência do grão', min: 6, max: 60, step: 1, def: 18 },
+      /* desligado, o grão não é sorteado de novo: fica FIXO no filme (e
+         anda com ele, porque o tremor da janela vem depois na cadeia) */
+      { k: 'ferver', t: 'b', label: 'Grão vivo (sorteia a cada quadro)', def: 1 }
     ],
     glsl: [
       'vec3 fx(vec2 uv){',
       '  vec3 c = srccol(uv);',
+      /* célula do grão em pixels do quadro: 1/sc. Era 3,3 px no 8 mm (0,30)
+         — grosso demais para 1080p; o app tem grão de 1–2 px, macio.     */
       '  float sizes[4];',
-      '  sizes[0] = 0.30; sizes[1] = 0.42; sizes[2] = 0.62; sizes[3] = 1.00;',
+      '  sizes[0] = 0.55; sizes[1] = 0.68; sizes[2] = 0.84; sizes[3] = 1.00;',
       '  float sc = sizes[int(clamp(u_fmt, 0.0, 3.0))];',
-      '  float tk = floor(uTime*u_fps);',
-      '  vec2 gp = floor(uv*uRes*sc) + tk;',
+      /* O QUADRO NOVO É OUTRO SORTEIO, NÃO O MESMO DESLOCADO. O desenho
+         antigo somava o número do quadro à coordenada (`floor(uv*uRes*sc)
+         + tk`): a rede de ruído andava UMA CÉLULA NA DIAGONAL por quadro,
+         e o grão inteiro "voava" de um canto ao outro — 60 px/s no 8 mm.
+         Agora o quadro entra como um SALTO aleatório grande na rede: cada
+         quadro é um grão novo, parado no lugar.                          */
+      '  float tk = u_ferver > 0.5 ? floor(uTime*u_fps) : 0.0;',
+      '  vec2 salto = floor(vec2(hash11(tk*1.31 + 0.7), hash11(tk*2.17 + 0.3))*1024.0);',
+      '  vec2 gp = floor(uv*uRes*sc) + salto;',
       '  float g = hash21(gp) - 0.5;',
       '  float gr = hash21(gp + 17.3) - 0.5;',
       '  float gb = hash21(gp + 91.7) - 0.5;',
       '  if(u_suave > 0.001){',
-      '    vec2 q = uv*uRes*sc*0.5 + tk*3.0;',
+      '    vec2 q = uv*uRes*sc*0.5 + salto*0.37;',
       '    float sm = (vnoise(q) - 0.5)*2.2;',
       '    g = mix(g, sm, u_suave); gr = mix(gr, (vnoise(q + 31.0) - 0.5)*2.2, u_suave); gb = mix(gb, (vnoise(q + 67.0) - 0.5)*2.2, u_suave);',
       '  }',
@@ -290,13 +302,15 @@
       'vec3 fx(vec2 uv){',
       '  vec3 c = srccol(uv);',
       '  float fr = floor(uTime*u_fps);',
-      /* poeira: pontos que trocam a cada quadro */
+      /* poeira: pontos que trocam a cada quadro — o quadro entra como um
+         salto aleatório na rede de células, não somado a ela (ver o grão) */
       '  if(u_dust > 0.001){',
       '    vec2 dp = uv*uRes/(9.0*max(u_dustSize, 0.05));',
-      '    vec2 cell = floor(dp);',
+      '    vec2 salto = floor(vec2(hash11(fr*1.77 + 0.2), hash11(fr*2.93 + 0.6))*512.0);',
+      '    vec2 cell = floor(dp) + salto;',
       '    vec2 f = fract(dp) - 0.5;',
-      '    vec2 off = hash22(cell + fr*3.7) - 0.5;',
-      '    float pick = hash21(cell*1.7 + fr);',
+      '    vec2 off = hash22(cell) - 0.5;',
+      '    float pick = hash21(cell*1.7);',
       '    float on = step(1.0 - u_dust*0.12, pick);',
       '    float d = length(f - off*0.7);',
       '    float sp = on*(1.0 - smoothstep(0.06, 0.24, d));',
@@ -526,8 +540,8 @@
         ['cadencia', { fps: 18 }],
         ['blur', { rad: 0.09, mixv: 0.6 }],
         ['filmstock', { exp: 0.03, con: 0.02, sat: -0.1, temp: 0.16, tintg: -0.05, fade: 0.11, roll: 0.5, split: 0.36, shTint: '#33262f', hiTint: '#f7eec2', vig: 0.08, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 1, amt: 0.1, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
-        ['dustscratch', { dust: 0.05, dustSize: 0.8, scratch: 0, hair: 0.02, fps: 12 }],
+        ['filmgrain', { fmt: 0, amt: 0.08, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
+        ['dustscratch', { dust: 0.03, dustSize: 0.4, scratch: 0, hair: 0.012, fps: 12 }],
         ['gateweave', { amt: 0.06, spd: 1.2, rot: 0.04, jump: 0.05, jumpRate: 0.1 }],
         ['lightleak', { amt: 0.3, side: 0, width: 0.22, spd: 0.25, flick: 0.15, bloom: 0.7, raro: 0.35 }],
         ['filmgate', { fmt: 0, forma: 1, tam: 0.88, zoom: 1.0, soft: 0.01, round: 0.75, vig: 0.1, sombra: 0.45, sombraW: 0.08, flick: 0.07, flickHz: 18, weave: 0.05 }]
@@ -539,8 +553,8 @@
         ['cadencia', { fps: 18 }],
         ['blur', { rad: 0.07, mixv: 0.5 }],
         ['filmstock', { exp: 0.03, con: 0.06, sat: -0.04, temp: 0.2, tintg: -0.03, fade: 0.1, roll: 0.5, split: 0.34, shTint: '#30241e', hiTint: '#ffeec8', vig: 0.06, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 2, amt: 0.09, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
-        ['dustscratch', { dust: 0.04, dustSize: 0.7, scratch: 0, hair: 0.015, fps: 12 }],
+        ['filmgrain', { fmt: 1, amt: 0.07, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
+        ['dustscratch', { dust: 0.025, dustSize: 0.35, scratch: 0, hair: 0.01, fps: 12 }],
         ['gateweave', { amt: 0.04, spd: 1.1, rot: 0.03, jump: 0.04, jumpRate: 0.08 }],
         ['lightleak', { amt: 0.22, side: 0, width: 0.2, spd: 0.2, flick: 0.12, bloom: 0.7, raro: 0.25 }],
         ['filmgate', { fmt: 1, forma: 1, tam: 0.9, zoom: 1.0, soft: 0.009, round: 0.7, vig: 0.1, sombra: 0.45, sombraW: 0.075, flick: 0.06, flickHz: 18, weave: 0.05 }]
@@ -552,7 +566,7 @@
         ['cadencia', { fps: 24 }],
         ['blur', { rad: 0.04, mixv: 0.4 }],
         ['filmstock', { exp: 0, con: 0.12, sat: -0.02, temp: 0.04, fade: 0.07, roll: 0.4, split: 0.24, shTint: '#1e2428', hiTint: '#fff2de', vig: 0.06, grain: 0, sharp: 0.1 }],
-        ['filmgrain', { fmt: 3, amt: 0.08, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
+        ['filmgrain', { fmt: 2, amt: 0.06, shadow: 0.6, color: 0.08, suave: 0.4, fps: 24 }],
         ['gateweave', { amt: 0.025, spd: 1.0, rot: 0.02, jump: 0.02, jumpRate: 0.06 }],
         ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.03, flickHz: 24, weave: 0.03, holes: 1, holeSide: 0, edge: '#3a2413' }]
       ]
@@ -562,7 +576,7 @@
       fx: [
         ['filmstock', { exp: 0.02, con: 0.16, sat: 0.04, temp: 0.04, fade: 0.05, roll: 0.45, split: 0.26, shTint: '#141a22', hiTint: '#fff3e4', vig: 0.06, grain: 0, sharp: 0.15 }],
         ['halation', { amt: 0.18, thr: 0.74, rad: 0.014, tint: '#ff5a2e', soft: 0.7 }],
-        ['filmgrain', { fmt: 3, amt: 0.08, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
+        ['filmgrain', { fmt: 3, amt: 0.06, shadow: 0.6, color: 0.08, suave: 0.4, fps: 24 }],
         ['filmgate', { fmt: 3, zoom: 1.015, soft: 0.006, round: 0.8, vig: 0.05, sombra: 0.25, sombraW: 0.05, flick: 0.02, flickHz: 24, weave: 0.02 }]
       ]
     },

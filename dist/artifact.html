@@ -3724,6 +3724,9 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   color:var(--fil-tinta, #e8d9a8);
 }
 /* a vinheta da peça: mais clara onde a luz bate, mais escura em baixo */
+/* carcaça de FOTO: uma imagem só, esticada sobre a máquina (as fotos de
+   couro não emendam como ladrilho; a calculada emenda e repete)      */
+.fil-cam.foto{background-size:cover;background-position:center}
 .fil-cam::before{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
   border-radius:inherit;
@@ -4058,11 +4061,33 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 /* a das BITOLAS sobe do chão do palco: plástico claro pontilhado, as
    quatro máquinas em miniatura, a escolhida com o nome numa pastilha */
 .fil-gaveta-pel{
-  left:0;right:0;bottom:0;height:176px;transform:translateY(103%);
+  left:0;right:0;bottom:0;height:262px;transform:translateY(103%);
   background:var(--fil-plastico) center / 160px repeat, #dcdcd8;
   box-shadow:0 -12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.75);
-  display:flex;align-items:center;justify-content:center;gap:30px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
 }
+.fil-gav-linha{display:flex;align-items:center;justify-content:center;gap:30px}
+/* a linha da CARCAÇA: pastilhas redondas com o material, o nome embaixo */
+.fil-carcacas{gap:10px;padding-top:12px;border-top:1px solid rgba(0,0,0,.08);width:min(860px, 94vw)}
+.fil-carcacas > b{font-size:8.5px;letter-spacing:.22em;color:#555;font-weight:600;margin-right:8px;white-space:nowrap}
+.fil-carc{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  border:0;background:transparent;cursor:pointer;padding:4px 6px;
+}
+.fil-carc i{
+  display:block;width:40px;height:40px;border-radius:50%;
+  background:var(--pele) center / 90px repeat, #333;
+  box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.25);
+  transition:transform .15s;
+}
+.fil-carc i.foto{background-size:cover}
+.fil-carc:hover i{transform:translateY(-2px)}
+.fil-carc span{font-size:8px;letter-spacing:.16em;color:#2a2a2a;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.fil-carc.on i{box-shadow:0 3px 8px rgba(0,0,0,.35), 0 0 0 2px #161616}
+.fil-carc.on span{background:#161616;color:#fff}
+.fil-carc-subir i{background:#f4f4f1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.25)}
+.fil-carc-subir i svg{width:20px;height:20px;fill:#222;display:block}
+.fil-mini i.foto{background-size:cover}
 .fil-gaveta-pel.aberta{transform:translateY(0)}
 .fil-mini{
   display:flex;flex-direction:column;align-items:center;gap:8px;
@@ -4097,6 +4122,7 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   display:flex;flex-direction:column;
 }
 .fil-gaveta-rolos.aberta{transform:translateX(0)}
+.fil-gaveta-rolos.foto{background-size:cover;background-position:center}
 .fil-gav-h{
   display:flex;align-items:center;gap:10px;padding:18px 18px 12px;
   color:var(--fil-creme);font-size:10px;letter-spacing:.26em;
@@ -4150,7 +4176,8 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 /* em tela baixa a máquina encolhe pela altura (já está na conta de
    `--larg`); a gaveta das bitolas fica mais baixa para não a cobrir */
 @media (max-height:640px){
-  .fil-gaveta-pel{height:140px;gap:18px}
+  .fil-gaveta-pel{height:224px;gap:8px}
+  .fil-gav-linha{gap:18px}
   .fil-mini i{width:96px;height:58px}
 }
 
@@ -9754,21 +9781,33 @@ window.VE = window.VE || {};
       /* o "smoothness" do Super 16: grão duro é ruído de sensor; grão de
          prata é uma nuvem — o suave mistura o ruído de valor, contínuo */
       { k: 'suave', label: 'Suavidade do grão', min: 0, max: 1, def: 0.4 },
-      { k: 'fps', label: 'Cadência do grão', min: 6, max: 60, step: 1, def: 18 }
+      { k: 'fps', label: 'Cadência do grão', min: 6, max: 60, step: 1, def: 18 },
+      /* desligado, o grão não é sorteado de novo: fica FIXO no filme (e
+         anda com ele, porque o tremor da janela vem depois na cadeia) */
+      { k: 'ferver', t: 'b', label: 'Grão vivo (sorteia a cada quadro)', def: 1 }
     ],
     glsl: [
       'vec3 fx(vec2 uv){',
       '  vec3 c = srccol(uv);',
+      /* célula do grão em pixels do quadro: 1/sc. Era 3,3 px no 8 mm (0,30)
+         — grosso demais para 1080p; o app tem grão de 1–2 px, macio.     */
       '  float sizes[4];',
-      '  sizes[0] = 0.30; sizes[1] = 0.42; sizes[2] = 0.62; sizes[3] = 1.00;',
+      '  sizes[0] = 0.55; sizes[1] = 0.68; sizes[2] = 0.84; sizes[3] = 1.00;',
       '  float sc = sizes[int(clamp(u_fmt, 0.0, 3.0))];',
-      '  float tk = floor(uTime*u_fps);',
-      '  vec2 gp = floor(uv*uRes*sc) + tk;',
+      /* O QUADRO NOVO É OUTRO SORTEIO, NÃO O MESMO DESLOCADO. O desenho
+         antigo somava o número do quadro à coordenada (`floor(uv*uRes*sc)
+         + tk`): a rede de ruído andava UMA CÉLULA NA DIAGONAL por quadro,
+         e o grão inteiro "voava" de um canto ao outro — 60 px/s no 8 mm.
+         Agora o quadro entra como um SALTO aleatório grande na rede: cada
+         quadro é um grão novo, parado no lugar.                          */
+      '  float tk = u_ferver > 0.5 ? floor(uTime*u_fps) : 0.0;',
+      '  vec2 salto = floor(vec2(hash11(tk*1.31 + 0.7), hash11(tk*2.17 + 0.3))*1024.0);',
+      '  vec2 gp = floor(uv*uRes*sc) + salto;',
       '  float g = hash21(gp) - 0.5;',
       '  float gr = hash21(gp + 17.3) - 0.5;',
       '  float gb = hash21(gp + 91.7) - 0.5;',
       '  if(u_suave > 0.001){',
-      '    vec2 q = uv*uRes*sc*0.5 + tk*3.0;',
+      '    vec2 q = uv*uRes*sc*0.5 + salto*0.37;',
       '    float sm = (vnoise(q) - 0.5)*2.2;',
       '    g = mix(g, sm, u_suave); gr = mix(gr, (vnoise(q + 31.0) - 0.5)*2.2, u_suave); gb = mix(gb, (vnoise(q + 67.0) - 0.5)*2.2, u_suave);',
       '  }',
@@ -9797,13 +9836,15 @@ window.VE = window.VE || {};
       'vec3 fx(vec2 uv){',
       '  vec3 c = srccol(uv);',
       '  float fr = floor(uTime*u_fps);',
-      /* poeira: pontos que trocam a cada quadro */
+      /* poeira: pontos que trocam a cada quadro — o quadro entra como um
+         salto aleatório na rede de células, não somado a ela (ver o grão) */
       '  if(u_dust > 0.001){',
       '    vec2 dp = uv*uRes/(9.0*max(u_dustSize, 0.05));',
-      '    vec2 cell = floor(dp);',
+      '    vec2 salto = floor(vec2(hash11(fr*1.77 + 0.2), hash11(fr*2.93 + 0.6))*512.0);',
+      '    vec2 cell = floor(dp) + salto;',
       '    vec2 f = fract(dp) - 0.5;',
-      '    vec2 off = hash22(cell + fr*3.7) - 0.5;',
-      '    float pick = hash21(cell*1.7 + fr);',
+      '    vec2 off = hash22(cell) - 0.5;',
+      '    float pick = hash21(cell*1.7);',
       '    float on = step(1.0 - u_dust*0.12, pick);',
       '    float d = length(f - off*0.7);',
       '    float sp = on*(1.0 - smoothstep(0.06, 0.24, d));',
@@ -10033,8 +10074,8 @@ window.VE = window.VE || {};
         ['cadencia', { fps: 18 }],
         ['blur', { rad: 0.09, mixv: 0.6 }],
         ['filmstock', { exp: 0.03, con: 0.02, sat: -0.1, temp: 0.16, tintg: -0.05, fade: 0.11, roll: 0.5, split: 0.36, shTint: '#33262f', hiTint: '#f7eec2', vig: 0.08, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 1, amt: 0.1, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
-        ['dustscratch', { dust: 0.05, dustSize: 0.8, scratch: 0, hair: 0.02, fps: 12 }],
+        ['filmgrain', { fmt: 0, amt: 0.08, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
+        ['dustscratch', { dust: 0.03, dustSize: 0.4, scratch: 0, hair: 0.012, fps: 12 }],
         ['gateweave', { amt: 0.06, spd: 1.2, rot: 0.04, jump: 0.05, jumpRate: 0.1 }],
         ['lightleak', { amt: 0.3, side: 0, width: 0.22, spd: 0.25, flick: 0.15, bloom: 0.7, raro: 0.35 }],
         ['filmgate', { fmt: 0, forma: 1, tam: 0.88, zoom: 1.0, soft: 0.01, round: 0.75, vig: 0.1, sombra: 0.45, sombraW: 0.08, flick: 0.07, flickHz: 18, weave: 0.05 }]
@@ -10046,8 +10087,8 @@ window.VE = window.VE || {};
         ['cadencia', { fps: 18 }],
         ['blur', { rad: 0.07, mixv: 0.5 }],
         ['filmstock', { exp: 0.03, con: 0.06, sat: -0.04, temp: 0.2, tintg: -0.03, fade: 0.1, roll: 0.5, split: 0.34, shTint: '#30241e', hiTint: '#ffeec8', vig: 0.06, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 2, amt: 0.09, shadow: 0.7, color: 0.1, suave: 0.45, fps: 18 }],
-        ['dustscratch', { dust: 0.04, dustSize: 0.7, scratch: 0, hair: 0.015, fps: 12 }],
+        ['filmgrain', { fmt: 1, amt: 0.07, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
+        ['dustscratch', { dust: 0.025, dustSize: 0.35, scratch: 0, hair: 0.01, fps: 12 }],
         ['gateweave', { amt: 0.04, spd: 1.1, rot: 0.03, jump: 0.04, jumpRate: 0.08 }],
         ['lightleak', { amt: 0.22, side: 0, width: 0.2, spd: 0.2, flick: 0.12, bloom: 0.7, raro: 0.25 }],
         ['filmgate', { fmt: 1, forma: 1, tam: 0.9, zoom: 1.0, soft: 0.009, round: 0.7, vig: 0.1, sombra: 0.45, sombraW: 0.075, flick: 0.06, flickHz: 18, weave: 0.05 }]
@@ -10059,7 +10100,7 @@ window.VE = window.VE || {};
         ['cadencia', { fps: 24 }],
         ['blur', { rad: 0.04, mixv: 0.4 }],
         ['filmstock', { exp: 0, con: 0.12, sat: -0.02, temp: 0.04, fade: 0.07, roll: 0.4, split: 0.24, shTint: '#1e2428', hiTint: '#fff2de', vig: 0.06, grain: 0, sharp: 0.1 }],
-        ['filmgrain', { fmt: 3, amt: 0.08, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
+        ['filmgrain', { fmt: 2, amt: 0.06, shadow: 0.6, color: 0.08, suave: 0.4, fps: 24 }],
         ['gateweave', { amt: 0.025, spd: 1.0, rot: 0.02, jump: 0.02, jumpRate: 0.06 }],
         ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.03, flickHz: 24, weave: 0.03, holes: 1, holeSide: 0, edge: '#3a2413' }]
       ]
@@ -10069,7 +10110,7 @@ window.VE = window.VE || {};
       fx: [
         ['filmstock', { exp: 0.02, con: 0.16, sat: 0.04, temp: 0.04, fade: 0.05, roll: 0.45, split: 0.26, shTint: '#141a22', hiTint: '#fff3e4', vig: 0.06, grain: 0, sharp: 0.15 }],
         ['halation', { amt: 0.18, thr: 0.74, rad: 0.014, tint: '#ff5a2e', soft: 0.7 }],
-        ['filmgrain', { fmt: 3, amt: 0.08, shadow: 0.6, color: 0.08, suave: 0.5, fps: 24 }],
+        ['filmgrain', { fmt: 3, amt: 0.06, shadow: 0.6, color: 0.08, suave: 0.4, fps: 24 }],
         ['filmgate', { fmt: 3, zoom: 1.015, soft: 0.006, round: 0.8, vig: 0.05, sombra: 0.25, sombraW: 0.05, flick: 0.02, flickHz: 24, weave: 0.02 }]
       ]
     },
@@ -42499,13 +42540,15 @@ window.VE = window.VE || {};
        escovado — que são RELEVO calculado e iluminado, não foto
      · a gravação pelo exportador e os ROLOS que saem dela
 
-   POR QUE AS TEXTURAS SÃO CALCULADAS
-   O polaroid usa uma foto de câmera de verdade, que o Bruno mandou.
-   Aqui as referências são capturas de tela de aplicativos, e isso
-   não se copia. Um mapa de altura periódico (o ladrilho emenda sem
-   costura) iluminado por uma luz de cima e da esquerda, com brilho
-   de superfície, dá couro de verdade a 320 px — e custa 60 ms uma
-   vez, sem arquivo nenhum para o arquivo único carregar.
+   A CARCAÇA
+   O couro da máquina vem de FOTO — os três couros que o Bruno mandou
+   (assets/filmadora/couro/), preto, marrom e bege — ou de uma que ele
+   sobe do PC pela gaveta (reduzida a 1200 px e guardada no navegador).
+   A textura CALCULADA (mapa de altura periódico iluminado por uma luz
+   de cima e da esquerda, com brilho de superfície) continua existindo
+   como quarta opção e como pele das bitolas de 16 e 35 mm, que são
+   pintura e não couro. Ele não gostou da calculada como couro — e a
+   foto ganha, sempre: é o que o polaroid já ensinou.
    ============================================================ */
 (function (VE) {
   'use strict';
@@ -42567,6 +42610,9 @@ window.VE = window.VE || {};
     vazamento: true,       /* o botão do relâmpago */
     som: false,            /* o botão da grade: grava em tempo real, com o áudio */
     cadencia: true,        /* o tranco da bitola; desligado, o vídeo anda como veio */
+    /* a carcaça de cada bitola: um id de F.CARCACAS, ou 'propria' */
+    carcaca: { '8mm': 'couro-preto', 's8': 'couro-marrom', '16mm': 'calculada', '35mm': 'calculada' },
+    propria: null,         /* a que subiu do PC: { url (data:), tinta } */
     aj: {},
     gravando: null,        /* { ini, dur, thumb } enquanto o rolo roda */
     rolos: []
@@ -42585,15 +42631,74 @@ window.VE = window.VE || {};
       if (g.aj) Object.keys(AJ_PADRAO).forEach(function (k) {
         var v = parseFloat(g.aj[k]); if (isFinite(v)) est.aj[k] = Math.max(0, Math.min(2, v));
       });
+      if (g.carcaca) Object.keys(est.carcaca).forEach(function (k) { if (typeof g.carcaca[k] === 'string') est.carcaca[k] = g.carcaca[k]; });
+      if (g.propria && typeof g.propria.url === 'string' && g.propria.url.indexOf('data:image/') === 0) est.propria = g.propria;
     } catch (e) { /* sem memória: a máquina abre como nova */ }
   };
   F.guardar = function () {
     try {
       localStorage.setItem(CHAVE, JSON.stringify({
         bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
-        som: est.som, cadencia: est.cadencia, aj: est.aj
+        som: est.som, cadencia: est.cadencia, aj: est.aj,
+        carcaca: est.carcaca, propria: est.propria
       }));
-    } catch (e) { /* sem espaço: paciência */ }
+    } catch (e) {
+      /* a foto do PC pode não caber (o limite do navegador anda em 5 MB):
+         guarda o resto sem ela, e ela vale só nesta sessão            */
+      try {
+        localStorage.setItem(CHAVE, JSON.stringify({
+          bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
+          som: est.som, cadencia: est.cadencia, aj: est.aj, carcaca: est.carcaca
+        }));
+      } catch (e2) { /* sem espaço: paciência */ }
+    }
+  };
+
+  /* ================================================================
+     A CARCAÇA
+     `tinta` diz se a máquina é escura (glifos creme) ou clara (glifos
+     pretos em plaquetas). A foto que sobe do PC decide isso pela própria
+     luminância média.                                                */
+  F.CARCACAS = [
+    { id: 'couro-preto', nome: 'COURO PRETO', url: 'assets/filmadora/couro/couro-preto.jpg', tinta: 'escura' },
+    { id: 'couro-marrom', nome: 'COURO MARROM', url: 'assets/filmadora/couro/couro-marrom.jpg', tinta: 'escura' },
+    { id: 'couro-bege', nome: 'COURO BEGE', url: 'assets/filmadora/couro/couro-bege.jpg', tinta: 'clara' },
+    { id: 'calculada', nome: 'CALCULADA', url: null, tinta: null }
+  ];
+  /* a carcaça de uma bitola, resolvida: { id, nome, url|null, tinta|null } */
+  F.carcacaDe = function (bitolaId) {
+    var id = est.carcaca[bitolaId] || 'calculada';
+    if (id === 'propria') {
+      if (est.propria) return { id: 'propria', nome: 'DO PC', url: est.propria.url, tinta: est.propria.tinta || 'escura' };
+      id = 'calculada';
+    }
+    return F.CARCACAS.filter(function (c) { return c.id === id; })[0] || F.CARCACAS[3];
+  };
+  F.escolherCarcaca = function (bitolaId, id) {
+    est.carcaca[bitolaId] = id; F.guardar();
+  };
+  /* a foto do PC: reduzida a 1200 px num canvas, JPEG, e a luminância
+     média decide a tinta. Devolve uma promessa com a carcaça pronta.   */
+  F.subirCarcaca = function (file) {
+    return new Promise(function (res, rej) {
+      if (!file || file.type.indexOf('image/') !== 0) { rej(new Error('escolha uma imagem (jpg, png, webp)')); return; }
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var s = Math.min(1, 1200 / Math.max(img.width, img.height));
+        var cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(img.width * s)); cv.height = Math.max(1, Math.round(img.height * s));
+        var c = cv.getContext('2d');
+        c.drawImage(img, 0, 0, cv.width, cv.height);
+        var d = c.getImageData(0, 0, cv.width, cv.height).data, soma = 0, n = 0, i;
+        for (i = 0; i < d.length; i += 64) { soma += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114; n++; }
+        est.propria = { url: cv.toDataURL('image/jpeg', 0.84), tinta: (soma / n) > 128 ? 'clara' : 'escura', nome: (file.name || 'foto').slice(0, 40) };
+        F.guardar();
+        res(est.propria);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('não consegui ler essa imagem')); };
+      img.src = url;
+    });
   };
   F.reporAjustes = function () {
     Object.keys(AJ_PADRAO).forEach(function (k) { est.aj[k] = AJ_PADRAO[k]; });
@@ -42957,9 +43062,19 @@ window.VE = window.VE || {};
   var est = null;
 
   function el(id) { return document.getElementById(id); }
+  /* url() dentro de uma variável CSS resolve pela FOLHA que a usa, não pelo
+     documento: 'assets/…' virava 'css/assets/…' e a foto não aparecia.
+     A variável recebe sempre o endereço absoluto.                     */
+  /* aspas SIMPLES: o valor também vai dentro de style="…" nas gavetas */
+  function urlCss(u) { return "url('" + (u.indexOf('data:') === 0 ? u : new URL(u, document.baseURI).href) + "')"; }
   function $(s, raiz) { return (raiz || document).querySelector(s); }
 
   /* a cor dos glifos, dos botões e da tinta gravada, por pele */
+  /* a tinta de uma carcaça de FOTO: escura (creme) ou clara (preta, em plaquetas) */
+  var TINTAS = {
+    escura: { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
+    clara: { glifo: '#1a1c1e', bt1: '#efefed', bt2: '#b9bab6', tinta: '#111', bisel: 'rgba(255,255,255,.55)', sombraTinta: 'rgba(255,255,255,.5)', halo: 'rgba(255,255,255,.9)', placa: 'rgba(238,238,234,.88)' }
+  };
   var PELES = {
     '8mm':  { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
     's8':   { glifo: '#f1e2b4', bt1: '#5c4b3e', bt2: '#1a1410', tinta: '#f1e2b4', bisel: 'rgba(255,255,255,.18)', sombraTinta: 'rgba(0,0,0,.7)' },
@@ -43072,8 +43187,14 @@ window.VE = window.VE || {};
      A PELE — a bitola veste a máquina                               */
   function vestir() {
     var b = F.bitola(F.est.bitola), p = PELES[b.id] || PELES['8mm'], cam = el('filCam');
-    cam.className = 'fil-cam pele-' + b.id;
-    cam.style.setProperty('--fil-pele', F.pele(b.pele, b.cor));
+    /* a carcaça: foto (os couros do Bruno, ou a do PC) ou a calculada */
+    var carc = F.carcacaDe(b.id);
+    if (carc.url) p = TINTAS[carc.tinta] || TINTAS.escura;
+    cam.className = 'fil-cam pele-' + b.id + (carc.url ? ' foto' : '');
+    cam.style.setProperty('--fil-pele', carc.url ? urlCss(carc.url) : F.pele(b.pele, b.cor));
+    /* a gaveta dos rolos veste o mesmo couro, quando é foto escura */
+    el('filPalco').style.setProperty('--fil-couro', (carc.url && carc.tinta === 'escura') ? urlCss(carc.url) : F.pele('couro', [30, 29, 28]));
+    el('filGavetaRolos').classList.toggle('foto', !!(carc.url && carc.tinta === 'escura'));
     cam.style.setProperty('--fil-glifo', p.glifo);
     cam.style.setProperty('--fil-bt1', p.bt1);
     cam.style.setProperty('--fil-bt2', p.bt2);
@@ -43082,9 +43203,8 @@ window.VE = window.VE || {};
     cam.style.setProperty('--fil-sombra-tinta', p.sombraTinta);
     cam.style.setProperty('--fil-halo', p.halo || 'rgba(0,0,0,0)');
     cam.style.setProperty('--fil-op', p.halo ? '1' : '');
-    cam.style.setProperty('--fil-placa', p.placa || 'transparent');
+    cam.style.setProperty('--fil-placa', p.placa || (carc.url ? 'rgba(8,8,8,.62)' : 'transparent'));
     el('filPlacaTxt').textContent = b.nome + ' · ' + b.fps + ' Q/S';
-    el('filPalco').style.setProperty('--fil-couro', F.pele('couro', [30, 29, 28]));
     el('filPalco').style.setProperty('--fil-plastico', F.pele('pontilhada', [224, 224, 220]));
     /* o disco torneado do seletor, no tamanho em que aparece */
     var disco = el('filDisco'), D = Math.round(Math.min(2, window.devicePixelRatio || 1) * disco.getBoundingClientRect().width) || 240;
@@ -43315,13 +43435,30 @@ window.VE = window.VE || {};
     el('filGavetaRolos').classList.remove('aberta');
   }
 
+  function peleDe(b) {
+    var c = F.carcacaDe(b.id);
+    return c.url ? urlCss(c.url) : F.pele(b.pele, b.cor);
+  }
   function pintarBitolas() {
-    var g = el('filGavetaPel');
-    g.innerHTML = F.BITOLAS.map(function (b) {
-      return '<button class="fil-mini' + (b.id === F.est.bitola ? ' on' : '') + '" data-bitola="' + b.id + '" title="' + b.desc + '">' +
-        '<i style="--pele:' + F.pele(b.pele, b.cor) + ';--ar:' + b.visor.toFixed(3) + '"></i>' +
-        '<span>' + b.nome + '</span><em>' + b.rotulo + ' · ' + b.fps + ' Q/S</em></button>';
-    }).join('');
+    var g = el('filGavetaPel'), atual = F.bitola(F.est.bitola), esc = F.carcacaDe(atual.id);
+    var lista = F.CARCACAS.slice();
+    if (F.est.propria) lista.splice(3, 0, { id: 'propria', nome: 'DO PC', url: F.est.propria.url });
+    g.innerHTML =
+      '<div class="fil-gav-linha">' + F.BITOLAS.map(function (b) {
+        return '<button class="fil-mini' + (b.id === F.est.bitola ? ' on' : '') + '" data-bitola="' + b.id + '" title="' + b.desc + '">' +
+          '<i style="--pele:' + peleDe(b) + ';--ar:' + b.visor.toFixed(3) + '"' + (F.carcacaDe(b.id).url ? ' class="foto"' : '') + '></i>' +
+          '<span>' + b.nome + '</span><em>' + b.rotulo + ' · ' + b.fps + ' Q/S</em></button>';
+      }).join('') + '</div>' +
+      /* a CARCAÇA da máquina escolhida: os couros da pasta, a do PC, a
+         calculada — e o botão que sobe uma foto nova                  */
+      '<div class="fil-gav-linha fil-carcacas"><b>CARCAÇA · ' + atual.nome + '</b>' + lista.map(function (c) {
+        var pele = c.url ? urlCss(c.url) : F.pele(atual.pele, atual.cor);
+        return '<button class="fil-carc' + (c.id === esc.id ? ' on' : '') + '" data-carcaca="' + c.id + '" title="' + (c.id === 'calculada' ? 'relevo calculado, sem arquivo' : c.nome) + '">' +
+          '<i style="--pele:' + pele + '"' + (c.url ? ' class="foto"' : '') + '></i><span>' + c.nome + '</span></button>';
+      }).join('') +
+      '<button class="fil-carc fil-carc-subir" id="filSubir" title="Uma foto de couro, tecido, metal — qualquer imagem do seu computador">' +
+        '<i><svg viewBox="0 0 24 24"><path d="M12 3.5l5 5.2h-3.2v6.3h-3.6V8.7H7z"/><path d="M4.5 15.5v4.2h15v-4.2h-2.2v2h-10.6v-2z"/></svg></i><span>SUBIR DO PC</span></button>' +
+      '<input type="file" id="filSubirArq" accept="image/*" hidden></div>';
     g.querySelectorAll('[data-bitola]').forEach(function (bt) {
       bt.addEventListener('click', function () {
         if (F.est.gravando) { VE.app.toast('termine a gravação antes de trocar a bitola', 'err'); return; }
@@ -43330,6 +43467,22 @@ window.VE = window.VE || {};
         if (VE.app.clearFeedback) VE.app.clearFeedback();
         if (est.tela === 'sobre') paginaSobre();
       });
+    });
+    g.querySelectorAll('[data-carcaca]').forEach(function (bt) {
+      bt.addEventListener('click', function () {
+        F.escolherCarcaca(F.est.bitola, bt.dataset.carcaca);
+        vestir(); pintarBitolas();
+      });
+    });
+    var arq = el('filSubirArq');
+    el('filSubir').addEventListener('click', function () { arq.value = ''; arq.click(); });
+    arq.addEventListener('change', function () {
+      var f = arq.files && arq.files[0]; if (!f) return;
+      F.subirCarcaca(f).then(function (p) {
+        F.escolherCarcaca(F.est.bitola, 'propria');
+        vestir(); pintarBitolas();
+        VE.app.toast('carcaça nova: ' + p.nome + (p.tinta === 'clara' ? ' (clara — glifos pretos)' : ''), 'ok');
+      }).catch(function (e) { VE.app.toast(e.message, 'err'); });
     });
   }
 
@@ -43459,7 +43612,7 @@ window.VE = window.VE || {};
         linha('CONTADOR', 'pés de filme desta bitola. A ' + b.fps + ' q/s, ' + b.ppf + ' quadros fazem um pé.') +
         linha('PORTA', 'os rolos gravados: baixar, usar na linha do tempo, apagar.') +
         linha('SELETOR', 'o filme: PURO é a película da bitola; os outros são os olhares 8 MM do catálogo. Arraste, role ou toque. ← → também.') +
-        linha('BITOLA', 'a gaveta das máquinas: 8 mm, Super 8, 16 mm, 35 mm.') +
+        linha('BITOLA', 'a gaveta das máquinas: 8 mm, Super 8, 16 mm, 35 mm. Embaixo, a CARCAÇA: os couros da pasta, a calculada, ou uma foto que você sobe do PC.') +
         linha('REBOB.', 'volta ao início.') +
         linha('LUZ', 'o vazamento pelo chassi, liga e desliga.') +
         linha('SOM', 'grava em tempo real com o áudio; desligado, grava exato, sem som.') +

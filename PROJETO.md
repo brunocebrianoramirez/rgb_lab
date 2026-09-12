@@ -7179,6 +7179,65 @@ visual daqui em diante: é um Chrome de verdade, com GPU por software.
   máquinas; 35 MM veste `pele-35mm`, visor 1,855, cadeia de 4 efeitos;
 - USAR: 1 → 2 clipes, palco fechado, `ops` vazio. Console sem erro.
 
+### 5m.7 SEGUNDA VOLTA (12/09/2026): a carcaça de foto, e o grão que voava
+
+O Bruno olhou e trouxe quatro coisas: não gostou do couro calculado ("a
+textura de fundo da carcaça"), mandou três fotos de couro numa pasta,
+pediu um botão para subir arquivo do PC, e — a mais importante — *"o grão
+está muito grosso e fica voando em uma direção dos cantos; o certo é o grão
+ser estático, porém estático dentro do filme e não da tela"*. E a sujeira
+grossa demais.
+
+**O grão voava de verdade, e a causa estava numa linha.** O `filmgrain`
+sorteava com `hash21(floor(uv*uRes*sc) + tk)` — o número do quadro
+SOMADO à coordenada. Somar um inteiro à coordenada de uma rede de ruído não
+sorteia de novo: DESLOCA a rede uma célula na diagonal. A 18 q/s com célula
+de 3,3 px, o grão inteiro andava ~60 px/s de um canto ao outro, exatamente
+o que ele descreveu. A poeira tinha o mesmo desenho (`cell*1.7 + fr`).
+Conserto: o quadro entra como um SALTO aleatório grande na rede
+(`floor(vec2(hash11(tk*1.31), hash11(tk*2.17))*1024)`), e cada quadro é
+um grão novo, parado. Célula de 1/0,55 = 1,8 px no 8 mm (era 3,3), e o
+controle **GRÃO VIVO**: desligado, `tk = 0` e o grão fica fixo no filme —
+e anda com ele, porque o tremor da janela vem depois na cadeia.
+
+Medido no motor (efeito isolado sobre cinza liso, dois quadros a 1/18 s,
+correlação normalizada num bloco de 96×96):
+
+```
+                       antigo            novo
+melhor deslocamento    (−3, −3) px       nenhum
+correlação lá          0,80              0,03 (máx. em ±4 px)
+autocorrelação 1 px    0,69 (3,3 px)     0,45 (1,8 px)
+GRÃO VIVO desligado    —                 9216/9216 pixels iguais entre quadros
+```
+
+O A/B foi feito compilando o shader antigo NO LUGAR (String.replace no
+`def.glsl` + `delete r.programs.filmgrain`), medindo, e devolvendo o novo
+— o truque da memória de 24/08. Pacotes: grão 0,08/0,07/0,06/0,06 e
+`suave` 0,35–0,4 (menos nublado = mais fino); poeira 0,03 com
+`dustSize` 0,4 (era 0,05 e 0,8), fiapo 0,012.
+
+**A carcaça.** Os três couros dele (5–17 MB cada) foram reduzidos a 1200 px
+com o System.Drawing do PowerShell (245–319 KB) e estão em
+`assets/filmadora/couro/`: `F.CARCACAS` é o manifesto (preto, marrom,
+bege, calculada). A gaveta BITOLA ganhou a linha CARCAÇA: pastilhas com o
+material, a escolhida marcada, e **SUBIR DO PC** — `<input type=file>`
+escondido, a imagem reduzida a 1200 px num canvas, JPEG 0,84 em data-URL, a
+tinta (clara/escura) decidida pela luminância média, guardada no
+`localStorage` (se não couber, vale na sessão). Cada bitola lembra a sua
+carcaça (`est.carcaca[bitola]`); 16 e 35 mm ficam na calculada de fábrica,
+que é pintura e não couro. A foto entra com `background-size: cover` (não
+emenda como ladrilho); os nomes gravados ganham plaqueta escura sobre couro
+de foto (os brilhos do couro comiam a tinta creme).
+
+**Duas armadilhas de `url()` em variável CSS, achadas pela foto sem cabeça:**
+1. `url()` relativo dentro de uma variável CSS resolve pela FOLHA que a usa,
+   não pelo documento — `assets/…` virou `css/assets/…` e a foto não
+   aparecia (a calculada, em data-URL, nunca sofreu disso). A variável recebe
+   sempre o endereço absoluto (`new URL(u, document.baseURI)`).
+2. O mesmo valor vai dentro de `style="…"` nas gavetas: `url("…")` com
+   aspas duplas fecha o atributo. Aspas simples.
+
 ### 5m.6 O que NÃO foi feito
 
 - A máquina em movimento não foi vista (o painel). O visor a 60 fps, a roda
