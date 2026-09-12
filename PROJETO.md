@@ -7238,6 +7238,80 @@ de foto (os brilhos do couro comiam a tinta creme).
 2. O mesmo valor vai dentro de `style="…"` nas gavetas: `url("…")` com
    aspas duplas fecha o atributo. Aspas simples.
 
+### 5m.8 TERCEIRA VOLTA (12/09/2026): a película MEDIDA da saída do app, e a máquina pela régua dele
+
+O Bruno mandou dois vídeos: o `.MOV` que o 8mm Vintage Camera gravou
+(960×720, 4:3, H.264, 58 s, sem áudio) **filmando a minha carta de
+calibração**, um filme do seletor de cada vez; e a gravação de tela do
+telefone (750×1334, 68 s) com o app gravando — o tutorial de cada botão. E
+quatro pedidos: carcaça fixa com os couros dele (grão menor — "muito zoom"),
+uma quarta textura de metal raspado, tirar o efeito da tira de filme
+(anexo 02), e "otimizar tudo" pelos vídeos.
+
+**Como os vídeos foram lidos.** Sem ffmpeg nesta máquina; os dois arquivos
+foram copiados para `__prova/` (servida pelo servidor local, apagada no
+fim) e lidos por `<video>` + canvas no painel, com um receptor HTTP de
+uma página (`recebe.js`, porta 5199, POST → arquivo no scratchpad) para
+tirar de lá folhas de contato e JSON. Folha de contato do tutorial com o
+rótulo da roda recortado a 1:1 deu a ORDEM dos filmes: **XPro → NOIR → 60s →
+Pela → Indigo → Tuscan → Two-Color → 2 Strip → 3-X → Siena** (quatro que eu
+não tinha), e as três LENTES do app (limpa, um ponto de luz, vazamento
+laranja). A linha do tempo do `.MOV` (cor e saturação médias a cada
+0,5 s) separou os dez trechos; entre 29,7 e 43 s a tira de filme anda no
+quadro (beira preta, beira creme, borda quente) — é o "frame jitter"/tira
+que ele mandou tirar, e esses trechos ficaram fora da medição.
+
+**O registro da carta.** Homografia carta→quadro por mínimos quadrados em 16
+cantos de patch medidos pelo máximo do gradiente (resíduo ≤ 8 px), depois de
+três tentativas por limiar que a borda preta da janela e a beira creme
+enganavam. Cada patch lido na região central (40%) de 5 quadros por filme.
+
+**As medidas da base** (Two-Color/Siena, carta parada):
+
+```
+maciez        borda 10–90% de 10 px em 960 (σ ≈ 3,6 px)  → blur rad 0,3 (era 0,09)
+grão          desvio ≈ 1 nível, célula ~2 px, ferve      → filmgrain amt 0,035 (era 0,08)
+cintilação    0,06% (nada)                               → filmgate flick 0,005 (era 0,07)
+cadência      24 quadros únicos por segundo no arquivo   (o app estava em 24; a bitola fica em 18)
+tremor        só vertical, ≤ 0,5% da altura, esporádico → gateweave amt 0,02, rot 0, jump 0,06 a 2,5/s
+janela        preta quase no limite (tam 0,97), sombra ~3% → sombra 0,8, sombraW 0,04
+tira/perfuração  fora (o pedido)                          → 16 mm holes 0
+```
+
+**Os filmes.** Para cada um, 45 patches (rampa de 16, os 24 do ColorChecker,
+5 grandes) lidos da saída do app viraram o alvo, e o PRÓPRIO SHADER do
+laboratório se ajustou a eles: Nelder–Mead em 20 dimensões sobre uma cadeia
+`crossproc → filmstock` (curva por canal + o filtro de cor), renderizando
+a carta pelo `VE.renderer` e lendo os patches com UM `readPixels` por
+avaliação (8 ms; com 45 leituras eram 90). Two-Color e 2 Strip trocam de cor
+(verde vira ciano, amarelo vira branco) e precisaram de `chanmix →
+filmstock`. Erro médio (RMSE nos 45 patches, 0–255): XPro 25 · NOIR 25 ·
+60s 25 · Pela 32 · Indigo 34 · Tuscan 28 · Two-Color 36 · 2 Strip 30 · 3-X 22
+· Siena 28; nos neutros, 7–14 níveis; pele a ~10. O modelo não é o LUT do
+app — o que fica de fora é o ombro dele (tudo acima de 204 vira ~240) e as
+cores muito saturadas (o laranja do checker, 40 níveis). A família 8 MM do
+catálogo (js/filters.js) agora são essas dez cadeias, na ordem do seletor,
+e o seletor da máquina lê a família.
+
+**A máquina pela régua do tutorial.** Os cinco botões na ordem do app: i ·
+ROLOS (a tira de filme = os "reels") · BITOLA (a câmera que gira = "trocar
+câmera") · REBOB. (o flash do app é tocha, não serve) · SOM. A LENTE ficou
+onde o app tem "change lens" (a porta, em cima à direita), com três
+estados (LIMPA · VAZAMENTO · HALO, o ícone muda como o dele); o TREMOR é o
+centro da roda ("frame jitter"). A carcaça é fixa por bitola: preto, marrom,
+bege e o metal escovado gerado (`metal.js` do scratchpad: ruído
+alongado em x em duas oitavas, 9 000 riscos, banda de luz), todos ladrilhos
+espelhados 2×2 de 1680×1120 (System.Drawing no PowerShell) exibidos a 86% da
+largura da máquina — o grão do couro na metade do tamanho. A escolha de
+carcaça e o SUBIR DO PC saíram ("o usuário não precisa escolher").
+
+**Medido no laboratório:** cadeia com XPro = cadencia, blur, crossproc,
+filmstock, grão, poeira, gateweave, janela; Two-Color = chanmix no lugar do
+crossproc; PURO = o filmstock do pacote; LENTE 1 acrescenta lightleak, LENTE
+2 acrescenta halation depois da cor; TREMOR desligado tira o gateweave.
+Quadro de teste (236,239,224): Siena → (240,201,152), NOIR → (240,240,240),
+beira da janela (11,10,8).
+
 ### 5m.6 O que NÃO foi feito
 
 - A máquina em movimento não foi vista (o painel). O visor a 60 fps, a roda

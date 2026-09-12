@@ -3736,7 +3736,10 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 /* a vinheta da peça: mais clara onde a luz bate, mais escura em baixo */
 /* carcaça de FOTO: uma imagem só, esticada sobre a máquina (as fotos de
    couro não emendam como ladrilho; a calculada emenda e repete)      */
-.fil-cam.foto{background-size:cover;background-position:center}
+/* o ladrilho espelhado 2×2 mede 86% da largura da máquina: cada foto de
+   couro cabe duas vezes na largura, com o grão na metade do tamanho da
+   primeira versão ("muito zoom", disse ele)                            */
+.fil-cam.foto{background-size:calc(var(--u) * 86) auto;background-position:0 0;background-repeat:repeat}
 .fil-cam::before{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
   border-radius:inherit;
@@ -3870,6 +3873,16 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   background:linear-gradient(180deg, #cfcfca, #8d8d88);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.65), inset 0 -2px 3px rgba(0,0,0,.35);
 }
+/* vazamento: a laranja entrando pelo canto; halo: a luz no escuro */
+.fil-porta.lente-1 i{background:linear-gradient(135deg, #ffb347 0%, #ff7a1a 45%, #c8401a 100%)}
+.fil-porta.lente-2 i{background:radial-gradient(circle at 50% 45%, #fff 0%, #ffe9b0 14%, #3a2a1a 40%, #0a0a0a 75%)}
+.fil-bt > b{
+  position:absolute;right:-18%;top:-18%;min-width:calc(var(--u) * 2.4);height:calc(var(--u) * 2.4);
+  border-radius:999px;background:#c8102e;color:#fff;font-weight:600;font-family:var(--mono);
+  font-size:calc(var(--u) * 1.2);line-height:calc(var(--u) * 2.4);text-align:center;padding:0 calc(var(--u) * .4);
+  box-shadow:0 1px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.3);z-index:2;
+}
+.fil-bt > b.hidden{display:none}
 .fil-porta b{
   position:absolute;right:-8%;top:-16%;min-width:calc(var(--u) * 2.8);height:calc(var(--u) * 2.8);
   border-radius:999px;background:#c8102e;color:#fff;font-weight:600;
@@ -3952,10 +3965,17 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   pointer-events:none;
 }
 .fil-roda-tampa{
-  position:absolute;left:44.5%;top:44.5%;width:11%;height:11%;border-radius:50%;
+  position:absolute;left:43%;top:43%;width:14%;height:14%;border-radius:50%;border:0;padding:0;cursor:pointer;
   background:radial-gradient(circle at 40% 35%, #f3e6b8, #a8862e 68%, #5b4512);
-  box-shadow:0 1px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.45);
+  box-shadow:0 1px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.45), 0 0 0 2px rgba(0,0,0,.35);
+  transition:filter .15s;
 }
+.fil-roda-tampa::after{
+  content:"";position:absolute;left:34%;top:34%;width:32%;height:32%;border-radius:50%;
+  background:#2a1d08;box-shadow:inset 0 1px 1px rgba(0,0,0,.8);
+}
+/* tremor desligado: a tampa apaga */
+.fil-roda-tampa.off{filter:grayscale(.85) brightness(.75)}
 .fil-roda-marca{
   position:absolute;left:50%;top:2.6%;width:2px;height:8%;margin-left:-1px;border-radius:2px;
   background:var(--fil-creme);opacity:.9;
@@ -4071,32 +4091,12 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 /* a das BITOLAS sobe do chão do palco: plástico claro pontilhado, as
    quatro máquinas em miniatura, a escolhida com o nome numa pastilha */
 .fil-gaveta-pel{
-  left:0;right:0;bottom:0;height:262px;transform:translateY(103%);
+  left:0;right:0;bottom:0;height:176px;transform:translateY(103%);
   background:var(--fil-plastico) center / 160px repeat, #dcdcd8;
   box-shadow:0 -12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.75);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
 }
 .fil-gav-linha{display:flex;align-items:center;justify-content:center;gap:30px}
-/* a linha da CARCAÇA: pastilhas redondas com o material, o nome embaixo */
-.fil-carcacas{gap:10px;padding-top:12px;border-top:1px solid rgba(0,0,0,.08);width:min(860px, 94vw)}
-.fil-carcacas > b{font-size:8.5px;letter-spacing:.22em;color:#555;font-weight:600;margin-right:8px;white-space:nowrap}
-.fil-carc{
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  border:0;background:transparent;cursor:pointer;padding:4px 6px;
-}
-.fil-carc i{
-  display:block;width:40px;height:40px;border-radius:50%;
-  background:var(--pele) center / 90px repeat, #333;
-  box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.25);
-  transition:transform .15s;
-}
-.fil-carc i.foto{background-size:cover}
-.fil-carc:hover i{transform:translateY(-2px)}
-.fil-carc span{font-size:8px;letter-spacing:.16em;color:#2a2a2a;padding:3px 8px;border-radius:999px;white-space:nowrap}
-.fil-carc.on i{box-shadow:0 3px 8px rgba(0,0,0,.35), 0 0 0 2px #161616}
-.fil-carc.on span{background:#161616;color:#fff}
-.fil-carc-subir i{background:#f4f4f1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.25)}
-.fil-carc-subir i svg{width:20px;height:20px;fill:#222;display:block}
 .fil-mini i.foto{background-size:cover}
 .fil-gaveta-pel.aberta{transform:translateY(0)}
 .fil-mini{
@@ -4127,12 +4127,14 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
    de filme com as perfurações, o carimbo laranja da data            */
 .fil-gaveta-rolos{
   top:0;bottom:0;right:0;width:min(350px, 92vw);transform:translateX(103%);
-  background:var(--fil-couro) center / 150px repeat, #141414;
+  /* o couro preto, escurecido por um véu: os rolos e os nomes têm de ler
+     por cima dele. O ladrilho entra pequeno (grão fino) e repetido.    */
+  background:linear-gradient(rgba(8,8,8,.7), rgba(8,8,8,.7)), var(--fil-couro) 0 0 / 300px auto repeat, #141414;
   box-shadow:-14px 0 40px rgba(0,0,0,.65);
   display:flex;flex-direction:column;
 }
 .fil-gaveta-rolos.aberta{transform:translateX(0)}
-.fil-gaveta-rolos.foto{background-size:cover;background-position:center}
+.fil-gaveta-rolos.foto{background-size:auto, 300px auto;background-position:0 0}
 .fil-gav-h{
   display:flex;align-items:center;gap:10px;padding:18px 18px 12px;
   color:var(--fil-creme);font-size:10px;letter-spacing:.26em;
@@ -4186,7 +4188,7 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 /* em tela baixa a máquina encolhe pela altura (já está na conta de
    `--larg`); a gaveta das bitolas fica mais baixa para não a cobrir */
 @media (max-height:640px){
-  .fil-gaveta-pel{height:224px;gap:8px}
+  .fil-gaveta-pel{height:140px;gap:8px}
   .fil-gav-linha{gap:18px}
   .fil-mini i{width:96px;height:58px}
 }
@@ -10081,38 +10083,44 @@ window.VE = window.VE || {};
     {
       id: 'p8mm', name: '8 mm caseiro', desc: '18 quadros por segundo, imagem macia, cor desbotada e a janela com sombra — o 8mm Vintage Camera',
       fx: [
+        /* MEDIDO na saída do app (12/09/2026, a carta de calibração filmada):
+           borda 10–90% de 10 px em 960 (σ ≈ 3,6 px → raio 0,3), grão com
+           desvio ≈ 1 nível e célula de 2 px, cintilação 0,06% (nada),
+           tremor só vertical e esporádico (≤ 0,5% da altura), a janela
+           preta quase no limite do quadro com sombra de ~3% — e nada de
+           beira de filme nem perfuração (ele pediu para tirar).       */
         ['cadencia', { fps: 18 }],
-        ['blur', { rad: 0.09, mixv: 0.6 }],
+        ['blur', { rad: 0.3, mixv: 0.6 }],
         ['filmstock', { exp: 0.03, con: 0.02, sat: -0.1, temp: 0.16, tintg: -0.05, fade: 0.11, roll: 0.5, split: 0.36, shTint: '#33262f', hiTint: '#f7eec2', vig: 0.08, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 0, amt: 0.08, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
-        ['dustscratch', { dust: 0.03, dustSize: 0.4, scratch: 0, hair: 0.012, fps: 12 }],
-        ['gateweave', { amt: 0.06, spd: 1.2, rot: 0.04, jump: 0.05, jumpRate: 0.1 }],
+        ['filmgrain', { fmt: 0, amt: 0.035, shadow: 0.6, color: 0.15, suave: 0.3, fps: 18 }],
+        ['dustscratch', { dust: 0.02, dustSize: 0.3, scratch: 0, hair: 0.008, fps: 12 }],
+        ['gateweave', { amt: 0.02, spd: 1.0, rot: 0, jump: 0.06, jumpRate: 2.5 }],
         ['lightleak', { amt: 0.3, side: 0, width: 0.22, spd: 0.25, flick: 0.15, bloom: 0.7, raro: 0.35 }],
-        ['filmgate', { fmt: 0, forma: 1, tam: 0.88, zoom: 1.0, soft: 0.01, round: 0.75, vig: 0.1, sombra: 0.45, sombraW: 0.08, flick: 0.07, flickHz: 18, weave: 0.05 }]
+        ['filmgate', { fmt: 0, forma: 1, tam: 0.97, zoom: 1.0, soft: 0.008, round: 0.6, vig: 0.12, sombra: 0.8, sombraW: 0.04, flick: 0.005, flickHz: 18, weave: 0.02 }]
       ]
     },
     {
       id: 'psuper8', name: 'Super 8', desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente',
       fx: [
         ['cadencia', { fps: 18 }],
-        ['blur', { rad: 0.07, mixv: 0.5 }],
+        ['blur', { rad: 0.24, mixv: 0.5 }],
         ['filmstock', { exp: 0.03, con: 0.06, sat: -0.04, temp: 0.2, tintg: -0.03, fade: 0.1, roll: 0.5, split: 0.34, shTint: '#30241e', hiTint: '#ffeec8', vig: 0.06, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 1, amt: 0.07, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
-        ['dustscratch', { dust: 0.025, dustSize: 0.35, scratch: 0, hair: 0.01, fps: 12 }],
-        ['gateweave', { amt: 0.04, spd: 1.1, rot: 0.03, jump: 0.04, jumpRate: 0.08 }],
+        ['filmgrain', { fmt: 1, amt: 0.03, shadow: 0.6, color: 0.15, suave: 0.3, fps: 18 }],
+        ['dustscratch', { dust: 0.016, dustSize: 0.3, scratch: 0, hair: 0.006, fps: 12 }],
+        ['gateweave', { amt: 0.015, spd: 1.0, rot: 0, jump: 0.05, jumpRate: 2 }],
         ['lightleak', { amt: 0.22, side: 0, width: 0.2, spd: 0.2, flick: 0.12, bloom: 0.7, raro: 0.25 }],
-        ['filmgate', { fmt: 1, forma: 1, tam: 0.9, zoom: 1.0, soft: 0.009, round: 0.7, vig: 0.1, sombra: 0.45, sombraW: 0.075, flick: 0.06, flickHz: 18, weave: 0.05 }]
+        ['filmgate', { fmt: 1, forma: 1, tam: 0.97, zoom: 1.0, soft: 0.008, round: 0.55, vig: 0.1, sombra: 0.75, sombraW: 0.035, flick: 0.005, flickHz: 18, weave: 0.02 }]
       ]
     },
     {
-      id: 'p16mm', name: '16 mm documentário', desc: '24 por segundo, cor neutra de negativo (250D), grão fino e a tira de filme com as perfurações — o Super 16',
+      id: 'p16mm', name: '16 mm documentário', desc: '24 por segundo, cor neutra de negativo (250D), grão fino — o Super 16',
       fx: [
         ['cadencia', { fps: 24 }],
         ['blur', { rad: 0.04, mixv: 0.4 }],
         ['filmstock', { exp: 0, con: 0.12, sat: -0.02, temp: 0.04, fade: 0.07, roll: 0.4, split: 0.24, shTint: '#1e2428', hiTint: '#fff2de', vig: 0.06, grain: 0, sharp: 0.1 }],
         ['filmgrain', { fmt: 2, amt: 0.06, shadow: 0.6, color: 0.08, suave: 0.4, fps: 24 }],
         ['gateweave', { amt: 0.025, spd: 1.0, rot: 0.02, jump: 0.02, jumpRate: 0.06 }],
-        ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.03, flickHz: 24, weave: 0.03, holes: 1, holeSide: 0, edge: '#3a2413' }]
+        ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.01, flickHz: 24, weave: 0.02, holes: 0 }]
       ]
     },
     {
@@ -30229,6 +30237,15 @@ window.VE = window.VE || {};
     };
   }
 
+  /* um filme do 8 MM: uma cadeia de dois passos (a curva por canal ou a
+     mesa de canais, e o filmstock), na família 8 MM                    */
+  function m(id, name, passo1, stock) {
+    var p1 = VE.defaults(passo1.fx); Object.keys(passo1.p).forEach(function (k) { p1[k] = passo1.p[k]; });
+    var p2 = VE.defaults('filmstock'); Object.keys(stock).forEach(function (k) { p2[k] = stock[k]; });
+    return { id: id, name: name, fam: '8 MM', kind: 'chain', desc: 'ajustado por medida à saída do 8mm Vintage Camera',
+      steps: [{ fx: passo1.fx, params: p1 }, { fx: 'filmstock', params: p2 }] };
+  }
+
   /* ------------------------------------------------------------- catálogo */
   var LIST = [
     /* ---- NEUTROS: mexem pouco, servem de ponto de partida ---- */
@@ -30263,19 +30280,44 @@ window.VE = window.VE || {};
     f('x05', 'LOMO', 'CRUZADO', { sat: 0.45, con: 0.42, crush: 0.1, fade: 0.04, split: 0.5, shTint: '#101f30', hiTint: '#fff0c0', vig: 0.85, sharp: 0.3 }),
     f('x06', 'POLAROIDE', 'CRUZADO', { exp: 0.16, temp: 0.14, sat: -0.08, con: -0.06, fade: 0.3, roll: 0.78, split: 0.55, shTint: '#2a2a3a', hiTint: '#fff4e2', vig: 0.18, grain: 0.05 }),
 
-    /* ---- 8 MM: os filmes do 8mm Vintage Camera, lidos dos prints ----
-       Todos desbotados (preto levantado, ombro nas luzes) e cada um com
-       o seu par de tons: o 60s tem sombra magenta e luz amarelo-verde; o
-       Two-Color, sombra teal e luz rosada, quase sem saturação.        */
-    f('m01', '60s', '8 MM', { con: 0.02, sat: -0.1, temp: 0.2, tintg: -0.1, fade: 0.14, roll: 0.55, split: 0.7, shTint: '#4a2a48', hiTint: '#f4f0a8', vig: 0.12, grain: 0.03 }),
-    f('m02', 'TWO-COLOR', '8 MM', { con: 0.05, sat: -0.38, temp: 0.04, fade: 0.16, roll: 0.5, split: 0.85, shTint: '#1f4a52', hiTint: '#ffd6c8', vig: 0.1, grain: 0.03 }),
-    f('m03', '70s', '8 MM', { con: 0.14, sat: 0.08, temp: 0.4, fade: 0.1, roll: 0.5, split: 0.5, shTint: '#3a2210', hiTint: '#ffd9a0', vig: 0.16, grain: 0.03 }),
-    f('m04', '1920', '8 MM', { skin: 0, sat: -1, con: 0.24, fade: 0.1, roll: 0.45, split: 0.6, shTint: '#2a1e14', hiTint: '#e8d9b8', vig: 0.3, grain: 0.09 }),
-    f('m05', 'SIENA', '8 MM', { skin: 0.1, sat: -0.5, temp: 0.35, con: 0.18, fade: 0.08, roll: 0.5, split: 0.8, shTint: '#3a2416', hiTint: '#f1d9b0', vig: 0.18, grain: 0.04 }),
-    f('m06', 'SAKURA', '8 MM', { exp: 0.14, sat: -0.2, con: -0.08, temp: 0.08, tintg: -0.26, fade: 0.2, roll: 0.7, split: 0.6, shTint: '#5a3550', hiTint: '#ffe4ec', vig: 0.06, grain: 0.02 }),
-    f('m07', 'INDIGO', '8 MM', { temp: -0.4, sat: -0.15, con: 0.2, fade: 0.1, roll: 0.5, split: 0.65, shTint: '#1a1f4a', hiTint: '#d8e4ff', vig: 0.14, grain: 0.03 }),
-    f('m08', 'XPRO', '8 MM', { sat: 0.3, con: 0.38, crush: 0.05, fade: 0.04, roll: 0.35, split: 0.8, shTint: '#0f3a44', hiTint: '#ffe873', vig: 0.2, grain: 0.04 }),
-    f('m09', 'NOIR', '8 MM', { skin: 0, sat: -1, con: 0.45, crush: 0.1, fade: 0.03, roll: 0.3, split: 0, vig: 0.45, grain: 0.07, sharp: 0.2 }),
+    /* ---- 8 MM: os dez filmes do 8mm Vintage Camera, AJUSTADOS POR MEDIDA
+       (12/09/2026). O Bruno filmou a carta de calibração do laboratório
+       com o app, um filme de cada vez; 45 patches foram lidos da saída
+       dele (js/../PROJETO.md 5m.8) e o shader se ajustou a eles: uma
+       CURVA POR CANAL (crossproc) ou uma MESA DE CANAIS (chanmix, nos de
+       duas cores) e depois o filmstock. Na ordem do seletor do app. O
+       erro médio de cada um está no comentário — o modelo não é o LUT
+       do app, mas os neutros ficam a 7–14 níveis e a pele a ~10.    */
+    /* XPro: erro médio 25.33 nos 45 patches */
+    m('m01', 'XPro', { fx: 'crossproc', p: { rc: 0.999, gc: 0.108, bc: -0.209, piv: 0.556, lift: -0.048, sat: -0.295, yellow: 0.059 } },
+      { exp: 0.104, con: 0.313, sat: -0.339, fade: 0.063, crush: 0.024, roll: 0.477, split: 0.579, skin: 0.3, shTint: '#402231', hiTint: '#faffab', grain: 0, vig: 0, sharp: 0 }),
+    /* NOIR: erro médio 24.67 nos 45 patches */
+    m('m02', 'NOIR', { fx: 'crossproc', p: { rc: 0.967, gc: -0.486, bc: -0.016, piv: 0.553, lift: -0.061, sat: -0.586, yellow: 0.128 } },
+      { exp: 0.198, con: 1.193, sat: -0.988, fade: 0.006, crush: 0.03, roll: 0.542, split: 0.378, skin: 0.3, shTint: '#484802', hiTint: '#ddcbb9', grain: 0, vig: 0, sharp: 0 }),
+    /* 60s: erro médio 24.6 nos 45 patches */
+    m('m03', '60s', { fx: 'crossproc', p: { rc: 0.776, gc: 0.15, bc: -0.143, piv: 0.506, lift: -0.016, sat: -0.128, yellow: 0.042 } },
+      { exp: 0.052, con: 0.256, sat: -0.461, fade: 0.077, crush: 0, roll: 0.182, split: 0.704, skin: 0.3, shTint: '#732d19', hiTint: '#defe7e', grain: 0, vig: 0, sharp: 0 }),
+    /* Pela: erro médio 32.48 nos 45 patches */
+    m('m04', 'Pela', { fx: 'crossproc', p: { rc: -0.711, gc: -0.278, bc: 0.81, piv: 0.75, lift: -0.1, sat: 0.01, yellow: 0 } },
+      { exp: 0.049, con: 0.062, sat: -0.026, fade: 0.053, crush: 0.069, roll: 0.155, split: 0.875, skin: 0.3, shTint: '#5b3f00', hiTint: '#e3b373', grain: 0, vig: 0, sharp: 0 }),
+    /* Indigo: erro médio 34.27 nos 45 patches */
+    m('m05', 'Indigo', { fx: 'crossproc', p: { rc: 1, gc: 0.155, bc: -0.569, piv: 0.498, lift: -0.085, sat: -0.357, yellow: 0.049 } },
+      { exp: 0.132, con: 0.208, sat: 0.14, fade: 0.093, crush: 0, roll: 0.475, split: 0.543, skin: 0.3, shTint: '#1e202b', hiTint: '#ffe5a1', grain: 0, vig: 0, sharp: 0 }),
+    /* Tuscan: erro médio 28.44 nos 45 patches */
+    m('m06', 'Tuscan', { fx: 'crossproc', p: { rc: 0.57, gc: 0.059, bc: 0.127, piv: 0.447, lift: -0.049, sat: -0.189, yellow: 0.055 } },
+      { exp: 0.17, con: 0.328, sat: -0.084, fade: 0.12, crush: 0, roll: 0.542, split: 0.713, skin: 0.3, shTint: '#7d3f00', hiTint: '#ffd59a', grain: 0, vig: 0, sharp: 0 }),
+    /* Two-Color: erro médio 36.47 nos 45 patches */
+    m('m07', 'Two-Color', { fx: 'chanmix', p: { rr: 1.225, rg: -0.218, rb: -0.018, gr: 0.121, gg: 1.111, gb: -0.272, br: 0.023, bg: 0.8, bb: 0.2, norm: 0 } },
+      { exp: 0.041, con: -0.003, sat: -0.02, fade: 0, crush: 0.055, roll: 0.344, split: 0.343, skin: 0.3, shTint: '#1c2600', hiTint: '#ffcb7a', grain: 0, vig: 0, sharp: 0 }),
+    /* 2 Strip: erro médio 30.06 nos 45 patches */
+    m('m08', '2 Strip', { fx: 'chanmix', p: { rr: 1.566, rg: -0.394, rb: -0.257, gr: 0.182, gg: 0.346, gb: 0.171, br: -0.073, bg: 0.056, bb: 0.652, norm: 0 } },
+      { exp: 0.094, con: 0.35, sat: -0.121, fade: 0.201, crush: 0.064, roll: 0.606, split: 0.878, skin: 0.3, shTint: '#146f00', hiTint: '#a2b7b0', grain: 0, vig: 0, sharp: 0 }),
+    /* 3-X: erro médio 21.65 nos 45 patches */
+    m('m09', '3-X', { fx: 'crossproc', p: { rc: 1, gc: -0.301, bc: -1, piv: 0.517, lift: 0.064, sat: -0.6, yellow: 0 } },
+      { exp: -0.172, con: 1.2, sat: -1, fade: 0.166, crush: 0, roll: 1, split: 0.592, skin: 0.3, shTint: '#576a44', hiTint: '#ffffff', grain: 0, vig: 0, sharp: 0 }),
+    /* Siena: erro médio 27.72 nos 45 patches */
+    m('m10', 'Siena', { fx: 'crossproc', p: { rc: 0.427, gc: 0.173, bc: -0.017, piv: 0.502, lift: -0.031, sat: -0.173, yellow: 0.027 } },
+      { exp: -0.068, con: 0.09, sat: -0.478, fade: 0.073, crush: 0.025, roll: 0.385, split: 0.978, skin: 0.3, shTint: '#822f0c', hiTint: '#ffa77d', grain: 0, vig: 0, sharp: 0 }),
 
     /* ---- PRETO E BRANCO ---- */
     f('b01', 'P&B NEUTRO', 'P&B', { skin: 0, sat: -1, con: 0.22, fade: 0.06, split: 0, grain: 0.05, sharp: 0.25 }),
@@ -42551,14 +42593,14 @@ window.VE = window.VE || {};
      · a gravação pelo exportador e os ROLOS que saem dela
 
    A CARCAÇA
-   O couro da máquina vem de FOTO — os três couros que o Bruno mandou
-   (assets/filmadora/couro/), preto, marrom e bege — ou de uma que ele
-   sobe do PC pela gaveta (reduzida a 1200 px e guardada no navegador).
-   A textura CALCULADA (mapa de altura periódico iluminado por uma luz
-   de cima e da esquerda, com brilho de superfície) continua existindo
-   como quarta opção e como pele das bitolas de 16 e 35 mm, que são
-   pintura e não couro. Ele não gostou da calculada como couro — e a
-   foto ganha, sempre: é o que o polaroid já ensinou.
+   O couro de cada máquina é FOTO, e é fixo: os três couros que o Bruno
+   mandou (assets/filmadora/couro/ — preto no 8 MM, marrom no SUPER 8,
+   bege no 16 MM) e um metal escovado gerado para o 35 MM, no mesmo
+   tamanho e na mesma pasta. Cada arquivo é um LADRILHO ESPELHADO 2×2
+   (a foto inteira a 840 px em cada quadrante) — emenda sem costura e
+   deixa o grão do couro na metade do tamanho da primeira versão, que
+   ele achou "com muito zoom". A textura calculada (relevo iluminado)
+   ficou só para o plástico da gaveta.
    ============================================================ */
 (function (VE) {
   'use strict';
@@ -42575,13 +42617,13 @@ window.VE = window.VE || {};
      que é como a janela de uma câmera de verdade enquadra.           */
   F.BITOLAS = [
     { id: '8mm', nome: '8 MM', rotulo: 'REGULAR 8', pack: 'p8mm', fps: 18, ppf: 80, rolo: 25, visor: 4 / 3,
-      pele: 'couro', cor: [30, 29, 28], desc: 'a caseira: 18 quadros, imagem macia, cor desbotada, janela com sombra' },
+      carcaca: 'assets/filmadora/couro/couro-preto.jpg', tinta: 'escura', desc: 'a caseira: 18 quadros, imagem macia, cor desbotada, janela com sombra' },
     { id: 's8', nome: 'SUPER 8', rotulo: 'SUPER 8', pack: 'psuper8', fps: 18, ppf: 72, rolo: 50, visor: 4 / 3,
-      pele: 'couro', cor: [56, 36, 26], desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente' },
+      carcaca: 'assets/filmadora/couro/couro-marrom.jpg', tinta: 'escura', desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente' },
     { id: '16mm', nome: '16 MM', rotulo: 'SUPER 16', pack: 'p16mm', fps: 24, ppf: 40, rolo: 100, visor: 5 / 3,
-      pele: 'rugosa', cor: [40, 41, 42], desc: 'a de documentário: 24 quadros, negativo neutro, grão fino, a tira com as perfurações' },
+      carcaca: 'assets/filmadora/couro/couro-bege.jpg', tinta: 'clara', desc: 'a de documentário: 24 quadros, negativo neutro, grão fino' },
     { id: '35mm', nome: '35 MM', rotulo: 'CINEMA', pack: 'p35mm', fps: 24, ppf: 16, rolo: 400, visor: 1.85,
-      pele: 'martelada', cor: [152, 154, 148], desc: 'a de cinema: grão fino, quase nada além da cor e da halação' }
+      carcaca: 'assets/filmadora/couro/metal-escovado.jpg', tinta: 'clara', desc: 'a de cinema: grão fino, quase nada além da cor e da halação' }
   ];
   F.bitola = function (id) {
     return F.BITOLAS.filter(function (b) { return b.id === id; })[0] || F.BITOLAS[0];
@@ -42589,16 +42631,20 @@ window.VE = window.VE || {};
 
   /* ================================================================
      OS FILMES DO SELETOR
-     PURO é a película da bitola como ela vem. Os outros são os nove
-     olhares da família 8 MM do catálogo (js/filters.js): o seletor
-     troca a COR da película, e só a cor — grão, janela e cadência
-     continuam sendo os da bitola.                                    */
+     PURO é a película da bitola como ela vem. Os outros são os dez
+     filmes da família 8 MM do catálogo (js/filters.js) — cada um uma
+     CADEIA (curva por canal ou mesa de canais, e depois o filmstock)
+     ajustada por medida à saída do app, na ordem do seletor dele. O
+     seletor troca a COR da película, e só a cor — grão, janela e
+     cadência continuam sendo os da bitola.                          */
   F.filmes = function () {
-    var lista = [{ id: 'puro', nome: 'PURO', cor1: '#2a2a2a', cor2: '#d8d2c0', params: null }];
+    var lista = [{ id: 'puro', nome: 'PURO', cor1: '#2a2a2a', cor2: '#d8d2c0', cadeia: null }];
     var cat = (VE.filters && VE.filters.LIST) || [];
     cat.forEach(function (d) {
-      if (d.fam !== '8 MM' || !d.params) return;
-      lista.push({ id: d.id, nome: d.name, cor1: d.params.shTint || '#333', cor2: d.params.hiTint || '#eee', params: d.params });
+      if (d.fam !== '8 MM') return;
+      var stock = d.kind === 'chain' ? (d.steps.filter(function (s) { return s.fx === 'filmstock'; })[0] || {}).params : d.params;
+      lista.push({ id: d.id, nome: d.name, cor1: (stock && stock.shTint) || '#333', cor2: (stock && stock.hiTint) || '#eee',
+        cadeia: VE.filters.chainOf ? VE.filters.chainOf(d) : null });
     });
     return lista;
   };
@@ -42612,17 +42658,15 @@ window.VE = window.VE || {};
      Guardado entre sessões (bitola, filme, ajustes) porque uma câmera
      lembra como foi deixada. Os rolos NÃO: são arquivos na memória. */
   var CHAVE = 'rgb_lab.filmadora';
-  var AJ_PADRAO = { cor: 0.7, maciez: 1, grao: 1, sujeira: 1, tremor: 1, vazamento: 1, janela: 1 };
+  var AJ_PADRAO = { cor: 1, maciez: 1, grao: 1, sujeira: 1, tremor: 1, vazamento: 1, janela: 1 };
   var est = F.est = {
     ativa: false,          /* a máquina está aberta: a película entra na cadeia */
     bitola: '8mm',
     filme: 'm01',
-    vazamento: true,       /* o botão do relâmpago */
+    lente: 0,              /* a LENTE do app: 0 limpa · 1 vazamento · 2 halo */
+    tremor: true,          /* o botão no centro da roda (o "frame jitter" do app) */
     som: false,            /* o botão da grade: grava em tempo real, com o áudio */
     cadencia: true,        /* o tranco da bitola; desligado, o vídeo anda como veio */
-    /* a carcaça de cada bitola: um id de F.CARCACAS, ou 'propria' */
-    carcaca: { '8mm': 'couro-preto', 's8': 'couro-marrom', '16mm': 'calculada', '35mm': 'calculada' },
-    propria: null,         /* a que subiu do PC: { url (data:), tinta } */
     aj: {},
     gravando: null,        /* { ini, dur, thumb } enquanto o rolo roda */
     rolos: []
@@ -42635,84 +42679,30 @@ window.VE = window.VE || {};
       if (!g) return;
       if (F.bitola(g.bitola).id === g.bitola) est.bitola = g.bitola;
       if (g.filme) est.filme = g.filme;
-      if (typeof g.vazamento === 'boolean') est.vazamento = g.vazamento;
+      if (g.lente === 0 || g.lente === 1 || g.lente === 2) est.lente = g.lente;
+      if (typeof g.tremor === 'boolean') est.tremor = g.tremor;
       if (typeof g.som === 'boolean') est.som = g.som;
       if (typeof g.cadencia === 'boolean') est.cadencia = g.cadencia;
       if (g.aj) Object.keys(AJ_PADRAO).forEach(function (k) {
         var v = parseFloat(g.aj[k]); if (isFinite(v)) est.aj[k] = Math.max(0, Math.min(2, v));
       });
-      if (g.carcaca) Object.keys(est.carcaca).forEach(function (k) { if (typeof g.carcaca[k] === 'string') est.carcaca[k] = g.carcaca[k]; });
-      if (g.propria && typeof g.propria.url === 'string' && g.propria.url.indexOf('data:image/') === 0) est.propria = g.propria;
     } catch (e) { /* sem memória: a máquina abre como nova */ }
   };
   F.guardar = function () {
     try {
       localStorage.setItem(CHAVE, JSON.stringify({
-        bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
-        som: est.som, cadencia: est.cadencia, aj: est.aj,
-        carcaca: est.carcaca, propria: est.propria
+        bitola: est.bitola, filme: est.filme, lente: est.lente, tremor: est.tremor,
+        som: est.som, cadencia: est.cadencia, aj: est.aj
       }));
-    } catch (e) {
-      /* a foto do PC pode não caber (o limite do navegador anda em 5 MB):
-         guarda o resto sem ela, e ela vale só nesta sessão            */
-      try {
-        localStorage.setItem(CHAVE, JSON.stringify({
-          bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
-          som: est.som, cadencia: est.cadencia, aj: est.aj, carcaca: est.carcaca
-        }));
-      } catch (e2) { /* sem espaço: paciência */ }
-    }
+    } catch (e) { /* sem espaço: paciência */ }
   };
 
-  /* ================================================================
-     A CARCAÇA
-     `tinta` diz se a máquina é escura (glifos creme) ou clara (glifos
-     pretos em plaquetas). A foto que sobe do PC decide isso pela própria
-     luminância média.                                                */
-  F.CARCACAS = [
-    { id: 'couro-preto', nome: 'COURO PRETO', url: 'assets/filmadora/couro/couro-preto.jpg', tinta: 'escura' },
-    { id: 'couro-marrom', nome: 'COURO MARROM', url: 'assets/filmadora/couro/couro-marrom.jpg', tinta: 'escura' },
-    { id: 'couro-bege', nome: 'COURO BEGE', url: 'assets/filmadora/couro/couro-bege.jpg', tinta: 'clara' },
-    { id: 'calculada', nome: 'CALCULADA', url: null, tinta: null }
-  ];
-  /* a carcaça de uma bitola, resolvida: { id, nome, url|null, tinta|null } */
-  F.carcacaDe = function (bitolaId) {
-    var id = est.carcaca[bitolaId] || 'calculada';
-    if (id === 'propria') {
-      if (est.propria) return { id: 'propria', nome: 'DO PC', url: est.propria.url, tinta: est.propria.tinta || 'escura' };
-      id = 'calculada';
-    }
-    return F.CARCACAS.filter(function (c) { return c.id === id; })[0] || F.CARCACAS[3];
-  };
-  F.escolherCarcaca = function (bitolaId, id) {
-    est.carcaca[bitolaId] = id; F.guardar();
-  };
-  /* a foto do PC: reduzida a 1200 px num canvas, JPEG, e a luminância
-     média decide a tinta. Devolve uma promessa com a carcaça pronta.   */
-  F.subirCarcaca = function (file) {
-    return new Promise(function (res, rej) {
-      if (!file || file.type.indexOf('image/') !== 0) { rej(new Error('escolha uma imagem (jpg, png, webp)')); return; }
-      var url = URL.createObjectURL(file), img = new Image();
-      img.onload = function () {
-        URL.revokeObjectURL(url);
-        var s = Math.min(1, 1200 / Math.max(img.width, img.height));
-        var cv = document.createElement('canvas');
-        cv.width = Math.max(1, Math.round(img.width * s)); cv.height = Math.max(1, Math.round(img.height * s));
-        var c = cv.getContext('2d');
-        c.drawImage(img, 0, 0, cv.width, cv.height);
-        var d = c.getImageData(0, 0, cv.width, cv.height).data, soma = 0, n = 0, i;
-        for (i = 0; i < d.length; i += 64) { soma += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114; n++; }
-        est.propria = { url: cv.toDataURL('image/jpeg', 0.84), tinta: (soma / n) > 128 ? 'clara' : 'escura', nome: (file.name || 'foto').slice(0, 40) };
-        F.guardar();
-        res(est.propria);
-      };
-      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('não consegui ler essa imagem')); };
-      img.src = url;
-    });
-  };
+  /* a carcaça de uma bitola: a foto e a tinta (escura = glifos creme,
+     clara = glifos pretos em plaquetas) */
+  F.carcacaDe = function (bitolaId) { var b = F.bitola(bitolaId); return { url: b.carcaca, tinta: b.tinta }; };
   F.reporAjustes = function () {
     Object.keys(AJ_PADRAO).forEach(function (k) { est.aj[k] = AJ_PADRAO[k]; });
-    est.vazamento = true; est.cadencia = true;
+    est.lente = 0; est.tremor = true; est.cadencia = true;
     F.guardar();
   };
   F.AJ_PADRAO = AJ_PADRAO;
@@ -42725,8 +42715,10 @@ window.VE = window.VE || {};
      é assim que o botão vermelho grava com a película. A bitola dá o
      pacote (js/fx5.js); os ajustes são MULTIPLICADORES sobre ele, para
      que o "1" de cada um seja sempre a calibração da bitola e não um
-     número solto. O filme do seletor troca os parâmetros do
-     `filmstock` inteiro, e a COR é o quanto dessa troca entra.       */
+     número solto. O filme do seletor entra no lugar do `filmstock` do
+     pacote como uma CADEIA (a curva por canal e o filmstock ajustados
+     à saída do app), e a COR é o quanto dessa cadeia entra. A LENTE
+     decide o vazamento (1) ou o halo (2); o TREMOR liga o gateweave. */
   F.ops = function (t) {
     if (!est.ativa) return [];
     var b = F.bitola(est.bitola);
@@ -42745,14 +42737,19 @@ window.VE = window.VE || {};
           if (p.rad < 0.002) return;
           break;
         case 'filmstock':
-          if (filme.params) {
-            for (k in filme.params) p[k] = filme.params[k];
-            /* grão e nitidez são da bitola, não do filme; a vinheta
-               idem — senão o olhar "60s" vem com a vinheta de foto */
-            p.grain = 0; p.sharp = 0; p.vig = par[1].vig || 0;
-          }
           amount = Math.max(0, Math.min(1, aj.cor));
-          if (amount < 0.005) return;
+          if (filme.cadeia && filme.cadeia.length) {
+            if (amount < 0.005) return;
+            /* a cadeia do filme, passo a passo, cada um com a COR */
+            filme.cadeia.forEach(function (passo, i) {
+              var pp = {}; for (k in passo.params) pp[k] = passo.params[k];
+              if (passo.id === 'filmstock') { pp.grain = 0; pp.sharp = 0; pp.vig = 0; }
+              fx.push({ id: passo.id, effId: 'fil-filme-' + i, params: pp, amount: amount, local: t, mask: VE.newMask() });
+            });
+            halo();
+            return;
+          }
+          amount = 1;
           break;
         case 'filmgrain':
           p.amt *= aj.grao;
@@ -42763,20 +42760,32 @@ window.VE = window.VE || {};
           if (p.dust + p.hair + p.scratch < 0.002) return;
           break;
         case 'gateweave':
+          if (!est.tremor) return;
           p.amt *= aj.tremor; p.rot *= aj.tremor; p.jump *= aj.tremor;
           if (p.amt + p.jump < 0.002) return;
           break;
         case 'lightleak':
-          if (!est.vazamento) return;
+          if (est.lente !== 1) return;
           p.amt *= aj.vazamento;
           if (p.amt < 0.005) return;
           break;
+        case 'halation':
+          /* a lente HALO acrescenta halação onde o pacote não tem */
+          break;
         case 'filmgate':
           p.sombra *= aj.janela;
+          if (est.lente === 2) p.vig = Math.min(1.5, (p.vig || 0) + 0.35);
           break;
       }
       fx.push({ id: id, effId: 'fil-' + id, params: p, amount: amount, local: t, mask: VE.newMask() });
+      if (id === 'filmstock') halo();
     });
+    /* a lente HALO: a halação entra logo depois da cor, antes do grão */
+    function halo() {
+      if (est.lente !== 2 || st.fx.some(function (q) { return q[0] === 'halation'; })) return;
+      var ph = VE.defaults('halation'); ph.amt = 0.32; ph.thr = 0.7; ph.rad = 0.02; ph.soft = 0.7;
+      fx.push({ id: 'halation', effId: 'fil-halo', params: ph, amount: 1, local: t, mask: VE.newMask() });
+    }
     return fx.length ? [{ kind: 'adjust', effects: fx }] : [];
   };
 
@@ -43050,19 +43059,26 @@ window.VE = window.VE || {};
                         lâmpada pisca e o contador conta os pés
      contador ......... pés de filme desta bitola (50 pés de Super
                         8 a 18 q/s são 3 min 20 s — é conta real)
-     porta do rolo .... abre os ROLOS gravados: baixar, usar na
-                        linha do tempo, apagar
-     seletor (a roda) . o FILME: PURO ou um dos nove olhares 8 MM
-                        do catálogo. Arrasta, rola, ou toca
+     LENTE (em cima) .. a lente do app: LIMPA, VAZAMENTO, HALO
+     seletor (a roda) . o FILME: PURO ou um dos dez filmes do app,
+                        medidos. Arrasta, rola, ou toca
+     centro da roda ... o TREMOR (o "frame jitter" do app)
      i ................ a plaqueta: o que cada peça faz
-     película ......... a gaveta das BITOLAS — 8 mm, Super 8,
+     tira de filme .... os ROLOS gravados: baixar, usar na linha
+                        do tempo, apagar (os "reels" do app)
+     câmera (giro) .... a gaveta das BITOLAS — 8 mm, Super 8,
                         16 mm, 35 mm. Cada uma é outra máquina
      rebobinar ........ volta a composição ao início
-     relâmpago ........ o vazamento de luz, liga e desliga
      grade ............ SOM: grava em tempo real, com o áudio
                         (desligado, grava exato, quadro a quadro)
      engrenagem ....... a telinha de ajustes (grão, sujeira,
                         tremor, cor…), no desenho do laboratório
+
+   A ORDEM DOS BOTÕES É A DO APP (a gravação de tela dele, 12/09/2026):
+   i · reels · trocar câmera · flash · som embaixo; change lens em
+   cima à direita; change film na roda; frame jitter no centro dela.
+   Aqui o flash virou REBOBINAR (não há tocha num laboratório) e o
+   change lens é a LENTE com três estados.
    ============================================================ */
 (function (VE) {
   'use strict';
@@ -43079,25 +43095,18 @@ window.VE = window.VE || {};
   function urlCss(u) { return "url('" + (u.indexOf('data:') === 0 ? u : new URL(u, document.baseURI).href) + "')"; }
   function $(s, raiz) { return (raiz || document).querySelector(s); }
 
-  /* a cor dos glifos, dos botões e da tinta gravada, por pele */
-  /* a tinta de uma carcaça de FOTO: escura (creme) ou clara (preta, em plaquetas) */
+  /* a tinta da carcaça: escura (glifos creme) ou clara (pretos, em plaquetas) */
   var TINTAS = {
     escura: { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
     clara: { glifo: '#1a1c1e', bt1: '#efefed', bt2: '#b9bab6', tinta: '#111', bisel: 'rgba(255,255,255,.55)', sombraTinta: 'rgba(255,255,255,.5)', halo: 'rgba(255,255,255,.9)', placa: 'rgba(238,238,234,.88)' }
-  };
-  var PELES = {
-    '8mm':  { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
-    's8':   { glifo: '#f1e2b4', bt1: '#5c4b3e', bt2: '#1a1410', tinta: '#f1e2b4', bisel: 'rgba(255,255,255,.18)', sombraTinta: 'rgba(0,0,0,.7)' },
-    '16mm': { glifo: '#f0b060', bt1: '#4c4d4f', bt2: '#151617', tinta: '#f0b060', bisel: 'rgba(255,255,255,.14)', sombraTinta: 'rgba(0,0,0,.7)' },
-    /* na pele clara a tinta é preta e ganha um HALO branco: sem ele o
-       nome gravado some na pintura martelada                          */
-    '35mm': { glifo: '#1a1c1e', bt1: '#efefed', bt2: '#b9bab6', tinta: '#111', bisel: 'rgba(255,255,255,.55)', sombraTinta: 'rgba(255,255,255,.5)', halo: 'rgba(255,255,255,.9)', placa: 'rgba(238,238,234,.88)' }
   };
 
   var ICO = {
     info: '<path d="M12 4.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM9.6 9.4h3.6v7.4h1.7v2H9.3v-2h1.7v-5.4H9.6z"/>',
     pelicula: '<path fill-rule="evenodd" d="M3 5h18v14H3zM5.4 7v2h2.2V7zm0 4v2h2.2v-2zm0 4v2h2.2v-2zm11 -8v2h2.2V7zm0 4v2h2.2v-2zm0 4v2h2.2v-2zM9.4 7.8h5.2v8.4H9.4z"/>',
     rebobinar: '<path d="M12 5.2V2.4L7.2 6l4.8 3.6V6.9a5.1 5.1 0 1 1-5.1 5.1H5.2A6.8 6.8 0 1 0 12 5.2z"/>',
+    /* trocar de câmera: as duas setas em volta, como no app */
+    camera: '<path d="M7 7.5h2.4l1.2-1.8h2.8l1.2 1.8H17a2 2 0 0 1 2 2v6.2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2zm5 2.2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M3 12.6l1.6-2.4 1.6 2.4zM21 11.4l-1.6 2.4-1.6-2.4z"/>',
     luz: '<path d="M13.4 2.4 5.6 13.2h5.1L9.4 21.6l8-11.2h-5.2z"/>',
     som: '<path fill-rule="evenodd" d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm-4 5.3v1.7h8V8.3zm-1.6 3.2v1.7h11.2v-1.7zm1.6 3.2v1.7h8v-1.7z"/>',
     eng: '<path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3H9l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h6l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/>',
@@ -43157,22 +43166,22 @@ window.VE = window.VE || {};
 
           '<div class="fil-botoes">' +
             '<button class="fil-bt" id="filInfo" title="O que cada peça faz">' + svg('info') + '<small>INFO</small></button>' +
-            '<button class="fil-bt" id="filPelicula" title="A bitola: 8 mm, Super 8, 16 mm, 35 mm">' + svg('pelicula') + '<small>BITOLA</small></button>' +
+            '<button class="fil-bt" id="filRolos" title="Os rolos gravados"><b id="filRolosN" class="hidden">0</b>' + svg('pelicula') + '<small>ROLOS</small></button>' +
+            '<button class="fil-bt" id="filPelicula" title="Trocar de câmera: 8 mm, Super 8, 16 mm, 35 mm">' + svg('camera') + '<small>BITOLA</small></button>' +
             '<button class="fil-bt" id="filRebobinar" title="Rebobinar: volta ao início">' + svg('rebobinar') + '<small>REBOB.</small></button>' +
-            '<button class="fil-bt" id="filVazamento" title="Vazamento de luz">' + svg('luz') + '<small>LUZ</small></button>' +
             '<button class="fil-bt" id="filSom" title="Som: grava em tempo real, com o áudio">' + svg('som') + '<small>SOM</small></button>' +
           '</div>' +
 
           '<div class="fil-contador" id="filContador"><b><span id="filPes">000.0</span><small>FT</small></b><span id="filTc">00:00</span></div>' +
           '<div class="fil-plaqueta" id="filPlaqueta"><b>FILMADORA</b><span id="filPlacaTxt">8 MM · 18 Q/S</span></div>' +
 
-          '<button class="fil-porta" id="filRolos" title="Os rolos gravados"><i></i><b id="filRolosN" class="hidden">0</b><small>ROLOS</small></button>' +
+          '<button class="fil-porta" id="filLente" title="A lente: limpa, vazamento de luz, halo"><i></i><small>LENTE</small></button>' +
           '<button class="fil-rec" id="filRec" title="Gravar a composição num rolo"><i></i></button>' +
           '<i class="fil-lampada" id="filLampada"></i>' +
           '<button class="fil-bt fil-eng" id="filAjustes" title="Ajustes da película">' + svg('eng') + '</button>' +
 
           '<div class="fil-seletor" id="filSeletor">' +
-            '<div class="fil-roda" id="filRoda" title="O filme: arraste, role ou toque"><canvas id="filDisco"></canvas><i class="fil-roda-marca"></i><i class="fil-roda-tampa"></i></div>' +
+            '<div class="fil-roda" id="filRoda" title="O filme: arraste, role ou toque"><canvas id="filDisco"></canvas><i class="fil-roda-marca"></i><button class="fil-roda-tampa" id="filTremor" title="Tremor do quadro (liga e desliga)"></button></div>' +
             '<div class="fil-rotulo" id="filRotulo" title="Próximo filme">60s</div>' +
           '</div>' +
         '</div>' +
@@ -43196,15 +43205,14 @@ window.VE = window.VE || {};
   /* ==================================================================
      A PELE — a bitola veste a máquina                               */
   function vestir() {
-    var b = F.bitola(F.est.bitola), p = PELES[b.id] || PELES['8mm'], cam = el('filCam');
-    /* a carcaça: foto (os couros do Bruno, ou a do PC) ou a calculada */
-    var carc = F.carcacaDe(b.id);
-    if (carc.url) p = TINTAS[carc.tinta] || TINTAS.escura;
-    cam.className = 'fil-cam pele-' + b.id + (carc.url ? ' foto' : '');
-    cam.style.setProperty('--fil-pele', carc.url ? urlCss(carc.url) : F.pele(b.pele, b.cor));
-    /* a gaveta dos rolos veste o mesmo couro, quando é foto escura */
-    el('filPalco').style.setProperty('--fil-couro', (carc.url && carc.tinta === 'escura') ? urlCss(carc.url) : F.pele('couro', [30, 29, 28]));
-    el('filGavetaRolos').classList.toggle('foto', !!(carc.url && carc.tinta === 'escura'));
+    var b = F.bitola(F.est.bitola), cam = el('filCam');
+    /* a carcaça é da bitola (foto), e a tinta vem com ela */
+    var carc = F.carcacaDe(b.id), p = TINTAS[carc.tinta] || TINTAS.escura;
+    cam.className = 'fil-cam pele-' + b.id + ' foto';
+    cam.style.setProperty('--fil-pele', urlCss(carc.url));
+    /* a gaveta dos rolos veste o couro preto */
+    el('filPalco').style.setProperty('--fil-couro', urlCss(F.bitola('8mm').carcaca));
+    el('filGavetaRolos').classList.add('foto');
     cam.style.setProperty('--fil-glifo', p.glifo);
     cam.style.setProperty('--fil-bt1', p.bt1);
     cam.style.setProperty('--fil-bt2', p.bt2);
@@ -43213,7 +43221,7 @@ window.VE = window.VE || {};
     cam.style.setProperty('--fil-sombra-tinta', p.sombraTinta);
     cam.style.setProperty('--fil-halo', p.halo || 'rgba(0,0,0,0)');
     cam.style.setProperty('--fil-op', p.halo ? '1' : '');
-    cam.style.setProperty('--fil-placa', p.placa || (carc.url ? 'rgba(8,8,8,.62)' : 'transparent'));
+    cam.style.setProperty('--fil-placa', p.placa || 'rgba(8,8,8,.62)');
     el('filPlacaTxt').textContent = b.nome + ' · ' + b.fps + ' Q/S';
     el('filPalco').style.setProperty('--fil-plastico', F.pele('pontilhada', [224, 224, 220]));
     /* o disco torneado do seletor, no tamanho em que aparece */
@@ -43333,8 +43341,18 @@ window.VE = window.VE || {};
       VE.app.seek(0);
       var b = el('filRebobinar'); b.classList.remove('gira'); void b.offsetWidth; b.classList.add('gira');
     });
-    el('filVazamento').addEventListener('click', function () {
-      F.est.vazamento = !F.est.vazamento; F.guardar(); pintarBotoes();
+    /* a LENTE gira entre três estados, como o botão do app */
+    el('filLente').addEventListener('click', function () {
+      F.est.lente = (F.est.lente + 1) % 3; F.guardar(); pintarBotoes();
+      VE.app.toast(['LENTE LIMPA', 'LENTE COM VAZAMENTO DE LUZ', 'LENTE COM HALO'][F.est.lente]);
+    });
+    /* o centro da roda é o TREMOR — e não pode virar o seletor */
+    var tampa = el('filTremor');
+    tampa.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+    tampa.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      F.est.tremor = !F.est.tremor; F.guardar(); pintarBotoes();
+      VE.app.toast(F.est.tremor ? 'TREMOR ligado' : 'TREMOR desligado');
     });
     el('filSom').addEventListener('click', function () {
       if (F.est.gravando) return;
@@ -43342,7 +43360,7 @@ window.VE = window.VE || {};
       VE.app.toast(F.est.som ? 'SOM: grava em tempo real, com o áudio (o gravador do navegador)' : 'SEM SOM: grava exato, quadro a quadro (o codificador)');
     });
 
-    /* a porta, o vermelho, a engrenagem */
+    /* os rolos, o vermelho, a engrenagem */
     el('filRolos').addEventListener('click', function () { gaveta('rolos'); });
     el('filAjustes').addEventListener('click', function () { abrirTela('ajustes'); });
     el('filRec').addEventListener('click', function () {
@@ -43425,7 +43443,8 @@ window.VE = window.VE || {};
     if (est.tela === 'sobre') paginaSobre();
   }
   function pintarBotoes() {
-    el('filVazamento').classList.toggle('on', !!F.est.vazamento);
+    var l = el('filLente'); l.className = 'fil-porta lente-' + (F.est.lente | 0);
+    el('filTremor').classList.toggle('off', !F.est.tremor);
     el('filSom').classList.toggle('on', !!F.est.som);
   }
 
@@ -43445,30 +43464,14 @@ window.VE = window.VE || {};
     el('filGavetaRolos').classList.remove('aberta');
   }
 
-  function peleDe(b) {
-    var c = F.carcacaDe(b.id);
-    return c.url ? urlCss(c.url) : F.pele(b.pele, b.cor);
-  }
   function pintarBitolas() {
-    var g = el('filGavetaPel'), atual = F.bitola(F.est.bitola), esc = F.carcacaDe(atual.id);
-    var lista = F.CARCACAS.slice();
-    if (F.est.propria) lista.splice(3, 0, { id: 'propria', nome: 'DO PC', url: F.est.propria.url });
+    var g = el('filGavetaPel');
     g.innerHTML =
       '<div class="fil-gav-linha">' + F.BITOLAS.map(function (b) {
         return '<button class="fil-mini' + (b.id === F.est.bitola ? ' on' : '') + '" data-bitola="' + b.id + '" title="' + b.desc + '">' +
-          '<i style="--pele:' + peleDe(b) + ';--ar:' + b.visor.toFixed(3) + '"' + (F.carcacaDe(b.id).url ? ' class="foto"' : '') + '></i>' +
+          '<i class="foto" style="--pele:' + urlCss(b.carcaca) + ';--ar:' + b.visor.toFixed(3) + '"></i>' +
           '<span>' + b.nome + '</span><em>' + b.rotulo + ' · ' + b.fps + ' Q/S</em></button>';
-      }).join('') + '</div>' +
-      /* a CARCAÇA da máquina escolhida: os couros da pasta, a do PC, a
-         calculada — e o botão que sobe uma foto nova                  */
-      '<div class="fil-gav-linha fil-carcacas"><b>CARCAÇA · ' + atual.nome + '</b>' + lista.map(function (c) {
-        var pele = c.url ? urlCss(c.url) : F.pele(atual.pele, atual.cor);
-        return '<button class="fil-carc' + (c.id === esc.id ? ' on' : '') + '" data-carcaca="' + c.id + '" title="' + (c.id === 'calculada' ? 'relevo calculado, sem arquivo' : c.nome) + '">' +
-          '<i style="--pele:' + pele + '"' + (c.url ? ' class="foto"' : '') + '></i><span>' + c.nome + '</span></button>';
-      }).join('') +
-      '<button class="fil-carc fil-carc-subir" id="filSubir" title="Uma foto de couro, tecido, metal — qualquer imagem do seu computador">' +
-        '<i><svg viewBox="0 0 24 24"><path d="M12 3.5l5 5.2h-3.2v6.3h-3.6V8.7H7z"/><path d="M4.5 15.5v4.2h15v-4.2h-2.2v2h-10.6v-2z"/></svg></i><span>SUBIR DO PC</span></button>' +
-      '<input type="file" id="filSubirArq" accept="image/*" hidden></div>';
+      }).join('') + '</div>';
     g.querySelectorAll('[data-bitola]').forEach(function (bt) {
       bt.addEventListener('click', function () {
         if (F.est.gravando) { VE.app.toast('termine a gravação antes de trocar a bitola', 'err'); return; }
@@ -43477,22 +43480,6 @@ window.VE = window.VE || {};
         if (VE.app.clearFeedback) VE.app.clearFeedback();
         if (est.tela === 'sobre') paginaSobre();
       });
-    });
-    g.querySelectorAll('[data-carcaca]').forEach(function (bt) {
-      bt.addEventListener('click', function () {
-        F.escolherCarcaca(F.est.bitola, bt.dataset.carcaca);
-        vestir(); pintarBitolas();
-      });
-    });
-    var arq = el('filSubirArq');
-    el('filSubir').addEventListener('click', function () { arq.value = ''; arq.click(); });
-    arq.addEventListener('change', function () {
-      var f = arq.files && arq.files[0]; if (!f) return;
-      F.subirCarcaca(f).then(function (p) {
-        F.escolherCarcaca(F.est.bitola, 'propria');
-        vestir(); pintarBitolas();
-        VE.app.toast('carcaça nova: ' + p.nome + (p.tinta === 'clara' ? ' (clara — glifos pretos)' : ''), 'ok');
-      }).catch(function (e) { VE.app.toast(e.message, 'err'); });
     });
   }
 
@@ -43551,7 +43538,7 @@ window.VE = window.VE || {};
     ['grao', 'GRÃO', 0, 2, ''],
     ['sujeira', 'SUJEIRA', 0, 2, 'poeira e fiapos na janela'],
     ['tremor', 'TREMOR', 0, 2, 'o quadro dançando na janela'],
-    ['vazamento', 'VAZAMENTO', 0, 2, 'a luz que entra pelo chassi (o relâmpago liga e desliga)'],
+    ['vazamento', 'VAZAMENTO', 0, 2, 'a luz que entra pelo chassi (a LENTE liga)'],
     ['janela', 'SOMBRA DA JANELA', 0, 2, 'a borda escura do quadro']
   ];
   function paginaAjustes() {
@@ -43613,18 +43600,19 @@ window.VE = window.VE || {};
     var b = F.bitola(F.est.bitola), f = F.filme(F.est.filme);
     el('filTelaPag').innerHTML =
       '<div class="fil-sub">A MÁQUINA</div>' +
-      '<div class="fil-nota"><b>' + b.nome + '</b> — ' + b.desc + '. Filme no seletor: <b>' + f.nome + '</b>. ' +
+      '<div class="fil-nota"><b>' + b.nome + '</b> — ' + b.desc + '. Filme no seletor: <b>' + f.nome + '</b>. Lente: <b>' + ['LIMPA', 'VAZAMENTO', 'HALO'][F.est.lente | 0] + '</b>. ' +
         'Um carregador de ' + b.rolo + ' pés dura ' + Math.round(b.rolo * b.ppf / b.fps) + ' s a ' + b.fps + ' q/s.</div>' +
       '<div class="fil-sub">AS PEÇAS</div>' +
       '<div class="fil-lista">' +
         linha('VISOR', 'a composição com a película. Clique toca e pausa; a barra de espaço também.') +
         linha('BOTÃO VERMELHO', 'grava a composição (ou o trecho I–O) num rolo, com a película. Apertar de novo cancela.') +
         linha('CONTADOR', 'pés de filme desta bitola. A ' + b.fps + ' q/s, ' + b.ppf + ' quadros fazem um pé.') +
-        linha('PORTA', 'os rolos gravados: baixar, usar na linha do tempo, apagar.') +
-        linha('SELETOR', 'o filme: PURO é a película da bitola; os outros são os olhares 8 MM do catálogo. Arraste, role ou toque. ← → também.') +
-        linha('BITOLA', 'a gaveta das máquinas: 8 mm, Super 8, 16 mm, 35 mm. Embaixo, a CARCAÇA: os couros da pasta, a calculada, ou uma foto que você sobe do PC.') +
+        linha('LENTE', 'em cima, à direita: LIMPA, VAZAMENTO de luz, HALO — gira a cada toque.') +
+        linha('SELETOR', 'o filme: PURO é a película da bitola; os outros são os dez filmes do app, medidos da saída dele. Arraste, role ou toque. ← → também.') +
+        linha('CENTRO DA RODA', 'o TREMOR do quadro, liga e desliga.') +
+        linha('ROLOS', 'a tira de filme: os rolos gravados — baixar, usar na linha do tempo, apagar.') +
+        linha('BITOLA', 'a câmera que gira: a gaveta das máquinas, 8 mm, Super 8, 16 mm, 35 mm — cada uma com o seu couro.') +
         linha('REBOB.', 'volta ao início.') +
-        linha('LUZ', 'o vazamento pelo chassi, liga e desliga.') +
         linha('SOM', 'grava em tempo real com o áudio; desligado, grava exato, sem som.') +
         linha('ENGRENAGEM', 'a telinha de ajustes.') +
       '</div>' +

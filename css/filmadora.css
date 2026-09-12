@@ -89,7 +89,10 @@
 /* a vinheta da peça: mais clara onde a luz bate, mais escura em baixo */
 /* carcaça de FOTO: uma imagem só, esticada sobre a máquina (as fotos de
    couro não emendam como ladrilho; a calculada emenda e repete)      */
-.fil-cam.foto{background-size:cover;background-position:center}
+/* o ladrilho espelhado 2×2 mede 86% da largura da máquina: cada foto de
+   couro cabe duas vezes na largura, com o grão na metade do tamanho da
+   primeira versão ("muito zoom", disse ele)                            */
+.fil-cam.foto{background-size:calc(var(--u) * 86) auto;background-position:0 0;background-repeat:repeat}
 .fil-cam::before{
   content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
   border-radius:inherit;
@@ -223,6 +226,16 @@
   background:linear-gradient(180deg, #cfcfca, #8d8d88);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.65), inset 0 -2px 3px rgba(0,0,0,.35);
 }
+/* vazamento: a laranja entrando pelo canto; halo: a luz no escuro */
+.fil-porta.lente-1 i{background:linear-gradient(135deg, #ffb347 0%, #ff7a1a 45%, #c8401a 100%)}
+.fil-porta.lente-2 i{background:radial-gradient(circle at 50% 45%, #fff 0%, #ffe9b0 14%, #3a2a1a 40%, #0a0a0a 75%)}
+.fil-bt > b{
+  position:absolute;right:-18%;top:-18%;min-width:calc(var(--u) * 2.4);height:calc(var(--u) * 2.4);
+  border-radius:999px;background:#c8102e;color:#fff;font-weight:600;font-family:var(--mono);
+  font-size:calc(var(--u) * 1.2);line-height:calc(var(--u) * 2.4);text-align:center;padding:0 calc(var(--u) * .4);
+  box-shadow:0 1px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.3);z-index:2;
+}
+.fil-bt > b.hidden{display:none}
 .fil-porta b{
   position:absolute;right:-8%;top:-16%;min-width:calc(var(--u) * 2.8);height:calc(var(--u) * 2.8);
   border-radius:999px;background:#c8102e;color:#fff;font-weight:600;
@@ -305,10 +318,17 @@
   pointer-events:none;
 }
 .fil-roda-tampa{
-  position:absolute;left:44.5%;top:44.5%;width:11%;height:11%;border-radius:50%;
+  position:absolute;left:43%;top:43%;width:14%;height:14%;border-radius:50%;border:0;padding:0;cursor:pointer;
   background:radial-gradient(circle at 40% 35%, #f3e6b8, #a8862e 68%, #5b4512);
-  box-shadow:0 1px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.45);
+  box-shadow:0 1px 2px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.45), 0 0 0 2px rgba(0,0,0,.35);
+  transition:filter .15s;
 }
+.fil-roda-tampa::after{
+  content:"";position:absolute;left:34%;top:34%;width:32%;height:32%;border-radius:50%;
+  background:#2a1d08;box-shadow:inset 0 1px 1px rgba(0,0,0,.8);
+}
+/* tremor desligado: a tampa apaga */
+.fil-roda-tampa.off{filter:grayscale(.85) brightness(.75)}
 .fil-roda-marca{
   position:absolute;left:50%;top:2.6%;width:2px;height:8%;margin-left:-1px;border-radius:2px;
   background:var(--fil-creme);opacity:.9;
@@ -424,32 +444,12 @@
 /* a das BITOLAS sobe do chão do palco: plástico claro pontilhado, as
    quatro máquinas em miniatura, a escolhida com o nome numa pastilha */
 .fil-gaveta-pel{
-  left:0;right:0;bottom:0;height:262px;transform:translateY(103%);
+  left:0;right:0;bottom:0;height:176px;transform:translateY(103%);
   background:var(--fil-plastico) center / 160px repeat, #dcdcd8;
   box-shadow:0 -12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.75);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
 }
 .fil-gav-linha{display:flex;align-items:center;justify-content:center;gap:30px}
-/* a linha da CARCAÇA: pastilhas redondas com o material, o nome embaixo */
-.fil-carcacas{gap:10px;padding-top:12px;border-top:1px solid rgba(0,0,0,.08);width:min(860px, 94vw)}
-.fil-carcacas > b{font-size:8.5px;letter-spacing:.22em;color:#555;font-weight:600;margin-right:8px;white-space:nowrap}
-.fil-carc{
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  border:0;background:transparent;cursor:pointer;padding:4px 6px;
-}
-.fil-carc i{
-  display:block;width:40px;height:40px;border-radius:50%;
-  background:var(--pele) center / 90px repeat, #333;
-  box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.25);
-  transition:transform .15s;
-}
-.fil-carc i.foto{background-size:cover}
-.fil-carc:hover i{transform:translateY(-2px)}
-.fil-carc span{font-size:8px;letter-spacing:.16em;color:#2a2a2a;padding:3px 8px;border-radius:999px;white-space:nowrap}
-.fil-carc.on i{box-shadow:0 3px 8px rgba(0,0,0,.35), 0 0 0 2px #161616}
-.fil-carc.on span{background:#161616;color:#fff}
-.fil-carc-subir i{background:#f4f4f1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.25)}
-.fil-carc-subir i svg{width:20px;height:20px;fill:#222;display:block}
 .fil-mini i.foto{background-size:cover}
 .fil-gaveta-pel.aberta{transform:translateY(0)}
 .fil-mini{
@@ -480,12 +480,14 @@
    de filme com as perfurações, o carimbo laranja da data            */
 .fil-gaveta-rolos{
   top:0;bottom:0;right:0;width:min(350px, 92vw);transform:translateX(103%);
-  background:var(--fil-couro) center / 150px repeat, #141414;
+  /* o couro preto, escurecido por um véu: os rolos e os nomes têm de ler
+     por cima dele. O ladrilho entra pequeno (grão fino) e repetido.    */
+  background:linear-gradient(rgba(8,8,8,.7), rgba(8,8,8,.7)), var(--fil-couro) 0 0 / 300px auto repeat, #141414;
   box-shadow:-14px 0 40px rgba(0,0,0,.65);
   display:flex;flex-direction:column;
 }
 .fil-gaveta-rolos.aberta{transform:translateX(0)}
-.fil-gaveta-rolos.foto{background-size:cover;background-position:center}
+.fil-gaveta-rolos.foto{background-size:auto, 300px auto;background-position:0 0}
 .fil-gav-h{
   display:flex;align-items:center;gap:10px;padding:18px 18px 12px;
   color:var(--fil-creme);font-size:10px;letter-spacing:.26em;
@@ -539,7 +541,7 @@
 /* em tela baixa a máquina encolhe pela altura (já está na conta de
    `--larg`); a gaveta das bitolas fica mais baixa para não a cobrir */
 @media (max-height:640px){
-  .fil-gaveta-pel{height:224px;gap:8px}
+  .fil-gaveta-pel{height:140px;gap:8px}
   .fil-gav-linha{gap:18px}
   .fil-mini i{width:96px;height:58px}
 }

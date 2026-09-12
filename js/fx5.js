@@ -537,38 +537,44 @@
     {
       id: 'p8mm', name: '8 mm caseiro', desc: '18 quadros por segundo, imagem macia, cor desbotada e a janela com sombra — o 8mm Vintage Camera',
       fx: [
+        /* MEDIDO na saída do app (12/09/2026, a carta de calibração filmada):
+           borda 10–90% de 10 px em 960 (σ ≈ 3,6 px → raio 0,3), grão com
+           desvio ≈ 1 nível e célula de 2 px, cintilação 0,06% (nada),
+           tremor só vertical e esporádico (≤ 0,5% da altura), a janela
+           preta quase no limite do quadro com sombra de ~3% — e nada de
+           beira de filme nem perfuração (ele pediu para tirar).       */
         ['cadencia', { fps: 18 }],
-        ['blur', { rad: 0.09, mixv: 0.6 }],
+        ['blur', { rad: 0.3, mixv: 0.6 }],
         ['filmstock', { exp: 0.03, con: 0.02, sat: -0.1, temp: 0.16, tintg: -0.05, fade: 0.11, roll: 0.5, split: 0.36, shTint: '#33262f', hiTint: '#f7eec2', vig: 0.08, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 0, amt: 0.08, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
-        ['dustscratch', { dust: 0.03, dustSize: 0.4, scratch: 0, hair: 0.012, fps: 12 }],
-        ['gateweave', { amt: 0.06, spd: 1.2, rot: 0.04, jump: 0.05, jumpRate: 0.1 }],
+        ['filmgrain', { fmt: 0, amt: 0.035, shadow: 0.6, color: 0.15, suave: 0.3, fps: 18 }],
+        ['dustscratch', { dust: 0.02, dustSize: 0.3, scratch: 0, hair: 0.008, fps: 12 }],
+        ['gateweave', { amt: 0.02, spd: 1.0, rot: 0, jump: 0.06, jumpRate: 2.5 }],
         ['lightleak', { amt: 0.3, side: 0, width: 0.22, spd: 0.25, flick: 0.15, bloom: 0.7, raro: 0.35 }],
-        ['filmgate', { fmt: 0, forma: 1, tam: 0.88, zoom: 1.0, soft: 0.01, round: 0.75, vig: 0.1, sombra: 0.45, sombraW: 0.08, flick: 0.07, flickHz: 18, weave: 0.05 }]
+        ['filmgate', { fmt: 0, forma: 1, tam: 0.97, zoom: 1.0, soft: 0.008, round: 0.6, vig: 0.12, sombra: 0.8, sombraW: 0.04, flick: 0.005, flickHz: 18, weave: 0.02 }]
       ]
     },
     {
       id: 'psuper8', name: 'Super 8', desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente',
       fx: [
         ['cadencia', { fps: 18 }],
-        ['blur', { rad: 0.07, mixv: 0.5 }],
+        ['blur', { rad: 0.24, mixv: 0.5 }],
         ['filmstock', { exp: 0.03, con: 0.06, sat: -0.04, temp: 0.2, tintg: -0.03, fade: 0.1, roll: 0.5, split: 0.34, shTint: '#30241e', hiTint: '#ffeec8', vig: 0.06, grain: 0, sharp: 0 }],
-        ['filmgrain', { fmt: 1, amt: 0.07, shadow: 0.7, color: 0.1, suave: 0.35, fps: 18 }],
-        ['dustscratch', { dust: 0.025, dustSize: 0.35, scratch: 0, hair: 0.01, fps: 12 }],
-        ['gateweave', { amt: 0.04, spd: 1.1, rot: 0.03, jump: 0.04, jumpRate: 0.08 }],
+        ['filmgrain', { fmt: 1, amt: 0.03, shadow: 0.6, color: 0.15, suave: 0.3, fps: 18 }],
+        ['dustscratch', { dust: 0.016, dustSize: 0.3, scratch: 0, hair: 0.006, fps: 12 }],
+        ['gateweave', { amt: 0.015, spd: 1.0, rot: 0, jump: 0.05, jumpRate: 2 }],
         ['lightleak', { amt: 0.22, side: 0, width: 0.2, spd: 0.2, flick: 0.12, bloom: 0.7, raro: 0.25 }],
-        ['filmgate', { fmt: 1, forma: 1, tam: 0.9, zoom: 1.0, soft: 0.009, round: 0.7, vig: 0.1, sombra: 0.45, sombraW: 0.075, flick: 0.06, flickHz: 18, weave: 0.05 }]
+        ['filmgate', { fmt: 1, forma: 1, tam: 0.97, zoom: 1.0, soft: 0.008, round: 0.55, vig: 0.1, sombra: 0.75, sombraW: 0.035, flick: 0.005, flickHz: 18, weave: 0.02 }]
       ]
     },
     {
-      id: 'p16mm', name: '16 mm documentário', desc: '24 por segundo, cor neutra de negativo (250D), grão fino e a tira de filme com as perfurações — o Super 16',
+      id: 'p16mm', name: '16 mm documentário', desc: '24 por segundo, cor neutra de negativo (250D), grão fino — o Super 16',
       fx: [
         ['cadencia', { fps: 24 }],
         ['blur', { rad: 0.04, mixv: 0.4 }],
         ['filmstock', { exp: 0, con: 0.12, sat: -0.02, temp: 0.04, fade: 0.07, roll: 0.4, split: 0.24, shTint: '#1e2428', hiTint: '#fff2de', vig: 0.06, grain: 0, sharp: 0.1 }],
         ['filmgrain', { fmt: 2, amt: 0.06, shadow: 0.6, color: 0.08, suave: 0.4, fps: 24 }],
         ['gateweave', { amt: 0.025, spd: 1.0, rot: 0.02, jump: 0.02, jumpRate: 0.06 }],
-        ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.03, flickHz: 24, weave: 0.03, holes: 1, holeSide: 0, edge: '#3a2413' }]
+        ['filmgate', { fmt: 2, zoom: 1.02, soft: 0.007, round: 0.9, vig: 0.06, sombra: 0.35, sombraW: 0.06, flick: 0.01, flickHz: 24, weave: 0.02, holes: 0 }]
       ]
     },
     {

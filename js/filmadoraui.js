@@ -12,19 +12,26 @@
                         lâmpada pisca e o contador conta os pés
      contador ......... pés de filme desta bitola (50 pés de Super
                         8 a 18 q/s são 3 min 20 s — é conta real)
-     porta do rolo .... abre os ROLOS gravados: baixar, usar na
-                        linha do tempo, apagar
-     seletor (a roda) . o FILME: PURO ou um dos nove olhares 8 MM
-                        do catálogo. Arrasta, rola, ou toca
+     LENTE (em cima) .. a lente do app: LIMPA, VAZAMENTO, HALO
+     seletor (a roda) . o FILME: PURO ou um dos dez filmes do app,
+                        medidos. Arrasta, rola, ou toca
+     centro da roda ... o TREMOR (o "frame jitter" do app)
      i ................ a plaqueta: o que cada peça faz
-     película ......... a gaveta das BITOLAS — 8 mm, Super 8,
+     tira de filme .... os ROLOS gravados: baixar, usar na linha
+                        do tempo, apagar (os "reels" do app)
+     câmera (giro) .... a gaveta das BITOLAS — 8 mm, Super 8,
                         16 mm, 35 mm. Cada uma é outra máquina
      rebobinar ........ volta a composição ao início
-     relâmpago ........ o vazamento de luz, liga e desliga
      grade ............ SOM: grava em tempo real, com o áudio
                         (desligado, grava exato, quadro a quadro)
      engrenagem ....... a telinha de ajustes (grão, sujeira,
                         tremor, cor…), no desenho do laboratório
+
+   A ORDEM DOS BOTÕES É A DO APP (a gravação de tela dele, 12/09/2026):
+   i · reels · trocar câmera · flash · som embaixo; change lens em
+   cima à direita; change film na roda; frame jitter no centro dela.
+   Aqui o flash virou REBOBINAR (não há tocha num laboratório) e o
+   change lens é a LENTE com três estados.
    ============================================================ */
 (function (VE) {
   'use strict';
@@ -41,25 +48,18 @@
   function urlCss(u) { return "url('" + (u.indexOf('data:') === 0 ? u : new URL(u, document.baseURI).href) + "')"; }
   function $(s, raiz) { return (raiz || document).querySelector(s); }
 
-  /* a cor dos glifos, dos botões e da tinta gravada, por pele */
-  /* a tinta de uma carcaça de FOTO: escura (creme) ou clara (preta, em plaquetas) */
+  /* a tinta da carcaça: escura (glifos creme) ou clara (pretos, em plaquetas) */
   var TINTAS = {
     escura: { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
     clara: { glifo: '#1a1c1e', bt1: '#efefed', bt2: '#b9bab6', tinta: '#111', bisel: 'rgba(255,255,255,.55)', sombraTinta: 'rgba(255,255,255,.5)', halo: 'rgba(255,255,255,.9)', placa: 'rgba(238,238,234,.88)' }
-  };
-  var PELES = {
-    '8mm':  { glifo: '#e8d9a8', bt1: '#4c4c4c', bt2: '#121212', tinta: '#e8d9a8', bisel: 'rgba(255,255,255,.16)', sombraTinta: 'rgba(0,0,0,.7)' },
-    's8':   { glifo: '#f1e2b4', bt1: '#5c4b3e', bt2: '#1a1410', tinta: '#f1e2b4', bisel: 'rgba(255,255,255,.18)', sombraTinta: 'rgba(0,0,0,.7)' },
-    '16mm': { glifo: '#f0b060', bt1: '#4c4d4f', bt2: '#151617', tinta: '#f0b060', bisel: 'rgba(255,255,255,.14)', sombraTinta: 'rgba(0,0,0,.7)' },
-    /* na pele clara a tinta é preta e ganha um HALO branco: sem ele o
-       nome gravado some na pintura martelada                          */
-    '35mm': { glifo: '#1a1c1e', bt1: '#efefed', bt2: '#b9bab6', tinta: '#111', bisel: 'rgba(255,255,255,.55)', sombraTinta: 'rgba(255,255,255,.5)', halo: 'rgba(255,255,255,.9)', placa: 'rgba(238,238,234,.88)' }
   };
 
   var ICO = {
     info: '<path d="M12 4.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM9.6 9.4h3.6v7.4h1.7v2H9.3v-2h1.7v-5.4H9.6z"/>',
     pelicula: '<path fill-rule="evenodd" d="M3 5h18v14H3zM5.4 7v2h2.2V7zm0 4v2h2.2v-2zm0 4v2h2.2v-2zm11 -8v2h2.2V7zm0 4v2h2.2v-2zm0 4v2h2.2v-2zM9.4 7.8h5.2v8.4H9.4z"/>',
     rebobinar: '<path d="M12 5.2V2.4L7.2 6l4.8 3.6V6.9a5.1 5.1 0 1 1-5.1 5.1H5.2A6.8 6.8 0 1 0 12 5.2z"/>',
+    /* trocar de câmera: as duas setas em volta, como no app */
+    camera: '<path d="M7 7.5h2.4l1.2-1.8h2.8l1.2 1.8H17a2 2 0 0 1 2 2v6.2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2zm5 2.2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/><path d="M3 12.6l1.6-2.4 1.6 2.4zM21 11.4l-1.6 2.4-1.6-2.4z"/>',
     luz: '<path d="M13.4 2.4 5.6 13.2h5.1L9.4 21.6l8-11.2h-5.2z"/>',
     som: '<path fill-rule="evenodd" d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm-4 5.3v1.7h8V8.3zm-1.6 3.2v1.7h11.2v-1.7zm1.6 3.2v1.7h8v-1.7z"/>',
     eng: '<path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3H9l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h6l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/>',
@@ -119,22 +119,22 @@
 
           '<div class="fil-botoes">' +
             '<button class="fil-bt" id="filInfo" title="O que cada peça faz">' + svg('info') + '<small>INFO</small></button>' +
-            '<button class="fil-bt" id="filPelicula" title="A bitola: 8 mm, Super 8, 16 mm, 35 mm">' + svg('pelicula') + '<small>BITOLA</small></button>' +
+            '<button class="fil-bt" id="filRolos" title="Os rolos gravados"><b id="filRolosN" class="hidden">0</b>' + svg('pelicula') + '<small>ROLOS</small></button>' +
+            '<button class="fil-bt" id="filPelicula" title="Trocar de câmera: 8 mm, Super 8, 16 mm, 35 mm">' + svg('camera') + '<small>BITOLA</small></button>' +
             '<button class="fil-bt" id="filRebobinar" title="Rebobinar: volta ao início">' + svg('rebobinar') + '<small>REBOB.</small></button>' +
-            '<button class="fil-bt" id="filVazamento" title="Vazamento de luz">' + svg('luz') + '<small>LUZ</small></button>' +
             '<button class="fil-bt" id="filSom" title="Som: grava em tempo real, com o áudio">' + svg('som') + '<small>SOM</small></button>' +
           '</div>' +
 
           '<div class="fil-contador" id="filContador"><b><span id="filPes">000.0</span><small>FT</small></b><span id="filTc">00:00</span></div>' +
           '<div class="fil-plaqueta" id="filPlaqueta"><b>FILMADORA</b><span id="filPlacaTxt">8 MM · 18 Q/S</span></div>' +
 
-          '<button class="fil-porta" id="filRolos" title="Os rolos gravados"><i></i><b id="filRolosN" class="hidden">0</b><small>ROLOS</small></button>' +
+          '<button class="fil-porta" id="filLente" title="A lente: limpa, vazamento de luz, halo"><i></i><small>LENTE</small></button>' +
           '<button class="fil-rec" id="filRec" title="Gravar a composição num rolo"><i></i></button>' +
           '<i class="fil-lampada" id="filLampada"></i>' +
           '<button class="fil-bt fil-eng" id="filAjustes" title="Ajustes da película">' + svg('eng') + '</button>' +
 
           '<div class="fil-seletor" id="filSeletor">' +
-            '<div class="fil-roda" id="filRoda" title="O filme: arraste, role ou toque"><canvas id="filDisco"></canvas><i class="fil-roda-marca"></i><i class="fil-roda-tampa"></i></div>' +
+            '<div class="fil-roda" id="filRoda" title="O filme: arraste, role ou toque"><canvas id="filDisco"></canvas><i class="fil-roda-marca"></i><button class="fil-roda-tampa" id="filTremor" title="Tremor do quadro (liga e desliga)"></button></div>' +
             '<div class="fil-rotulo" id="filRotulo" title="Próximo filme">60s</div>' +
           '</div>' +
         '</div>' +
@@ -158,15 +158,14 @@
   /* ==================================================================
      A PELE — a bitola veste a máquina                               */
   function vestir() {
-    var b = F.bitola(F.est.bitola), p = PELES[b.id] || PELES['8mm'], cam = el('filCam');
-    /* a carcaça: foto (os couros do Bruno, ou a do PC) ou a calculada */
-    var carc = F.carcacaDe(b.id);
-    if (carc.url) p = TINTAS[carc.tinta] || TINTAS.escura;
-    cam.className = 'fil-cam pele-' + b.id + (carc.url ? ' foto' : '');
-    cam.style.setProperty('--fil-pele', carc.url ? urlCss(carc.url) : F.pele(b.pele, b.cor));
-    /* a gaveta dos rolos veste o mesmo couro, quando é foto escura */
-    el('filPalco').style.setProperty('--fil-couro', (carc.url && carc.tinta === 'escura') ? urlCss(carc.url) : F.pele('couro', [30, 29, 28]));
-    el('filGavetaRolos').classList.toggle('foto', !!(carc.url && carc.tinta === 'escura'));
+    var b = F.bitola(F.est.bitola), cam = el('filCam');
+    /* a carcaça é da bitola (foto), e a tinta vem com ela */
+    var carc = F.carcacaDe(b.id), p = TINTAS[carc.tinta] || TINTAS.escura;
+    cam.className = 'fil-cam pele-' + b.id + ' foto';
+    cam.style.setProperty('--fil-pele', urlCss(carc.url));
+    /* a gaveta dos rolos veste o couro preto */
+    el('filPalco').style.setProperty('--fil-couro', urlCss(F.bitola('8mm').carcaca));
+    el('filGavetaRolos').classList.add('foto');
     cam.style.setProperty('--fil-glifo', p.glifo);
     cam.style.setProperty('--fil-bt1', p.bt1);
     cam.style.setProperty('--fil-bt2', p.bt2);
@@ -175,7 +174,7 @@
     cam.style.setProperty('--fil-sombra-tinta', p.sombraTinta);
     cam.style.setProperty('--fil-halo', p.halo || 'rgba(0,0,0,0)');
     cam.style.setProperty('--fil-op', p.halo ? '1' : '');
-    cam.style.setProperty('--fil-placa', p.placa || (carc.url ? 'rgba(8,8,8,.62)' : 'transparent'));
+    cam.style.setProperty('--fil-placa', p.placa || 'rgba(8,8,8,.62)');
     el('filPlacaTxt').textContent = b.nome + ' · ' + b.fps + ' Q/S';
     el('filPalco').style.setProperty('--fil-plastico', F.pele('pontilhada', [224, 224, 220]));
     /* o disco torneado do seletor, no tamanho em que aparece */
@@ -295,8 +294,18 @@
       VE.app.seek(0);
       var b = el('filRebobinar'); b.classList.remove('gira'); void b.offsetWidth; b.classList.add('gira');
     });
-    el('filVazamento').addEventListener('click', function () {
-      F.est.vazamento = !F.est.vazamento; F.guardar(); pintarBotoes();
+    /* a LENTE gira entre três estados, como o botão do app */
+    el('filLente').addEventListener('click', function () {
+      F.est.lente = (F.est.lente + 1) % 3; F.guardar(); pintarBotoes();
+      VE.app.toast(['LENTE LIMPA', 'LENTE COM VAZAMENTO DE LUZ', 'LENTE COM HALO'][F.est.lente]);
+    });
+    /* o centro da roda é o TREMOR — e não pode virar o seletor */
+    var tampa = el('filTremor');
+    tampa.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+    tampa.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      F.est.tremor = !F.est.tremor; F.guardar(); pintarBotoes();
+      VE.app.toast(F.est.tremor ? 'TREMOR ligado' : 'TREMOR desligado');
     });
     el('filSom').addEventListener('click', function () {
       if (F.est.gravando) return;
@@ -304,7 +313,7 @@
       VE.app.toast(F.est.som ? 'SOM: grava em tempo real, com o áudio (o gravador do navegador)' : 'SEM SOM: grava exato, quadro a quadro (o codificador)');
     });
 
-    /* a porta, o vermelho, a engrenagem */
+    /* os rolos, o vermelho, a engrenagem */
     el('filRolos').addEventListener('click', function () { gaveta('rolos'); });
     el('filAjustes').addEventListener('click', function () { abrirTela('ajustes'); });
     el('filRec').addEventListener('click', function () {
@@ -387,7 +396,8 @@
     if (est.tela === 'sobre') paginaSobre();
   }
   function pintarBotoes() {
-    el('filVazamento').classList.toggle('on', !!F.est.vazamento);
+    var l = el('filLente'); l.className = 'fil-porta lente-' + (F.est.lente | 0);
+    el('filTremor').classList.toggle('off', !F.est.tremor);
     el('filSom').classList.toggle('on', !!F.est.som);
   }
 
@@ -407,30 +417,14 @@
     el('filGavetaRolos').classList.remove('aberta');
   }
 
-  function peleDe(b) {
-    var c = F.carcacaDe(b.id);
-    return c.url ? urlCss(c.url) : F.pele(b.pele, b.cor);
-  }
   function pintarBitolas() {
-    var g = el('filGavetaPel'), atual = F.bitola(F.est.bitola), esc = F.carcacaDe(atual.id);
-    var lista = F.CARCACAS.slice();
-    if (F.est.propria) lista.splice(3, 0, { id: 'propria', nome: 'DO PC', url: F.est.propria.url });
+    var g = el('filGavetaPel');
     g.innerHTML =
       '<div class="fil-gav-linha">' + F.BITOLAS.map(function (b) {
         return '<button class="fil-mini' + (b.id === F.est.bitola ? ' on' : '') + '" data-bitola="' + b.id + '" title="' + b.desc + '">' +
-          '<i style="--pele:' + peleDe(b) + ';--ar:' + b.visor.toFixed(3) + '"' + (F.carcacaDe(b.id).url ? ' class="foto"' : '') + '></i>' +
+          '<i class="foto" style="--pele:' + urlCss(b.carcaca) + ';--ar:' + b.visor.toFixed(3) + '"></i>' +
           '<span>' + b.nome + '</span><em>' + b.rotulo + ' · ' + b.fps + ' Q/S</em></button>';
-      }).join('') + '</div>' +
-      /* a CARCAÇA da máquina escolhida: os couros da pasta, a do PC, a
-         calculada — e o botão que sobe uma foto nova                  */
-      '<div class="fil-gav-linha fil-carcacas"><b>CARCAÇA · ' + atual.nome + '</b>' + lista.map(function (c) {
-        var pele = c.url ? urlCss(c.url) : F.pele(atual.pele, atual.cor);
-        return '<button class="fil-carc' + (c.id === esc.id ? ' on' : '') + '" data-carcaca="' + c.id + '" title="' + (c.id === 'calculada' ? 'relevo calculado, sem arquivo' : c.nome) + '">' +
-          '<i style="--pele:' + pele + '"' + (c.url ? ' class="foto"' : '') + '></i><span>' + c.nome + '</span></button>';
-      }).join('') +
-      '<button class="fil-carc fil-carc-subir" id="filSubir" title="Uma foto de couro, tecido, metal — qualquer imagem do seu computador">' +
-        '<i><svg viewBox="0 0 24 24"><path d="M12 3.5l5 5.2h-3.2v6.3h-3.6V8.7H7z"/><path d="M4.5 15.5v4.2h15v-4.2h-2.2v2h-10.6v-2z"/></svg></i><span>SUBIR DO PC</span></button>' +
-      '<input type="file" id="filSubirArq" accept="image/*" hidden></div>';
+      }).join('') + '</div>';
     g.querySelectorAll('[data-bitola]').forEach(function (bt) {
       bt.addEventListener('click', function () {
         if (F.est.gravando) { VE.app.toast('termine a gravação antes de trocar a bitola', 'err'); return; }
@@ -439,22 +433,6 @@
         if (VE.app.clearFeedback) VE.app.clearFeedback();
         if (est.tela === 'sobre') paginaSobre();
       });
-    });
-    g.querySelectorAll('[data-carcaca]').forEach(function (bt) {
-      bt.addEventListener('click', function () {
-        F.escolherCarcaca(F.est.bitola, bt.dataset.carcaca);
-        vestir(); pintarBitolas();
-      });
-    });
-    var arq = el('filSubirArq');
-    el('filSubir').addEventListener('click', function () { arq.value = ''; arq.click(); });
-    arq.addEventListener('change', function () {
-      var f = arq.files && arq.files[0]; if (!f) return;
-      F.subirCarcaca(f).then(function (p) {
-        F.escolherCarcaca(F.est.bitola, 'propria');
-        vestir(); pintarBitolas();
-        VE.app.toast('carcaça nova: ' + p.nome + (p.tinta === 'clara' ? ' (clara — glifos pretos)' : ''), 'ok');
-      }).catch(function (e) { VE.app.toast(e.message, 'err'); });
     });
   }
 
@@ -513,7 +491,7 @@
     ['grao', 'GRÃO', 0, 2, ''],
     ['sujeira', 'SUJEIRA', 0, 2, 'poeira e fiapos na janela'],
     ['tremor', 'TREMOR', 0, 2, 'o quadro dançando na janela'],
-    ['vazamento', 'VAZAMENTO', 0, 2, 'a luz que entra pelo chassi (o relâmpago liga e desliga)'],
+    ['vazamento', 'VAZAMENTO', 0, 2, 'a luz que entra pelo chassi (a LENTE liga)'],
     ['janela', 'SOMBRA DA JANELA', 0, 2, 'a borda escura do quadro']
   ];
   function paginaAjustes() {
@@ -575,18 +553,19 @@
     var b = F.bitola(F.est.bitola), f = F.filme(F.est.filme);
     el('filTelaPag').innerHTML =
       '<div class="fil-sub">A MÁQUINA</div>' +
-      '<div class="fil-nota"><b>' + b.nome + '</b> — ' + b.desc + '. Filme no seletor: <b>' + f.nome + '</b>. ' +
+      '<div class="fil-nota"><b>' + b.nome + '</b> — ' + b.desc + '. Filme no seletor: <b>' + f.nome + '</b>. Lente: <b>' + ['LIMPA', 'VAZAMENTO', 'HALO'][F.est.lente | 0] + '</b>. ' +
         'Um carregador de ' + b.rolo + ' pés dura ' + Math.round(b.rolo * b.ppf / b.fps) + ' s a ' + b.fps + ' q/s.</div>' +
       '<div class="fil-sub">AS PEÇAS</div>' +
       '<div class="fil-lista">' +
         linha('VISOR', 'a composição com a película. Clique toca e pausa; a barra de espaço também.') +
         linha('BOTÃO VERMELHO', 'grava a composição (ou o trecho I–O) num rolo, com a película. Apertar de novo cancela.') +
         linha('CONTADOR', 'pés de filme desta bitola. A ' + b.fps + ' q/s, ' + b.ppf + ' quadros fazem um pé.') +
-        linha('PORTA', 'os rolos gravados: baixar, usar na linha do tempo, apagar.') +
-        linha('SELETOR', 'o filme: PURO é a película da bitola; os outros são os olhares 8 MM do catálogo. Arraste, role ou toque. ← → também.') +
-        linha('BITOLA', 'a gaveta das máquinas: 8 mm, Super 8, 16 mm, 35 mm. Embaixo, a CARCAÇA: os couros da pasta, a calculada, ou uma foto que você sobe do PC.') +
+        linha('LENTE', 'em cima, à direita: LIMPA, VAZAMENTO de luz, HALO — gira a cada toque.') +
+        linha('SELETOR', 'o filme: PURO é a película da bitola; os outros são os dez filmes do app, medidos da saída dele. Arraste, role ou toque. ← → também.') +
+        linha('CENTRO DA RODA', 'o TREMOR do quadro, liga e desliga.') +
+        linha('ROLOS', 'a tira de filme: os rolos gravados — baixar, usar na linha do tempo, apagar.') +
+        linha('BITOLA', 'a câmera que gira: a gaveta das máquinas, 8 mm, Super 8, 16 mm, 35 mm — cada uma com o seu couro.') +
         linha('REBOB.', 'volta ao início.') +
-        linha('LUZ', 'o vazamento pelo chassi, liga e desliga.') +
         linha('SOM', 'grava em tempo real com o áudio; desligado, grava exato, sem som.') +
         linha('ENGRENAGEM', 'a telinha de ajustes.') +
       '</div>' +

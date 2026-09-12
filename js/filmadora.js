@@ -18,14 +18,14 @@
      · a gravação pelo exportador e os ROLOS que saem dela
 
    A CARCAÇA
-   O couro da máquina vem de FOTO — os três couros que o Bruno mandou
-   (assets/filmadora/couro/), preto, marrom e bege — ou de uma que ele
-   sobe do PC pela gaveta (reduzida a 1200 px e guardada no navegador).
-   A textura CALCULADA (mapa de altura periódico iluminado por uma luz
-   de cima e da esquerda, com brilho de superfície) continua existindo
-   como quarta opção e como pele das bitolas de 16 e 35 mm, que são
-   pintura e não couro. Ele não gostou da calculada como couro — e a
-   foto ganha, sempre: é o que o polaroid já ensinou.
+   O couro de cada máquina é FOTO, e é fixo: os três couros que o Bruno
+   mandou (assets/filmadora/couro/ — preto no 8 MM, marrom no SUPER 8,
+   bege no 16 MM) e um metal escovado gerado para o 35 MM, no mesmo
+   tamanho e na mesma pasta. Cada arquivo é um LADRILHO ESPELHADO 2×2
+   (a foto inteira a 840 px em cada quadrante) — emenda sem costura e
+   deixa o grão do couro na metade do tamanho da primeira versão, que
+   ele achou "com muito zoom". A textura calculada (relevo iluminado)
+   ficou só para o plástico da gaveta.
    ============================================================ */
 (function (VE) {
   'use strict';
@@ -42,13 +42,13 @@
      que é como a janela de uma câmera de verdade enquadra.           */
   F.BITOLAS = [
     { id: '8mm', nome: '8 MM', rotulo: 'REGULAR 8', pack: 'p8mm', fps: 18, ppf: 80, rolo: 25, visor: 4 / 3,
-      pele: 'couro', cor: [30, 29, 28], desc: 'a caseira: 18 quadros, imagem macia, cor desbotada, janela com sombra' },
+      carcaca: 'assets/filmadora/couro/couro-preto.jpg', tinta: 'escura', desc: 'a caseira: 18 quadros, imagem macia, cor desbotada, janela com sombra' },
     { id: 's8', nome: 'SUPER 8', rotulo: 'SUPER 8', pack: 'psuper8', fps: 18, ppf: 72, rolo: 50, visor: 4 / 3,
-      pele: 'couro', cor: [56, 36, 26], desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente' },
+      carcaca: 'assets/filmadora/couro/couro-marrom.jpg', tinta: 'escura', desc: 'o mesmo tranco de 18, quadro maior, um pouco mais nítido e quente' },
     { id: '16mm', nome: '16 MM', rotulo: 'SUPER 16', pack: 'p16mm', fps: 24, ppf: 40, rolo: 100, visor: 5 / 3,
-      pele: 'rugosa', cor: [40, 41, 42], desc: 'a de documentário: 24 quadros, negativo neutro, grão fino, a tira com as perfurações' },
+      carcaca: 'assets/filmadora/couro/couro-bege.jpg', tinta: 'clara', desc: 'a de documentário: 24 quadros, negativo neutro, grão fino' },
     { id: '35mm', nome: '35 MM', rotulo: 'CINEMA', pack: 'p35mm', fps: 24, ppf: 16, rolo: 400, visor: 1.85,
-      pele: 'martelada', cor: [152, 154, 148], desc: 'a de cinema: grão fino, quase nada além da cor e da halação' }
+      carcaca: 'assets/filmadora/couro/metal-escovado.jpg', tinta: 'clara', desc: 'a de cinema: grão fino, quase nada além da cor e da halação' }
   ];
   F.bitola = function (id) {
     return F.BITOLAS.filter(function (b) { return b.id === id; })[0] || F.BITOLAS[0];
@@ -56,16 +56,20 @@
 
   /* ================================================================
      OS FILMES DO SELETOR
-     PURO é a película da bitola como ela vem. Os outros são os nove
-     olhares da família 8 MM do catálogo (js/filters.js): o seletor
-     troca a COR da película, e só a cor — grão, janela e cadência
-     continuam sendo os da bitola.                                    */
+     PURO é a película da bitola como ela vem. Os outros são os dez
+     filmes da família 8 MM do catálogo (js/filters.js) — cada um uma
+     CADEIA (curva por canal ou mesa de canais, e depois o filmstock)
+     ajustada por medida à saída do app, na ordem do seletor dele. O
+     seletor troca a COR da película, e só a cor — grão, janela e
+     cadência continuam sendo os da bitola.                          */
   F.filmes = function () {
-    var lista = [{ id: 'puro', nome: 'PURO', cor1: '#2a2a2a', cor2: '#d8d2c0', params: null }];
+    var lista = [{ id: 'puro', nome: 'PURO', cor1: '#2a2a2a', cor2: '#d8d2c0', cadeia: null }];
     var cat = (VE.filters && VE.filters.LIST) || [];
     cat.forEach(function (d) {
-      if (d.fam !== '8 MM' || !d.params) return;
-      lista.push({ id: d.id, nome: d.name, cor1: d.params.shTint || '#333', cor2: d.params.hiTint || '#eee', params: d.params });
+      if (d.fam !== '8 MM') return;
+      var stock = d.kind === 'chain' ? (d.steps.filter(function (s) { return s.fx === 'filmstock'; })[0] || {}).params : d.params;
+      lista.push({ id: d.id, nome: d.name, cor1: (stock && stock.shTint) || '#333', cor2: (stock && stock.hiTint) || '#eee',
+        cadeia: VE.filters.chainOf ? VE.filters.chainOf(d) : null });
     });
     return lista;
   };
@@ -79,17 +83,15 @@
      Guardado entre sessões (bitola, filme, ajustes) porque uma câmera
      lembra como foi deixada. Os rolos NÃO: são arquivos na memória. */
   var CHAVE = 'rgb_lab.filmadora';
-  var AJ_PADRAO = { cor: 0.7, maciez: 1, grao: 1, sujeira: 1, tremor: 1, vazamento: 1, janela: 1 };
+  var AJ_PADRAO = { cor: 1, maciez: 1, grao: 1, sujeira: 1, tremor: 1, vazamento: 1, janela: 1 };
   var est = F.est = {
     ativa: false,          /* a máquina está aberta: a película entra na cadeia */
     bitola: '8mm',
     filme: 'm01',
-    vazamento: true,       /* o botão do relâmpago */
+    lente: 0,              /* a LENTE do app: 0 limpa · 1 vazamento · 2 halo */
+    tremor: true,          /* o botão no centro da roda (o "frame jitter" do app) */
     som: false,            /* o botão da grade: grava em tempo real, com o áudio */
     cadencia: true,        /* o tranco da bitola; desligado, o vídeo anda como veio */
-    /* a carcaça de cada bitola: um id de F.CARCACAS, ou 'propria' */
-    carcaca: { '8mm': 'couro-preto', 's8': 'couro-marrom', '16mm': 'calculada', '35mm': 'calculada' },
-    propria: null,         /* a que subiu do PC: { url (data:), tinta } */
     aj: {},
     gravando: null,        /* { ini, dur, thumb } enquanto o rolo roda */
     rolos: []
@@ -102,84 +104,30 @@
       if (!g) return;
       if (F.bitola(g.bitola).id === g.bitola) est.bitola = g.bitola;
       if (g.filme) est.filme = g.filme;
-      if (typeof g.vazamento === 'boolean') est.vazamento = g.vazamento;
+      if (g.lente === 0 || g.lente === 1 || g.lente === 2) est.lente = g.lente;
+      if (typeof g.tremor === 'boolean') est.tremor = g.tremor;
       if (typeof g.som === 'boolean') est.som = g.som;
       if (typeof g.cadencia === 'boolean') est.cadencia = g.cadencia;
       if (g.aj) Object.keys(AJ_PADRAO).forEach(function (k) {
         var v = parseFloat(g.aj[k]); if (isFinite(v)) est.aj[k] = Math.max(0, Math.min(2, v));
       });
-      if (g.carcaca) Object.keys(est.carcaca).forEach(function (k) { if (typeof g.carcaca[k] === 'string') est.carcaca[k] = g.carcaca[k]; });
-      if (g.propria && typeof g.propria.url === 'string' && g.propria.url.indexOf('data:image/') === 0) est.propria = g.propria;
     } catch (e) { /* sem memória: a máquina abre como nova */ }
   };
   F.guardar = function () {
     try {
       localStorage.setItem(CHAVE, JSON.stringify({
-        bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
-        som: est.som, cadencia: est.cadencia, aj: est.aj,
-        carcaca: est.carcaca, propria: est.propria
+        bitola: est.bitola, filme: est.filme, lente: est.lente, tremor: est.tremor,
+        som: est.som, cadencia: est.cadencia, aj: est.aj
       }));
-    } catch (e) {
-      /* a foto do PC pode não caber (o limite do navegador anda em 5 MB):
-         guarda o resto sem ela, e ela vale só nesta sessão            */
-      try {
-        localStorage.setItem(CHAVE, JSON.stringify({
-          bitola: est.bitola, filme: est.filme, vazamento: est.vazamento,
-          som: est.som, cadencia: est.cadencia, aj: est.aj, carcaca: est.carcaca
-        }));
-      } catch (e2) { /* sem espaço: paciência */ }
-    }
+    } catch (e) { /* sem espaço: paciência */ }
   };
 
-  /* ================================================================
-     A CARCAÇA
-     `tinta` diz se a máquina é escura (glifos creme) ou clara (glifos
-     pretos em plaquetas). A foto que sobe do PC decide isso pela própria
-     luminância média.                                                */
-  F.CARCACAS = [
-    { id: 'couro-preto', nome: 'COURO PRETO', url: 'assets/filmadora/couro/couro-preto.jpg', tinta: 'escura' },
-    { id: 'couro-marrom', nome: 'COURO MARROM', url: 'assets/filmadora/couro/couro-marrom.jpg', tinta: 'escura' },
-    { id: 'couro-bege', nome: 'COURO BEGE', url: 'assets/filmadora/couro/couro-bege.jpg', tinta: 'clara' },
-    { id: 'calculada', nome: 'CALCULADA', url: null, tinta: null }
-  ];
-  /* a carcaça de uma bitola, resolvida: { id, nome, url|null, tinta|null } */
-  F.carcacaDe = function (bitolaId) {
-    var id = est.carcaca[bitolaId] || 'calculada';
-    if (id === 'propria') {
-      if (est.propria) return { id: 'propria', nome: 'DO PC', url: est.propria.url, tinta: est.propria.tinta || 'escura' };
-      id = 'calculada';
-    }
-    return F.CARCACAS.filter(function (c) { return c.id === id; })[0] || F.CARCACAS[3];
-  };
-  F.escolherCarcaca = function (bitolaId, id) {
-    est.carcaca[bitolaId] = id; F.guardar();
-  };
-  /* a foto do PC: reduzida a 1200 px num canvas, JPEG, e a luminância
-     média decide a tinta. Devolve uma promessa com a carcaça pronta.   */
-  F.subirCarcaca = function (file) {
-    return new Promise(function (res, rej) {
-      if (!file || file.type.indexOf('image/') !== 0) { rej(new Error('escolha uma imagem (jpg, png, webp)')); return; }
-      var url = URL.createObjectURL(file), img = new Image();
-      img.onload = function () {
-        URL.revokeObjectURL(url);
-        var s = Math.min(1, 1200 / Math.max(img.width, img.height));
-        var cv = document.createElement('canvas');
-        cv.width = Math.max(1, Math.round(img.width * s)); cv.height = Math.max(1, Math.round(img.height * s));
-        var c = cv.getContext('2d');
-        c.drawImage(img, 0, 0, cv.width, cv.height);
-        var d = c.getImageData(0, 0, cv.width, cv.height).data, soma = 0, n = 0, i;
-        for (i = 0; i < d.length; i += 64) { soma += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114; n++; }
-        est.propria = { url: cv.toDataURL('image/jpeg', 0.84), tinta: (soma / n) > 128 ? 'clara' : 'escura', nome: (file.name || 'foto').slice(0, 40) };
-        F.guardar();
-        res(est.propria);
-      };
-      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('não consegui ler essa imagem')); };
-      img.src = url;
-    });
-  };
+  /* a carcaça de uma bitola: a foto e a tinta (escura = glifos creme,
+     clara = glifos pretos em plaquetas) */
+  F.carcacaDe = function (bitolaId) { var b = F.bitola(bitolaId); return { url: b.carcaca, tinta: b.tinta }; };
   F.reporAjustes = function () {
     Object.keys(AJ_PADRAO).forEach(function (k) { est.aj[k] = AJ_PADRAO[k]; });
-    est.vazamento = true; est.cadencia = true;
+    est.lente = 0; est.tremor = true; est.cadencia = true;
     F.guardar();
   };
   F.AJ_PADRAO = AJ_PADRAO;
@@ -192,8 +140,10 @@
      é assim que o botão vermelho grava com a película. A bitola dá o
      pacote (js/fx5.js); os ajustes são MULTIPLICADORES sobre ele, para
      que o "1" de cada um seja sempre a calibração da bitola e não um
-     número solto. O filme do seletor troca os parâmetros do
-     `filmstock` inteiro, e a COR é o quanto dessa troca entra.       */
+     número solto. O filme do seletor entra no lugar do `filmstock` do
+     pacote como uma CADEIA (a curva por canal e o filmstock ajustados
+     à saída do app), e a COR é o quanto dessa cadeia entra. A LENTE
+     decide o vazamento (1) ou o halo (2); o TREMOR liga o gateweave. */
   F.ops = function (t) {
     if (!est.ativa) return [];
     var b = F.bitola(est.bitola);
@@ -212,14 +162,19 @@
           if (p.rad < 0.002) return;
           break;
         case 'filmstock':
-          if (filme.params) {
-            for (k in filme.params) p[k] = filme.params[k];
-            /* grão e nitidez são da bitola, não do filme; a vinheta
-               idem — senão o olhar "60s" vem com a vinheta de foto */
-            p.grain = 0; p.sharp = 0; p.vig = par[1].vig || 0;
-          }
           amount = Math.max(0, Math.min(1, aj.cor));
-          if (amount < 0.005) return;
+          if (filme.cadeia && filme.cadeia.length) {
+            if (amount < 0.005) return;
+            /* a cadeia do filme, passo a passo, cada um com a COR */
+            filme.cadeia.forEach(function (passo, i) {
+              var pp = {}; for (k in passo.params) pp[k] = passo.params[k];
+              if (passo.id === 'filmstock') { pp.grain = 0; pp.sharp = 0; pp.vig = 0; }
+              fx.push({ id: passo.id, effId: 'fil-filme-' + i, params: pp, amount: amount, local: t, mask: VE.newMask() });
+            });
+            halo();
+            return;
+          }
+          amount = 1;
           break;
         case 'filmgrain':
           p.amt *= aj.grao;
@@ -230,20 +185,32 @@
           if (p.dust + p.hair + p.scratch < 0.002) return;
           break;
         case 'gateweave':
+          if (!est.tremor) return;
           p.amt *= aj.tremor; p.rot *= aj.tremor; p.jump *= aj.tremor;
           if (p.amt + p.jump < 0.002) return;
           break;
         case 'lightleak':
-          if (!est.vazamento) return;
+          if (est.lente !== 1) return;
           p.amt *= aj.vazamento;
           if (p.amt < 0.005) return;
           break;
+        case 'halation':
+          /* a lente HALO acrescenta halação onde o pacote não tem */
+          break;
         case 'filmgate':
           p.sombra *= aj.janela;
+          if (est.lente === 2) p.vig = Math.min(1.5, (p.vig || 0) + 0.35);
           break;
       }
       fx.push({ id: id, effId: 'fil-' + id, params: p, amount: amount, local: t, mask: VE.newMask() });
+      if (id === 'filmstock') halo();
     });
+    /* a lente HALO: a halação entra logo depois da cor, antes do grão */
+    function halo() {
+      if (est.lente !== 2 || st.fx.some(function (q) { return q[0] === 'halation'; })) return;
+      var ph = VE.defaults('halation'); ph.amt = 0.32; ph.thr = 0.7; ph.rad = 0.02; ph.soft = 0.7;
+      fx.push({ id: 'halation', effId: 'fil-halo', params: ph, amount: 1, local: t, mask: VE.newMask() });
+    }
     return fx.length ? [{ kind: 'adjust', effects: fx }] : [];
   };
 

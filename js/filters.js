@@ -47,6 +47,15 @@
     };
   }
 
+  /* um filme do 8 MM: uma cadeia de dois passos (a curva por canal ou a
+     mesa de canais, e o filmstock), na família 8 MM                    */
+  function m(id, name, passo1, stock) {
+    var p1 = VE.defaults(passo1.fx); Object.keys(passo1.p).forEach(function (k) { p1[k] = passo1.p[k]; });
+    var p2 = VE.defaults('filmstock'); Object.keys(stock).forEach(function (k) { p2[k] = stock[k]; });
+    return { id: id, name: name, fam: '8 MM', kind: 'chain', desc: 'ajustado por medida à saída do 8mm Vintage Camera',
+      steps: [{ fx: passo1.fx, params: p1 }, { fx: 'filmstock', params: p2 }] };
+  }
+
   /* ------------------------------------------------------------- catálogo */
   var LIST = [
     /* ---- NEUTROS: mexem pouco, servem de ponto de partida ---- */
@@ -81,19 +90,44 @@
     f('x05', 'LOMO', 'CRUZADO', { sat: 0.45, con: 0.42, crush: 0.1, fade: 0.04, split: 0.5, shTint: '#101f30', hiTint: '#fff0c0', vig: 0.85, sharp: 0.3 }),
     f('x06', 'POLAROIDE', 'CRUZADO', { exp: 0.16, temp: 0.14, sat: -0.08, con: -0.06, fade: 0.3, roll: 0.78, split: 0.55, shTint: '#2a2a3a', hiTint: '#fff4e2', vig: 0.18, grain: 0.05 }),
 
-    /* ---- 8 MM: os filmes do 8mm Vintage Camera, lidos dos prints ----
-       Todos desbotados (preto levantado, ombro nas luzes) e cada um com
-       o seu par de tons: o 60s tem sombra magenta e luz amarelo-verde; o
-       Two-Color, sombra teal e luz rosada, quase sem saturação.        */
-    f('m01', '60s', '8 MM', { con: 0.02, sat: -0.1, temp: 0.2, tintg: -0.1, fade: 0.14, roll: 0.55, split: 0.7, shTint: '#4a2a48', hiTint: '#f4f0a8', vig: 0.12, grain: 0.03 }),
-    f('m02', 'TWO-COLOR', '8 MM', { con: 0.05, sat: -0.38, temp: 0.04, fade: 0.16, roll: 0.5, split: 0.85, shTint: '#1f4a52', hiTint: '#ffd6c8', vig: 0.1, grain: 0.03 }),
-    f('m03', '70s', '8 MM', { con: 0.14, sat: 0.08, temp: 0.4, fade: 0.1, roll: 0.5, split: 0.5, shTint: '#3a2210', hiTint: '#ffd9a0', vig: 0.16, grain: 0.03 }),
-    f('m04', '1920', '8 MM', { skin: 0, sat: -1, con: 0.24, fade: 0.1, roll: 0.45, split: 0.6, shTint: '#2a1e14', hiTint: '#e8d9b8', vig: 0.3, grain: 0.09 }),
-    f('m05', 'SIENA', '8 MM', { skin: 0.1, sat: -0.5, temp: 0.35, con: 0.18, fade: 0.08, roll: 0.5, split: 0.8, shTint: '#3a2416', hiTint: '#f1d9b0', vig: 0.18, grain: 0.04 }),
-    f('m06', 'SAKURA', '8 MM', { exp: 0.14, sat: -0.2, con: -0.08, temp: 0.08, tintg: -0.26, fade: 0.2, roll: 0.7, split: 0.6, shTint: '#5a3550', hiTint: '#ffe4ec', vig: 0.06, grain: 0.02 }),
-    f('m07', 'INDIGO', '8 MM', { temp: -0.4, sat: -0.15, con: 0.2, fade: 0.1, roll: 0.5, split: 0.65, shTint: '#1a1f4a', hiTint: '#d8e4ff', vig: 0.14, grain: 0.03 }),
-    f('m08', 'XPRO', '8 MM', { sat: 0.3, con: 0.38, crush: 0.05, fade: 0.04, roll: 0.35, split: 0.8, shTint: '#0f3a44', hiTint: '#ffe873', vig: 0.2, grain: 0.04 }),
-    f('m09', 'NOIR', '8 MM', { skin: 0, sat: -1, con: 0.45, crush: 0.1, fade: 0.03, roll: 0.3, split: 0, vig: 0.45, grain: 0.07, sharp: 0.2 }),
+    /* ---- 8 MM: os dez filmes do 8mm Vintage Camera, AJUSTADOS POR MEDIDA
+       (12/09/2026). O Bruno filmou a carta de calibração do laboratório
+       com o app, um filme de cada vez; 45 patches foram lidos da saída
+       dele (js/../PROJETO.md 5m.8) e o shader se ajustou a eles: uma
+       CURVA POR CANAL (crossproc) ou uma MESA DE CANAIS (chanmix, nos de
+       duas cores) e depois o filmstock. Na ordem do seletor do app. O
+       erro médio de cada um está no comentário — o modelo não é o LUT
+       do app, mas os neutros ficam a 7–14 níveis e a pele a ~10.    */
+    /* XPro: erro médio 25.33 nos 45 patches */
+    m('m01', 'XPro', { fx: 'crossproc', p: { rc: 0.999, gc: 0.108, bc: -0.209, piv: 0.556, lift: -0.048, sat: -0.295, yellow: 0.059 } },
+      { exp: 0.104, con: 0.313, sat: -0.339, fade: 0.063, crush: 0.024, roll: 0.477, split: 0.579, skin: 0.3, shTint: '#402231', hiTint: '#faffab', grain: 0, vig: 0, sharp: 0 }),
+    /* NOIR: erro médio 24.67 nos 45 patches */
+    m('m02', 'NOIR', { fx: 'crossproc', p: { rc: 0.967, gc: -0.486, bc: -0.016, piv: 0.553, lift: -0.061, sat: -0.586, yellow: 0.128 } },
+      { exp: 0.198, con: 1.193, sat: -0.988, fade: 0.006, crush: 0.03, roll: 0.542, split: 0.378, skin: 0.3, shTint: '#484802', hiTint: '#ddcbb9', grain: 0, vig: 0, sharp: 0 }),
+    /* 60s: erro médio 24.6 nos 45 patches */
+    m('m03', '60s', { fx: 'crossproc', p: { rc: 0.776, gc: 0.15, bc: -0.143, piv: 0.506, lift: -0.016, sat: -0.128, yellow: 0.042 } },
+      { exp: 0.052, con: 0.256, sat: -0.461, fade: 0.077, crush: 0, roll: 0.182, split: 0.704, skin: 0.3, shTint: '#732d19', hiTint: '#defe7e', grain: 0, vig: 0, sharp: 0 }),
+    /* Pela: erro médio 32.48 nos 45 patches */
+    m('m04', 'Pela', { fx: 'crossproc', p: { rc: -0.711, gc: -0.278, bc: 0.81, piv: 0.75, lift: -0.1, sat: 0.01, yellow: 0 } },
+      { exp: 0.049, con: 0.062, sat: -0.026, fade: 0.053, crush: 0.069, roll: 0.155, split: 0.875, skin: 0.3, shTint: '#5b3f00', hiTint: '#e3b373', grain: 0, vig: 0, sharp: 0 }),
+    /* Indigo: erro médio 34.27 nos 45 patches */
+    m('m05', 'Indigo', { fx: 'crossproc', p: { rc: 1, gc: 0.155, bc: -0.569, piv: 0.498, lift: -0.085, sat: -0.357, yellow: 0.049 } },
+      { exp: 0.132, con: 0.208, sat: 0.14, fade: 0.093, crush: 0, roll: 0.475, split: 0.543, skin: 0.3, shTint: '#1e202b', hiTint: '#ffe5a1', grain: 0, vig: 0, sharp: 0 }),
+    /* Tuscan: erro médio 28.44 nos 45 patches */
+    m('m06', 'Tuscan', { fx: 'crossproc', p: { rc: 0.57, gc: 0.059, bc: 0.127, piv: 0.447, lift: -0.049, sat: -0.189, yellow: 0.055 } },
+      { exp: 0.17, con: 0.328, sat: -0.084, fade: 0.12, crush: 0, roll: 0.542, split: 0.713, skin: 0.3, shTint: '#7d3f00', hiTint: '#ffd59a', grain: 0, vig: 0, sharp: 0 }),
+    /* Two-Color: erro médio 36.47 nos 45 patches */
+    m('m07', 'Two-Color', { fx: 'chanmix', p: { rr: 1.225, rg: -0.218, rb: -0.018, gr: 0.121, gg: 1.111, gb: -0.272, br: 0.023, bg: 0.8, bb: 0.2, norm: 0 } },
+      { exp: 0.041, con: -0.003, sat: -0.02, fade: 0, crush: 0.055, roll: 0.344, split: 0.343, skin: 0.3, shTint: '#1c2600', hiTint: '#ffcb7a', grain: 0, vig: 0, sharp: 0 }),
+    /* 2 Strip: erro médio 30.06 nos 45 patches */
+    m('m08', '2 Strip', { fx: 'chanmix', p: { rr: 1.566, rg: -0.394, rb: -0.257, gr: 0.182, gg: 0.346, gb: 0.171, br: -0.073, bg: 0.056, bb: 0.652, norm: 0 } },
+      { exp: 0.094, con: 0.35, sat: -0.121, fade: 0.201, crush: 0.064, roll: 0.606, split: 0.878, skin: 0.3, shTint: '#146f00', hiTint: '#a2b7b0', grain: 0, vig: 0, sharp: 0 }),
+    /* 3-X: erro médio 21.65 nos 45 patches */
+    m('m09', '3-X', { fx: 'crossproc', p: { rc: 1, gc: -0.301, bc: -1, piv: 0.517, lift: 0.064, sat: -0.6, yellow: 0 } },
+      { exp: -0.172, con: 1.2, sat: -1, fade: 0.166, crush: 0, roll: 1, split: 0.592, skin: 0.3, shTint: '#576a44', hiTint: '#ffffff', grain: 0, vig: 0, sharp: 0 }),
+    /* Siena: erro médio 27.72 nos 45 patches */
+    m('m10', 'Siena', { fx: 'crossproc', p: { rc: 0.427, gc: 0.173, bc: -0.017, piv: 0.502, lift: -0.031, sat: -0.173, yellow: 0.027 } },
+      { exp: -0.068, con: 0.09, sat: -0.478, fade: 0.073, crush: 0.025, roll: 0.385, split: 0.978, skin: 0.3, shTint: '#822f0c', hiTint: '#ffa77d', grain: 0, vig: 0, sharp: 0 }),
 
     /* ---- PRETO E BRANCO ---- */
     f('b01', 'P&B NEUTRO', 'P&B', { skin: 0, sat: -1, con: 0.22, fade: 0.06, split: 0, grain: 0.05, sharp: 0.25 }),

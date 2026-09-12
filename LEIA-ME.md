@@ -1072,32 +1072,37 @@ ajustes é a única coisa que não é câmera.
 |---|---|
 | **o visor** | a composição com a película. Clique toca e pausa (a barra de espaço também). Nas bitolas de 8 mm ele é 4:3 e recorta as barras pretas que a janela deixa num vídeo largo — como o visor de uma câmera de verdade |
 | **o botão vermelho** | **GRAVA**: a exportação do laboratório, com a película dentro. A lâmpada pisca, o contador conta. Apertar de novo cancela |
+| **LENTE** (alto, à direita) | a lente do app: **LIMPA → VAZAMENTO de luz → HALO**, girando a cada toque. O visor da porta mostra qual está |
+| **o centro da roda** | o **TREMOR** do quadro, liga e desliga (o "frame jitter" do app) |
 | **o contador** | pés de filme desta bitola. 50 pés de Super 8 a 18 q/s são 3 min 20 s — é conta real (72 quadros por pé no Super 8, 80 no 8 mm, 40 no 16, 16 no 35) |
-| **a porta do carregador** (alto, à direita) | os **ROLOS** gravados nesta sessão: baixar, **usar na linha do tempo**, apagar. Cada rolo é um quadro de filme com o carimbo laranja da data |
-| **o seletor** (a roda do canto) | o **FILME**: PURO (a película da bitola como vem) ou um dos nove olhares 8 MM do catálogo — 60s, TWO-COLOR, 70s, 1920, SIENA, SAKURA, INDIGO, XPRO, NOIR. Arraste em volta, role, toque no nome, ou ← → |
+| **o seletor** (a roda do canto) | o **FILME**: PURO (a película da bitola como vem) ou um dos **dez filmes do app, medidos da saída dele** — XPro, NOIR, 60s, Pela, Indigo, Tuscan, Two-Color, 2 Strip, 3-X, Siena, na ordem do seletor do app. Arraste em volta, role, toque no nome, ou ← → |
 | **i** | a plaqueta: o que cada peça faz |
-| **BITOLA** | a gaveta das máquinas: **8 MM, SUPER 8, 16 MM, 35 MM**. Cada uma é outra câmera — outro couro, outro visor, outra película, outra cadência |
+| **ROLOS** (a tira de filme) | os rolos gravados nesta sessão: baixar, **usar na linha do tempo**, apagar. Cada rolo é um quadro de filme com o carimbo laranja da data |
+| **BITOLA** (a câmera que gira) | a gaveta das máquinas: **8 MM, SUPER 8, 16 MM, 35 MM**. Cada uma é outra câmera — outro couro, outro visor, outra película, outra cadência |
 | **REBOB.** | volta ao início |
-| **LUZ** | o vazamento de luz pelo chassi, liga e desliga |
 | **SOM** | grava em **tempo real, com o áudio** (o gravador do navegador). Desligado, grava **exato**, quadro a quadro, sem som — o arquivo sai certo mesmo com efeito pesado |
+
+A ordem dos botões é a do app (i · rolos · trocar câmera · flash · som embaixo; a lente em cima; o filme na roda; o tremor no centro dela). O flash virou REBOBINAR — não há tocha num laboratório.
 | **a engrenagem** | a telinha de ajustes |
 
-**As quatro máquinas.** A bitola é a máquina inteira: o 8 MM vem em couro
-preto, o SUPER 8 em couro marrom, o 16 MM na pintura rugosa de câmera de
-documentário com os glifos laranja, o 35 MM na pintura martelada cinza das
-câmeras de cinema.
-
-**A carcaça** (12/09/2026) é escolhida na gaveta BITOLA, na linha de baixo:
-os três couros de verdade da pasta `assets/filmadora/couro/` — preto,
-marrom, bege —, a textura CALCULADA (relevo iluminado na hora, sem arquivo;
-é a pele de fábrica do 16 e do 35 mm) e **SUBIR DO PC**: qualquer imagem do
-seu computador vira a carcaça (é reduzida a 1200 px e fica guardada no
-navegador). Cada bitola lembra a sua. Numa carcaça clara os glifos ficam
-pretos, em plaquetas; numa escura, creme. Para acrescentar um couro à pasta
-de fábrica, ponha o arquivo e registre-o em `F.CARCACAS` (js/filmadora.js).
+**As quatro máquinas.** A bitola é a máquina inteira, e cada uma tem o seu
+couro — foto, fixo: o **8 MM** em couro preto, o **SUPER 8** em couro marrom,
+o **16 MM** em couro bege (glifos pretos, em plaquetas), o **35 MM** em metal
+escovado. Os três couros são os da pasta `assets/filmadora/couro/`,
+guardados como ladrilho espelhado 2×2 (emenda sem costura, grão na metade do
+tamanho); o metal foi gerado no mesmo tamanho. Não há escolha de carcaça —
+a máquina é a máquina.
 
 **A película** é o pacote da bitola em ESTILOS (`8 MM CASEIRO`, `SUPER 8`,
-`16 MM DOCUMENTÁRIO`, `35 MM`), calibrado pela régua do 8mm Vintage Camera.
+`16 MM DOCUMENTÁRIO`, `35 MM`), calibrado pela régua do 8mm Vintage Camera —
+e, desde 12/09/2026, **medido da saída dele**: o Bruno filmou a carta de
+calibração com o app, um filme de cada vez, e cada filme do seletor é uma
+cadeia (curva por canal ou mesa de canais, e depois o filtro de cor) que o
+próprio shader ajustou aos 45 patches lidos do vídeo. Os neutros ficam a
+7–14 níveis do app, a pele a ~10; não é o LUT dele, é a família do olhar.
+Da mesma medição vieram a maciez (borda de 10 px em 960), o grão (fino, um
+nível), a cintilação (nenhuma), o tremor (só vertical, esporádico) e a
+janela (quase no limite do quadro, sombra de 3%).
 Ela entra como o **último ajuste da cadeia** enquanto a máquina está aberta —
 na prévia e no rolo — e some ao fechar. Nada é gravado na linha do tempo
 sem você pedir. Se a mesma bitola já estiver aplicada como camada de ajuste,
