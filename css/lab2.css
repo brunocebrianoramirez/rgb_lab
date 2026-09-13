@@ -2477,6 +2477,7 @@
 :root[data-ui="2"] #side[data-l2cat="media"] #srcPolaroid,
 :root[data-ui="2"] #side[data-l2cat="media"] #srcSonografo,
 :root[data-ui="2"] #side[data-l2cat="media"] #srcFilmadora,
+:root[data-ui="2"] #side[data-l2cat="media"] #srcAquarela,
 :root[data-ui="2"] #side[data-l2cat="media"] #srcOver{display:none}
 
 :root[data-ui="2"] #side[data-l2cat="ferr"] .srcgrid > *{display:none}
@@ -2485,6 +2486,7 @@
 :root[data-ui="2"] #side[data-l2cat="ferr"] #srcPolaroid,
 :root[data-ui="2"] #side[data-l2cat="ferr"] #srcSonografo,
 :root[data-ui="2"] #side[data-l2cat="ferr"] #srcFilmadora,
+:root[data-ui="2"] #side[data-l2cat="ferr"] #srcAquarela,
 :root[data-ui="2"] #side[data-l2cat="ferr"] #srcOver{display:flex}
 /* AS PASTILHAS DE TOOLS SÃO QUADRADAS, IGUAIS ÀS DE MÍDIA.
    Aqui já esteve o contrário — `grid-template-columns:1fr`, uma faixa

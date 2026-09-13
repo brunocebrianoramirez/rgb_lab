@@ -1717,6 +1717,12 @@
       '<rect x="2.6" y="9.6" width="13.8" height="10.4" rx="2.6"/>' +
       '<path d="M17.8 13.4l3.5-2.3a.9.9 0 0 1 1.4.8v5.8a.9.9 0 0 1-1.4.8l-3.5-2.3z"/>',
 
+    /* a aquarela: a gota, maciça, sobre a linha da mesa — é água, e é
+       o que a distingue das outras máquinas da grade                */
+    srcAquarela:
+      '<path d="M12 2.4c3.6 5.1 5.7 8.7 5.7 11.8a5.7 5.7 0 0 1-11.4 0c0-3.1 2.1-6.7 5.7-11.8z"/>' +
+      '<rect x="3.2" y="19.6" width="17.6" height="2.2" rx="1.1"/>',
+
     /* sobrepor: dois quadros, o de trás mais apagado. A transparência é o
        desenho — é ela que diz "um POR CIMA do outro"                   */
     srcOver:

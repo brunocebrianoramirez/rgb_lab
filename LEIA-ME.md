@@ -1120,6 +1120,65 @@ janela EXPORTAR (que não abre), e o trecho entre as marcas I e O quando
 existe. Medido: uma composição de 5,964 s saiu com 5,967 s, 1280×720, VP9
 exato, com a janela 4:3 e a cor do filme dentro do arquivo.
 
+### AQUARELA — a mesa de luz do animador
+
+Está em **TOOLS** (no 2.0) e na grade FONTE (no Classic), ao lado da
+filmadora. Clica e abre, no palco escuro, a **prancheta de um animador**: a
+mesa de madeira com o vidro aceso por baixo, a folha presa na barra de
+pinos, a caixa de tintas de lata à esquerda e a tira de quadros embaixo. Não
+há janela; cada peça é uma função.
+
+É uma aquarela **por física**, não por filtro: a água anda pelo papel, leva o
+pigmento, seca pela beira — o modelo de Curtis e outros ("Computer-Generated
+Watercolor", SIGGRAPH 1997), inteiro na placa de vídeo. A cor é
+**Kubelka-Munk**: cada um dos **52 pigmentos** tem absorção e espalhamento por
+canal, calculados de duas cores (a aguada sobre branco e a mesma camada sobre
+preto), e a pilha compõe camada sobre camada — é por isso que amarelo com
+azul dá verde, ultramar com siena queimada dá o cinza-violeta clássico, o
+branco de titânio cobre e o ftalo não.
+
+| Peça | O que ela faz |
+|---|---|
+| **a folha** | o papel. Pinte com o ponteiro — caneta com pressão muda o traço e a carga. A água fica à vista enquanto a folha está molhada |
+| **LUZ** (o botão de latão) | a mesa de luz: arraste. Quanto do **vídeo da composição** aparece por baixo do papel — é o quadro do instante em que a folha está. No fim do curso a luz vem **por trás** da pintura (retroiluminação: o que se vê é o que atravessa) |
+| **VEGETAL** | o papel vegetal do animador: o quadro **anterior em azul**, o **seguinte em vermelho**, por cima da folha |
+| **os godês** | os oito pigmentos da paleta. Toque escolhe; o **⇄** abre a gaveta dos 52, em seis grupos, com o índice de cor e as marcas GRANULA e MANCHA |
+| **os pincéis** | quatro redondos: **n.º 2, 6, 12 e 24**. `[` e `]` mudam |
+| **ÁGUA** | só água: molhe antes de pintar (molhado sobre molhado), dilua, provoque floradas |
+| **ESPONJA** | levanta tinta e água. Pigmento que MANCHA (ftalos, quinacridonas, perilenos) resiste; o que granula sai fácil |
+| **SECO** | o pincel quase sem água: a tinta pega só nas cristas do papel |
+| **SAL** | sobre a aguada ainda molhada: os cristais bebem a água e deixam **estrelas claras de borda escura** |
+| **ÁLCOOL** | gotas que repelem o pigmento: olhos claros com a borda escura |
+| **SECAR** | seca a folha agora. Trocar de quadro também seca |
+| **↶** | desfaz a última pincelada (Ctrl+Z) — três níveis |
+| **a tira** | os **QUADROS** da sequência. ◀ ▶ andam, e **a composição anda junto**: cada quadro é um instante do vídeo. **+** cria um quadro depois deste, **⧉** copia o anterior para este, 🗑 apaga, ▶ **folheia** a sequência (espaço) |
+| **EM 1s · 2s · 3s** | a cadência: um desenho por quadro, por dois, por três — como se anima à mão (a 24 q/s, EM 2s são 12 desenhos por segundo) |
+| **USAR** (o vermelho) | a sequência entra na linha do tempo **por cima do vídeo**, no instante em que começou, em modo **Multiplicar** — a aguada como transparência. É a animação em cima da animação |
+| **DO CLIPE** | com um clipe de aquarela escolhido na linha do tempo, traz a sequência de volta para a mesa, **editável** (o rolo guarda o depositado de cada quadro) |
+| **↓** | baixa os quadros em PNG, num .zip |
+| **i · ⚙** | a plaqueta e os ajustes |
+
+**A telinha de ajustes**: o PAPEL (prensado a quente, a frio, rugoso — o
+relevo da folha inteira), a SECAGEM (rápida, normal, lenta), a GRANULAÇÃO
+(quanto o pigmento assenta nos vales do papel), a BORDA ESCURA (a água escoa
+para a beira da mancha e o pigmento vai atrás — a assinatura da aquarela),
+as FLORADAS (a água que invade o papel ao lado, e corre longe em papel ainda
+úmido), a força do VEGETAL, a cadência da composição (24, 25, 30), a
+DEFINIÇÃO da folha (512 a 1280 px no lado maior; vale para uma folha nova),
+a SAÍDA (**SOBRE O VÍDEO**, transparente em Multiplicar; ou **NO PAPEL**,
+opaca, com o papel — a animação por si) e o **MODO CÓDIGO**: liga e a mesa
+mostra, num terminal de canto, as chamadas que o simulador está fazendo
+enquanto você pinta — as de verdade, com os números de verdade
+(`aquarela.pincel(307, 288, 15.3, 48, 'ultramar')`, `aquarela.passo(120)`,
+`aquarela.secar()`, `aquarela.quadro(4)`).
+
+**O que vai para a linha do tempo** é uma fonte de QUADROS: a sequência
+guardada em PNG com alfa (o rolo, um arquivo só, com os estados dentro), que
+o laboratório desenha quadro a quadro pelo tempo — vale velocidade, reverso,
+entrada, como num vídeo, e vai para a sessão guardada e para o .rgblab. Sem
+composição aberta, a mesa funciona como uma aquarela solta: 16:9, e o USAR
+cria a composição no tamanho da folha.
+
 ### A região de um efeito pode ser um traçado
 
 Todo efeito tem uma **REGIÃO**: onde ele acontece. Além de retângulo, elipse e
@@ -2017,6 +2076,9 @@ css/sonografo.css             o chassi de metal do sonógrafo, no palco escuro
 js/filmadora.js               filmadora: bitolas, a cadeia da película, as texturas calculadas, a gravação e os rolos
 js/filmadoraui.js             a traseira da filmadora: visor, seletor, botões, gavetas, telinha
 css/filmadora.css             o couro, o visor, o vermelho, a roda — em 1% da largura da máquina
+js/aquarela.js                aquarela: 52 pigmentos (Kubelka-Munk), o papel, a simulação de água e pigmento na GPU, os quadros, o rolo e a fonte 'quadros'
+js/aquarelaui.js              a mesa de luz: caixa de tintas, folha, luz, vegetal, tira de quadros, telinha, gaveta dos 52, modo código
+css/aquarela.css              a madeira, a lata, o vidro aceso, a tira — em 1% da largura da mesa
 js/cifra.js                   cifra: campo harmônico, acordes, inversões, gravação
 js/cifraui.js                 a janela da cifra: pastilhas, teclado, gravador
 css/cifra.css                 o corpo de marfim da cifra

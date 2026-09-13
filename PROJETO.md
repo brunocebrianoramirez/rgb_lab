@@ -1,12 +1,49 @@
 # rgb_lab — estado do projeto
 
 > Documento de continuidade. Última sessão: **13/09/2026** (vigésima
-> sexta, em quatro voltas: 11, 12 e 13/09). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> sétima: a AQUARELA; a vigésima sexta foi a filmadora, em quatro voltas). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
 > decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
+
+**A vigésima sétima passada (13/09/2026) construiu a AQUARELA em TOOLS** —
+a mesa de luz de um animador, flutuando no palco: pinta-se com água e
+pigmento de verdade (o modelo de Curtis na GPU, a cor por Kubelka-Munk, 52
+pigmentos) POR CIMA do quadro da composição, um quadro de cada vez, e a
+sequência entra na linha do tempo em Multiplicar — a animação em cima da
+animação, que foi o pedido. Está toda na **seção 5n**. Estado em 13/09:
+
+```
+js/aquarela.js      o motor: os 52 pigmentos (K e S por canal, de duas cores),
+                    o papel (relevo calculado), a simulação (água rasa,
+                    pigmento, capilar, sal, álcool) em texturas RGBA32F, o
+                    Kubelka-Munk no shader, os quadros (estado quantizado +
+                    deflate, PNG escrito à mão), o ROLO e a fonte 'quadros'
+js/aquarelaui.js    a mesa: caixa de tintas (8 godês, 4 pincéis, 6 utensílios),
+                    folha, LUZ, VEGETAL, tira de quadros, telinha (papel,
+                    secagem, granulação, borda, floradas, cadência, definição,
+                    saída, MODO CÓDIGO), gaveta dos 52, DO CLIPE, USAR
+css/aquarela.css    tudo em --u (1% da largura da mesa)
+js/media.js         a fonte kind 'quadros' no plano (pelo tempo da fonte) e o
+                    rolo em media.recriar (sessão guardada e .rgblab)
+```
+
+**O que a medida provou** (5n.5): massa do pigmento conservada a 0,000%;
+borda 1,4× mais escura que o miolo; ultramar granula (−0,71) e ftalo quase
+não (−0,15); o sal clareia o cristal; o traço sangra 2 px; estado, PNG e
+rolo vão e voltam; no laboratório de verdade, três quadros viraram o clipe
+"AQUARELA 01" em Multiplicar e o `#gl` deu azul em t=1,00, amarelo em
+t=1,17 e branco fora do clipe. Na placa dele: 9,8 ms por passo a 1024×576.
+
+**O que ficou para ele testar (ninguém viu a mesa em movimento):** pintar
+com o ponteiro de verdade (pressão, coalescência), a água à vista secando,
+os pincéis e utensílios pela caixa, folhear, o vegetal. E o olho dele para a
+força das aguadas, a granulação e as floradas (a couve-flor ainda cresce
+pouco — 5n.6).
+
+---
 
 **A vigésima sexta passada (11–13/09/2026) construiu a FILMADORA em TOOLS**
 — a traseira de uma câmera de filme flutuando no palco, na regra do
@@ -438,8 +475,13 @@ js/filmadora.js ← NOVO   A FILMADORA, motor: bitolas, cadeia da película, tex
                          calculadas, gravação pelo exportador, rolos
 js/filmadoraui.js ← NOVO a traseira da filmadora: visor, seletor, gavetas, telinha
 css/filmadora.css ← NOVO o couro, o visor, o vermelho, a roda — em --u
+js/aquarela.js  ← NOVO   A AQUARELA, motor: 52 pigmentos (Kubelka-Munk), papel,
+                         simulação de água/pigmento na GPU, quadros, rolo, fonte 'quadros'
+js/aquarelaui.js ← NOVO  a mesa de luz: caixa de tintas, folha, luz, vegetal, tira,
+                         telinha, gaveta dos 52, modo código
+css/aquarela.css ← NOVO  a madeira, a lata, o vidro aceso, a tira — em --u
 js/presets.js            presets (localStorage)
-js/media.js              fontes + geometria de MOTION + plano para a GPU
+js/media.js              fontes + geometria de MOTION + plano para a GPU (e a fonte 'quadros')
 js/view.js               viewport: zoom, pan, fit, réguas
 js/timeline.js           a mesa de edição
 js/panels.js             catálogo, ficha da composição, PLACAS RECOLHÍVEIS, máscara
@@ -7429,6 +7471,158 @@ linhas de cima: 299 contra 49). A varredura ATRAVESSA saía branca demais
   máquina de foto.
 - O 16 MM não tem a tira de filme com perfurações no visor — está na
   película (o `filmgate` com `holes`), não na máquina.
+
+## 5n. A AQUARELA — a mesa de luz do animador (vigésima sétima passada)
+
+O pedido: *"uma nova tool que é um gerador de aquarela… simulador de aquarela
+baseado em física real que permite pintar diretamente pelo navegador"*, com
+a referência de um simulador feito no Claude (52 pigmentos por Kubelka-Munk,
+sal, álcool, retroiluminação, um Modo Código que mostra as chamadas enquanto
+se pinta, o modelo de Curtis da SIGGRAPH) — e o que é dele: *"QUERO UMA OPÇÃO
+QUE DÊ PRA PINTAR CONFORME OS FRAMES, ASSIM VIRA UMA ANIMAÇÃO EM CIMA DA
+ANIMAÇÃO."*
+
+### 5n.1 O que a máquina é, e por que é uma mesa de luz
+
+Pintar quadro a quadro por cima de um vídeo é o que o animador faz na mesa
+de luz: o vidro aceso mostra o fotograma por baixo do papel, o vegetal mostra
+o desenho anterior, a barra de pinos segura a folha. Então a máquina é essa
+mesa (regra do polaroid: não há janela, cada peça é uma função): madeira
+calculada (veios ao comprido, gerada no tamanho da mesa, sem emenda), a
+caixa de tintas de lata com oito godês, quatro pincéis, água, esponja,
+pincel seco, sal, álcool e secador; o vidro com a folha; o botão de LUZ (o
+vídeo por baixo, e no fim do curso a retroiluminação); a chave do VEGETAL; a
+tira de quadros; o vermelho USAR. É a segunda natureza de instrumento
+(GRAVAÇÃO): mora no palco, e o resultado vira FONTE.
+
+### 5n.2 O modelo, e onde ele saiu de Curtis (por medida)
+
+Curtis et al. têm: máscara molhada M, velocidades (u,v), pressão p,
+pigmentos g (na água) e d (depositados), saturação s do papel, relevo h. A
+cada passo: mover a água (advecção, viscosidade, ∇p, declive, arrasto,
+relaxar a divergência), escoar para a borda (p −= η(1−M')M), mover o
+pigmento (fluxo pelas faces), transferir (depositar/levantar com densidade
+ρ, mancha ω, granulação γ contra h), capilar (s absorve, difunde, e M cresce
+onde s > σ). Tudo isso está no motor. Três coisas mudaram, cada uma por uma
+medida que deu errado antes:
+
+1. **A pressão virou altura de água (água rasa, compressível), e a
+   relaxação de divergência saiu.** No artigo a água nunca acaba; p pode
+   ficar negativa na beira e é isso que sustenta o escoamento para fora.
+   Com água finita, p era pressão E quantidade, e o passo capilar tirava
+   3% da água por passo — a mancha secava em 100 passos sem fluir. Separei:
+   `w` (a água da célula, em sat.a: anda com o fluxo, evapora, é absorvida,
+   some pela beira) e a velocidade vem do gradiente de `w` (`pressao` 0,5,
+   arrasto 0,06). A relaxação de Curtis fecha a mancha (um campo sem
+   divergência não leva nada à beira) e foi retirada. Medido: antes,
+   orla/centro = 0,53 (a borda saía CLARA); depois, 1,4.
+2. **O pigmento assenta quando a água vai embora, não com água por cima.**
+   Com taxa constante, 30% já tinha assentado antes de chegar à beira.
+   Agora `desce ∝ (0,12 + 0,88·(1 − w/0,15))` e `sobe ∝ w`.
+3. **A célula só seca quando as vizinhas também estão sem água**, senão a
+   beira secava primeiro e M=0 bloqueava o fluxo para lá. O contador de
+   secagem vive dentro do próprio M (1 → cai por passo seco → 0 abaixo de
+   0,7).
+
+E duas coisas de precisão que só a medida pegou: **texturas de 16 bits
+perdiam 2,3% do pigmento em 40 passos** (a fração que entra numa célula ficava
+abaixo do último bit) — o estado é RGBA32F, sem filtro; e a **água
+fantasma fora da máscara** (o pincel punha água onde a cobertura era menor
+que 2%) segurava 30 células da beira molhadas para sempre.
+
+O sangrado e a florada: uma célula seca ao lado de uma molhada com água
+bastante (`sangra` 0,2) molha também; em papel ainda ÚMIDO (s alto — o
+pincel encharca o papel a 2× a água, e o papel seca a 0,4× a evaporação)
+a água exigida cai quase a zero, e o papel CHEIO (s > σ) devolve água à
+superfície ao lado de uma molhada. O sal: cristais sorteados (pequenos,
+raros), que puxam a água (o gradiente do sal borrado entra na velocidade),
+bebem-na, capturam o pigmento (g × 0,85 por passo, e ao secar o que estava
+no cristal vai embora com ele) e escurecem a orla (deposição × 3,5 num anel
+do borrado). O álcool: impulso radial para fora, evaporação 4×, deposição
+× 0,15. O pincel seco só assenta nas cristas (h > 0,5–0,78).
+
+### 5n.3 A cor: Kubelka-Munk de duas cores
+
+Cada pigmento é dado pela aguada sobre branco e pela mesma camada sobre
+preto (o método do artigo, 4.4): `a = ½(Rw + (Rb − Rw + 1)/Rb)`, `b =
+√(a²−1)`, `S = arccoth((1/Rb − a)/b)/b`, `K = S(a−1)`, por canal, em luz
+linear. Uma camada de espessura x: `R = (1−e^{−2y})/(a(1−e^{−2y}) +
+b(1+e^{−2y}))`, `T = 2b·e^{−y}/(…)`, y = bSx (a forma estável, sem sinh).
+A pilha: `R = R₁ + T₁²R₂/(1 − R₁R₂)`. Os 52 devolvem as cores de partida
+com erro 5·10⁻³ (teste em Node, `A.ks` + `A.kmCompor`); hansa + ftalo =
+#b4d483, rosa + hansa = #e9b476, ultramar + siena queimada = #b9abb0,
+titânio x=2 sobre preto = #dedede, ftalo x=2 sobre preto = #0c2b4c.
+
+**Sobre o vídeo é MULTIPLICAR.** O compositor do laboratório tem um alfa só
+por pixel, e uma aguada é um filtro POR CANAL (T² não é igual nos três). O
+quadro sai com a cor sobre branco (C_w) e alfa de cobertura, e o clipe entra
+em Multiplicar: C = C_w·B — exato para pigmento transparente, e o pigmento
+com corpo (cádmios, titânio) perde o corpo sobre vídeo escuro (é o que fica
+de fora; NO PAPEL, opaco, o corpo é exato). Um modo de mistura próprio
+(índice 27, com o "corpo" no alfa) resolveria — anotado.
+
+### 5n.4 Os quadros, o rolo e a fonte
+
+Cada quadro terminado: o depositado (8 canais × 0,25, quantizados em 8 bits,
+dois RGBA8, deflate do navegador — 17 KB a 1024×576) e o quadro renderizado
+(PNG escrito à mão, sem canvas no meio, para o alfa não ser pré-multiplicado
+— 25 KB). Trocar de quadro seca, empacota, guarda e repõe o de destino (122
+ms na placa dele). O ROLO é um arquivo só (cabeçalho JSON + PNGs + estados +
+paleta) e é o `blob` da fonte — vai para a sessão guardada e para o .rgblab
+sem que autosave.js ou projfile.js saibam dele; `media.recriar` tem o ramo.
+A fonte `kind: 'quadros'` desenha o quadro do instante (`floor(t·fps)`)
+num canvas, decodificando sob demanda com cache de 40 e prefetch de 4 — e o
+plano chama `render(VE.srcTime(c, t))`, por isso velocidade, reverso e
+entrada valem como num vídeo.
+
+### 5n.5 Medido
+
+Motor (Chrome sem cabeça, GPU por software, 256×192, `__teste.html`, apagado):
+
+```
+massa do pigmento em 40 passos      Δ 0,000% (com 16F: −2,3%)
+borda escura (d orla / d centro)    1,39 (era 0,53 antes da água rasa)
+granulação corr(d, h)               ultramar −0,71 · ftalo −0,15
+sal                                 d no cristal 0,139 < orla 0,183
+sangrado do traço                   raio 19,3 → 21,8 px
+estado ida e volta                  erro máx 0,0078 (½ degrau); deflate 393 KB → 4 KB, idêntico
+PNG                                 decodifica 256×192; alfa 0 onde não há tinta; linha 0 = topo
+quadros                             pintar 3, voltar ao 0: depositado reposto (erro 0,0078)
+fonte                               render(t) escolhe 0,0,1,2,3 para t = 0, .05, .09, .17, .25
+rolo                                3 quadros, 3 estados, paleta de 8, PNG idêntico
+```
+
+Laboratório de verdade (lab2.html, painel escondido, por medida): TOOLS
+mostra #srcAquarela, MÍDIA esconde; folha 1024×576 de uma composição
+1280×720; fundo copiado do #gl; três quadros (ultramar, pirrol, hansa) → o
+clipe "AQUARELA 01" kind quadros, start 1,00, dur 0,25, blend 3, numa pista
+acima da imagem; `#gl` em t=1,00 no traço: (193,204,244); em t=1,17 no
+traço do quadro 2: (249,248,171); fora do clipe: branco; azul (27,79,216)
+multiplicado → (22,67,209). `media.recriar` do rolo: 3 quadros, fps 12, o
+mesmo pixel (194,205,244,255). DO CLIPE: 3 quadros de volta, ultramar 0,675
+no quadro 0, hansa 0,533 no quadro 2. Placa dele (Intel UHD): 9,8 ms por
+passo, 2,8 ms para desenhar, empacotar 19 ms, exportar 8 ms, quadro 122 ms.
+
+Como foi visto: o banco de prova `__banco.html` (VE de mentira, apagado) no
+Chrome sem cabeça — foi assim que apareceram a madeira em espinha de peixe,
+as aguadas fracas (carga 0,26 → 0,42) e a telinha saindo da janela (o
+conjunto encolhe a 0,86 com ela aberta).
+
+### 5n.6 O que NÃO foi feito, e por quê
+
+- **A mesa em movimento não foi vista** (o painel). O ponteiro de verdade
+  (pressão, `getCoalescedEvents`), a água à vista secando, o cursor, o
+  folhear, o vegetal: só o Bruno olhando.
+- **A florada grande (a couve-flor) cresce pouco** no teste: uma gota na
+  beira de uma aguada úmida cresceu +52 células contra +190 no papel seco.
+  O mecanismo existe (o limiar cai em papel úmido) mas a água evapora antes
+  de correr longe. É ajuste de constantes com o olho dele (`sangra`,
+  `evap`, `eta`, `pressao` em `M.par`).
+- **Corpo sobre o vídeo**: pigmento opaco sobre vídeo escuro perde o corpo
+  em Multiplicar (5n.3). Um modo de mistura próprio resolveria.
+- **Sem pincel chato, sem leque, sem spray** — só redondos.
+- A paleta é lembrada entre sessões (localStorage); os rolos só vivem na
+  linha do tempo (o clipe) — não há gaveta de rolos como na filmadora.
 
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 

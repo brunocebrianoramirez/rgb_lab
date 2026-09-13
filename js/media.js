@@ -116,6 +116,9 @@
     } else if (info.kind === 'audio') {
       carga = M.loadAudioFile(new File([info.blob], info.name || 'audio',
         { type: info.tipo || 'audio/wav' }));
+    } else if (info.kind === 'quadros' && VE.aquarela) {
+      /* o ROLO da aquarela: os quadros em PNG (e os estados) num arquivo só */
+      carga = VE.aquarela.recriarFonte(info.blob, info.name);
     } else {
       carga = new Promise(function (res, rej) {
         var img = new Image();
@@ -517,6 +520,12 @@
         /* uma fonte só para todas as legendas: ela redesenha o texto DO
            CLIPE que está sendo montado agora, por isso o clipe vai junto */
         if (s.render) s.render(op.local, c);
+        tex = VE.renderer.upload(texKey(c, s), s.el, true);
+      } else if (s.kind === 'quadros') {
+        /* a sequência pintada na AQUARELA: a fonte desenha o quadro do
+           instante pedido — pelo tempo da FONTE, para velocidade, sentido
+           e entrada valerem como num vídeo                            */
+        if (s.render) s.render(VE.srcTime(c, op.local + c.start));
         tex = VE.renderer.upload(texKey(c, s), s.el, true);
       } else if (s.kind === 'image') {
         var key = texKey(c, s);

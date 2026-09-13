@@ -4183,6 +4183,412 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   .fil-mini i{width:96px;height:58px}
 }
 
+/* ===== aquarela.css ===== */
+/* ================================================================
+   rgb_lab — A AQUARELA · a mesa de luz
+   ----------------------------------------------------------------
+   A prancheta de um animador flutuando no palco escuro: madeira
+   calculada (veios, em js/aquarelaui.js), o vidro aceso por baixo,
+   a folha presa na barra de pinos, a caixa de tintas de lata à
+   esquerda e a tira de quadros embaixo. Como no polaroid e na
+   filmadora: NÃO HÁ JANELA, cada peça é uma função.
+
+   A MEDIDA
+   Tudo em `--u`, 1% da largura da mesa (100u × 60u). Mudar `--larg`
+   redimensiona a mesa inteira.
+
+   A ORDEM EM PROFUNDIDADE
+     z1  a madeira e a vinheta
+     z2  as peças fixas: vidro, caixa, tira, código
+     z3  os comandos
+     z7  a telinha, ao lado
+     z9  a gaveta dos pigmentos (sobe do chão do palco)
+   ================================================================ */
+
+/* ============================================================ O PALCO */
+.aq-palco{
+  position:fixed;inset:0;z-index:150;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 90% at 50% 30%, rgba(30,27,24,.96), rgba(9,8,7,.985));
+  --larg:min(1180px, 94vw, calc((100vh - 70px) * 1.62));
+  --u:calc(var(--larg) / 100);
+  --aq-azul:var(--ch-video, #1b4fd8);
+  --aq-tela:#17171a; --aq-tela2:#212127;
+  --aq-tx:#eceae4;   --aq-tx2:#8f8d87;  --aq-linha:rgba(255,255,255,.075);
+  --aq-lata:#c9c4b6; --aq-lata2:#8e8a7e; --aq-tinta:#2a2620;
+  font-family:var(--mono);
+  overflow:hidden;
+}
+.aq-palco.hidden{display:none}
+.aq-sair{
+  position:absolute;top:18px;right:22px;z-index:12;
+  width:38px;height:38px;border-radius:50%;padding:0;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.aq-sair svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;display:block}
+.aq-sair:hover{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.4)}
+.aq-conjunto{position:relative;width:var(--larg);transition:transform .42s cubic-bezier(.25,.9,.3,1)}
+/* com a telinha aberta o conjunto encolhe e anda para a esquerda, para o
+   par caber na janela; em tela larga só anda                          */
+.aq-palco.com-tela .aq-conjunto{transform:translateX(calc(var(--larg) * -.145)) scale(.86)}
+@media (min-width:1640px){ .aq-palco.com-tela .aq-conjunto{transform:translateX(calc(var(--larg) * -.17))} }
+
+/* ============================================================ A MESA */
+.aq-mesa{
+  position:relative;width:100%;aspect-ratio:100 / 60;
+  border-radius:calc(var(--u) * 1.6);overflow:hidden;
+  background:var(--aq-madeira) center / 100% 100% no-repeat, #7a5230;
+  box-shadow:
+    inset 0 1px 0 rgba(255,235,200,.35), inset 0 -2px 0 rgba(0,0,0,.45),
+    inset calc(var(--u) * .5) 0 calc(var(--u) * 1.2) rgba(255,230,190,.12),
+    0 calc(var(--u) * 3) calc(var(--u) * 7) rgba(0,0,0,.7), 0 calc(var(--u) * .6) calc(var(--u) * 1.4) rgba(0,0,0,.5);
+}
+.aq-mesa::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(90% 80% at 50% 40%, transparent 55%, rgba(0,0,0,.28));
+}
+.aq-parafuso{
+  position:absolute;z-index:2;width:calc(var(--u) * 1.5);height:calc(var(--u) * 1.5);border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #d9d3c4, #6e6a60 70%, #3a3831);
+  box-shadow:0 1px 2px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.35);
+}
+.aq-parafuso::after{content:"";position:absolute;left:50%;top:22%;width:14%;height:56%;background:#2a2823;transform:translateX(-50%) rotate(28deg);border-radius:1px}
+
+/* ====================================================== A CAIXA DE TINTAS */
+.aq-caixa{
+  position:absolute;z-index:2;left:calc(var(--u) * 2.2);top:calc(var(--u) * 3);
+  width:calc(var(--u) * 22);height:calc(var(--u) * 41);
+  border-radius:calc(var(--u) * 1.1);
+  background:linear-gradient(160deg, #d6d1c3, #b9b4a6 45%, #a19c8f);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7), inset 0 -2px 0 rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.18),
+    0 calc(var(--u) * .8) calc(var(--u) * 1.6) rgba(0,0,0,.45);
+  display:flex;flex-direction:column;padding:calc(var(--u) * .9);gap:calc(var(--u) * .7);
+  color:var(--aq-tinta);
+}
+.aq-caixa-tampa{
+  display:flex;align-items:center;gap:calc(var(--u) * .6);
+  padding:calc(var(--u) * .35) calc(var(--u) * .6);border-radius:calc(var(--u) * .5);
+  background:rgba(0,0,0,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+}
+.aq-caixa-tampa b{font-size:calc(var(--u) * 1.15);letter-spacing:.22em;font-weight:700}
+.aq-caixa-tampa span{flex:1;font-size:calc(var(--u) * .62);letter-spacing:.12em;color:#5d594f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aq-mini{
+  width:calc(var(--u) * 2.4);height:calc(var(--u) * 2.4);border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:linear-gradient(#f2eee4, #bdb8aa);color:var(--aq-tinta);
+  box-shadow:0 1px 2px rgba(0,0,0,.4), inset 0 1px 0 #fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+}
+.aq-mini svg{width:60%;height:60%;fill:currentColor;display:block}
+.aq-mini:active{transform:translateY(1px)}
+
+/* os godês: pastilhas fundas numa bandeja */
+.aq-godes{
+  display:grid;grid-template-columns:repeat(4, 1fr);gap:calc(var(--u) * .5);
+  padding:calc(var(--u) * .6);border-radius:calc(var(--u) * .7);
+  background:linear-gradient(#f3f0e8, #e3dfd3);box-shadow:inset 0 2px 4px rgba(0,0,0,.28), inset 0 0 0 1px rgba(0,0,0,.12);
+}
+.aq-gode{
+  position:relative;border:0;background:transparent;padding:0;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:calc(var(--u) * .25);
+}
+.aq-gode i{
+  display:block;width:calc(var(--u) * 3.9);height:calc(var(--u) * 3.9);border-radius:calc(var(--u) * .8);
+  background:
+    radial-gradient(circle at 40% 35%, rgba(255,255,255,.28), transparent 55%),
+    radial-gradient(circle at 60% 70%, var(--c2, #666), var(--c1, #aaa) 78%);
+  box-shadow:inset 0 3px 6px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.35), 0 1px 0 rgba(255,255,255,.6);
+  transition:transform .12s;
+}
+.aq-gode.vazio i{background:repeating-linear-gradient(45deg, #e9e6dd 0 3px, #d9d5ca 3px 6px);box-shadow:inset 0 3px 6px rgba(0,0,0,.25)}
+.aq-gode small{font-size:calc(var(--u) * .58);letter-spacing:.06em;color:#3e3a33;text-transform:uppercase;line-height:1.1;text-align:center;max-width:calc(var(--u) * 4.6);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.aq-gode.on i{transform:scale(1.08);box-shadow:inset 0 3px 6px rgba(0,0,0,.35), 0 0 0 2px #fff, 0 0 0 3.5px var(--aq-azul)}
+.aq-gode .aq-trocar{
+  position:absolute;right:calc(var(--u) * -.1);top:calc(var(--u) * -.2);
+  width:calc(var(--u) * 1.5);height:calc(var(--u) * 1.5);border-radius:50%;
+  background:#2a2620;color:#f2eee4;font-size:calc(var(--u) * .9);line-height:calc(var(--u) * 1.5);text-align:center;text-decoration:none;
+  opacity:0;transition:opacity .15s;
+}
+.aq-gode:hover .aq-trocar,.aq-gode.on .aq-trocar{opacity:1}
+
+/* os pincéis: quatro redondos num copo, cabo, virola e ponta */
+.aq-pinceis{
+  display:grid;grid-template-columns:repeat(4, 1fr);gap:calc(var(--u) * .4);
+  padding:calc(var(--u) * .4) calc(var(--u) * .6) 0;
+}
+.aq-pincel{border:0;background:transparent;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u) * .3)}
+.aq-pincel i{
+  --esp:calc(var(--u) * (0.6 + var(--n) * .28));
+  display:block;position:relative;width:var(--esp);height:calc(var(--u) * 7.2);border-radius:calc(var(--u) * .3) calc(var(--u) * .3) 40% 40% / calc(var(--u) * .3) calc(var(--u) * .3) 30% 30%;
+  background:linear-gradient(90deg, #3a2a1c, #7b5a3a 45%, #3a2a1c);
+  box-shadow:0 1px 2px rgba(0,0,0,.4);transition:transform .12s;
+}
+.aq-pincel i::before{
+  content:"";position:absolute;left:0;right:0;top:56%;height:18%;
+  background:linear-gradient(90deg, #8f8f8f, #e8e8e8 45%, #7a7a7a);
+}
+.aq-pincel i::after{
+  content:"";position:absolute;left:8%;right:8%;top:74%;height:26%;
+  border-radius:0 0 50% 50% / 0 0 100% 100%;
+  background:linear-gradient(#c9a26b, #7b5a3a);
+}
+.aq-pincel small{font-size:calc(var(--u) * .7);letter-spacing:.08em;color:#3e3a33}
+.aq-pincel.on i{transform:translateY(calc(var(--u) * -.5));box-shadow:0 0 0 1.5px #fff, 0 0 0 3px var(--aq-azul), 0 2px 3px rgba(0,0,0,.4)}
+
+/* os utensílios: água, esponja, seco, sal, álcool, secador */
+.aq-utensilios{display:grid;grid-template-columns:repeat(3, 1fr);gap:calc(var(--u) * .45);margin-top:auto}
+.aq-ut{
+  border:0;padding:calc(var(--u) * .3) 0 calc(var(--u) * .25);cursor:pointer;border-radius:calc(var(--u) * .6);
+  background:linear-gradient(#f2eee4, #cfcabc);box-shadow:0 1px 2px rgba(0,0,0,.35), inset 0 1px 0 #fff;
+  display:flex;flex-direction:column;align-items:center;gap:calc(var(--u) * .15);color:#3e3a33;
+}
+.aq-ut i{display:block;width:calc(var(--u) * 3.1);height:calc(var(--u) * 2.6);background:currentColor;
+  -webkit-mask:var(--ico) center / contain no-repeat;mask:var(--ico) center / contain no-repeat}
+.aq-ut small{font-size:calc(var(--u) * .6);letter-spacing:.1em}
+.aq-ut.on{background:linear-gradient(#2a5fe6, #1b4fd8);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 1px 2px rgba(0,0,0,.4)}
+.aq-ut:active{transform:translateY(1px)}
+.aq-pote i{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 4h12v2h-1v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6H6zM9 11v9h6v-9z'/%3E%3C/svg%3E")}
+.aq-esponja i{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm4 2a1.3 1.3 0 1 0 0 2.6A1.3 1.3 0 0 0 7 9zm6 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm4-2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-8 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm7 1a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z'/%3E%3C/svg%3E")}
+.aq-seco i{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 2h6v9H9zM7 12h10v3H7zM7.5 16h9l-.6 6h-7.8z'/%3E%3C/svg%3E")}
+.aq-saleiro i{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 3h6l1 4H8zM8 8h8l1.4 13H6.6zM10 4.8h1v1h-1zm3 0h1v1h-1zm-1.5-1h1v1h-1z'/%3E%3C/svg%3E")}
+.aq-gotas i{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2c3 5 5 8 5 11a5 5 0 0 1-10 0c0-3 2-6 5-11zm-2 20h4v1h-4z'/%3E%3C/svg%3E")}
+.aq-secador i{--ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 8a5 5 0 0 1 5-5h9l3 1v8l-3 1H8a5 5 0 0 1-5-5zm5-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm2 8h5l-2 8h-3z'/%3E%3C/svg%3E")}
+.aq-ferr-nome{
+  font-size:calc(var(--u) * .68);letter-spacing:.16em;text-align:center;color:#3e3a33;
+  padding:calc(var(--u) * .35) 0 0;border-top:1px solid rgba(0,0,0,.14);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* ============================================================ O VIDRO */
+.aq-vidro{
+  position:absolute;z-index:2;left:calc(var(--u) * 26.5);top:calc(var(--u) * 3);
+  width:calc(var(--u) * 59);height:calc(var(--u) * 44);
+  border-radius:calc(var(--u) * .9);
+  background:
+    radial-gradient(70% 60% at 50% 55%, rgba(255,246,222,calc(.55 * var(--glow, .5))), transparent 80%),
+    linear-gradient(#6f6b62, #4e4a43);
+  box-shadow:inset 0 0 0 calc(var(--u) * .35) #2b2924, inset 0 0 calc(var(--u) * 2) rgba(0,0,0,.6), 0 calc(var(--u) * .6) calc(var(--u) * 1.4) rgba(0,0,0,.5);
+}
+.aq-vidro::before{
+  content:"";position:absolute;inset:calc(var(--u) * .35);border-radius:calc(var(--u) * .6);pointer-events:none;
+  background:linear-gradient(115deg, rgba(255,255,255,.10), transparent 40%, transparent 70%, rgba(255,255,255,.06));
+}
+.aq-pinos{
+  position:absolute;left:50%;top:calc(var(--u) * 2.1);transform:translateX(-50%);z-index:3;
+  width:calc(var(--u) * 22);height:calc(var(--u) * 2.2);border-radius:calc(var(--u) * .4);
+  background:linear-gradient(#3a3834, #1c1b18);box-shadow:0 2px 4px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:space-between;padding:0 calc(var(--u) * 2.4);
+}
+.aq-pinos i{width:calc(var(--u) * 1.1);height:calc(var(--u) * 1.1);border-radius:50%;background:radial-gradient(circle at 35% 35%, #e8e4d8, #8a867c 65%, #4a4842)}
+.aq-pinos i.fenda{width:calc(var(--u) * 3.2);height:calc(var(--u) * .9);border-radius:calc(var(--u) * .45)}
+.aq-papel{
+  position:absolute;left:50%;transform:translateX(-50%);z-index:2;
+  background:#f2efe6;box-shadow:0 calc(var(--u) * .5) calc(var(--u) * 1.2) rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.2);
+  overflow:hidden;
+}
+.aq-papel canvas{display:block;width:100%;height:100%;touch-action:none;cursor:none}
+.aq-papel .aq-folhear{position:absolute;inset:0;cursor:default}
+.aq-papel .aq-folhear.hidden{display:none}
+.aq-cursor{
+  position:absolute;pointer-events:none;transform:translate(-50%, -50%);border-radius:50%;
+  border:1px solid rgba(0,0,0,.65);box-shadow:0 0 0 1px rgba(255,255,255,.7);z-index:5;
+}
+.aq-cursor.hidden{display:none}
+.aq-carimbo{
+  position:absolute;right:calc(var(--u) * 1.4);bottom:calc(var(--u) * .9);z-index:3;
+  font-size:calc(var(--u) * .68);letter-spacing:.2em;color:rgba(255,255,255,.55);
+}
+
+/* ========================================================== A COLUNA */
+.aq-coluna{
+  position:absolute;z-index:3;left:calc(var(--u) * 87.5);top:calc(var(--u) * 3);
+  width:calc(var(--u) * 10.5);height:calc(var(--u) * 44);
+  display:flex;flex-direction:column;align-items:center;gap:calc(var(--u) * 1.1);
+}
+.aq-espaco{flex:1}
+.aq-luz{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u) * .4);cursor:ns-resize;user-select:none;touch-action:none}
+.aq-luz small,.aq-chave small,.aq-usar small{font-size:calc(var(--u) * .66);letter-spacing:.18em;color:#f1e6cf;text-shadow:0 1px 1px rgba(0,0,0,.8)}
+.aq-knob{
+  position:relative;display:block;width:calc(var(--u) * 6.2);height:calc(var(--u) * 6.2);border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #f3e6c4, #b5964e 55%, #6d5424 100%);
+  box-shadow:0 calc(var(--u) * .4) calc(var(--u) * .8) rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.35),
+    0 0 calc(var(--u) * 2) rgba(255,220,150,calc(.55 * var(--glow, 0)));
+}
+.aq-knob b{
+  position:absolute;left:50%;top:6%;width:9%;height:32%;margin-left:-4.5%;border-radius:2px;background:#2a2218;
+  transform-origin:50% 137.5%;   /* o centro do botão: 3,1u abaixo do topo, o ponteiro começa em 0,37u */
+  transform:rotate(var(--ang, -135deg));
+}
+.aq-knob::after{content:"";position:absolute;inset:26%;border-radius:50%;background:radial-gradient(circle at 40% 35%, #e9dbb6, #a7873f 70%);box-shadow:inset 0 1px 2px rgba(0,0,0,.4)}
+.aq-chave{border:0;background:transparent;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u) * .4)}
+.aq-chave i{
+  position:relative;display:block;width:calc(var(--u) * 5.2);height:calc(var(--u) * 2.4);border-radius:calc(var(--u) * 1.2);
+  background:linear-gradient(#2a2823, #15140f);box-shadow:inset 0 1px 3px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12);transition:background .18s;
+}
+.aq-chave i::after{
+  content:"";position:absolute;top:calc(var(--u) * .3);left:calc(var(--u) * .3);width:calc(var(--u) * 1.8);height:calc(var(--u) * 1.8);border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #f2eee4, #9a9587 80%);box-shadow:0 1px 2px rgba(0,0,0,.6);transition:left .18s;
+}
+.aq-chave.on i{background:linear-gradient(#2a5fe6, #1b4fd8)}
+.aq-chave.on i::after{left:calc(var(--u) * 3.1)}
+.aq-bt{
+  width:calc(var(--u) * 4.2);height:calc(var(--u) * 4.2);border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:radial-gradient(circle at 40% 35%, #4a4741, #1e1c18 80%);color:#e8dcc0;
+  box-shadow:0 calc(var(--u) * .3) calc(var(--u) * .6) rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;transition:transform .1s, color .15s;
+}
+.aq-bt svg{width:52%;height:52%;fill:currentColor;display:block}
+.aq-bt:hover{color:#fff}
+.aq-bt:active{transform:translateY(1px)}
+.aq-usar{
+  width:calc(var(--u) * 8.6);height:calc(var(--u) * 8.6);border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:radial-gradient(circle at 40% 32%, #ff7a6a, #d0271b 55%, #7a140d);color:#fff;
+  box-shadow:0 calc(var(--u) * .5) calc(var(--u) * 1) rgba(0,0,0,.65), inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 5px rgba(0,0,0,.35), 0 0 0 calc(var(--u) * .45) #2b2924;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u) * .1);transition:transform .1s;
+}
+.aq-usar svg{width:44%;height:44%;fill:currentColor;display:block}
+.aq-usar small{color:#fff;font-size:calc(var(--u) * .7)}
+.aq-usar:active{transform:translateY(2px)}
+
+/* ============================================================ A TIRA */
+.aq-tira{
+  position:absolute;z-index:2;left:calc(var(--u) * 26.5);top:calc(var(--u) * 48.6);
+  width:calc(var(--u) * 71.5);height:calc(var(--u) * 8.8);
+  border-radius:calc(var(--u) * .8);
+  background:linear-gradient(#2c2a25, #1b1a16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), inset 0 0 0 1px rgba(0,0,0,.6), 0 calc(var(--u) * .4) calc(var(--u) * 1) rgba(0,0,0,.5);
+  display:flex;align-items:center;gap:calc(var(--u) * .7);padding:0 calc(var(--u) * .9);color:#e8e4d8;
+}
+.aq-tira-nav{display:flex;align-items:center;gap:calc(var(--u) * .4);flex:0 0 auto}
+.aq-contador{display:flex;align-items:baseline;gap:calc(var(--u) * .35);min-width:calc(var(--u) * 9.5);justify-content:center}
+.aq-contador b{font-size:calc(var(--u) * 2.2);font-weight:500;color:#fff}
+.aq-contador span{font-size:calc(var(--u) * .9);color:#8f8d87}
+.aq-contador i{font-size:calc(var(--u) * .7);font-style:normal;color:#e2670f;letter-spacing:.08em;margin-left:calc(var(--u) * .3)}
+.aq-nav{
+  width:calc(var(--u) * 3.2);height:calc(var(--u) * 3.2);border-radius:50%;border:0;padding:0;cursor:pointer;flex:0 0 auto;
+  background:linear-gradient(#4b4841, #2a2823);color:#e8e4d8;box-shadow:0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;
+}
+.aq-nav svg{width:56%;height:56%;fill:currentColor;display:block}
+.aq-nav:disabled{opacity:.35;cursor:default}
+.aq-nav:not(:disabled):hover{color:#fff;background:linear-gradient(#5a564e, #353229)}
+.aq-folhear-bt{background:linear-gradient(#2a5fe6, #1b4fd8)}
+.aq-tira-lista{
+  flex:1;min-width:0;height:calc(var(--u) * 7);display:flex;gap:calc(var(--u) * .45);align-items:center;
+  overflow-x:auto;overflow-y:hidden;padding:0 calc(var(--u) * .3);
+  scrollbar-width:thin;scrollbar-color:#4a4741 transparent;
+}
+.aq-tira-lista::-webkit-scrollbar{height:5px}
+.aq-tira-lista::-webkit-scrollbar-thumb{background:#4a4741;border-radius:5px}
+.aq-quadro{
+  position:relative;flex:0 0 auto;height:calc(var(--u) * 6.2);aspect-ratio:16 / 9;border:0;padding:0;cursor:pointer;border-radius:calc(var(--u) * .35);
+  background:#f2efe6;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.6);
+}
+.aq-quadro img{display:block;width:100%;height:100%;object-fit:contain}
+.aq-quadro.vazio{background:repeating-linear-gradient(45deg, #e9e6dd 0 4px, #d9d5ca 4px 8px)}
+.aq-quadro small{position:absolute;left:calc(var(--u) * .3);bottom:calc(var(--u) * .2);font-size:calc(var(--u) * .62);color:#2a2620;background:rgba(255,255,255,.7);padding:0 3px;border-radius:2px}
+.aq-quadro.on{box-shadow:0 0 0 2px var(--aq-azul), 0 1px 2px rgba(0,0,0,.6)}
+.aq-tira-acoes{display:flex;align-items:center;gap:calc(var(--u) * .4);flex:0 0 auto}
+.aq-cadencia{display:flex;gap:2px;margin-left:calc(var(--u) * .4);background:rgba(0,0,0,.35);padding:2px;border-radius:999px}
+.aq-cadencia button{
+  border:0;background:transparent;color:#8f8d87;cursor:pointer;font-family:var(--mono);
+  font-size:calc(var(--u) * .62);letter-spacing:.1em;padding:calc(var(--u) * .4) calc(var(--u) * .7);border-radius:999px;
+}
+.aq-cadencia button.on{background:var(--aq-azul);color:#fff}
+
+/* ======================================================= MODO CÓDIGO */
+.aq-codigo{
+  position:absolute;z-index:2;left:calc(var(--u) * 2.2);top:calc(var(--u) * 45.2);
+  width:calc(var(--u) * 22);height:calc(var(--u) * 12.2);
+  border-radius:calc(var(--u) * .6);background:#0f0f0e;color:#9fe8b0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 calc(var(--u) * .4) calc(var(--u) * .9) rgba(0,0,0,.6);
+  padding:calc(var(--u) * .5) calc(var(--u) * .7);display:flex;flex-direction:column;gap:calc(var(--u) * .3);
+}
+.aq-codigo.hidden{display:none}
+.aq-codigo b{font-size:calc(var(--u) * .6);letter-spacing:.22em;color:#5f8f6b;font-weight:500}
+.aq-codigo pre{
+  margin:0;flex:1;min-height:0;overflow:hidden;font-family:var(--mono);font-size:calc(var(--u) * .66);line-height:1.5;
+  white-space:pre;color:#bdf3c8;
+}
+
+/* ========================================================== A TELINHA */
+.aq-tela{
+  position:absolute;left:100%;margin-left:1.6%;top:2%;width:34%;height:96%;z-index:7;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--aq-tela);border:1px solid rgba(255,255,255,.09);border-radius:18px;
+  box-shadow:0 26px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05);
+  transform-origin:left center;transform:perspective(1500px) rotateY(112deg);
+  opacity:0;visibility:hidden;backface-visibility:hidden;
+  transition:transform .55s cubic-bezier(.2,.9,.25,1), opacity .22s, visibility 0s linear .55s;
+}
+.aq-tela.aberta{transform:perspective(1500px) rotateY(0deg);opacity:1;visibility:visible;transition:transform .55s cubic-bezier(.2,.9,.25,1), opacity .2s, visibility 0s}
+.aq-tela-h{display:flex;align-items:center;gap:9px;padding:13px 14px 12px;border-bottom:1px solid var(--aq-linha);flex:0 0 auto}
+.aq-led{width:7px;height:7px;border-radius:50%;background:var(--aq-azul);box-shadow:0 0 8px var(--aq-azul);flex:0 0 auto}
+.aq-tela-h h4{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:500;color:var(--aq-tx);margin:0}
+.aq-tela-x{
+  width:26px;height:26px;flex:0 0 auto;border-radius:50%;cursor:pointer;border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--aq-tx2);padding:0;
+  display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s,background .15s;
+}
+.aq-tela-x svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;display:block}
+.aq-tela-x:hover{color:var(--aq-tx);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.07)}
+.aq-tela-pag{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 16px;scrollbar-width:thin;scrollbar-color:#3a3a42 transparent}
+.aq-tela-pag::-webkit-scrollbar{width:7px}
+.aq-tela-pag::-webkit-scrollbar-thumb{background:#3a3a42;border-radius:7px}
+.aq-sub{font-family:var(--mono);font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--aq-tx2);margin:16px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--aq-linha)}
+.aq-sub:first-child{margin-top:0}
+.aq-nota{font-family:var(--mono);font-size:9px;line-height:1.7;color:var(--aq-tx2);margin:-2px 0 10px}
+.aq-nota b{color:var(--aq-tx);font-weight:500}
+.aq-ctrl{margin-bottom:12px}
+.aq-ctrl label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--aq-tx);margin-bottom:6px}
+.aq-ctrl-l{display:flex;align-items:center;gap:9px}
+.aq-ctrl i{display:block;font-family:var(--mono);font-size:8.5px;line-height:1.6;color:var(--aq-tx2);font-style:normal;margin-top:4px}
+.aq-num{flex:0 0 50px;min-width:0;font-family:var(--mono);font-size:10px;color:var(--aq-tx);background:transparent;border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:5px 4px;text-align:center}
+.aq-num:focus{outline:none;border-color:var(--aq-azul)}
+/* a linha É o campo: a barra se enche até onde o valor está */
+.aq-tela input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;min-width:0;height:3px;border-radius:3px;outline:none;
+  background:linear-gradient(90deg, var(--aq-azul) var(--fill, 0%), rgba(255,255,255,.18) var(--fill, 0%));
+}
+.aq-tela input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:3px;background:var(--aq-azul);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.aq-tela input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;border-radius:3px;background:var(--aq-azul);cursor:pointer}
+.aq-pilulas{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.aq-pil{
+  flex:1 0 30%;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;padding:7px 9px;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.16);background:transparent;color:var(--aq-tx2);transition:all .14s;
+}
+.aq-pil:hover{border-color:rgba(255,255,255,.45);color:var(--aq-tx)}
+.aq-pil.on{background:var(--aq-azul);border-color:var(--aq-azul);color:#fff}
+.aq-repor{width:100%;flex:none;margin-top:6px}
+.aq-lista{display:flex;flex-direction:column}
+.aq-item{display:grid;grid-template-columns:82px 1fr;gap:10px;align-items:start;padding:7px 0;border-bottom:1px solid var(--aq-linha);font-family:var(--mono);font-size:8.5px;line-height:1.6;color:var(--aq-tx2)}
+.aq-item b{color:var(--aq-tx);font-weight:500;letter-spacing:.12em}
+
+/* ========================================================== A GAVETA */
+.aq-gaveta{
+  position:absolute;z-index:14;left:0;right:0;bottom:0;height:min(62vh, 470px);transform:translateY(103%);
+  background:linear-gradient(#e8e4da, #d3cfc4);
+  box-shadow:0 -12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.75);
+  display:flex;flex-direction:column;font-family:var(--mono);color:#2a2620;
+  transition:transform .38s cubic-bezier(.2,.9,.3,1);
+}
+.aq-gaveta.aberta{transform:translateY(0)}
+.aq-gav-h{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid rgba(0,0,0,.12);flex:0 0 auto}
+.aq-gav-h b{font-size:10px;letter-spacing:.24em}
+.aq-gav-h span{flex:1;font-size:9px;letter-spacing:.14em;color:#6e6a60}
+.aq-gav-h .aq-tela-x{border-color:rgba(0,0,0,.3);color:#2a2620}
+.aq-gav-lista{flex:1;min-height:0;overflow-y:auto;padding:8px 18px 18px;scrollbar-width:thin}
+.aq-gav-grupo{font-size:8.5px;letter-spacing:.22em;color:#6e6a60;margin:12px 0 7px}
+.aq-gav-linha{display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:6px}
+.aq-tubo{
+  display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center;text-align:left;
+  border:1px solid rgba(0,0,0,.14);border-radius:9px;background:rgba(255,255,255,.55);padding:5px 8px 5px 5px;cursor:pointer;
+  transition:background .12s, border-color .12s;
+}
+.aq-tubo:hover{background:#fff;border-color:rgba(0,0,0,.4)}
+.aq-tubo.na-paleta{border-color:var(--aq-azul);box-shadow:inset 0 0 0 1px var(--aq-azul)}
+.aq-tubo i{grid-row:span 2;display:block;width:34px;height:34px;border-radius:8px;background:radial-gradient(circle at 60% 70%, var(--c2), var(--c1) 78%);box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
+.aq-tubo b{font-size:9px;letter-spacing:.06em;font-weight:500;line-height:1.2}
+.aq-tubo small{font-size:7.5px;letter-spacing:.1em;color:#6e6a60}
+
 /* ===== sonografo.css ===== */
 /* ================================================================
    rgb_lab — O SONÓGRAFO · a folha do aparelho
@@ -5119,6 +5525,10 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
                     title="Filmadora: a traseira de uma câmera de filme. A bitola (8 mm, Super 8, 16 mm, 35 mm) é a máquina, o seletor é o filme, e o botão vermelho grava a composição num rolo — com a película">
               <svg viewBox="0 0 24 24"><circle cx="7" cy="5.5" r="2.6"/><circle cx="13.4" cy="5.5" r="2.6"/><rect x="3" y="9.2" width="13" height="10" rx="1.6"/><path d="M16 12.5l5-2.4v7.8l-5-2.4z"/></svg>
               <span class="micro">FILMADORA</span></button>
+            <button class="srcbtn" id="srcAquarela"
+                    title="Aquarela: a mesa de luz do animador. Pinta-se com água e pigmento de verdade (52 pigmentos, Kubelka-Munk) sobre o quadro da composição, um quadro de cada vez — e a sequência entra por cima do vídeo">
+              <svg viewBox="0 0 24 24"><path d="M12 3c3.5 5 5.5 8.5 5.5 11.5a5.5 5.5 0 0 1-11 0C6.5 11.5 8.5 8 12 3z"/><path d="M4 20h16"/></svg>
+              <span class="micro">AQUARELA</span></button>
             <button class="srcbtn srcbtn-hi" id="srcOver"
                     title="Põe um vídeo ou imagem POR CIMA do que já está no cursor, na mesma duração, já em modo de mistura">
               <svg viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="12"/><rect x="9" y="3" width="12" height="12"/></svg>
@@ -23370,6 +23780,9 @@ window.VE = window.VE || {};
     } else if (info.kind === 'audio') {
       carga = M.loadAudioFile(new File([info.blob], info.name || 'audio',
         { type: info.tipo || 'audio/wav' }));
+    } else if (info.kind === 'quadros' && VE.aquarela) {
+      /* o ROLO da aquarela: os quadros em PNG (e os estados) num arquivo só */
+      carga = VE.aquarela.recriarFonte(info.blob, info.name);
     } else {
       carga = new Promise(function (res, rej) {
         var img = new Image();
@@ -23771,6 +24184,12 @@ window.VE = window.VE || {};
         /* uma fonte só para todas as legendas: ela redesenha o texto DO
            CLIPE que está sendo montado agora, por isso o clipe vai junto */
         if (s.render) s.render(op.local, c);
+        tex = VE.renderer.upload(texKey(c, s), s.el, true);
+      } else if (s.kind === 'quadros') {
+        /* a sequência pintada na AQUARELA: a fonte desenha o quadro do
+           instante pedido — pelo tempo da FONTE, para velocidade, sentido
+           e entrada valerem como num vídeo                            */
+        if (s.render) s.render(VE.srcTime(c, op.local + c.start));
         tex = VE.renderer.upload(texKey(c, s), s.el, true);
       } else if (s.kind === 'image') {
         var key = texKey(c, s);
@@ -43757,6 +44176,2072 @@ window.VE = window.VE || {};
 
 })(window.VE);
 
+/* ===== aquarela.js ===== */
+/* ============================================================
+   rgb_lab — A AQUARELA · o motor
+   ------------------------------------------------------------
+   Um simulador de aquarela por FÍSICA, não por filtro: o modelo
+   de Curtis, Anderson, Seims, Fleischer e Salesin ("Computer-
+   Generated Watercolor", SIGGRAPH 1997), inteiro na GPU.
+
+   Cada célula do papel guarda:
+     água       u, v (velocidade), p (cópia da altura, para leitura),
+                M (molhado, com o contador de secagem dentro)
+     capilar    s (saturação do papel), sal, álcool, w (a ÁGUA da
+                célula: anda com o fluxo, evapora, é absorvida, some
+                pela beira)
+     pigmento   g₀…g₇ (na água) e d₀…d₇ (depositado no papel)
+     papel      h (relevo), c (capacidade), fibra
+
+   A cada passo (js: A.passo):
+     1. mover a água — velocidades (viscosidade, o gradiente da ALTURA
+        da água, o declive do papel, o puxão do sal, arrasto). Aqui a
+        água é RASA e finita, não o fluido incompressível do artigo: a
+        relaxação de divergência de Curtis fecha a mancha e impede o
+        escoamento para a beira num modelo em que a água acaba. Com a
+        altura no lugar da pressão, a beira que seca primeiro puxa a
+        água do miolo — e o pigmento vai atrás (o escurecimento de
+        borda, a assinatura da aquarela)
+     2. mover o pigmento — transporte em fluxo, conservativo
+     3. transferir — depositar/levantar, com DENSIDADE, MANCHA e
+        GRANULAÇÃO por pigmento, contra o relevo do papel
+     4. capilar — o papel absorve, a água caminha de célula em
+        célula, e onde a saturação passa do limiar a área molhada
+        CRESCE (os "blooms", as floradas)
+
+   A COR é Kubelka-Munk: cada pigmento tem K (absorção) e S
+   (espalhamento) por canal, calculados de duas cores — a aguada
+   sobre branco e a mesma camada sobre preto (o método do próprio
+   artigo, seção 4.4). A pilha compõe camada sobre camada:
+     R = R₁ + T₁² R₂ / (1 − R₁ R₂),   T = T₁ T₂ / (1 − R₁ R₂)
+   e é por isso que amarelo com azul dá verde, e não cinza.
+
+   Os 52 PIGMENTOS são pigmentos de verdade (o índice de cor está
+   em cada um), com nome do laboratório em português.
+
+   OS QUADROS: a folha pode ser UMA pintura ou uma SEQUÊNCIA — um
+   quadro por instante da composição. Cada quadro terminado é
+   guardado seco (só o depositado, 8 canais quantizados e
+   comprimidos) e renderizado (PNG com alfa). A sequência vira uma
+   FONTE do laboratório (`kind: 'quadros'`) que devolve o quadro
+   certo para cada instante — e é assim que a pintura vira uma
+   animação em cima da animação.
+
+   Nada aqui toca o DOM: a tela é o js/aquarelaui.js.
+   ============================================================ */
+(function (VE) {
+  'use strict';
+
+  var A = VE.aquarela = {};
+
+  /* ================================================== PIGMENTOS ========
+     Cada um: nome do laboratório, índice de cor, grupo, a AGUADA sobre
+     branco, a mesma camada sobre PRETO (é dela que sai a opacidade),
+     densidade ρ (o quanto assenta), mancha ω (o quanto agarra no
+     papel — quanto maior, menos levanta) e granulação γ.            */
+  var P = function (id, nome, ci, grupo, branco, preto, dens, mancha, gran) {
+    return { id: id, nome: nome, ci: ci, grupo: grupo, branco: branco, preto: preto, dens: dens, mancha: mancha, gran: gran };
+  };
+  A.GRUPOS = ['AMARELOS', 'LARANJAS E VERMELHOS', 'VIOLETAS', 'AZUIS', 'VERDES', 'TERRAS E PRETOS'];
+  A.PIGMENTOS = [
+    /* amarelos */
+    P('hansa', 'Amarelo Hansa', 'PY3', 0, '#f4f279', '#3a3a08', 0.30, 2.2, 0.05),
+    P('cadmio-claro', 'Amarelo de Cádmio Claro', 'PY35', 0, '#fff08a', '#7a6a12', 0.60, 1.2, 0.20),
+    P('azo-niquel', 'Amarelo Azo de Níquel', 'PY150', 0, '#f1e39a', '#3e2f06', 0.30, 3.0, 0.05),
+    P('ouro-verde', 'Verde Dourado', 'PY129', 0, '#dbe07a', '#25300a', 0.30, 3.0, 0.10),
+    P('ouro-quinacridona', 'Ouro de Quinacridona', 'PO49', 0, '#f6dfa0', '#4a2c08', 0.35, 2.8, 0.10),
+    P('ocre', 'Ocre Amarelo', 'PY43', 0, '#ead28f', '#5a4210', 0.70, 1.3, 0.55),
+    P('siena-natural', 'Siena Natural', 'PBr7', 0, '#e8cd8a', '#4a3410', 0.70, 1.4, 0.50),
+    P('napoles', 'Amarelo de Nápoles', 'PBr24', 0, '#fbeab8', '#a08a50', 0.80, 1.1, 0.20),
+    /* laranjas e vermelhos */
+    P('cadmio-laranja', 'Laranja de Cádmio', 'PO20', 1, '#ffc27f', '#7c3a0a', 0.65, 1.2, 0.20),
+    P('pirrol-laranja', 'Laranja Pirrol', 'PO73', 1, '#ffb07c', '#4a1806', 0.30, 3.0, 0.05),
+    P('quin-laranja', 'Laranja Queimado de Quinacridona', 'PO48', 1, '#eeb28c', '#3a1608', 0.40, 2.6, 0.15),
+    P('cadmio-vermelho', 'Vermelho de Cádmio', 'PR108', 1, '#ff9d8c', '#6a1010', 0.65, 1.3, 0.15),
+    P('pirrol-vermelho', 'Vermelho Pirrol', 'PR254', 1, '#ff8e84', '#3c0a0a', 0.30, 3.2, 0.05),
+    P('perileno-marrom', 'Marrom Perileno', 'PR179', 1, '#e69c93', '#2a0c0c', 0.40, 3.0, 0.10),
+    P('alizarina', 'Carmim Alizarina', 'PR206', 1, '#f19da6', '#2e0810', 0.30, 3.0, 0.05),
+    P('quin-rosa', 'Rosa de Quinacridona', 'PV19', 1, '#f7abc3', '#30081a', 0.35, 3.0, 0.05),
+    P('quin-magenta', 'Magenta de Quinacridona', 'PR122', 1, '#f39fca', '#2e0a22', 0.35, 3.0, 0.05),
+    P('rosa-oleiro', 'Rosa de Oleiro', 'PR233', 1, '#f1cbc2', '#4a2a26', 0.85, 1.1, 0.85),
+    P('indiano', 'Vermelho Indiano', 'PR101', 1, '#e2aa9c', '#4a1c14', 0.80, 1.4, 0.50),
+    P('caput', 'Caput Mortuum', 'PR101', 1, '#d9acab', '#2a1014', 0.80, 1.4, 0.60),
+    /* violetas */
+    P('dioxazina', 'Violeta Dioxazina', 'PV23', 2, '#b9a4d5', '#12061e', 0.30, 3.5, 0.05),
+    P('ultramar-violeta', 'Violeta Ultramar', 'PV15', 2, '#cbbfe3', '#241c3e', 0.80, 1.5, 0.75),
+    P('manganes-violeta', 'Violeta de Manganês', 'PV16', 2, '#d7bad8', '#2c1a32', 0.80, 1.4, 0.70),
+    P('perileno-violeta', 'Violeta Perileno', 'PV29', 2, '#c9a3a7', '#1c0e12', 0.40, 3.0, 0.10),
+    /* azuis */
+    P('ultramar', 'Azul Ultramar Francês', 'PB29', 3, '#aab9ef', '#0c1440', 0.80, 1.5, 0.75),
+    P('cobalto', 'Azul Cobalto', 'PB28', 3, '#aac5ee', '#0e2450', 0.75, 1.4, 0.55),
+    P('ceruleo', 'Azul Cerúleo', 'PB35', 3, '#b9dcef', '#1a3e58', 0.85, 1.2, 0.70),
+    P('ftalo-azul', 'Azul Ftalo', 'PB15:3', 3, '#93d0ec', '#041a34', 0.25, 3.8, 0.00),
+    P('prussia', 'Azul da Prússia', 'PB27', 3, '#a2c1d8', '#06121c', 0.30, 3.2, 0.10),
+    P('indantreno', 'Azul Indantreno', 'PB60', 3, '#aab5d1', '#0c1024', 0.40, 2.4, 0.20),
+    P('indigo', 'Índigo', 'PB66', 3, '#aab1c1', '#0a0e16', 0.45, 2.2, 0.25),
+    P('cobalto-turquesa', 'Turquesa de Cobalto', 'PB36', 3, '#b0e3e3', '#0c343a', 0.85, 1.3, 0.60),
+    P('manganes-azul', 'Azul de Manganês', 'PB33', 3, '#b7e5f1', '#12404e', 0.85, 1.2, 0.65),
+    P('ftalo-turquesa', 'Turquesa Ftalo', 'PB16', 3, '#a8e1de', '#062a2a', 0.30, 3.5, 0.05),
+    /* verdes */
+    P('ftalo-verde', 'Verde Ftalo', 'PG7', 4, '#a0ddc1', '#03221a', 0.25, 3.8, 0.00),
+    P('viridiano', 'Viridiano', 'PG18', 4, '#bae3d3', '#10342a', 0.60, 1.6, 0.45),
+    P('cobalto-verde', 'Verde Cobalto', 'PG50', 4, '#b8decb', '#143828', 0.80, 1.3, 0.60),
+    P('seiva', 'Verde Seiva', 'PG7+PY150', 4, '#c7da8c', '#1c2a0a', 0.35, 2.6, 0.10),
+    P('hooker', 'Verde Hooker', 'PG36+PY110', 4, '#b7d59b', '#122210', 0.40, 2.4, 0.15),
+    P('terra-verde', 'Terra Verde', 'PG23', 4, '#d6dcc3', '#343e2a', 0.70, 1.2, 0.50),
+    P('perileno-verde', 'Verde Perileno', 'PBk31', 4, '#b6c3b1', '#0a100c', 0.40, 3.0, 0.15),
+    /* terras e pretos */
+    P('siena-queimada', 'Siena Queimada', 'PBr7', 5, '#ecc1a1', '#3a160a', 0.70, 1.6, 0.45),
+    P('sombra-queimada', 'Sombra Queimada', 'PBr7', 5, '#d9c2ac', '#1e120a', 0.70, 1.6, 0.50),
+    P('sombra-natural', 'Sombra Natural', 'PBr7', 5, '#d6ceb8', '#22200f', 0.70, 1.5, 0.50),
+    P('vandyck', 'Marrom Van Dyck', 'NBr8', 5, '#dac6b2', '#180e08', 0.50, 2.0, 0.30),
+    P('payne', 'Cinza de Payne', 'PB29+PBk', 5, '#b9c1cd', '#0e121a', 0.50, 2.2, 0.30),
+    P('neutra', 'Tinta Neutra', 'PBk+PV', 5, '#c1bfc5', '#0e0d12', 0.50, 2.2, 0.20),
+    P('fumo', 'Negro de Fumo', 'PBk7', 5, '#bdbdbd', '#060606', 0.35, 3.0, 0.10),
+    P('lunar', 'Preto Lunar', 'PBk11', 5, '#c6c3be', '#141311', 0.90, 1.3, 0.95),
+    P('hematita', 'Hematita', 'PR101 gen.', 5, '#d7b9a9', '#2a1410', 0.90, 1.3, 0.90),
+    P('sodalita', 'Sodalita', 'genuína', 5, '#bdbdd1', '#12121e', 0.90, 1.3, 0.90),
+    P('titanio', 'Branco de Titânio', 'PW6', 5, '#fdfdfd', '#c8c8c8', 0.70, 1.0, 0.10)
+  ];
+  A.PIGBY = {};
+  A.PIGMENTOS.forEach(function (p) { A.PIGBY[p.id] = p; });
+
+  /* a paleta de fábrica: oito godês — as duplas de primárias e as terras */
+  A.PALETA_PADRAO = ['hansa', 'ocre', 'pirrol-vermelho', 'quin-rosa', 'ultramar', 'ftalo-azul', 'seiva', 'siena-queimada'];
+
+  /* ------------------------------------------------ cor: sRGB ↔ linear */
+  function hex2lin(hex) {
+    var n = parseInt(hex.replace('#', ''), 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255].map(function (v) {
+      v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+  }
+  function lin2hex(c) {
+    return '#' + c.map(function (v) {
+      v = Math.max(0, Math.min(1, v));
+      v = v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+      var s = Math.round(v * 255).toString(16); return s.length < 2 ? '0' + s : s;
+    }).join('');
+  }
+  A.hex2lin = hex2lin; A.lin2hex = lin2hex;
+
+  /* ---------------------------------------------- Kubelka-Munk (JS) ----
+     De (R_w, R_b) — a camada sobre branco e sobre preto — saem a, b, S e
+     K por canal (Curtis, 4.4). O caso inválido (a camada sobre preto
+     clara demais para a mesma camada sobre branco) é corrigido
+     escurecendo o preto até a conta fechar; o teste de nó avisa quais. */
+  function ksCanal(Rw, Rb) {
+    Rw = Math.min(0.995, Math.max(0.02, Rw));
+    Rb = Math.min(Rw - 0.01, Math.max(0.0015, Rb));
+    var a, b, z, corrigido = 0;
+    for (var tent = 0; tent < 40; tent++) {
+      a = 0.5 * (Rw + (Rb - Rw + 1) / Rb);
+      b = Math.sqrt(Math.max(a * a - 1, 1e-9));
+      z = (1 / Rb - a) / b;
+      if (z > 1.0005) break;
+      Rb *= 0.9; corrigido++;
+    }
+    var S = 0.5 * Math.log((z + 1) / (z - 1)) / b;     /* arccoth(z)/b */
+    var K = S * (a - 1);
+    return { a: a, b: b, S: S, K: K, corrigido: corrigido, Rb: Rb };
+  }
+  A.ks = function (pig) {
+    if (pig.__ks) return pig.__ks;
+    var w = hex2lin(pig.branco), k = hex2lin(pig.preto), out = { a: [], b: [], S: [], K: [], corrigido: 0 };
+    for (var c = 0; c < 3; c++) {
+      var r = ksCanal(w[c], k[c]);
+      out.a.push(r.a); out.b.push(r.b); out.S.push(r.S); out.K.push(r.K); out.corrigido += r.corrigido;
+    }
+    pig.__ks = out;
+    return out;
+  };
+  /* uma camada de espessura x: reflectância e transmitância por canal */
+  A.kmCamada = function (ks, x) {
+    var R = [], T = [];
+    for (var c = 0; c < 3; c++) {
+      var y = Math.min(30, ks.b[c] * ks.S[c] * x), e = Math.exp(-2 * y);
+      var den = ks.a[c] * (1 - e) + ks.b[c] * (1 + e);
+      R.push((1 - e) / den); T.push(2 * ks.b[c] * Math.exp(-y) / den);
+    }
+    return { R: R, T: T };
+  };
+  /* a pilha: camadas [{ks, x}] de baixo para cima, sobre um fundo (linear) */
+  A.kmCompor = function (camadas, fundo) {
+    var Rt = fundo.slice();
+    camadas.forEach(function (cam) {
+      var l = A.kmCamada(cam.ks, cam.x);
+      for (var c = 0; c < 3; c++) Rt[c] = l.R[c] + l.T[c] * l.T[c] * Rt[c] / (1 - l.R[c] * Rt[c]);
+    });
+    return Rt;
+  };
+  /* a cor de uma aguada de espessura x sobre papel branco, em hex (para
+     godês, gavetas e miniaturas)                                        */
+  A.corDaAguada = function (id, x) {
+    var p = A.PIGBY[id]; if (!p) return '#000';
+    return lin2hex(A.kmCompor([{ ks: A.ks(p), x: x == null ? 1 : x }], [0.92, 0.91, 0.88]));
+  };
+
+  /* ====================================================== O PAPEL ======
+     Relevo calculado (ruído de valor em oitavas): três grãos. `h` em
+     0..1 é o relevo; a CAPACIDADE `c` segue o relevo (Curtis: c = h·(cmax
+     − cmin) + cmin); a fibra é um segundo ruído fino, para as formas do
+     sal e o grão seco não saírem redondos.                             */
+  A.PAPEIS = {
+    liso: { nome: 'PRENSADO A QUENTE', esc: 2.6, amp: 0.35, oit: 3 },
+    frio: { nome: 'PRENSADO A FRIO', esc: 5.5, amp: 0.75, oit: 4 },
+    rugoso: { nome: 'RUGOSO', esc: 9.5, amp: 1.0, oit: 4 }
+  };
+  function hash2(x, y, s) {
+    var n = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453;
+    return n - Math.floor(n);
+  }
+  function ruidoValor(x, y, s) {
+    var xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    var a = hash2(xi, yi, s), b = hash2(xi + 1, yi, s), c = hash2(xi, yi + 1, s), d = hash2(xi + 1, yi + 1, s);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  }
+  A.gerarPapel = function (w, h, tipo, semente) {
+    var pp = A.PAPEIS[tipo] || A.PAPEIS.frio, s = (semente || 7) * 1.37;
+    var out = new Float32Array(w * h * 4), i = 0;
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var v = 0, amp = 1, esc = pp.esc, tot = 0;
+      for (var o = 0; o < pp.oit; o++) { v += ruidoValor(x / esc, y / esc, s + o) * amp; tot += amp; amp *= 0.5; esc *= 0.5; }
+      v /= tot;
+      /* o relevo: centrado em 0,5, amplitude do papel */
+      var rel = 0.5 + (v - 0.5) * pp.amp * 1.9;
+      rel = Math.max(0, Math.min(1, rel));
+      var fibra = ruidoValor(x / 1.7, y / 1.7, s + 11) * 0.7 + ruidoValor(x / 0.9, y / 0.9, s + 13) * 0.3;
+      out[i++] = rel;                          /* h */
+      out[i++] = 0.7 + rel * 0.3;              /* c: capacidade (pouco relevo: senão todo pigmento granula) */
+      out[i++] = fibra;                        /* fibra */
+      out[i++] = 1;
+    }
+    return out;
+  };
+
+  /* ===================================================== O MOTOR (GPU) =
+     Um contexto WebGL2 próprio, no canvas da folha. Texturas RGBA32F em
+     par (ping-pong); todos os passos são um quad de tela inteira.      */
+  var VS = [
+    '#version 300 es',
+    'in vec2 aPos; out vec2 vUv;',
+    'void main(){ vUv = aPos*0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }'
+  ].join('\n');
+
+  var PRE = [
+    '#version 300 es',
+    'precision highp float; precision highp int; precision highp sampler2D;',
+    'in vec2 vUv;',
+    'uniform ivec2 uTam;',
+    'ivec2 IJ(){ return ivec2(gl_FragCoord.xy); }',
+    'ivec2 CL(ivec2 q){ return clamp(q, ivec2(0), uTam - 1); }',
+    'float hash21(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x*p.y); }'
+  ].join('\n');
+
+  /* 1. as velocidades ------------------------------------------------ */
+  var FS_VEL = [
+    PRE,
+    'uniform sampler2D uAgua, uPapel, uSat, uMasc;',
+    'uniform float uMu, uKappa, uDeclive, uSalPuxa, uPressao;',
+    'out vec4 o;',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  vec4 c = texelFetch(uAgua, ij, 0);',
+    '  float M = c.a;',
+    '  if(M < 0.5){ o = vec4(0.0, 0.0, 0.0, 0.0); return; }',
+    '  vec4 L = texelFetch(uAgua, CL(ij + ivec2(-1,0)), 0), R = texelFetch(uAgua, CL(ij + ivec2(1,0)), 0);',
+    '  vec4 D = texelFetch(uAgua, CL(ij + ivec2(0,-1)), 0), U = texelFetch(uAgua, CL(ij + ivec2(0,1)), 0);',
+    '  float u = c.r, v = c.g;',
+    /* viscosidade: difusão */
+    '  u += uMu*(L.r + R.r + D.r + U.r - 4.0*c.r);',
+    '  v += uMu*(L.g + R.g + D.g + U.g - 4.0*c.g);',
+    /* a altura da água empurra pela face (célula i para i+1): água rasa */
+    '  float w0 = texelFetch(uSat, ij, 0).a, wR = texelFetch(uSat, CL(ij + ivec2(1,0)), 0).a, wU = texelFetch(uSat, CL(ij + ivec2(0,1)), 0).a;',
+    '  u += (w0 - wR)*uPressao;',
+    '  v += (w0 - wU)*uPressao;',
+    /* o declive do papel empurra a água para os vales */
+    '  vec4 pp = texelFetch(uPapel, ij, 0);',
+    '  float hR = texelFetch(uPapel, CL(ij + ivec2(1,0)), 0).r, hU = texelFetch(uPapel, CL(ij + ivec2(0,1)), 0).r;',
+    '  u += (pp.r - hR)*uDeclive;',
+    '  v += (pp.r - hU)*uDeclive;',
+    /* o SAL puxa a água para o cristal (sobe o gradiente do sal borrado) */
+    '  float sR = texelFetch(uMasc, CL(ij + ivec2(1,0)), 0).g, sU = texelFetch(uMasc, CL(ij + ivec2(0,1)), 0).g, s0 = texelFetch(uMasc, ij, 0).g;',
+    '  u += (sR - s0)*uSalPuxa;',
+    '  v += (sU - s0)*uSalPuxa;',
+    /* arrasto */
+    '  u *= (1.0 - uKappa); v *= (1.0 - uKappa);',
+    /* contorno: a face com uma célula seca não deixa passar água */
+    '  if(R.a < 0.5) u = 0.0;',
+    '  if(U.a < 0.5) v = 0.0;',
+    /* CFL: no máximo 0,24 célula por passo, para o transporte conservar massa */
+    '  u = clamp(u, -0.24, 0.24); v = clamp(v, -0.24, 0.24);',
+    '  o = vec4(u, v, w0, M);',
+    '}'
+  ].join('\n');
+
+  /* 2. (a relaxação de divergência do artigo saiu daqui — ver o cabeçalho) (Curtis, uma iteração por passada) ------ */
+  /* 3. transporte do pigmento (fluxo pelas faces, conservativo) ------- */
+  var FS_PIG = [
+    PRE,
+    'uniform sampler2D uPig, uAgua, uSat;',
+    'uniform int uSoAgua;',   /* 1 = transportar só a ÁGUA (o canal a de uSat), os outros passam */
+    'out vec4 o;',
+    'float molhada(ivec2 q){ return smoothstep(0.0, 0.01, texelFetch(uSat, q, 0).a); }',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  vec4 g = texelFetch(uPig, ij, 0);',
+    '  vec4 a = texelFetch(uAgua, ij, 0);',
+    '  if(a.a < 0.5){ o = g; return; }',
+    '  float uR = a.r, vU = a.g;',
+    '  ivec2 qL = CL(ij + ivec2(-1,0)), qR = CL(ij + ivec2(1,0)), qD = CL(ij + ivec2(0,-1)), qU = CL(ij + ivec2(0,1));',
+    '  float uL = texelFetch(uAgua, qL, 0).r, vD = texelFetch(uAgua, qD, 0).g;',
+    '  float sai = (max(uR, 0.0) + max(-uL, 0.0) + max(vU, 0.0) + max(-vD, 0.0))*molhada(ij);',
+    '  vec4 entra = max(uL, 0.0)*molhada(qL)*texelFetch(uPig, qL, 0)',
+    '             + max(-uR, 0.0)*molhada(qR)*texelFetch(uPig, qR, 0)',
+    '             + max(vD, 0.0)*molhada(qD)*texelFetch(uPig, qD, 0)',
+    '             + max(-vU, 0.0)*molhada(qU)*texelFetch(uPig, qU, 0);',
+    '  vec4 novo = max(g*(1.0 - sai) + entra, vec4(0.0));',
+    '  if(uSoAgua == 1){ o = vec4(g.rgb, novo.a); return; }',
+    '  o = novo;',
+    '}'
+  ].join('\n');
+
+  /* 4. transferir: depositar e levantar ------------------------------ */
+  var FS_TRANS = [
+    PRE,
+    'uniform sampler2D uPig, uDep, uPapel, uAgua, uSat, uMasc;',
+    'uniform vec4 uDens, uMancha, uGran;',
+    'uniform float uTaxa;',
+    'layout(location=0) out vec4 oPig;',
+    'layout(location=1) out vec4 oDep;',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  vec4 g = texelFetch(uPig, ij, 0), d = texelFetch(uDep, ij, 0);',
+    '  vec4 a = texelFetch(uAgua, ij, 0), pp = texelFetch(uPapel, ij, 0), st = texelFetch(uSat, ij, 0);',
+    '  if(a.a < 0.5){ oPig = vec4(0.0); oDep = (st.g > 0.5) ? d : d + g; return; }',   /* secou: tudo assenta — menos o que o cristal de sal levou */
+    '  float h = pp.r;',
+    /* com água por cima o pigmento fica em suspensão e VIAJA; é quando a
+       água vai embora que ele assenta — é isso que leva pigmento à beira */
+    '  float agua = clamp(st.a/0.15, 0.0, 1.0);',
+    '  vec4 desce = g*(1.0 - h*uGran)*uDens*uTaxa*(0.12 + 0.88*(1.0 - agua));',
+    '  vec4 sobe  = d*(1.0 + (h - 1.0)*uGran)*uDens/uMancha*uTaxa*agua;',
+    /* o álcool repele: onde há álcool o pigmento não assenta */
+    '  desce *= (1.0 - 0.85*clamp(st.b, 0.0, 1.0));',
+    /* o sal: o cristal captura a água com o pigmento (fica claro); na
+       orla, o pigmento que a água trouxe assenta mais (fica escuro)   */
+    '  float sb = texelFetch(uMasc, ij, 0).g;',
+    '  float orla = smoothstep(0.02, 0.12, sb)*(1.0 - smoothstep(0.12, 0.5, sb))*(1.0 - step(0.5, st.g));',
+    '  desce *= (1.0 + 2.5*orla);',
+    '  if(st.g > 0.5){ desce *= 0.1; sobe = min(sobe + d*0.03, d); g *= 0.85; }',   /* o cristal bebe a água e fica com o pigmento */
+    '  desce = min(desce, g); sobe = min(sobe, d);',
+    '  oPig = max(g - desce + sobe, vec4(0.0));',
+    '  oDep = max(d + desce - sobe, vec4(0.0));',
+    '}'
+  ].join('\n');
+
+  /* 5. capilar, evaporação, escoamento de borda, secagem, floradas --- */
+  var FS_CAP = [
+    PRE,
+    'uniform sampler2D uSat, uAgua, uPapel, uMasc;',
+    'uniform float uAlfa, uEps, uSigma, uEvap, uEta, uSecaP, uSalBebe, uSangra;',
+    'layout(location=0) out vec4 oSat;',
+    'layout(location=1) out vec4 oAgua;',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  vec4 st = texelFetch(uSat, ij, 0), a = texelFetch(uAgua, ij, 0), pp = texelFetch(uPapel, ij, 0);',
+    '  float s = st.r, c = pp.g, p = a.b, M = a.a, w = st.a;',
+    /* absorção: da água rasa para dentro do papel */
+    '  if(M > 0.5){ float ab = min(min(uAlfa, max(c - s, 0.0)), w); s += ab; w -= ab; }',
+    /* difusão capilar entre vizinhas (forma de coleta, conservativa) */
+    '  ivec2 viz[4]; viz[0] = ivec2(-1,0); viz[1] = ivec2(1,0); viz[2] = ivec2(0,-1); viz[3] = ivec2(0,1);',
+    '  float s0 = st.r, ds = 0.0;',
+    '  for(int k = 0; k < 4; k++){',
+    '    ivec2 q = CL(ij + viz[k]);',
+    '    float sn = texelFetch(uSat, q, 0).r, cn = texelFetch(uPapel, q, 0).g;',
+    '    if(sn > uEps && sn > s0) ds += max(0.0, min(sn - s0, c - s0))*0.25;',
+    '    if(s0 > uEps && s0 > sn) ds -= max(0.0, min(s0 - sn, cn - sn))*0.25;',
+    '  }',
+    '  s += ds;',
+    /* o papel também seca, devagar */
+    '  s = max(s - uEvap*0.4, 0.0);',        /* o papel fica úmido muito depois de a água de cima ir embora */
+    /* evaporação da água; o álcool evapora depressa; o sal bebe; e a beira
+       da mancha seca primeiro — na PRESSÃO isso não tem piso (Curtis): é o
+       que mantém a água a escoar para fora e o pigmento a ir atrás     */
+    '  if(M > 0.5){',
+    '    float mb = texelFetch(uMasc, ij, 0).r;',
+    '    float beira = uEta*(1.0 - mb);',
+    '    w -= uEvap*(1.0 + 3.0*st.b) + beira;',
+    '    if(st.g > 0.5) w -= uSalBebe;',
+    '    w = max(w, 0.0);',
+    '    p -= beira;',
+    '  }',
+    /* secagem: sem água por uns passos (e as vizinhas também sem), a célula
+       deixa de estar molhada. O contador vive no próprio M: 1 é molhada,
+       cai a cada passo seco, abaixo de 0,7 seca de vez                 */
+    '  float wv = max(max(texelFetch(uSat, CL(ij + ivec2(-1,0)), 0).a, texelFetch(uSat, CL(ij + ivec2(1,0)), 0).a), max(texelFetch(uSat, CL(ij + ivec2(0,-1)), 0).a, texelFetch(uSat, CL(ij + ivec2(0,1)), 0).a));',
+    '  if(M > 0.5){',
+    '    if(w <= 0.0008 && wv <= 0.0008) M -= 0.3/uSecaP; else M = 1.0;',
+    '    if(M < 0.7){ M = 0.0; p = 0.0; w = 0.0; }',
+    '  } else {',
+    /* o SANGRADO e a FLORADA: a célula seca ao lado de uma molhada com
+       água bastante molha também — a água livre invade o papel vizinho. A
+       água que isso exige (uSangra) cai quase a zero em papel ainda ÚMIDO
+       (saturação alta): é por isso que uma gota sobre uma aguada que está
+       secando corre longe e empurra o pigmento (a florada), e sobre papel
+       seco o traço só sangra um ou dois pixels.                        */
+    '    bool vizM = texelFetch(uAgua, CL(ij + ivec2(-1,0)), 0).a > 0.5 || texelFetch(uAgua, CL(ij + ivec2(1,0)), 0).a > 0.5 || texelFetch(uAgua, CL(ij + ivec2(0,-1)), 0).a > 0.5 || texelFetch(uAgua, CL(ij + ivec2(0,1)), 0).a > 0.5;',
+    '    float limiar = uSangra*(1.0 - 0.85*clamp(s/uSigma, 0.0, 1.0));',
+    /* e o papel CHEIO (saturação acima de σ, Curtis) devolve água à
+       superfície ao lado de uma célula molhada — a florada corre por aí */
+    '    if(vizM && (wv > limiar || s > uSigma)){ M = 1.0; w = max(0.02, (s - uSigma)*0.5); p = w; s = min(s, uSigma); }',
+    '    else w = max(w - uEvap, 0.0);',
+    '  }',
+    '  float alc = st.b*0.985;',
+    '  oSat = vec4(s, st.g, alc, w);',
+    '  oAgua = vec4(a.r, a.g, p, M);',
+    '}'
+  ].join('\n');
+
+  /* 6. borrão separável (M e sal) ------------------------------------ */
+  var FS_BLUR = [
+    PRE,
+    'uniform sampler2D uSrc;',
+    'uniform ivec2 uDir;',   /* direção E passo: (1,0), (0,1), (3,0), (0,3) */
+    'uniform int uModo;',   /* 0 = ler M (agua.a) e sal (sat.g) de duas texturas; 1 = borrar a textura já montada */
+    'uniform sampler2D uSat;',
+    'out vec4 o;',
+    'vec2 ler(ivec2 q){',
+    '  if(uModo == 0) return vec2(texelFetch(uSrc, q, 0).a, step(0.5, texelFetch(uSat, q, 0).g));',
+    '  return texelFetch(uSrc, q, 0).rg;',
+    '}',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  float w[7]; w[0] = 0.1994; w[1] = 0.1760; w[2] = 0.1210; w[3] = 0.0648; w[4] = 0.0270; w[5] = 0.0088; w[6] = 0.0022;',
+    '  vec2 acc = ler(ij)*w[0];',
+    '  for(int k = 1; k < 7; k++) acc += (ler(CL(ij + uDir*k)) + ler(CL(ij - uDir*k)))*w[k];',
+    '  o = vec4(acc, 0.0, 1.0);',
+    '}'
+  ].join('\n');
+
+  /* 7. as ferramentas: um lote de toques por passada ------------------ */
+  var FS_TOOL = [
+    PRE,
+    'uniform sampler2D uAgua, uSat, uPig0, uPig1, uDep0, uDep1, uPapel;',
+    'uniform vec4 uDab[48];',      /* x, y (px), raio, força */
+    'uniform int uN, uFerr, uSlot;',
+    'uniform float uAgua1, uCarga, uLev, uSalQ;',
+    'uniform vec4 uMancha0, uMancha1;',
+    'layout(location=0) out vec4 oAgua;',
+    'layout(location=1) out vec4 oSat;',
+    'layout(location=2) out vec4 oPig0;',
+    'layout(location=3) out vec4 oPig1;',
+    'layout(location=4) out vec4 oDep0;',
+    'layout(location=5) out vec4 oDep1;',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  vec2 p = gl_FragCoord.xy;',
+    '  vec4 ag = texelFetch(uAgua, ij, 0), st = texelFetch(uSat, ij, 0);',
+    '  vec4 g0 = texelFetch(uPig0, ij, 0), g1 = texelFetch(uPig1, ij, 0), d0 = texelFetch(uDep0, ij, 0), d1 = texelFetch(uDep1, ij, 0);',
+    '  vec4 pp = texelFetch(uPapel, ij, 0);',
+    '  float cob = 0.0, cobDura = 0.0, cobSoma = 0.0; vec2 dirImp = vec2(0.0); float anel = 0.0;',
+    '  for(int k = 0; k < 48; k++){',
+    '    if(k >= uN) break;',
+    '    vec4 d = uDab[k];',
+    '    float dist = distance(p, d.xy);',
+    '    float r = max(d.z, 0.6);',
+    '    float c = (1.0 - smoothstep(r*0.86, r, dist))*d.w;',
+    /* cerdas: a borda do pincel não é um círculo perfeito */
+    '    c *= 0.9 + 0.1*pp.b;',
+    '    cob = max(cob, c); cobSoma += c;',
+    '    cobDura = max(cobDura, step(dist, r)*d.w);',
+    '    float an = smoothstep(r*0.35, r*0.9, dist)*(1.0 - smoothstep(r*0.9, r*1.25, dist));',
+    '    if(an > anel){ anel = an; dirImp = normalize(p - d.xy + vec2(1e-3)); }',
+    '  }',
+    '  cobSoma = min(cobSoma, 1.6);',
+    '  vec4 sel0 = vec4(equal(ivec4(uSlot), ivec4(0,1,2,3)));',
+    '  vec4 sel1 = vec4(equal(ivec4(uSlot), ivec4(4,5,6,7)));',
+    '  if(uFerr == 0 || uFerr == 1){',            /* pincel molhado / só água */
+    '    if(cob > 0.02){ ag.a = 1.0; ag.b += uAgua1*cobSoma; st.a += uAgua1*cobSoma; }',
+    '    st.r = min(st.r + uAgua1*cobSoma*2.0, pp.g);',
+    '    if(uFerr == 0){ g0 += sel0*uCarga*cobSoma; g1 += sel1*uCarga*cobSoma; }',
+    '  } else if(uFerr == 2){',                    /* pincel seco: só nas cristas do papel */
+    '    float crista = smoothstep(0.5, 0.78, pp.r);',
+    '    d0 += sel0*uCarga*cob*crista*1.6; d1 += sel1*uCarga*cob*crista*1.6;',
+    '  } else if(uFerr == 3){',                    /* esponja / pano: levanta */
+    '    ag.b -= uLev*cob*1.5; st.a = max(st.a - uLev*cob*1.5, 0.0);',
+    '    g0 *= (1.0 - 0.85*cob); g1 *= (1.0 - 0.85*cob);',
+    '    d0 *= (1.0 - uLev*cob/uMancha0); d1 *= (1.0 - uLev*cob/uMancha1);',
+    '  } else if(uFerr == 4){',                    /* sal: cristais */
+    '    if(cobDura > 0.5 && pp.b*0.6 + hash21(p*0.37)*0.4 > 0.45) st.g = 1.0;',
+    '  } else if(uFerr == 5){',                    /* álcool: gota que repele */
+    '    if(cob > 0.02){ ag.a = 1.0; }',
+    '    st.b = max(st.b, cob);',
+    '    ag.rg += dirImp*anel*0.22;',
+    '    ag.b += 0.12*cob; st.a += 0.12*cob;',
+    '    g0 *= (1.0 - 0.7*cob); g1 *= (1.0 - 0.7*cob);',
+    '  }',
+    '  oAgua = ag; oSat = st; oPig0 = g0; oPig1 = g1; oDep0 = d0; oDep1 = d1;',
+    '}'
+  ].join('\n');
+
+  /* 8. a cor: Kubelka-Munk, a pilha de até oito pigmentos ------------ */
+  var GL_KM = [
+    'uniform vec3 uKa[8], uKb[8], uKs[8];',
+    'vec3 kmR(int k, float x, out vec3 T){',
+    '  vec3 a = uKa[k], b = uKb[k];',
+    '  vec3 y = clamp(b*uKs[k]*x, vec3(0.0), vec3(30.0));',
+    '  vec3 e = exp(-2.0*y);',
+    '  vec3 den = a*(1.0 - e) + b*(1.0 + e);',
+    '  T = 2.0*b*exp(-y)/den;',
+    '  return (1.0 - e)/den;',
+    '}',
+    /* compõe a pilha sobre o fundo `Rt`; devolve R total e escreve T total */
+    'vec3 pilha(vec4 x0, vec4 x1, vec3 Rt, out vec3 Tt){',
+    '  Tt = vec3(1.0);',
+    '  for(int k = 0; k < 8; k++){',
+    '    float x = (k < 4) ? x0[k] : x1[k - 4];',
+    '    if(x < 1e-4) continue;',
+    '    vec3 T; vec3 R = kmR(k, x, T);',
+    '    vec3 den = max(1.0 - R*Rt, vec3(1e-4));',
+    '    Tt = Tt*T/den;',
+    '    Rt = R + T*T*Rt/den;',
+    '  }',
+    '  return Rt;',
+    '}',
+    'vec3 aLin(vec3 c){ return mix(c/12.92, pow(max((c + 0.055)/1.055, vec3(1e-4)), vec3(2.4)), step(0.04045, c)); }',
+    'vec3 aSrgb(vec3 c){ c = max(c, vec3(0.0)); return mix(c*12.92, 1.055*pow(max(c, vec3(1e-6)), vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }',
+    'vec3 papelBase(ivec2 ij, sampler2D pap){',
+    '  vec4 pp = texelFetch(pap, ij, 0);',
+    '  float hR = texelFetch(pap, CL(ij + ivec2(1,0)), 0).r, hU = texelFetch(pap, CL(ij + ivec2(0,1)), 0).r;',
+    '  float sh = 1.0 + 0.16*(pp.r - hR) + 0.10*(pp.r - hU) + 0.025*(pp.b - 0.5);',
+    '  return vec3(0.905, 0.895, 0.865)*sh;',
+    '}'
+  ].join('\n');
+
+  var FS_VER = [
+    PRE,
+    'uniform sampler2D uDep0, uDep1, uPig0, uPig1, uPapel, uAgua, uSat, uFundo, uVegAnt, uVegProx;',
+    'uniform float uLuz, uRetro, uVegA, uVegP, uMostraAgua;',
+    'uniform int uTemFundo;',
+    GL_KM,
+    'out vec4 o;',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  vec4 x0 = texelFetch(uDep0, ij, 0) + texelFetch(uPig0, ij, 0);',
+    '  vec4 x1 = texelFetch(uDep1, ij, 0) + texelFetch(uPig1, ij, 0);',
+    '  vec3 base = papelBase(ij, uPapel);',
+    '  vec3 fundo = base;',
+    '  if(uTemFundo == 1){ vec3 vid = aLin(texture(uFundo, vUv).rgb); fundo = mix(base, vid*base/vec3(0.905,0.895,0.865)*0.98 + 0.02, uLuz); }',
+    '  vec3 Tt; vec3 R = pilha(x0, x1, fundo, Tt);',
+    '  vec4 a = texelFetch(uAgua, ij, 0); float w = texelFetch(uSat, ij, 0).a;',
+    /* a água à vista: a mancha molhada é um pouco mais escura e brilha */
+    '  float molh = a.a*clamp(w*3.0, 0.0, 1.0)*uMostraAgua;',
+    '  R *= (1.0 - 0.09*molh);',
+    '  R += 0.03*molh*vec3(1.0);',
+    '  vec3 cor = R;',
+    /* retroiluminação: a luz vem por trás do papel, o que se vê é o que ATRAVESSA */
+    '  if(uRetro > 0.001){ vec3 Tp; pilha(x0, x1, vec3(0.0), Tp); vec3 luz = Tp*vec3(1.0, 0.98, 0.94)*1.15 + 0.06*R; cor = mix(cor, luz, uRetro); }',
+    /* o papel vegetal: o quadro anterior em azul, o seguinte em vermelho */
+    '  if(uVegA > 0.001){ vec3 pa = aLin(texture(uVegAnt, vUv).rgb); float t = 1.0 - min(min(pa.r, pa.g), pa.b); cor *= mix(vec3(1.0), mix(vec3(1.0), vec3(0.45, 0.6, 1.0), clamp(t*1.4, 0.0, 1.0)), uVegA); }',
+    '  if(uVegP > 0.001){ vec3 pr = aLin(texture(uVegProx, vUv).rgb); float t2 = 1.0 - min(min(pr.r, pr.g), pr.b); cor *= mix(vec3(1.0), mix(vec3(1.0), vec3(1.0, 0.5, 0.45), clamp(t2*1.4, 0.0, 1.0)), uVegP); }',
+    '  o = vec4(aSrgb(cor), 1.0);',
+    '}'
+  ].join('\n');
+
+  /* 9. a saída: o quadro para o laboratório (invertido em y = PNG) ----- */
+  var FS_EXP = [
+    PRE,
+    'uniform sampler2D uDep0, uDep1, uPig0, uPig1, uPapel;',
+    'uniform int uModo;',     /* 0 = sobre o vídeo (C_w + alfa) · 1 = no papel (opaco) */
+    GL_KM,
+    'out vec4 o;',
+    'void main(){',
+    '  ivec2 ij = ivec2(int(gl_FragCoord.x), uTam.y - 1 - int(gl_FragCoord.y));',
+    '  vec4 x0 = texelFetch(uDep0, ij, 0) + texelFetch(uPig0, ij, 0);',
+    '  vec4 x1 = texelFetch(uDep1, ij, 0) + texelFetch(uPig1, ij, 0);',
+    '  vec3 Tt;',
+    '  if(uModo == 0){',
+    '    vec3 Cw = pilha(x0, x1, vec3(1.0), Tt);',
+    '    float cob = clamp((1.0 - min(min(Cw.r, Cw.g), Cw.b))*12.0, 0.0, 1.0);',
+    '    o = vec4(aSrgb(Cw), cob);',
+    '  } else {',
+    '    vec3 R = pilha(x0, x1, papelBase(ij, uPapel), Tt);',
+    '    o = vec4(aSrgb(R), 1.0);',
+    '  }',
+    '}'
+  ].join('\n');
+
+  /* 10. empacotar / desempacotar o estado (8 canais → dois RGBA8) ----- */
+  var FS_PACK = [
+    PRE,
+    'uniform sampler2D uSrc;',
+    'out vec4 o;',
+    'void main(){',
+    '  ivec2 ij = ivec2(int(gl_FragCoord.x), uTam.y - 1 - int(gl_FragCoord.y));',
+    '  o = clamp(texelFetch(uSrc, ij, 0)*0.25, 0.0, 1.0);',
+    '}'
+  ].join('\n');
+  var FS_UNPACK = [
+    PRE,
+    'uniform sampler2D uSrc;',
+    'out vec4 o;',
+    'void main(){',
+    '  ivec2 ij = ivec2(int(gl_FragCoord.x), uTam.y - 1 - int(gl_FragCoord.y));',
+    '  o = texelFetch(uSrc, ij, 0)*4.0;',
+    '}'
+  ].join('\n');
+  var FS_ZERO = [PRE, 'out vec4 o;', 'void main(){ o = vec4(0.0); }'].join('\n');
+  var FS_COPY = [PRE, 'uniform sampler2D uSrc;', 'out vec4 o;', 'void main(){ o = texelFetch(uSrc, IJ(), 0); }'].join('\n');
+
+  /* ------------------------------------------------ a fábrica do motor */
+  function Motor(canvas, w, h, opts) {
+    var self = this;
+    opts = opts || {};
+    this.w = w; this.h = h; this.canvas = canvas;
+    canvas.width = w; canvas.height = h;
+    var gl = this.gl = canvas.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false, depth: false, stencil: false, alpha: false });
+    if (!gl) { this.falhou = 'sem WebGL2'; return; }
+    if (!gl.getExtension('EXT_color_buffer_float')) { this.falhou = 'a placa não renderiza em texturas float'; return; }
+    this.progs = {};
+    this.quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+
+    /* as texturas de estado, em par */
+    var T = this.tex = {};
+    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (n) { T[n] = [self.mkTex(gl.RGBA32F), self.mkTex(gl.RGBA32F)]; });
+    T.masc = [this.mkTex(gl.RGBA32F), this.mkTex(gl.RGBA32F)];
+    T.papel = this.mkTex(gl.RGBA32F);
+    T.fundo = this.mkTex(gl.RGBA8); T.vegAnt = this.mkTex(gl.RGBA8); T.vegProx = this.mkTex(gl.RGBA8);
+    T.u8 = [this.mkTex(gl.RGBA8), this.mkTex(gl.RGBA8)];
+    /* desfazer: três níveis, seis texturas cada */
+    this.desf = []; this.desfN = 0;
+    for (var i = 0; i < 3; i++) {
+      var n = {};
+      ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { n[k] = self.mkTex(gl.RGBA32F); });
+      this.desf.push(n);
+    }
+    this.fbo = gl.createFramebuffer();
+    this.temFundo = 0;
+    this.papelTipo = opts.papel || 'frio';
+    this.setPapel(this.papelTipo, opts.semente || 7);
+    this.paleta = (opts.paleta || A.PALETA_PADRAO).slice(0, 8);
+    while (this.paleta.length < 8) this.paleta.push(null);
+    this.ferr = 'pincel';
+    this.slot = 0;
+    this.raio = 9; this.agua1 = 0.30; this.carga = 0.42; this.lev = 0.55;
+    /* as constantes do modelo — os nomes são os do artigo */
+    this.par = {
+      mu: 0.10, kappa: 0.06, pressao: 0.5, declive: 0.001,
+      alfa: 0.0004, eps: 0.10, sigma: 0.5, sangra: 0.2, eta: 0.0025, evap: 0.0006,
+      secaP: 10, taxa: 0.05, salPuxa: 0.35, salBebe: 0.012,
+      granMul: 1, floradas: 1, borda: 1
+    };
+    this.passos = 0; this.ultimoToque = -1e9;
+    this.fila = []; this.ultimoDab = null;
+    this.luz = 0.55; this.retro = 0; this.vegA = 0; this.vegP = 0;
+    this.limpar();
+  }
+
+  /* As de estado são RGBA32F e sem filtro: com meia precisão (16F) o
+     transporte perdia 2,3% do pigmento em 40 passos — a fração que entra
+     numa célula ficava abaixo do último bit e sumia. Medido.          */
+  Motor.prototype.mkTex = function (fmt) {
+    var gl = this.gl, t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    var flt = (fmt === gl.RGBA32F) ? gl.NEAREST : gl.LINEAR;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, flt);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, flt);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (fmt === gl.RGBA32F) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this.w, this.h, 0, gl.RGBA, gl.FLOAT, null);
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.w, this.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    return t;
+  };
+
+  Motor.prototype.prog = function (nome, fs) {
+    if (this.progs[nome]) return this.progs[nome];
+    var gl = this.gl;
+    function sh(tipo, src) {
+      var s = gl.createShader(tipo); gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error('aquarela/' + nome + ': ' + gl.getShaderInfoLog(s));
+      return s;
+    }
+    var p = gl.createProgram();
+    gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+    gl.bindAttribLocation(p, 0, 'aPos');
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('aquarela/' + nome + ' link: ' + gl.getProgramInfoLog(p));
+    var u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (var i = 0; i < n; i++) { var inf = gl.getActiveUniform(p, i); var nm = inf.name.replace(/\[0\]$/, ''); u[nm] = gl.getUniformLocation(p, inf.name); }
+    this.progs[nome] = { p: p, u: u };
+    return this.progs[nome];
+  };
+
+  /* uma passada: programa, texturas de entrada {nome: tex}, alvos [tex…]
+     (null = a tela), e uma função que arma os uniformes restantes     */
+  Motor.prototype.passar = function (pr, entradas, alvos, arma) {
+    var gl = this.gl;
+    gl.useProgram(pr.p);
+    if (alvos) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+      var bufs = [];
+      for (var i = 0; i < 8; i++) {
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, i < alvos.length ? alvos[i] : null, 0);
+        if (i < alvos.length) bufs.push(gl.COLOR_ATTACHMENT0 + i);
+      }
+      gl.drawBuffers(bufs);
+    } else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, this.w, this.h);
+    var un = 0;
+    Object.keys(entradas).forEach(function (k) {
+      if (pr.u[k] === undefined) return;
+      gl.activeTexture(gl.TEXTURE0 + un); gl.bindTexture(gl.TEXTURE_2D, entradas[k]); gl.uniform1i(pr.u[k], un); un++;
+    });
+    if (pr.u.uTam) gl.uniform2i(pr.u.uTam, this.w, this.h);
+    if (arma) arma(pr.u, gl);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  };
+  Motor.prototype.troca = function (n) { var t = this.tex[n]; var a = t[0]; t[0] = t[1]; t[1] = a; };
+  Motor.prototype.copiar = function (src, dst) { this.passar(this.prog('copy', FS_COPY), { uSrc: src }, [dst]); };
+  Motor.prototype.zerar = function (dst) { this.passar(this.prog('zero', FS_ZERO), {}, [dst]); };
+
+  /* ------------------------------------------------------- o papel */
+  Motor.prototype.setPapel = function (tipo, semente) {
+    var gl = this.gl;
+    this.papelTipo = A.PAPEIS[tipo] ? tipo : 'frio';
+    this.papelSemente = semente || this.papelSemente || 7;
+    var dados = A.gerarPapel(this.w, this.h, this.papelTipo, this.papelSemente);
+    gl.bindTexture(gl.TEXTURE_2D, this.tex.papel);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this.w, this.h, 0, gl.RGBA, gl.FLOAT, dados);
+  };
+
+  /* ---------------------------------------------- limpar a folha */
+  Motor.prototype.limpar = function () {
+    var self = this;
+    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1', 'masc'].forEach(function (n) { self.zerar(self.tex[n][0]); self.zerar(self.tex[n][1]); });
+    this.fila = []; this.ultimoDab = null; this.molhada = false; this.passos = 0;
+    this.desfN = 0;
+    registrar('limpar', []);
+  };
+
+  /* ------------------------------------------------ os pigmentos */
+  Motor.prototype.armarKM = function (u, gl) {
+    var a = [], b = [], s = [], dens = [], man = [], gran = [];
+    for (var k = 0; k < 8; k++) {
+      var p = A.PIGBY[this.paleta[k]];
+      var ks = p ? A.ks(p) : { a: [1.5, 1.5, 1.5], b: [1.1, 1.1, 1.1], S: [0.0001, 0.0001, 0.0001] };
+      a.push(ks.a[0], ks.a[1], ks.a[2]); b.push(ks.b[0], ks.b[1], ks.b[2]); s.push(ks.S[0], ks.S[1], ks.S[2]);
+      dens.push(p ? p.dens : 0.5); man.push(p ? p.mancha : 2); gran.push(p ? Math.min(0.98, p.gran * this.par.granMul) : 0);
+    }
+    if (u.uKa) { gl.uniform3fv(u.uKa, a); gl.uniform3fv(u.uKb, b); gl.uniform3fv(u.uKs, s); }
+    this.__dens = dens; this.__man = man; this.__gran = gran;
+  };
+
+  /* ---------------------------------------------- as ferramentas */
+  var FERR = { pincel: 0, agua: 1, seco: 2, esponja: 3, sal: 4, alcool: 5 };
+  Motor.prototype.ferramenta = function (nome, o) {
+    if (FERR[nome] === undefined) return;
+    this.ferr = nome;
+    o = o || {};
+    if (o.raio != null) this.raio = o.raio;
+    if (o.agua != null) this.agua1 = o.agua;
+    if (o.carga != null) this.carga = o.carga;
+    if (o.lev != null) this.lev = o.lev;
+    if (o.slot != null) this.slot = o.slot;
+  };
+
+  /* um toque: (x, y) em pixels da folha, pressão 0..1. Entre dois toques
+     o motor semeia pontos com o espaçamento do pincel                 */
+  Motor.prototype.tocar = function (x, y, pr) {
+    this.guardarDesfazer();
+    this.ultimoDab = null;
+    this.arrastar(x, y, pr);
+  };
+  Motor.prototype.arrastar = function (x, y, pr) {
+    pr = (pr == null || pr <= 0) ? 0.5 : pr;
+    var r = this.raio * (0.55 + 0.9 * pr), f = (0.5 + pr);
+    var esp = Math.max(1.2, r * 0.32);
+    if (this.ferr === 'sal' || this.ferr === 'alcool') esp = Math.max(esp, r * 0.9);
+    if (!this.ultimoDab) { this.fila.push([x, y, r, f]); }
+    else {
+      var lx = this.ultimoDab[0], ly = this.ultimoDab[1], dx = x - lx, dy = y - ly, d = Math.sqrt(dx * dx + dy * dy);
+      if (d < esp) return;
+      var n = Math.floor(d / esp);
+      for (var i = 1; i <= n; i++) { var t = i * esp / d; this.fila.push([lx + dx * t, ly + dy * t, r, f]); }
+      var rest = d - n * esp;
+      if (rest > esp * 0.5) { this.fila.push([x, y, r, f]); }
+      else { x = lx + dx * (n * esp / d); y = ly + dy * (n * esp / d); }
+    }
+    this.ultimoDab = [x, y, r, f];
+    this.ultimoToque = this.passos;
+    if (this.fila.length >= 48) this.aplicar();
+  };
+  Motor.prototype.soltar = function () { this.aplicar(); this.ultimoDab = null; };
+
+  Motor.prototype.aplicar = function () {
+    if (!this.fila.length) return;
+    var self = this, gl = this.gl, T = this.tex;
+    var lote = this.fila.splice(0, 48), n = lote.length;
+    if (this.ferr === 'sal') {
+      /* cristais: pontos sorteados dentro do toque, poucos e pequenos */
+      var cr = [];
+      lote.forEach(function (d) {
+        var q = Math.max(2, Math.round(d[2] * d[2] * 0.012));
+        for (var i = 0; i < q && cr.length < 48; i++) {
+          var ang = Math.random() * 6.2832, rr = Math.sqrt(Math.random()) * d[2];
+          cr.push([d[0] + Math.cos(ang) * rr, d[1] + Math.sin(ang) * rr, 0.9 + Math.random() * 1.1, 1]);
+        }
+      });
+      lote = cr; n = cr.length;
+      if (!n) return;
+    }
+    var arr = new Float32Array(48 * 4);
+    for (var i = 0; i < n; i++) { arr[i * 4] = lote[i][0]; arr[i * 4 + 1] = lote[i][1]; arr[i * 4 + 2] = lote[i][2]; arr[i * 4 + 3] = lote[i][3]; }
+    var pr = this.prog('tool', FS_TOOL);
+    this.passar(pr, { uAgua: T.agua[0], uSat: T.sat[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uDep0: T.dep0[0], uDep1: T.dep1[0], uPapel: T.papel },
+      [T.agua[1], T.sat[1], T.pig0[1], T.pig1[1], T.dep0[1], T.dep1[1]], function (u) {
+        gl.uniform4fv(u.uDab, arr); gl.uniform1i(u.uN, n);
+        gl.uniform1i(u.uFerr, FERR[self.ferr]); gl.uniform1i(u.uSlot, self.slot);
+        gl.uniform1f(u.uAgua1, self.agua1); gl.uniform1f(u.uCarga, self.carga); gl.uniform1f(u.uLev, self.lev);
+        var man = [], k;
+        for (k = 0; k < 8; k++) { var p = A.PIGBY[self.paleta[k]]; man.push(p ? p.mancha : 2); }
+        gl.uniform4fv(u.uMancha0, man.slice(0, 4)); gl.uniform4fv(u.uMancha1, man.slice(4, 8));
+      });
+    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { self.troca(k); });
+    this.molhada = true;
+    var pig = this.paleta[this.slot];
+    registrar(this.ferr, [Math.round(lote[0][0]), Math.round(lote[0][1]), +lote[0][2].toFixed(1), n, this.ferr === 'pincel' || this.ferr === 'seco' ? pig : undefined]);
+  };
+
+  /* ------------------------------------------------------ o passo */
+  Motor.prototype.passo = function () {
+    if (!this.molhada) return false;
+    var self = this, gl = this.gl, T = this.tex, P = this.par;
+    this.aplicar();
+    /* o borrão da máscara e do sal (só a cada 2 passos: muda devagar) */
+    if (this.passos % 2 === 0) {
+      var pb = this.prog('blur', FS_BLUR);
+      this.passar(pb, { uSrc: T.agua[0], uSat: T.sat[0] }, [T.masc[1]], function (u) { gl.uniform2i(u.uDir, 1, 0); gl.uniform1i(u.uModo, 0); });
+      this.passar(pb, { uSrc: T.masc[1], uSat: T.sat[0] }, [T.masc[0]], function (u) { gl.uniform2i(u.uDir, 0, 1); gl.uniform1i(u.uModo, 1); });
+      this.passar(pb, { uSrc: T.masc[0], uSat: T.sat[0] }, [T.masc[1]], function (u) { gl.uniform2i(u.uDir, 3, 0); gl.uniform1i(u.uModo, 1); });
+      this.passar(pb, { uSrc: T.masc[1], uSat: T.sat[0] }, [T.masc[0]], function (u) { gl.uniform2i(u.uDir, 0, 3); gl.uniform1i(u.uModo, 1); });
+    }
+    /* 1. a água */
+    this.passar(this.prog('vel', FS_VEL), { uAgua: T.agua[0], uPapel: T.papel, uSat: T.sat[0], uMasc: T.masc[0] }, [T.agua[1]], function (u) {
+      gl.uniform1f(u.uMu, P.mu); gl.uniform1f(u.uKappa, P.kappa); gl.uniform1f(u.uDeclive, P.declive); gl.uniform1f(u.uSalPuxa, P.salPuxa); gl.uniform1f(u.uPressao, P.pressao);
+    });
+    this.troca('agua');
+    /* 2. o pigmento anda com a água */
+    var pp = this.prog('pig', FS_PIG);
+    this.passar(pp, { uPig: T.pig0[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.pig0[1]], function (u) { gl.uniform1i(u.uSoAgua, 0); }); this.troca('pig0');
+    this.passar(pp, { uPig: T.pig1[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.pig1[1]], function (u) { gl.uniform1i(u.uSoAgua, 0); }); this.troca('pig1');
+    /* a própria água anda com o fluxo */
+    this.passar(pp, { uPig: T.sat[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.sat[1]], function (u) { gl.uniform1i(u.uSoAgua, 1); }); this.troca('sat');
+    /* 3. deposita e levanta */
+    var pt = this.prog('trans', FS_TRANS);
+    this.armarKM({}, gl);
+    var dens = this.__dens, man = this.__man, gran = this.__gran;
+    [0, 1].forEach(function (b) {
+      var pg = 'pig' + b, dp = 'dep' + b;
+      self.passar(pt, { uPig: T[pg][0], uDep: T[dp][0], uPapel: T.papel, uAgua: T.agua[0], uSat: T.sat[0], uMasc: T.masc[0] }, [T[pg][1], T[dp][1]], function (u) {
+        gl.uniform4fv(u.uDens, dens.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uMancha, man.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uGran, gran.slice(b * 4, b * 4 + 4));
+        gl.uniform1f(u.uTaxa, P.taxa);
+      });
+      self.troca(pg); self.troca(dp);
+    });
+    /* 4. capilar, evaporação, borda, secagem */
+    this.passar(this.prog('cap', FS_CAP), { uSat: T.sat[0], uAgua: T.agua[0], uPapel: T.papel, uMasc: T.masc[0] }, [T.sat[1], T.agua[1]], function (u) {
+      gl.uniform1f(u.uAlfa, P.alfa); gl.uniform1f(u.uEps, P.eps); gl.uniform1f(u.uSigma, P.sigma);
+      gl.uniform1f(u.uEvap, P.evap); gl.uniform1f(u.uEta, P.eta * P.borda); gl.uniform1f(u.uSecaP, P.secaP); gl.uniform1f(u.uSalBebe, P.salBebe);
+      gl.uniform1f(u.uSangra, P.floradas ? P.sangra : 9.0);
+    });
+    this.troca('sat'); this.troca('agua');
+    this.passos++;
+    if (this.passos % 120 === 0) registrar('passo', [this.passos]);
+    /* passado o tempo de secagem sem toque, a folha está seca: seca de vez */
+    if (this.passos - this.ultimoToque > this.secagemPassos()) this.secar();
+    return true;
+  };
+  Motor.prototype.secagemPassos = function () { return Math.round(1.1 / Math.max(this.par.evap, 1e-4)); };
+
+  /* secar de vez: a água some, o que estava nela assenta, o sal sai */
+  Motor.prototype.secar = function () {
+    var self = this, gl = this.gl, T = this.tex;
+    this.aplicar();
+    var pt = this.prog('trans', FS_TRANS);
+    this.armarKM({}, gl);
+    this.zerar(T.agua[1]); this.troca('agua');              /* M = 0, p = 0, u = v = 0 */
+    var dens = this.__dens, man = this.__man, gran = this.__gran;
+    [0, 1].forEach(function (b) {
+      var pg = 'pig' + b, dp = 'dep' + b;
+      self.passar(pt, { uPig: T[pg][0], uDep: T[dp][0], uPapel: T.papel, uAgua: T.agua[0], uSat: T.sat[0], uMasc: T.masc[0] }, [T[pg][1], T[dp][1]], function (u) {
+        gl.uniform4fv(u.uDens, dens.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uMancha, man.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uGran, gran.slice(b * 4, b * 4 + 4));
+        gl.uniform1f(u.uTaxa, self.par.taxa);
+      });
+      self.troca(pg); self.troca(dp);
+    });
+    this.zerar(T.sat[1]); this.troca('sat');                /* o sal sai com a escova, depois de levar o que levou */
+    this.molhada = false;
+    registrar('secar', []);
+  };
+
+  /* ----------------------------------------------------- desfazer */
+  Motor.prototype.guardarDesfazer = function () {
+    var self = this, n = this.desf[this.desfN % 3];
+    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { self.copiar(self.tex[k][0], n[k]); });
+    n.molhada = this.molhada; n.ultimoToque = this.ultimoToque;
+    this.desfN++;
+    this.desfMax = Math.min(3, (this.desfMax || 0) + 1);
+  };
+  Motor.prototype.desfazer = function () {
+    if (!this.desfMax) return false;
+    var self = this;
+    this.desfN--; this.desfMax--;
+    var n = this.desf[((this.desfN % 3) + 3) % 3];
+    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { self.copiar(n[k], self.tex[k][0]); });
+    this.molhada = true; this.ultimoToque = this.passos; this.fila = []; this.ultimoDab = null;
+    registrar('desfazer', []);
+    return true;
+  };
+
+  /* --------------------------------------------- o fundo e o vegetal */
+  Motor.prototype.setFundo = function (fonte) {
+    var gl = this.gl;
+    if (!fonte) { this.temFundo = 0; return; }
+    gl.bindTexture(gl.TEXTURE_2D, this.tex.fundo);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, fonte); this.temFundo = 1; }
+    catch (e) { this.temFundo = 0; }
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  };
+  Motor.prototype.setVegetal = function (qual, fonte) {
+    var gl = this.gl, t = qual === 'prox' ? this.tex.vegProx : this.tex.vegAnt;
+    if (!fonte) { if (qual === 'prox') this.temVegP = 0; else this.temVegA = 0; return; }
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, fonte); if (qual === 'prox') this.temVegP = 1; else this.temVegA = 1; }
+    catch (e) { }
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  };
+
+  /* ------------------------------------------------------- desenhar */
+  Motor.prototype.desenhar = function () {
+    var self = this, gl = this.gl, T = this.tex;
+    this.aplicar();
+    this.passar(this.prog('ver', FS_VER), { uDep0: T.dep0[0], uDep1: T.dep1[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uPapel: T.papel, uAgua: T.agua[0], uSat: T.sat[0], uFundo: T.fundo, uVegAnt: T.vegAnt, uVegProx: T.vegProx }, null, function (u) {
+      self.armarKM(u, gl);
+      gl.uniform1f(u.uLuz, self.luz); gl.uniform1f(u.uRetro, self.retro);
+      gl.uniform1f(u.uVegA, self.temVegA ? self.vegA : 0); gl.uniform1f(u.uVegP, self.temVegP ? self.vegP : 0);
+      gl.uniform1f(u.uMostraAgua, self.mostraAgua === false ? 0 : 1);
+      gl.uniform1i(u.uTemFundo, self.temFundo);
+    });
+  };
+
+  /* ------------------------------------- ler de volta (para testes) */
+  Motor.prototype.ler = function (nome, x, y, w, h) {
+    var gl = this.gl, t = nome === 'papel' ? this.tex.papel : this.tex[nome][0];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    for (var i = 1; i < 8; i++) gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, null, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+    w = w || this.w; h = h || this.h;
+    var out = new Float32Array(w * h * 4);
+    gl.readPixels(x || 0, y || 0, w, h, gl.RGBA, gl.FLOAT, out);
+    return out;
+  };
+  /* a tela, em bytes (RGBA, de baixo para cima como o GL) */
+  Motor.prototype.lerTela = function () {
+    var gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    var out = new Uint8Array(this.w * this.h * 4);
+    gl.readPixels(0, 0, this.w, this.h, gl.RGBA, gl.UNSIGNED_BYTE, out);
+    return out;
+  };
+
+  /* --------------------------------------------- a saída do quadro */
+  Motor.prototype.exportar = function (modo) {
+    var self = this, gl = this.gl, T = this.tex;
+    this.passar(this.prog('exp', FS_EXP), { uDep0: T.dep0[0], uDep1: T.dep1[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uPapel: T.papel }, [T.u8[0]], function (u) {
+      self.armarKM(u, gl); gl.uniform1i(u.uModo, modo === 'papel' ? 1 : 0);
+    });
+    var out = new Uint8Array(this.w * this.h * 4);
+    gl.readPixels(0, 0, this.w, this.h, gl.RGBA, gl.UNSIGNED_BYTE, out);
+    return out;
+  };
+  /* o estado seco (só o depositado), dois RGBA8 de cima para baixo */
+  Motor.prototype.empacotar = function () {
+    var gl = this.gl, T = this.tex, pr = this.prog('pack', FS_PACK), out = new Uint8Array(this.w * this.h * 8);
+    this.passar(pr, { uSrc: T.dep0[0] }, [T.u8[0]]);
+    gl.readPixels(0, 0, this.w, this.h, gl.RGBA, gl.UNSIGNED_BYTE, out.subarray(0, this.w * this.h * 4));
+    this.passar(pr, { uSrc: T.dep1[0] }, [T.u8[0]]);
+    gl.readPixels(0, 0, this.w, this.h, gl.RGBA, gl.UNSIGNED_BYTE, out.subarray(this.w * this.h * 4));
+    return out;
+  };
+  Motor.prototype.desempacotar = function (bytes) {
+    var self = this, gl = this.gl, T = this.tex, pr = this.prog('unpack', FS_UNPACK), n = this.w * this.h * 4;
+    this.limpar();
+    [0, 1].forEach(function (b) {
+      gl.bindTexture(gl.TEXTURE_2D, T.u8[1]);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, self.w, self.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, bytes.subarray(b * n, b * n + n));
+      self.passar(pr, { uSrc: T.u8[1] }, [T['dep' + b][0]]);
+    });
+    this.molhada = false;
+  };
+  Motor.prototype.destruir = function () {
+    var gl = this.gl; if (!gl) return;
+    try { gl.getExtension('WEBGL_lose_context').loseContext(); } catch (e) { }
+  };
+
+  A.Motor = Motor;
+  A.motor = null;
+  A.abrirMotor = function (canvas, w, h, opts) {
+    if (A.motor && A.motor.gl && A.motor.w === w && A.motor.h === h && A.motor.canvas === canvas) return A.motor;
+    if (A.motor) A.motor.destruir();
+    A.motor = new Motor(canvas, w, h, opts);
+    return A.motor;
+  };
+
+  /* ============================================== MODO CÓDIGO ==========
+     Cada chamada de motor que importa passa por aqui. Com o modo ligado,
+     as linhas ficam num anel e a tela as mostra enquanto se pinta —
+     são as chamadas de verdade, com os números de verdade.            */
+  A.codigo = { ligado: false, linhas: [], ouvinte: null };
+  function registrar(nome, args) {
+    if (!A.codigo.ligado) return;
+    var txt = 'aquarela.' + nome + '(' + args.filter(function (a) { return a !== undefined; }).map(function (a) {
+      return typeof a === 'string' ? "'" + a + "'" : String(a);
+    }).join(', ') + ')';
+    var L = A.codigo.linhas, ult = L[L.length - 1];
+    if (ult && ult.txt === txt) { ult.n++; }
+    else { L.push({ txt: txt, n: 1 }); if (L.length > 60) L.shift(); }
+    if (A.codigo.ouvinte) A.codigo.ouvinte();
+  }
+  A.registrar = registrar;
+
+  /* =========================================== DEFLATE E PNG ==========
+     O estado de um quadro vai comprimido (deflate do navegador) e o
+     quadro renderizado vai em PNG escrito à mão — sem canvas no meio,
+     para o alfa não ser pré-multiplicado por ninguém.                  */
+  var CRC = (function () {
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+    return t;
+  })();
+  function crc32(buf, ini, fim) {
+    var c = 0xFFFFFFFF;
+    for (var i = ini; i < fim; i++) c = CRC[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function comprimir(bytes, formato) {
+    if (typeof CompressionStream === 'undefined') return Promise.reject(new Error('sem CompressionStream'));
+    var cs = new CompressionStream(formato || 'deflate');
+    var w = cs.writable.getWriter(); w.write(bytes); w.close();
+    return new Response(cs.readable).arrayBuffer().then(function (b) { return new Uint8Array(b); });
+  }
+  function descomprimir(bytes, formato) {
+    var ds = new DecompressionStream(formato || 'deflate');
+    var w = ds.writable.getWriter(); w.write(bytes); w.close();
+    return new Response(ds.readable).arrayBuffer().then(function (b) { return new Uint8Array(b); });
+  }
+  A.comprimir = comprimir; A.descomprimir = descomprimir;
+
+  A.png = function (w, h, rgba) {
+    var linha = w * 4 + 1, raw = new Uint8Array(linha * h);
+    for (var y = 0; y < h; y++) { raw[y * linha] = 0; raw.set(rgba.subarray(y * w * 4, (y + 1) * w * 4), y * linha + 1); }
+    return comprimir(raw, 'deflate').then(function (idat) {
+      function chunk(tipo, dados) {
+        var out = new Uint8Array(12 + dados.length), dv = new DataView(out.buffer);
+        dv.setUint32(0, dados.length);
+        for (var i = 0; i < 4; i++) out[4 + i] = tipo.charCodeAt(i);
+        out.set(dados, 8);
+        dv.setUint32(8 + dados.length, crc32(out, 4, 8 + dados.length));
+        return out;
+      }
+      var ihdr = new Uint8Array(13), dv = new DataView(ihdr.buffer);
+      dv.setUint32(0, w); dv.setUint32(4, h); ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+      var partes = [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', idat), chunk('IEND', new Uint8Array(0))];
+      var tot = 0; partes.forEach(function (p) { tot += p.length; });
+      var out = new Uint8Array(tot), off = 0;
+      partes.forEach(function (p) { out.set(p, off); off += p.length; });
+      return out;
+    });
+  };
+
+  /* ================================================== OS QUADROS =======
+     A sequência. Cada quadro: { estado (deflate dos dois RGBA8), png
+     (bytes), thumb (data-url) }. O quadro ATUAL vive na GPU; trocar de
+     quadro seca, empacota e guarda o que estava, e repõe o de destino. */
+  A.filme = { quadros: [], atual: 0, fps: 12, passo: 2, inicio: 0, w: 0, h: 0, modo: 'video' };
+
+  A.guardarAtual = function () {
+    var m = A.motor, F = A.filme; if (!m || !m.gl) return Promise.resolve();
+    if (m.molhada) m.secar();
+    var q = F.quadros[F.atual]; if (!q) { q = F.quadros[F.atual] = {}; }
+    var estado = m.empacotar(), rgba = m.exportar(F.modo);
+    q.w = m.w; q.h = m.h; q.sujo = false;
+    return Promise.all([comprimir(estado, 'deflate'), A.png(m.w, m.h, rgba)]).then(function (r) {
+      q.estado = r[0]; q.png = r[1];
+      q.blob = new Blob([q.png], { type: 'image/png' });
+      if (q.bitmap) { try { q.bitmap.close(); } catch (e) { } q.bitmap = null; }
+      return A.miniatura(q);
+    });
+  };
+  A.miniatura = function (q) {
+    return createImageBitmap(q.blob).then(function (bm) {
+      var cv = document.createElement('canvas'), w = 160, h = Math.max(1, Math.round(160 * q.h / q.w));
+      cv.width = w; cv.height = h;
+      var c = cv.getContext('2d');
+      c.fillStyle = '#f2efe6'; c.fillRect(0, 0, w, h);
+      c.drawImage(bm, 0, 0, w, h);
+      q.thumb = cv.toDataURL('image/jpeg', 0.8);
+      q.bitmap = bm;
+      return q;
+    }).catch(function () { return q; });
+  };
+  A.reporQuadro = function (i) {
+    var m = A.motor, F = A.filme, q = F.quadros[i];
+    F.atual = i;
+    if (!q || !q.estado) { m.limpar(); return Promise.resolve(); }
+    return descomprimir(q.estado, 'deflate').then(function (bytes) { m.desempacotar(bytes); });
+  };
+  /* ir para um quadro: guarda o atual, repõe o destino (cria se não existir) */
+  A.irPara = function (i) {
+    var F = A.filme;
+    i = Math.max(0, i | 0);
+    registrar('quadro', [i]);
+    var ida = (A.motor && F.quadros[F.atual] !== undefined || (A.motor && A.motor.molhada)) ? A.guardarAtual() : Promise.resolve();
+    return ida.then(function () {
+      while (F.quadros.length <= i) F.quadros.push({});
+      return A.reporQuadro(i);
+    });
+  };
+  A.apagarQuadro = function (i) {
+    var F = A.filme; if (F.quadros.length <= 1) return Promise.resolve();
+    var q = F.quadros[i];
+    if (q && q.bitmap) { try { q.bitmap.close(); } catch (e) { } }
+    F.quadros.splice(i, 1);
+    if (F.atual > i) F.atual--;
+    if (F.atual >= F.quadros.length) F.atual = F.quadros.length - 1;
+    return A.reporQuadro(F.atual);
+  };
+  /* copiar o quadro anterior para o atual (animar por cima do que já havia) */
+  A.copiarAnterior = function () {
+    var F = A.filme, q = F.quadros[F.atual - 1];
+    if (!q || !q.estado) return Promise.resolve(false);
+    return descomprimir(q.estado, 'deflate').then(function (bytes) { A.motor.desempacotar(bytes); F.quadros[F.atual].sujo = true; return true; });
+  };
+  A.novoFilme = function (w, h) {
+    var F = A.filme;
+    F.quadros.forEach(function (q) { if (q.bitmap) { try { q.bitmap.close(); } catch (e) { } } });
+    F.quadros = [{}]; F.atual = 0; F.w = w; F.h = h;
+  };
+  A.tempoDoQuadro = function (i) { return A.filme.inicio + i / A.filme.fps; };
+
+  /* ============================================ A FONTE 'quadros' ======
+     O laboratório recebe a sequência como uma fonte que sabe desenhar o
+     quadro certo para cada instante. A imagem é decodificada sob demanda
+     e guardada num cache pequeno; enquanto o quadro pedido não chega, o
+     último fica na tela (nunca pisca).                                */
+  function fonteDeQuadros(quadros, fps, w, h, nome) {
+    var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    var c = cv.getContext('2d');
+    var cache = {}, ordem = [], MAX = 40, ultimo = -1;
+    function pedir(i) {
+      var q = quadros[i]; if (!q || cache[i] !== undefined) return;
+      cache[i] = null;
+      createImageBitmap(q.blob).then(function (bm) {
+        cache[i] = bm; ordem.push(i);
+        while (ordem.length > MAX) { var v = ordem.shift(); if (cache[v]) { try { cache[v].close(); } catch (e) { } } delete cache[v]; }
+      }).catch(function () { delete cache[i]; });
+    }
+    var s = {
+      kind: 'quadros', name: nome || 'AQUARELA', el: cv, w: w, h: h, duration: quadros.length / fps, fps: fps, n: quadros.length,
+      quadros: quadros, live: true, animado: true,
+      render: function (tSrc) {
+        var i = Math.max(0, Math.min(quadros.length - 1, Math.floor(tSrc * fps + 1e-4)));
+        for (var k = 0; k < 4; k++) pedir(Math.min(quadros.length - 1, i + k));
+        if (i === ultimo) return;
+        var bm = cache[i];
+        if (!bm) return;               /* ainda decodificando: fica o último */
+        c.clearRect(0, 0, w, h); c.drawImage(bm, 0, 0, w, h);
+        ultimo = i;
+      }
+    };
+    s.render(0);
+    return s;
+  }
+  A.fonteDeQuadros = fonteDeQuadros;
+
+  /* o ROLO: um arquivo só com todos os quadros — cabeçalho JSON e os PNGs
+     em fila. É o `blob` da fonte, o que a sessão guardada e o arquivo de
+     projeto gravam e devolvem.                                          */
+  A.empacotarRolo = function (quadros, fps, w, h, paleta) {
+    var cab = JSON.stringify({
+      app: 'rgb_lab', tipo: 'aquarela', v: 1, fps: fps, w: w, h: h, n: quadros.length,
+      paleta: paleta || null,
+      tamanhos: quadros.map(function (q) { return q.png.length; }),
+      /* os estados (o depositado, comprimido) vão junto: é o que deixa o
+         DO CLIPE trazer a sequência de volta para a mesa, editável      */
+      tamanhosEstado: quadros.map(function (q) { return q.estado ? q.estado.length : 0; })
+    });
+    var enc = new TextEncoder().encode(cab), head = new Uint8Array(8);
+    new DataView(head.buffer).setUint32(0, 0x52474241); new DataView(head.buffer).setUint32(4, enc.length);
+    var partes = [head, enc];
+    quadros.forEach(function (q) { partes.push(q.png); });
+    quadros.forEach(function (q) { if (q.estado) partes.push(q.estado); });
+    return new Blob(partes, { type: 'application/x-rgblab-aquarela' });
+  };
+  A.desempacotarRolo = function (blob) {
+    return blob.arrayBuffer().then(function (buf) {
+      var dv = new DataView(buf);
+      if (dv.getUint32(0) !== 0x52474241) throw new Error('não é um rolo de aquarela');
+      var n = dv.getUint32(4), cab = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 8, n)));
+      var off = 8 + n, quadros = [], estados = [];
+      cab.tamanhos.forEach(function (t) {
+        var png = new Uint8Array(buf, off, t); off += t;
+        quadros.push({ png: png, blob: new Blob([png], { type: 'image/png' }), w: cab.w, h: cab.h });
+      });
+      (cab.tamanhosEstado || []).forEach(function (t) {
+        if (!t) { estados.push(null); return; }
+        estados.push(new Uint8Array(buf, off, t)); off += t;
+      });
+      return { cab: cab, quadros: quadros, estados: cab.tamanhosEstado ? estados : null };
+    });
+  };
+  /* registrar a sequência atual como fonte (o USAR da máquina chama isto) */
+  A.registrarFonte = function (nome) {
+    var F = A.filme, quadros = F.quadros.filter(function (q) { return q && q.png; });
+    if (!quadros.length) return null;
+    var w = quadros[0].w, h = quadros[0].h;
+    var s = fonteDeQuadros(quadros, F.fps, w, h, nome);
+    s.blob = A.empacotarRolo(quadros, F.fps, w, h, A.motor ? A.motor.paleta : null);
+    s.modo = F.modo;
+    return VE.media.register(s);
+  };
+  /* remontar uma fonte a partir do rolo guardado (media.js/recriar) */
+  A.recriarFonte = function (blob, nome) {
+    return A.desempacotarRolo(blob).then(function (r) {
+      var s = fonteDeQuadros(r.quadros, r.cab.fps, r.cab.w, r.cab.h, nome);
+      s.blob = blob;
+      return VE.media.register(s);
+    });
+  };
+
+})(window.VE);
+
+/* ===== aquarelaui.js ===== */
+/* ============================================================
+   rgb_lab — A AQUARELA · a tela
+   ------------------------------------------------------------
+   NÃO HÁ JANELA. Há a MESA DE LUZ de um animador flutuando no
+   palco — a prancheta de madeira com o vidro aceso por baixo, a
+   folha presa na barra de pinos, a caixa de tintas aberta à
+   esquerda e a tira de quadros embaixo — na regra do polaroid e
+   da filmadora: cada peça é uma função.
+
+     a folha ........... o papel. Pinta-se nela com o ponteiro
+                         (caneta com pressão, mouse, dedo)
+     a luz (o botão) ... a mesa de luz: quanto do VÍDEO da
+                         composição aparece por baixo do papel.
+                         No fim do curso a luz vem POR TRÁS da
+                         pintura (retroiluminação)
+     o vegetal ......... o papel vegetal do animador: o quadro
+                         anterior em azul e o seguinte em vermelho
+     os godês .......... os oito pigmentos da paleta. Toque escolhe;
+                         o ⇄ abre a gaveta dos 52
+     os pincéis ........ quatro redondos (n.º 2, 6, 12 e 24)
+     o pote ............ só água (molhar, diluir, floradas)
+     a esponja ......... levanta tinta e água
+     o pincel chato .... pincel SECO: só nas cristas do papel
+     o saleiro ......... sal sobre a aguada molhada
+     o conta-gotas ..... álcool: gotas que repelem o pigmento
+     o secador ......... seca a folha agora
+     a tira ............ os QUADROS: um por instante da composição.
+                         ◀ ▶ andam (e a composição anda junto),
+                         + cria, ⧉ copia o anterior, ▶ folheia
+     EM 1s / 2s / 3s ... a cadência: um desenho por quadro, por
+                         dois, por três — como se anima à mão
+     USAR .............. a sequência vai para a linha do tempo,
+                         POR CIMA do vídeo, em modo Multiplicar
+     i / ⚙ ............. a plaqueta e os ajustes (o papel, a
+                         secagem, a granulação, o modo código…)
+
+   O motor é o js/aquarela.js. Aqui só há DOM.
+   ============================================================ */
+(function (VE) {
+  'use strict';
+
+  var U = VE.aquarelaui = {};
+  var A = null;                 /* VE.aquarela, resolvido na abertura */
+  var M = null;                 /* o motor aberto */
+  var est = null;
+
+  function el(id) { return document.getElementById(id); }
+  function $(s, raiz) { return (raiz || document).querySelector(s); }
+  function $$(s, raiz) { return Array.prototype.slice.call((raiz || document).querySelectorAll(s)); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function toast(m, t) { if (VE.app && VE.app.toast) VE.app.toast(m, t); }
+
+  var ICO = {
+    x: '<path d="M4 4l16 16M20 4L4 20"/>',
+    info: '<path d="M12 4.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM9.6 9.4h3.6v7.4h1.7v2H9.3v-2h1.7v-5.4H9.6z"/>',
+    eng: '<path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3H9l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h6l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/>',
+    desfazer: '<path d="M9 7.5V4L3.5 9 9 14v-3.5c4 0 7 1.5 8.5 5 .3-4.7-3-8-8.5-8z"/>',
+    ant: '<path d="M15.5 5v14L7 12z"/>',
+    prox: '<path d="M8.5 5v14L17 12z"/>',
+    play: '<path d="M8 5.2v13.6L18.6 12z"/>',
+    pausa: '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>',
+    mais: '<path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/>',
+    copiar: '<path d="M8 4h10v12h-2V6H8zM6 8h10v12H6z"/>',
+    lixo: '<path d="M7 7h10l-.8 12.2a1.5 1.5 0 0 1-1.5 1.4H9.3a1.5 1.5 0 0 1-1.5-1.4zM9.5 3.5h5l.8 2H8.7zM5 5.5h14v1.6H5z"/>',
+    baixar: '<path d="M11 3h2v9.2l3.2-3.1 1.4 1.4L12 16.1 6.4 10.5l1.4-1.4 3.2 3.1zM4 17h16v3H4z"/>',
+    usar: '<path d="M4 6h16v12H4zm2 2v8h12V8zm3 1.5l5 2.5-5 2.5z"/>',
+    clipe: '<path d="M3 6h18v12H3zm2 2v8h14V8zM6 5h2v2H6zm4 0h2v2h-2zm4 0h2v2h-2zM6 17h2v2H6zm4 0h2v2h-2zm4 0h2v2h-2z"/>'
+  };
+  function svg(n) { return '<svg viewBox="0 0 24 24">' + ICO[n] + '</svg>'; }
+
+  var PINCEIS = [
+    { n: 2, raio: 2.2 }, { n: 6, raio: 5 }, { n: 12, raio: 10 }, { n: 24, raio: 20 }
+  ];
+  var FERR_NOME = { pincel: 'PINCEL', agua: 'SÓ ÁGUA', seco: 'PINCEL SECO', esponja: 'ESPONJA', sal: 'SAL', alcool: 'ÁLCOOL' };
+
+  /* ==================================================================
+     ABRIR / FECHAR                                                  */
+  U.abrir = function (opts) {
+    A = VE.aquarela;
+    if (!A) { toast('o motor da aquarela não carregou', 'err'); return; }
+    montar();
+    if (!est) {
+      est = {
+        raf: 0, tela: null, gaveta: false, pincel: 2, ferr: 'pincel', slot: 0,
+        folheando: 0, fundoPedido: -1, secagem: 'normal', defin: 1024, base: 24,
+        vegetal: true, vegForca: 0.55, codigo: false, arr: null, ultPasso: 0,
+        luzKnob: 0.55
+      };
+      carregarPrefs();
+    }
+    el('aqPalco').classList.remove('hidden');
+    /* com a mesa aberta o laboratório não precisa desenhar a composição a
+       cada quadro: o fundo é pedido quando o quadro muda (pedirFundo), pelo
+       mesmo caminho da exportação. pauseLoop também pausa a reprodução. */
+    if (VE.app && VE.app.pauseLoop) VE.app.pauseLoop(); else if (VE.app && VE.app.playing) VE.app.pause();
+    prepararFolha(opts && opts.reabrir);
+    vestir();
+    pintarCaixa(); pintarPinceis(); pintarTira(); pintarLuz();
+    A.codigo.ligado = est.codigo; A.codigo.ouvinte = pintarCodigo;
+    el('aqCodigo').classList.toggle('hidden', !est.codigo);
+    pedirFundo();
+    if (!est.raf) laco();
+  };
+  U.fechar = function () {
+    if (!est) return;
+    if (est.folheando) pararFolhear();
+    el('aqPalco').classList.add('hidden');
+    fecharTela(); fecharGaveta();
+    cancelAnimationFrame(est.raf); est.raf = 0;
+    A.codigo.ouvinte = null;
+    if (VE.app && VE.app.resumeLoop) VE.app.resumeLoop();
+    guardarPrefs();
+  };
+  U.aberta = function () { return !!(est && el('aqPalco') && !el('aqPalco').classList.contains('hidden')); };
+
+  /* a folha nasce do tamanho da composição (a proporção dela, com o lado
+     maior na DEFINIÇÃO escolhida); sem projeto, 16:9                 */
+  function tamanhoDaFolha() {
+    var p = VE.project, cw = p ? p.canvas.w : 1920, ch = p ? p.canvas.h : 1080, lado = est.defin;
+    var esc = lado / Math.max(cw, ch);
+    return { w: Math.max(64, Math.round(cw * esc / 2) * 2), h: Math.max(64, Math.round(ch * esc / 2) * 2) };
+  }
+  function prepararFolha(reabrir) {
+    var t = tamanhoDaFolha(), cv = el('aqFolha');
+    var novo = !M || !M.gl || M.w !== t.w || M.h !== t.h;
+    if (novo) {
+      M = A.abrirMotor(cv, t.w, t.h, { papel: est.papel || 'frio', paleta: est.paleta });
+      if (M.falhou) { toast('aquarela: ' + M.falhou, 'err'); return; }
+      aplicarAjustes();
+      A.novoFilme(t.w, t.h);
+      var F = A.filme;
+      F.fps = est.base / (F.passo || 2);
+      F.inicio = VE.project ? Math.floor(VE.project.time * F.fps + 1e-6) / F.fps : 0;
+      F.modo = est.modo || 'video';
+    }
+    aplicarFerramenta();
+    ajustarVidro();
+  }
+
+  /* ==================================================================
+     A MONTAGEM — uma vez                                            */
+  function montar() {
+    if (el('aqPalco')) return;
+    var d = document.createElement('div');
+    d.className = 'aq-palco hidden';
+    d.id = 'aqPalco';
+    d.innerHTML =
+      '<button class="aq-sair" id="aqFechar" title="Fechar (Esc)">' + svg('x') + '</button>' +
+      '<div class="aq-conjunto" id="aqConjunto">' +
+        '<div class="aq-mesa" id="aqMesa">' +
+          '<i class="aq-parafuso" style="left:1.4%;top:2.4%"></i><i class="aq-parafuso" style="right:1.4%;top:2.4%"></i>' +
+          '<i class="aq-parafuso" style="left:1.4%;bottom:2.6%"></i><i class="aq-parafuso" style="right:1.4%;bottom:2.6%"></i>' +
+
+          /* ---- a caixa de tintas ---- */
+          '<div class="aq-caixa" id="aqCaixa">' +
+            '<div class="aq-caixa-tampa"><b>AQUARELA</b><span>52 PIGMENTOS · KUBELKA-MUNK</span>' +
+              '<button class="aq-mini" id="aqDesfazer" title="Desfazer a última pincelada (Ctrl+Z)">' + svg('desfazer') + '</button></div>' +
+            '<div class="aq-godes" id="aqGodes"></div>' +
+            '<div class="aq-pinceis" id="aqPinceis"></div>' +
+            '<div class="aq-utensilios">' +
+              '<button class="aq-ut aq-pote" data-ferr="agua" title="Só água: molhar o papel, diluir, fazer floradas"><i></i><small>ÁGUA</small></button>' +
+              '<button class="aq-ut aq-esponja" data-ferr="esponja" title="Esponja: levanta a tinta molhada (a que mancha resiste)"><i></i><small>ESPONJA</small></button>' +
+              '<button class="aq-ut aq-seco" data-ferr="seco" title="Pincel seco: a tinta pega só nas cristas do papel"><i></i><small>SECO</small></button>' +
+              '<button class="aq-ut aq-saleiro" data-ferr="sal" title="Sal sobre a aguada molhada: os cristais bebem a água e deixam estrelas claras"><i></i><small>SAL</small></button>' +
+              '<button class="aq-ut aq-gotas" data-ferr="alcool" title="Álcool: cada gota repele o pigmento e abre um olho claro de borda escura"><i></i><small>ÁLCOOL</small></button>' +
+              '<button class="aq-ut aq-secador" id="aqSecar" title="Secar a folha agora"><i></i><small>SECAR</small></button>' +
+            '</div>' +
+            '<div class="aq-ferr-nome" id="aqFerrNome">PINCEL N.º 12</div>' +
+          '</div>' +
+
+          /* ---- a mesa de luz ---- */
+          '<div class="aq-vidro" id="aqVidro">' +
+            '<div class="aq-pinos"><i></i><i class="fenda"></i><i></i></div>' +
+            '<div class="aq-papel" id="aqPapel"><canvas id="aqFolha"></canvas><canvas class="aq-folhear hidden" id="aqFolhear"></canvas>' +
+              '<div class="aq-cursor" id="aqCursor"></div></div>' +
+            '<div class="aq-carimbo" id="aqCarimbo">QUADRO 01</div>' +
+          '</div>' +
+
+          /* ---- a coluna da direita ---- */
+          '<div class="aq-coluna">' +
+            '<div class="aq-luz" id="aqLuz" title="A mesa de luz: arraste. Quanto do vídeo aparece por baixo do papel; no fim do curso a luz vem por trás da pintura">' +
+              '<i class="aq-knob"><b></b></i><small>LUZ</small></div>' +
+            '<button class="aq-chave" id="aqVegetal" title="Papel vegetal: o quadro anterior em azul, o seguinte em vermelho"><i></i><small>VEGETAL</small></button>' +
+            '<button class="aq-bt" id="aqInfo" title="O que cada peça faz">' + svg('info') + '</button>' +
+            '<button class="aq-bt" id="aqAjustes" title="Ajustes: papel, secagem, granulação, modo código">' + svg('eng') + '</button>' +
+            '<div class="aq-espaco"></div>' +
+            '<button class="aq-bt" id="aqDoClipe" title="Abrir a aquarela do clipe escolhido na linha do tempo, para continuar">' + svg('clipe') + '</button>' +
+            '<button class="aq-bt" id="aqBaixar" title="Baixar os quadros em PNG (.zip)">' + svg('baixar') + '</button>' +
+            '<button class="aq-usar" id="aqUsar" title="Usar na linha do tempo: a sequência entra por cima do vídeo">' + svg('usar') + '<small>USAR</small></button>' +
+          '</div>' +
+
+          /* ---- a tira de quadros ---- */
+          '<div class="aq-tira" id="aqTira">' +
+            '<div class="aq-tira-nav">' +
+              '<button class="aq-nav" id="aqAnt" title="Quadro anterior (←)">' + svg('ant') + '</button>' +
+              '<div class="aq-contador" id="aqContador"><b>01</b><span>/ 01</span><i>0:00.00</i></div>' +
+              '<button class="aq-nav" id="aqProx" title="Quadro seguinte (→)">' + svg('prox') + '</button>' +
+            '</div>' +
+            '<div class="aq-tira-lista" id="aqLista"></div>' +
+            '<div class="aq-tira-acoes">' +
+              '<button class="aq-nav" id="aqNovo" title="Quadro novo depois deste">' + svg('mais') + '</button>' +
+              '<button class="aq-nav" id="aqCopiar" title="Copiar o quadro anterior para este">' + svg('copiar') + '</button>' +
+              '<button class="aq-nav" id="aqApagar" title="Apagar este quadro">' + svg('lixo') + '</button>' +
+              '<button class="aq-nav aq-folhear-bt" id="aqFolheia" title="Folhear: tocar a sequência (espaço)">' + svg('play') + '</button>' +
+              '<div class="aq-cadencia" id="aqCadencia">' +
+                '<button data-passo="1">EM 1s</button><button data-passo="2" class="on">EM 2s</button><button data-passo="3">EM 3s</button></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="aq-codigo hidden" id="aqCodigo"><b>MODO CÓDIGO</b><pre id="aqCodigoTxt"></pre></div>' +
+        '</div>' +
+
+        /* ---- a telinha ---- */
+        '<div class="aq-tela" id="aqTela">' +
+          '<div class="aq-tela-h"><i class="aq-led"></i><h4 id="aqTelaTit">AJUSTES</h4>' +
+            '<button class="aq-tela-x" id="aqTelaX" title="Fechar">' + svg('x') + '</button></div>' +
+          '<div class="aq-tela-pag" id="aqTelaPag"></div>' +
+        '</div>' +
+      '</div>' +
+
+      /* ---- a gaveta dos pigmentos ---- */
+      '<div class="aq-gaveta" id="aqGaveta">' +
+        '<div class="aq-gav-h"><b>OS 52 PIGMENTOS</b><span id="aqGavPara">para o godê 1</span><button class="aq-tela-x" id="aqGavX" title="Fechar">' + svg('x') + '</button></div>' +
+        '<div class="aq-gav-lista" id="aqGavLista"></div>' +
+      '</div>';
+    document.body.appendChild(d);
+    ligar();
+  }
+
+  /* ==================================================================
+     A PELE — madeira calculada (veios) para a mesa                 */
+  function madeira(D) {
+    var Wd = D, Hd = Math.round(D * 0.6);
+    var cv = document.createElement('canvas'); cv.width = Wd; cv.height = Hd;
+    var c = cv.getContext('2d'), im = c.createImageData(Wd, Hd), d = im.data;
+    function h2(x, y) { var n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); }
+    function ru(x, y) {
+      var xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi;
+      fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+      var a = h2(xi, yi), b = h2(xi + 1, yi), cc = h2(xi, yi + 1), dd = h2(xi + 1, yi + 1);
+      return a + (b - a) * fx + (cc - a) * fy + (a - b - cc + dd) * fx * fy;
+    }
+    for (var y = 0; y < Hd; y++) for (var x = 0; x < Wd; x++) {
+      /* veios AO COMPRIDO: faixas em y, onduladas devagar em x (a primeira
+         versão dobrava em zigue-zague e parecia espinha de peixe)     */
+      var wob = ru(x / 210, y / 70) * 22 + ru(x / 60, y / 22) * 4;
+      var v = 0.5 + 0.5 * Math.sin((y + wob) * 0.21);
+      v = Math.pow(v, 1.5);
+      var grao = ru(x / 1.3, y / 7) * 0.14 + ru(x / 9, y / 2.2) * 0.06;
+      var l = 0.44 + v * 0.28 + grao;
+      var i = (y * Wd + x) * 4;
+      d[i] = Math.round(176 * l); d[i + 1] = Math.round(122 * l); d[i + 2] = Math.round(78 * l); d[i + 3] = 255;
+    }
+    c.putImageData(im, 0, 0);
+    return cv.toDataURL('image/jpeg', 0.86);
+  }
+  function vestir() {
+    var p = el('aqPalco');
+    if (!p.style.getPropertyValue('--aq-madeira')) p.style.setProperty('--aq-madeira', 'url(' + madeira(1200) + ')');
+  }
+
+  /* o vidro tem a proporção da folha, dentro da caixa que a mesa dá */
+  function ajustarVidro() {
+    var vidro = el('aqVidro'), pap = el('aqPapel');
+    var r = vidro.getBoundingClientRect(); if (!r.width || !M) return;
+    var padX = r.width * 0.045, padT = r.height * 0.13, padB = r.height * 0.06;
+    var aw = r.width - padX * 2, ah = r.height - padT - padB, ar = M.w / M.h, w = aw, h = aw / ar;
+    if (h > ah) { h = ah; w = ah * ar; }
+    pap.style.width = w + 'px'; pap.style.height = h + 'px';
+    pap.style.top = (padT + (ah - h) / 2) + 'px';
+    var fl = el('aqFolhear'); fl.width = M.w; fl.height = M.h;
+  }
+
+  /* ==================================================================
+     O LAÇO — o motor dá passos e a folha se redesenha                */
+  function laco() {
+    est.raf = requestAnimationFrame(laco);
+    if (!U.aberta() || !M || !M.gl) return;
+    if (est.folheando) return;
+    var t0 = performance.now();
+    var deu = M.passo();
+    if (deu && performance.now() - t0 < 7) M.passo();
+    if (M.molhada || est.sujo || est.redesenha) { M.desenhar(); est.redesenha = false; }
+    if (M.molhada) est.sujo = true;
+    if (!M.molhada && est.sujo) { est.sujo = false; A.filme.quadros[A.filme.atual].sujo = true; M.desenhar(); }
+  }
+
+  /* o fundo: a composição no instante do quadro, lida do #gl depois de
+     uma busca exata (a mesma mecânica da exportação)                 */
+  function pedirFundo() {
+    var F = A.filme, i = F.atual, gl = el('gl');
+    if (!VE.project || !gl || !M) { if (M) M.setFundo(null); est.redesenha = true; return; }
+    var t = A.tempoDoQuadro(i);
+    if (t > VE.duration()) { M.setFundo(null); est.redesenha = true; return; }
+    var pedido = ++est.fundoPedido;
+    VE.project.time = Math.min(VE.duration(), t);
+    VE.tl && VE.tl.setTime && VE.tl.setTime(VE.project.time);
+    VE.media.seekAll(VE.project.time).then(function () {
+      if (pedido !== est.fundoPedido || !U.aberta()) return;
+      VE.app.renderNow();
+      M.setFundo(gl);
+      est.redesenha = true;
+    }).catch(function () { });
+  }
+
+  /* ==================================================================
+     A CAIXA DE TINTAS                                               */
+  function pintarCaixa() {
+    var g = el('aqGodes');
+    g.innerHTML = M.paleta.map(function (id, i) {
+      var p = A.PIGBY[id];
+      if (!p) return '<button class="aq-gode vazio" data-gode="' + i + '" title="Godê vazio: toque para escolher um pigmento"><i></i><small>—</small></button>';
+      var cor = A.corDaAguada(id, 1.2), cor2 = A.corDaAguada(id, 3.5);
+      return '<button class="aq-gode' + (i === est.slot ? ' on' : '') + '" data-gode="' + i + '" style="--c1:' + cor + ';--c2:' + cor2 + '" title="' + esc(p.nome + ' · ' + p.ci) + '">' +
+        '<i></i><small>' + esc(p.nome.split(' ')[0] === 'Amarelo' || p.nome.split(' ')[0] === 'Azul' || p.nome.split(' ')[0] === 'Verde' || p.nome.split(' ')[0] === 'Vermelho' ? p.nome.split(' ').slice(0, 2).join(' ') : p.nome.split(' ')[0]) + '</small>' +
+        '<u class="aq-trocar" data-trocar="' + i + '" title="Trocar o pigmento deste godê">⇄</u></button>';
+    }).join('');
+  }
+  function pintarPinceis() {
+    el('aqPinceis').innerHTML = PINCEIS.map(function (p, i) {
+      return '<button class="aq-pincel' + (est.pincel === i && est.ferr === 'pincel' ? ' on' : '') + '" data-pincel="' + i + '" style="--n:' + (i + 1) + '" title="Pincel redondo n.º ' + p.n + '"><i></i><small>' + p.n + '</small></button>';
+    }).join('');
+    $$('.aq-ut', el('aqCaixa')).forEach(function (b) { b.classList.toggle('on', b.dataset.ferr === est.ferr); });
+    var nome = est.ferr === 'pincel' ? 'PINCEL N.º ' + PINCEIS[est.pincel].n : FERR_NOME[est.ferr];
+    var pig = A.PIGBY[M.paleta[est.slot]];
+    if ((est.ferr === 'pincel' || est.ferr === 'seco') && pig) nome += ' · ' + pig.nome.toUpperCase();
+    el('aqFerrNome').textContent = nome;
+  }
+  function aplicarFerramenta() {
+    if (!M) return;
+    var r = PINCEIS[est.pincel].raio;
+    var o = { raio: r, slot: est.slot };
+    if (est.ferr === 'agua') { o.raio = r * 1.3; o.agua = 0.5; } else o.agua = 0.30;
+    if (est.ferr === 'esponja') o.raio = r * 1.6;
+    if (est.ferr === 'seco') o.raio = r * 1.2;
+    if (est.ferr === 'sal') o.raio = Math.max(14, r * 2.2);
+    if (est.ferr === 'alcool') o.raio = Math.max(6, r * 0.9);
+    M.ferramenta(est.ferr, o);
+    est.raioTela = o.raio;
+  }
+
+  /* a gaveta dos 52 */
+  function abrirGaveta(slot) {
+    est.gaveta = slot;
+    el('aqGavPara').textContent = 'para o godê ' + (slot + 1);
+    var lista = el('aqGavLista'), h = '';
+    A.GRUPOS.forEach(function (gr, gi) {
+      h += '<div class="aq-gav-grupo">' + gr + '</div><div class="aq-gav-linha">';
+      A.PIGMENTOS.filter(function (p) { return p.grupo === gi; }).forEach(function (p) {
+        var na = M.paleta.indexOf(p.id);
+        h += '<button class="aq-tubo' + (na >= 0 ? ' na-paleta' : '') + '" data-pig="' + p.id + '" style="--c1:' + A.corDaAguada(p.id, 1.2) + ';--c2:' + A.corDaAguada(p.id, 3.5) + '" title="' + esc(p.nome + ' · ' + p.ci + ' · densidade ' + p.dens + ' · mancha ' + p.mancha + ' · granulação ' + p.gran) + '">' +
+          '<i></i><b>' + esc(p.nome) + '</b><small>' + esc(p.ci) + (p.gran >= 0.5 ? ' · GRANULA' : '') + (p.mancha >= 2.8 ? ' · MANCHA' : '') + (na >= 0 ? ' · GODÊ ' + (na + 1) : '') + '</small></button>';
+      });
+      h += '</div>';
+    });
+    lista.innerHTML = h;
+    el('aqGaveta').classList.add('aberta');
+  }
+  function fecharGaveta() { est.gaveta = false; el('aqGaveta').classList.remove('aberta'); }
+
+  /* ==================================================================
+     A LUZ                                                           */
+  function pintarLuz() {
+    var k = est.luzKnob, knob = $('.aq-knob', el('aqLuz'));
+    knob.style.setProperty('--ang', (-135 + k * 270) + 'deg');
+    el('aqLuz').style.setProperty('--glow', Math.min(1, k * 1.6).toFixed(2));
+    el('aqVidro').style.setProperty('--glow', Math.min(1, k * 1.4).toFixed(2));
+    el('aqVegetal').classList.toggle('on', est.vegetal);
+    if (!M) return;
+    /* 0..0,7 é o vídeo por baixo; de 0,7 a 1 a luz passa para trás da pintura */
+    M.luz = Math.min(1, k / 0.7);
+    M.retro = k <= 0.7 ? 0 : (k - 0.7) / 0.3;
+    M.vegA = est.vegetal ? est.vegForca : 0; M.vegP = est.vegetal ? est.vegForca * 0.8 : 0;
+    est.redesenha = true;
+  }
+
+  /* ==================================================================
+     A TIRA DE QUADROS                                               */
+  function pintarTira() {
+    var F = A.filme, n = F.quadros.length, i = F.atual;
+    el('aqContador').innerHTML = '<b>' + String(i + 1).padStart(2, '0') + '</b><span>/ ' + String(n).padStart(2, '0') + '</span><i>' + tc(A.tempoDoQuadro(i)) + '</i>';
+    el('aqCarimbo').textContent = 'QUADRO ' + String(i + 1).padStart(2, '0') + ' · ' + F.fps + ' Q/S';
+    var L = el('aqLista');
+    L.innerHTML = F.quadros.map(function (q, k) {
+      return '<button class="aq-quadro' + (k === i ? ' on' : '') + (q.thumb ? '' : ' vazio') + '" data-q="' + k + '" title="Quadro ' + (k + 1) + ' · ' + tc(A.tempoDoQuadro(k)) + '">' +
+        (q.thumb ? '<img src="' + q.thumb + '" alt="">' : '<i></i>') + '<small>' + (k + 1) + '</small></button>';
+    }).join('');
+    var on = $('.aq-quadro.on', L);
+    if (on) { var lr = L.getBoundingClientRect(), orr = on.getBoundingClientRect(); if (orr.left < lr.left || orr.right > lr.right) on.scrollIntoView({ inline: 'center', block: 'nearest' }); }
+    $$('#aqCadencia button').forEach(function (b) { b.classList.toggle('on', +b.dataset.passo === F.passo); });
+    el('aqAnt').disabled = i <= 0;
+  }
+  function tc(t) {
+    var m = Math.floor(t / 60), s = t - m * 60;
+    return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2);
+  }
+  var trocando = false;
+  function irPara(i) {
+    if (trocando || !M) return;
+    if (i < 0) return;
+    trocando = true;
+    var F = A.filme;
+    A.irPara(i).then(function () {
+      trocando = false;
+      vegetais();
+      pintarTira(); pedirFundo();
+      est.redesenha = true;
+    }).catch(function (e) { trocando = false; toast('não consegui trocar de quadro: ' + (e && e.message), 'err'); });
+  }
+  /* o vegetal: o anterior e o seguinte, dos bitmaps já decodificados */
+  function vegetais() {
+    var F = A.filme, a = F.quadros[F.atual - 1], p = F.quadros[F.atual + 1];
+    M.setVegetal('ant', a && a.bitmap ? a.bitmap : null);
+    M.setVegetal('prox', p && p.bitmap ? p.bitmap : null);
+  }
+  function novoQuadro() {
+    var F = A.filme;
+    if (trocando) return;
+    F.quadros.splice(F.atual + 1, 0, {});
+    irPara(F.atual + 1);
+  }
+  function apagarQuadro() {
+    var F = A.filme;
+    if (trocando || F.quadros.length <= 1) { if (F.quadros.length <= 1) { M.limpar(); F.quadros[0] = {}; pintarTira(); est.redesenha = true; } return; }
+    trocando = true;
+    A.apagarQuadro(F.atual).then(function () { trocando = false; vegetais(); pintarTira(); pedirFundo(); est.redesenha = true; });
+  }
+  function copiarAnterior() {
+    if (trocando) return;
+    A.copiarAnterior().then(function (ok) {
+      if (!ok) { toast('não há quadro anterior com pintura', 'err'); return; }
+      est.redesenha = true; toast('o quadro anterior foi copiado para este');
+    });
+  }
+  function mudarPasso(p) {
+    var F = A.filme;
+    F.passo = p; F.fps = est.base / p;
+    F.inicio = Math.floor(F.inicio * F.fps + 1e-6) / F.fps;
+    pintarTira(); pedirFundo();
+  }
+
+  /* folhear: a sequência toca no vidro (os PNGs guardados, sobre o papel) */
+  function folhear() {
+    var F = A.filme;
+    if (est.folheando) { pararFolhear(); return; }
+    A.guardarAtual().then(function () {
+      var prontos = F.quadros.filter(function (q) { return q.bitmap; }).length;
+      if (prontos < 2) { toast('pinte pelo menos dois quadros para folhear'); return; }
+      var cv = el('aqFolhear'), c = cv.getContext('2d'), i = 0, t0 = performance.now();
+      cv.classList.remove('hidden');
+      el('aqFolheia').innerHTML = svg('pausa');
+      est.folheando = 1;
+      function quadro() {
+        if (!est.folheando) return;
+        var k = Math.floor((performance.now() - t0) / 1000 * F.fps) % F.quadros.length, q = F.quadros[k];
+        c.fillStyle = '#f2efe6'; c.fillRect(0, 0, cv.width, cv.height);
+        if (q && q.bitmap) c.drawImage(q.bitmap, 0, 0, cv.width, cv.height);
+        el('aqContador').innerHTML = '<b>' + String(k + 1).padStart(2, '0') + '</b><span>/ ' + String(F.quadros.length).padStart(2, '0') + '</span><i>' + tc(A.tempoDoQuadro(k)) + '</i>';
+        est.folheando = requestAnimationFrame(quadro);
+      }
+      quadro();
+    });
+  }
+  function pararFolhear() {
+    cancelAnimationFrame(est.folheando); est.folheando = 0;
+    el('aqFolhear').classList.add('hidden');
+    el('aqFolheia').innerHTML = svg('play');
+    pintarTira(); est.redesenha = true;
+  }
+
+  /* ==================================================================
+     USAR, BAIXAR, DO CLIPE                                          */
+  function usar() {
+    if (trocando) return;
+    var F = A.filme;
+    A.guardarAtual().then(function () {
+      var pintados = F.quadros.filter(function (q) { return q.png; }).length;
+      if (!pintados) { toast('pinte alguma coisa primeiro', 'err'); return; }
+      var n = Object.keys(VE.sources).filter(function (k) { return VE.sources[k].kind === 'quadros'; }).length + 1;
+      var id = A.registrarFonte('AQUARELA ' + String(n).padStart(2, '0'));
+      if (!id) { toast('não consegui montar a sequência', 'err'); return; }
+      var s = VE.sources[id], primeiro = !VE.project;
+      VE.app.ensureProject(s.w, s.h, Math.max(4, F.inicio + s.duration + 1));
+      if (primeiro) VE.setCanvas(s.w, s.h, 'src');
+      var c = VE.addMedia({ kind: 'quadros', name: s.name, src: id, start: F.inicio, dur: s.duration, fit: 'contain', over: true });
+      /* sobre o vídeo, a aguada é uma TRANSPARÊNCIA: Multiplicar (índice 3 em VE.BLENDS) */
+      if (F.modo === 'video') c.blend = 3;
+      if (F.inicio + s.duration > VE.duration()) VE.setDuration(F.inicio + s.duration);
+      VE.pushHistory(); VE.emit('project'); VE.emit('sources');
+      U.fechar();
+      VE.shell.go('video');
+      if (VE.view && VE.view.fit) VE.view.fit();
+      toast('a aquarela virou camada por cima do vídeo — ' + pintados + ' quadro' + (pintados > 1 ? 's' : '') + ' a ' + F.fps + ' q/s' + (F.modo === 'video' ? ', em Multiplicar' : ', no papel'), 'ok');
+    }).catch(function (e) { toast('não deu: ' + (e && e.message), 'err'); });
+  }
+  function baixar() {
+    var F = A.filme;
+    A.guardarAtual().then(function () {
+      var files = [];
+      F.quadros.forEach(function (q, i) { if (q.png) files.push({ name: 'aquarela-' + String(i + 1).padStart(3, '0') + '.png', data: q.png }); });
+      if (!files.length) { toast('não há quadro pintado', 'err'); return; }
+      if (!VE.zip) { toast('o escritor de zip não carregou', 'err'); return; }
+      VE.saveFile('rgb_lab-aquarela-' + F.fps + 'qps-' + files.length + 'quadros.zip', VE.zip(files));
+    });
+  }
+  /* abrir do clipe: a sequência de um clipe 'quadros' volta para a mesa */
+  function doClipe() {
+    var sel = VE.selected && VE.selected();
+    var s = sel && VE.sources[sel.src];
+    if (!s || s.kind !== 'quadros') { toast('escolha na linha do tempo um clipe de AQUARELA', 'err'); return; }
+    if (!s.blob) { toast('esse clipe não guarda o rolo', 'err'); return; }
+    A.desempacotarRolo(s.blob).then(function (r) {
+      if (!r.estados) { toast('esse rolo não tem os estados — só os quadros prontos', 'err'); return; }
+      var t = { w: r.cab.w, h: r.cab.h };
+      M = A.abrirMotor(el('aqFolha'), t.w, t.h, { papel: est.papel || 'frio', paleta: r.cab.paleta || est.paleta });
+      if (r.cab.paleta) M.paleta = r.cab.paleta.slice(0, 8);
+      aplicarAjustes(); aplicarFerramenta(); ajustarVidro();
+      A.novoFilme(t.w, t.h);
+      var F = A.filme;
+      F.fps = r.cab.fps; F.passo = Math.max(1, Math.round(est.base / r.cab.fps)); F.inicio = sel.start; F.modo = s.modo || 'video';
+      F.quadros = r.quadros.map(function (q, i) { return { png: q.png, blob: q.blob, w: q.w, h: q.h, estado: r.estados[i] }; });
+      return Promise.all(F.quadros.map(function (q) { return A.miniatura(q); })).then(function () {
+        F.atual = 0;
+        return A.reporQuadro(0);
+      }).then(function () { pintarCaixa(); pintarPinceis(); vegetais(); pintarTira(); pedirFundo(); est.redesenha = true; toast('a aquarela do clipe está na mesa: ' + F.quadros.length + ' quadros'); });
+    }).catch(function (e) { toast('não consegui abrir: ' + (e && e.message), 'err'); });
+  }
+
+  /* ==================================================================
+     A TELINHA                                                       */
+  function abrirTela(qual) {
+    if (est.tela === qual) { fecharTela(); return; }
+    est.tela = qual; fecharGaveta();
+    el('aqTelaTit').textContent = qual === 'ajustes' ? 'AQUARELA · AJUSTES' : 'AQUARELA · A PLAQUETA';
+    if (qual === 'ajustes') paginaAjustes(); else paginaSobre();
+    el('aqTela').classList.add('aberta'); el('aqPalco').classList.add('com-tela');
+  }
+  function fecharTela() { est.tela = null; el('aqTela').classList.remove('aberta'); el('aqPalco').classList.remove('com-tela'); }
+
+  var AJ = [
+    ['granMul', 'GRANULAÇÃO', 0, 2, 'quanto o pigmento assenta nos vales do papel. 1 é o pigmento como ele é'],
+    ['borda', 'BORDA ESCURA', 0, 2, 'a água escoa para a beira da mancha e o pigmento vai atrás — a assinatura da aquarela'],
+    ['floradas', 'FLORADAS', 0, 1, 'a água que caminha pelo papel molha de novo o que estava secando e empurra o pigmento (os "blooms")'],
+    ['vegForca', 'VEGETAL', 0, 1, 'a força do papel vegetal']
+  ];
+  function paginaAjustes() {
+    var pag = el('aqTelaPag'), aj = est.aj || (est.aj = { granMul: 1, borda: 1, floradas: 1 });
+    pag.innerHTML =
+      '<div class="aq-sub">O PAPEL</div>' +
+      '<div class="aq-pilulas">' + Object.keys(A.PAPEIS).map(function (k) { return '<button class="aq-pil' + ((est.papel || 'frio') === k ? ' on' : '') + '" data-papel="' + k + '">' + A.PAPEIS[k].nome + '</button>'; }).join('') + '</div>' +
+      '<div class="aq-nota">Trocar o papel troca o relevo da folha inteira: o que já foi pintado continua, mas assenta noutro grão daqui em diante.</div>' +
+      '<div class="aq-sub">A ÁGUA</div>' +
+      '<div class="aq-pilulas">' + [['rapida', 'SECAGEM RÁPIDA'], ['normal', 'NORMAL'], ['lenta', 'LENTA']].map(function (s) { return '<button class="aq-pil' + (est.secagem === s[0] ? ' on' : '') + '" data-secagem="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>' +
+      AJ.map(function (a) {
+        var v = a[0] === 'vegForca' ? est.vegForca : aj[a[0]];
+        return '<div class="aq-ctrl"><label>' + a[1] + '</label><div class="aq-ctrl-l">' +
+          '<input type="range" min="' + a[2] + '" max="' + a[3] + '" step="0.01" value="' + v + '" data-aj="' + a[0] + '">' +
+          '<input class="aq-num" type="number" min="' + a[2] + '" max="' + a[3] + '" step="0.05" value="' + (+v).toFixed(2) + '" data-ajn="' + a[0] + '"></div><i>' + a[4] + '</i></div>';
+      }).join('') +
+      '<div class="aq-sub">OS QUADROS</div>' +
+      '<div class="aq-pilulas">' + [24, 25, 30].map(function (b) { return '<button class="aq-pil' + (est.base === b ? ' on' : '') + '" data-base="' + b + '">' + b + ' Q/S</button>'; }).join('') + '</div>' +
+      '<div class="aq-nota">A cadência da composição. EM 1s pinta um desenho por quadro; EM 2s, um a cada dois (12 q/s a 24) — é como se anima à mão.</div>' +
+      '<div class="aq-pilulas">' + [512, 768, 1024, 1280].map(function (d) { return '<button class="aq-pil' + (est.defin === d ? ' on' : '') + '" data-defin="' + d + '">' + d + ' PX</button>'; }).join('') + '</div>' +
+      '<div class="aq-nota">A definição da folha (o lado maior). Mais pixels, mais detalhe e mais lento; a mudança vale para uma folha NOVA.</div>' +
+      '<div class="aq-sub">A SAÍDA</div>' +
+      '<div class="aq-pilulas">' +
+        '<button class="aq-pil' + ((est.modo || 'video') === 'video' ? ' on' : '') + '" data-modo="video">SOBRE O VÍDEO</button>' +
+        '<button class="aq-pil' + (est.modo === 'papel' ? ' on' : '') + '" data-modo="papel">NO PAPEL</button></div>' +
+      '<div class="aq-nota">SOBRE O VÍDEO: a aguada vai transparente, em Multiplicar, e o vídeo aparece através dela. NO PAPEL: o quadro sai opaco, com o papel — a animação por si.</div>' +
+      '<div class="aq-sub">MODO CÓDIGO</div>' +
+      '<div class="aq-pilulas"><button class="aq-pil' + (est.codigo ? ' on' : '') + '" data-codigo="1">LIGADO</button><button class="aq-pil' + (!est.codigo ? ' on' : '') + '" data-codigo="0">DESLIGADO</button></div>' +
+      '<div class="aq-nota">Mostra na mesa as chamadas que o simulador faz enquanto se pinta — as de verdade, com os números de verdade.</div>' +
+      '<button class="aq-pil aq-repor" id="aqLimpar">LIMPAR A FOLHA DESTE QUADRO</button>';
+
+    function encher(r) { r.style.setProperty('--fill', ((r.value - r.min) / (r.max - r.min) * 100).toFixed(1) + '%'); }
+    $$('[data-aj]', pag).forEach(function (r) {
+      encher(r);
+      r.addEventListener('input', function () {
+        var k = r.dataset.aj, v = parseFloat(r.value);
+        if (k === 'vegForca') est.vegForca = v; else aj[k] = v;
+        encher(r); $('[data-ajn="' + k + '"]', pag).value = v.toFixed(2);
+        aplicarAjustes(); pintarLuz();
+      });
+    });
+    $$('[data-ajn]', pag).forEach(function (n) {
+      n.addEventListener('change', function () {
+        var k = n.dataset.ajn, v = parseFloat(n.value); if (!isFinite(v)) return;
+        var r = $('[data-aj="' + k + '"]', pag); r.value = v; r.dispatchEvent(new Event('input'));
+      });
+    });
+    $$('[data-papel]', pag).forEach(function (b) { b.addEventListener('click', function () { est.papel = b.dataset.papel; M.setPapel(est.papel); est.redesenha = true; paginaAjustes(); }); });
+    $$('[data-secagem]', pag).forEach(function (b) { b.addEventListener('click', function () { est.secagem = b.dataset.secagem; aplicarAjustes(); paginaAjustes(); }); });
+    $$('[data-base]', pag).forEach(function (b) { b.addEventListener('click', function () { est.base = +b.dataset.base; mudarPasso(A.filme.passo); paginaAjustes(); }); });
+    $$('[data-defin]', pag).forEach(function (b) { b.addEventListener('click', function () { est.defin = +b.dataset.defin; paginaAjustes(); toast('vale para a próxima folha nova (LIMPAR ou reabrir a mesa)'); }); });
+    $$('[data-modo]', pag).forEach(function (b) { b.addEventListener('click', function () { est.modo = b.dataset.modo; A.filme.modo = est.modo; A.filme.quadros.forEach(function (q) { if (q.png) q.sujo = true; }); paginaAjustes(); }); });
+    $$('[data-codigo]', pag).forEach(function (b) { b.addEventListener('click', function () { est.codigo = b.dataset.codigo === '1'; A.codigo.ligado = est.codigo; el('aqCodigo').classList.toggle('hidden', !est.codigo); pintarCodigo(); paginaAjustes(); }); });
+    el('aqLimpar').addEventListener('click', function () {
+      var t = tamanhoDaFolha();
+      if (M.w !== t.w || M.h !== t.h) { A.novoFilme(t.w, t.h); prepararFolha(); pintarCaixa(); pintarPinceis(); pintarTira(); pedirFundo(); }
+      M.limpar(); A.filme.quadros[A.filme.atual] = {}; est.redesenha = true; pintarTira();
+    });
+  }
+  function aplicarAjustes() {
+    if (!M) return;
+    var aj = est.aj || { granMul: 1, borda: 1, floradas: 1 };
+    M.par.granMul = aj.granMul; M.par.borda = aj.borda; M.par.floradas = aj.floradas > 0.05 ? 1 : 0;
+    /* FLORADAS: quanta água a beira precisa para invadir o papel ao lado —
+       0,2 é o padrão; menos água exigida = sangra e floresce mais      */
+    M.par.sangra = 0.2 / Math.max(0.05, aj.floradas);
+    /* a secagem: evaporação e escoamento de borda andam juntos (6,7:1) */
+    M.par.evap = est.secagem === 'rapida' ? 0.0018 : (est.secagem === 'lenta' ? 0.00025 : 0.0006);
+    M.par.eta = M.par.evap * 4.2;
+  }
+  function paginaSobre() {
+    el('aqTelaPag').innerHTML =
+      '<div class="aq-sub">A MESA DE LUZ</div>' +
+      '<div class="aq-nota">Uma aquarela por FÍSICA: a água anda pelo papel, leva o pigmento, seca pela beira — e a cor é Kubelka-Munk, o modelo que diz como pigmentos de verdade se misturam. É o modelo de Curtis e outros ("Computer-Generated Watercolor", SIGGRAPH 1997).</div>' +
+      '<div class="aq-lista">' + [
+        ['A FOLHA', 'pinte com o ponteiro. Caneta com pressão muda o traço e a carga.'],
+        ['A LUZ', 'arraste: quanto do vídeo da composição aparece por baixo. No fim do curso a luz vem por trás da pintura (retroiluminação).'],
+        ['VEGETAL', 'o papel vegetal do animador: o quadro anterior em azul, o seguinte em vermelho.'],
+        ['GODÊS', 'os oito pigmentos da paleta. Toque escolhe; ⇄ abre a gaveta dos 52.'],
+        ['PINCÉIS', 'quatro redondos: 2, 6, 12 e 24. [ e ] mudam o tamanho.'],
+        ['ÁGUA', 'só água: molhe antes de pintar (molhado sobre molhado), dilua, provoque floradas.'],
+        ['ESPONJA', 'levanta tinta e água. Pigmento que MANCHA (ftalos, quinacridonas) resiste; o que granula sai fácil.'],
+        ['SECO', 'o pincel quase sem água: a tinta pega só nas cristas do papel.'],
+        ['SAL', 'sobre a aguada ainda molhada: os cristais bebem a água e deixam estrelas claras de borda escura.'],
+        ['ÁLCOOL', 'gotas que repelem o pigmento: olhos claros com a borda escura.'],
+        ['SECAR', 'seca a folha agora. Trocar de quadro também seca.'],
+        ['A TIRA', 'os quadros da sequência. ◀ ▶ andam, e a composição anda junto — cada quadro é um instante do vídeo.'],
+        ['EM 1s · 2s · 3s', 'a cadência: um desenho por quadro, por dois, por três.'],
+        ['+ · ⧉ · 🗑 · ▶', 'quadro novo, copiar o anterior, apagar, folhear.'],
+        ['USAR', 'a sequência entra na linha do tempo por cima do vídeo, em Multiplicar — a aguada como transparência. Em NO PAPEL (ajustes) entra opaca.'],
+        ['DO CLIPE', 'com um clipe de aquarela escolhido na linha do tempo, traz a sequência de volta para continuar.'],
+        ['TECLAS', '← → quadros · espaço folheia · Ctrl+Z desfaz · [ ] pincel · Esc fecha.']
+      ].map(function (l) { return '<div class="aq-item"><b>' + l[0] + '</b><span>' + l[1] + '</span></div>'; }).join('') + '</div>';
+  }
+
+  /* ==================================================================
+     O MODO CÓDIGO                                                   */
+  function pintarCodigo() {
+    if (!est || !est.codigo) return;
+    var L = A.codigo.linhas.slice(-9);
+    el('aqCodigoTxt').textContent = L.map(function (l) { return l.txt + (l.n > 1 ? '   × ' + l.n : ''); }).join('\n') || '// pinte alguma coisa';
+  }
+
+  /* ==================================================================
+     PREFERÊNCIAS                                                    */
+  var PREF = 'rgblab.aquarela';
+  function guardarPrefs() {
+    try {
+      localStorage.setItem(PREF, JSON.stringify({ paleta: M ? M.paleta : est.paleta, papel: est.papel, secagem: est.secagem, defin: est.defin, base: est.base, vegetal: est.vegetal, vegForca: est.vegForca, codigo: est.codigo, aj: est.aj, modo: est.modo, luz: est.luzKnob, pincel: est.pincel }));
+    } catch (e) { }
+  }
+  function carregarPrefs() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PREF) || 'null'); if (!p) return;
+      ['papel', 'secagem', 'defin', 'base', 'vegetal', 'vegForca', 'codigo', 'aj', 'modo', 'pincel'].forEach(function (k) { if (p[k] !== undefined) est[k] = p[k]; });
+      if (p.paleta && p.paleta.length === 8) est.paleta = p.paleta;
+      if (typeof p.luz === 'number') est.luzKnob = p.luz;
+    } catch (e) { }
+  }
+
+  /* ==================================================================
+     OS COMANDOS                                                     */
+  function ligar() {
+    el('aqFechar').addEventListener('click', U.fechar);
+    el('aqPalco').addEventListener('pointerdown', function (ev) {
+      if (ev.target !== el('aqPalco')) return;
+      if (est.tela) { fecharTela(); return; }
+      if (est.gaveta !== false) { fecharGaveta(); return; }
+      U.fechar();
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (!U.aberta()) return;
+      var tag = (ev.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); if (est.tela) fecharTela(); else if (est.gaveta !== false) fecharGaveta(); else U.fechar(); return; }
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); ev.stopPropagation(); irPara(A.filme.atual + 1); }
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); ev.stopPropagation(); irPara(A.filme.atual - 1); }
+      if (ev.key === ' ') { ev.preventDefault(); ev.stopPropagation(); folhear(); }
+      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') { ev.preventDefault(); ev.stopPropagation(); if (M.desfazer()) est.redesenha = true; }
+      if (ev.key === ']') { est.pincel = Math.min(3, est.pincel + 1); aplicarFerramenta(); pintarPinceis(); }
+      if (ev.key === '[') { est.pincel = Math.max(0, est.pincel - 1); aplicarFerramenta(); pintarPinceis(); }
+    }, true);
+    el('aqPalco').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) b.blur(); });
+    window.addEventListener('resize', function () { if (U.aberta()) ajustarVidro(); });
+
+    /* ---- a folha: o ponteiro pinta ---- */
+    var folha = el('aqFolha'), cur = el('aqCursor');
+    function pos(ev) {
+      var r = folha.getBoundingClientRect();
+      return { x: (ev.clientX - r.left) / r.width * M.w, y: (1 - (ev.clientY - r.top) / r.height) * M.h, r: r };
+    }
+    function pressao(ev) { return ev.pointerType === 'mouse' ? 0.5 : (ev.pressure > 0 ? ev.pressure : 0.5); }
+    function cursor(ev) {
+      var r = folha.getBoundingClientRect(), esc = r.width / M.w;
+      cur.style.left = (ev.clientX - r.left) + 'px'; cur.style.top = (ev.clientY - r.top) + 'px';
+      var d = est.raioTela * 2 * esc * (est.arr ? (0.55 + 0.9 * pressao(ev)) : 1);
+      cur.style.width = d + 'px'; cur.style.height = d + 'px';
+      cur.classList.remove('hidden');
+    }
+    folha.addEventListener('pointerdown', function (ev) {
+      if (!M || !M.gl || est.folheando) return;
+      /* o ESTADO primeiro; a captura do ponteiro depois, dentro de try —
+         ela pode ser recusada e a exceção não sobe (ver as armadilhas) */
+      est.arr = { id: ev.pointerId };
+      var p = pos(ev);
+      M.tocar(p.x, p.y, pressao(ev));
+      est.sujo = true;
+      try { folha.setPointerCapture(ev.pointerId); } catch (e) { }
+      cursor(ev);
+      ev.preventDefault();
+    });
+    folha.addEventListener('pointermove', function (ev) {
+      if (!M || !M.gl) return;
+      cursor(ev);
+      if (!est.arr || est.arr.id !== ev.pointerId) return;
+      var evs = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [];
+      if (!evs.length) evs = [ev];                 /* lista vazia é valor válido */
+      for (var i = 0; i < evs.length; i++) { var p = pos(evs[i]); M.arrastar(p.x, p.y, pressao(evs[i])); }
+    });
+    function soltar(ev) {
+      if (!est.arr) return;
+      est.arr = null; M.soltar();
+      try { folha.releasePointerCapture(ev.pointerId); } catch (e) { }
+    }
+    folha.addEventListener('pointerup', soltar);
+    folha.addEventListener('pointercancel', soltar);
+    folha.addEventListener('pointerleave', function () { cur.classList.add('hidden'); });
+    document.addEventListener('pointerup', function (ev) { if (est && est.arr) soltar(ev); });
+
+    /* ---- a caixa ---- */
+    el('aqGodes').addEventListener('click', function (ev) {
+      var tr = ev.target.closest('[data-trocar]');
+      if (tr) { ev.stopPropagation(); abrirGaveta(+tr.dataset.trocar); return; }
+      var g = ev.target.closest('[data-gode]'); if (!g) return;
+      var i = +g.dataset.gode;
+      if (!M.paleta[i]) { abrirGaveta(i); return; }
+      est.slot = i;
+      if (est.ferr !== 'pincel' && est.ferr !== 'seco') est.ferr = 'pincel';
+      aplicarFerramenta(); pintarCaixa(); pintarPinceis();
+    });
+    el('aqGavLista').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-pig]'); if (!b || est.gaveta === false) return;
+      var slot = est.gaveta, id = b.dataset.pig, ja = M.paleta.indexOf(id);
+      if (ja >= 0 && ja !== slot) M.paleta[ja] = M.paleta[slot];    /* troca de lugar, sem duplicar */
+      M.paleta[slot] = id;
+      est.slot = slot; est.ferr = est.ferr === 'seco' ? 'seco' : 'pincel';
+      est.paleta = M.paleta.slice();
+      fecharGaveta(); aplicarFerramenta(); pintarCaixa(); pintarPinceis(); est.redesenha = true;
+      A.registrar('paleta', [slot, id]);
+      guardarPrefs();
+    });
+    el('aqGavX').addEventListener('click', fecharGaveta);
+    el('aqPinceis').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-pincel]'); if (!b) return;
+      est.pincel = +b.dataset.pincel;
+      if (est.ferr !== 'seco') est.ferr = 'pincel';
+      aplicarFerramenta(); pintarPinceis();
+    });
+    $$('.aq-ut[data-ferr]', el('aqCaixa')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        est.ferr = (est.ferr === b.dataset.ferr && b.dataset.ferr !== 'pincel') ? 'pincel' : b.dataset.ferr;
+        aplicarFerramenta(); pintarPinceis();
+      });
+    });
+    el('aqSecar').addEventListener('click', function () { M.secar(); est.redesenha = true; est.sujo = false; A.filme.quadros[A.filme.atual].sujo = true; toast('folha seca'); });
+    el('aqDesfazer').addEventListener('click', function () { if (M.desfazer()) est.redesenha = true; else toast('nada para desfazer'); });
+
+    /* ---- a luz: arrasto vertical no botão ---- */
+    var luz = el('aqLuz');
+    luz.addEventListener('pointerdown', function (ev) {
+      var y0 = ev.clientY, k0 = est.luzKnob;
+      function mv(e) { est.luzKnob = Math.max(0, Math.min(1, k0 + (y0 - e.clientY) / 160)); pintarLuz(); }
+      function up() { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); guardarPrefs(); }
+      document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
+      ev.preventDefault();
+    });
+    luz.addEventListener('wheel', function (ev) { ev.preventDefault(); est.luzKnob = Math.max(0, Math.min(1, est.luzKnob - Math.sign(ev.deltaY) * 0.05)); pintarLuz(); }, { passive: false });
+    el('aqVegetal').addEventListener('click', function () { est.vegetal = !est.vegetal; pintarLuz(); guardarPrefs(); });
+    el('aqInfo').addEventListener('click', function () { abrirTela('sobre'); });
+    el('aqAjustes').addEventListener('click', function () { abrirTela('ajustes'); });
+    el('aqTelaX').addEventListener('click', fecharTela);
+    el('aqDoClipe').addEventListener('click', doClipe);
+    el('aqBaixar').addEventListener('click', baixar);
+    el('aqUsar').addEventListener('click', usar);
+
+    /* ---- a tira ---- */
+    el('aqAnt').addEventListener('click', function () { irPara(A.filme.atual - 1); });
+    el('aqProx').addEventListener('click', function () { irPara(A.filme.atual + 1); });
+    el('aqNovo').addEventListener('click', novoQuadro);
+    el('aqCopiar').addEventListener('click', copiarAnterior);
+    el('aqApagar').addEventListener('click', apagarQuadro);
+    el('aqFolheia').addEventListener('click', folhear);
+    el('aqLista').addEventListener('click', function (ev) { var b = ev.target.closest('[data-q]'); if (b) irPara(+b.dataset.q); });
+    el('aqCadencia').addEventListener('click', function (ev) { var b = ev.target.closest('[data-passo]'); if (b) mudarPasso(+b.dataset.passo); });
+  }
+
+  /* para os testes: o estado e o motor */
+  U.__est = function () { return est; };
+  U.__motor = function () { return M; };
+})(window.VE);
+
 /* ===== musica.js ===== */
 /* ============================================================
    rgb_lab — O NÚCLEO MUSICAL
@@ -48929,6 +51414,11 @@ window.VE = window.VE || {};
        uma máquina que se abre, e a grade FONTE é onde se procura por
        máquina. No 2.0 as duas aparecem em TOOLS.                     */
     ao('#srcFilmadora', 'click', function () { VE.filmadoraui.abrir(); });
+
+    /* A AQUARELA é a mesa de luz do animador: pinta-se por cima do quadro
+       da composição, um quadro de cada vez, e a sequência volta como
+       FONTE (kind 'quadros'). Mesma grade, mesma razão das outras máquinas. */
+    ao('#srcAquarela', 'click', function () { VE.aquarelaui.abrir(); });
 
     /* O SONÓGRAFO tem DUAS portas, e não é duplicação — é uma
        máquina só, aberta de dois lados. Ela come VÍDEO e devolve

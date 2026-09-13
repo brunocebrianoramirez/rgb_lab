@@ -158,6 +158,11 @@
        máquina. No 2.0 as duas aparecem em TOOLS.                     */
     ao('#srcFilmadora', 'click', function () { VE.filmadoraui.abrir(); });
 
+    /* A AQUARELA é a mesa de luz do animador: pinta-se por cima do quadro
+       da composição, um quadro de cada vez, e a sequência volta como
+       FONTE (kind 'quadros'). Mesma grade, mesma razão das outras máquinas. */
+    ao('#srcAquarela', 'click', function () { VE.aquarelaui.abrir(); });
+
     /* O SONÓGRAFO tem DUAS portas, e não é duplicação — é uma
        máquina só, aberta de dois lados. Ela come VÍDEO e devolve
        ÁUDIO, então cai bem nos dois laboratórios por motivos
