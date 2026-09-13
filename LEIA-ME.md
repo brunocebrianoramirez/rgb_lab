@@ -1075,7 +1075,7 @@ ajustes é a única coisa que não é câmera.
 | **LENTE** (alto, à direita) | a lente do app: **LIMPA → VAZAMENTO de luz → HALO**, girando a cada toque. O visor da porta mostra qual está |
 | **o centro da roda** | o **TREMOR** do quadro, liga e desliga (o "frame jitter" do app) |
 | **o contador** | pés de filme desta bitola. 50 pés de Super 8 a 18 q/s são 3 min 20 s — é conta real (72 quadros por pé no Super 8, 80 no 8 mm, 40 no 16, 16 no 35) |
-| **o seletor** (a roda do canto) | o **FILME**: PURO (a película da bitola como vem) ou um dos **dez filmes do app, medidos da saída dele** — XPro, NOIR, 60s, Pela, Indigo, Tuscan, Two-Color, 2 Strip, 3-X, Siena, na ordem do seletor do app. Arraste em volta, role, toque no nome, ou ← → |
+| **o seletor** (a roda do canto) | o **FILME**: PURO (a película da bitola como vem) ou um dos **dez filmes medidos da saída do app**, com nomes do laboratório na ordem do seletor dele — CRUZADO, NOIR P&B, ANOS 60, ÂMBAR, ÍNDIGO, TOSCANO, BICOLOR, 2 TIRAS, TRÊS-X, TERRA. NOIR P&B e TRÊS-X são preto e branco de verdade. Arraste em volta, role, toque no nome, ou ← → |
 | **i** | a plaqueta: o que cada peça faz |
 | **ROLOS** (a tira de filme) | os rolos gravados nesta sessão: baixar, **usar na linha do tempo**, apagar. Cada rolo é um quadro de filme com o carimbo laranja da data |
 | **BITOLA** (a câmera que gira) | a gaveta das máquinas: **8 MM, SUPER 8, 16 MM, 35 MM**. Cada uma é outra câmera — outro couro, outro visor, outra película, outra cadência |
@@ -1150,9 +1150,11 @@ não quebra nada: a região volta a ser o quadro inteiro.
 > 16 mm, que é o tranco que diz filme. O 16 mm mostra a tira com as
 > perfurações, como o Super 16.
 >
-> Os filmes do app estão na **galeria de filtros**, família **8 MM**: 60s,
-> TWO-COLOR, 70s, 1920, SIENA, SAKURA, INDIGO, XPRO e NOIR — para pôr por
-> cima de qualquer pacote, ou sozinhos.
+> Os filmes ficam na **galeria de filtros**, família **8 MM** — desde
+> 12/09/2026 medidos da saída do app e com nomes do laboratório, na ordem
+> do seletor dele: CRUZADO, NOIR P&B, ANOS 60, ÂMBAR, ÍNDIGO, TOSCANO,
+> BICOLOR, 2 TIRAS, TRÊS-X e TERRA — para pôr por cima de qualquer pacote,
+> ou sozinhos. NOIR P&B e TRÊS-X são preto e branco de verdade.
 >
 > Efeitos novos e controles novos: **CADÊNCIA DE PROJEÇÃO** (segura o
 > quadro no ritmo pedido), a **SOMBRA DA BORDA** e a **CINTILAÇÃO** na

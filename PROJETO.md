@@ -7312,6 +7312,20 @@ crossproc; PURO = o filmstock do pacote; LENTE 1 acrescenta lightleak, LENTE
 Quadro de teste (236,239,224): Siena → (240,201,152), NOIR → (240,240,240),
 beira da janela (11,10,8).
 
+### 5m.9 Quarta volta (13/09/2026): couro mais escuro, nomes do laboratório, P&B de verdade
+
+Três pedidos curtos. O couro preto tinha brilho demais: a foto foi
+escurecida na própria imagem (matriz de cor a 0,55 + gama 1,6 pelo
+System.Drawing) — pastilha visível, brilho fosco. Os dez filmes ganharam
+nomes do laboratório, parecidos com os do app e na ordem do seletor dele:
+CRUZADO, NOIR P&B, ANOS 60, ÂMBAR, ÍNDIGO, TOSCANO, BICOLOR, 2 TIRAS, TRÊS-X,
+TERRA. E "faltou o Noir preto e branco": a medida do app dava um leve quente
+nos médios (148/143/130) e o ajuste tinha tingido as sombras de oliva —
+lido na tela como sépia, não como P&B. NOIR P&B e TRÊS-X agora têm
+saturação −1 e tonalização 0; medido no motor, R=G=B em todos os patches
+(NOIR: rampa 7 → 145, branco → 255, azul → 10; TRÊS-X: 152, 221, 51 — as
+curvas medidas continuam).
+
 ### 5m.6 O que NÃO foi feito
 
 - A máquina em movimento não foi vista (o painel). O visor a 60 fps, a roda

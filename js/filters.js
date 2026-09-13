@@ -97,36 +97,40 @@
        CURVA POR CANAL (crossproc) ou uma MESA DE CANAIS (chanmix, nos de
        duas cores) e depois o filmstock. Na ordem do seletor do app. O
        erro médio de cada um está no comentário — o modelo não é o LUT
-       do app, mas os neutros ficam a 7–14 níveis e a pele a ~10.    */
+       do app, mas os neutros ficam a 7–14 níveis e a pele a ~10.
+       Os nomes são do laboratório, parecidos com os do app (pedido do
+       Bruno); a ORDEM é a do seletor dele. NOIR P&B e TRÊS-X são preto
+       e branco de verdade (saturação -1, sem tonalização): a medida do
+       app dava um leve quente nos médios, mas ele quer P&B.         */
     /* XPro: erro médio 25.33 nos 45 patches */
-    m('m01', 'XPro', { fx: 'crossproc', p: { rc: 0.999, gc: 0.108, bc: -0.209, piv: 0.556, lift: -0.048, sat: -0.295, yellow: 0.059 } },
+    m('m01', 'CRUZADO', { fx: 'crossproc', p: { rc: 0.999, gc: 0.108, bc: -0.209, piv: 0.556, lift: -0.048, sat: -0.295, yellow: 0.059 } },
       { exp: 0.104, con: 0.313, sat: -0.339, fade: 0.063, crush: 0.024, roll: 0.477, split: 0.579, skin: 0.3, shTint: '#402231', hiTint: '#faffab', grain: 0, vig: 0, sharp: 0 }),
     /* NOIR: erro médio 24.67 nos 45 patches */
-    m('m02', 'NOIR', { fx: 'crossproc', p: { rc: 0.967, gc: -0.486, bc: -0.016, piv: 0.553, lift: -0.061, sat: -0.586, yellow: 0.128 } },
-      { exp: 0.198, con: 1.193, sat: -0.988, fade: 0.006, crush: 0.03, roll: 0.542, split: 0.378, skin: 0.3, shTint: '#484802', hiTint: '#ddcbb9', grain: 0, vig: 0, sharp: 0 }),
+    m('m02', 'NOIR P&B', { fx: 'crossproc', p: { rc: 0.967, gc: -0.486, bc: -0.016, piv: 0.553, lift: -0.061, sat: -0.586, yellow: 0.128 } },
+      { exp: 0.198, con: 1.193, sat: -1, fade: 0.006, crush: 0.03, roll: 0.542, split: 0, skin: 0, shTint: '#808080', hiTint: '#ffffff', grain: 0, vig: 0, sharp: 0 }),
     /* 60s: erro médio 24.6 nos 45 patches */
-    m('m03', '60s', { fx: 'crossproc', p: { rc: 0.776, gc: 0.15, bc: -0.143, piv: 0.506, lift: -0.016, sat: -0.128, yellow: 0.042 } },
+    m('m03', 'ANOS 60', { fx: 'crossproc', p: { rc: 0.776, gc: 0.15, bc: -0.143, piv: 0.506, lift: -0.016, sat: -0.128, yellow: 0.042 } },
       { exp: 0.052, con: 0.256, sat: -0.461, fade: 0.077, crush: 0, roll: 0.182, split: 0.704, skin: 0.3, shTint: '#732d19', hiTint: '#defe7e', grain: 0, vig: 0, sharp: 0 }),
     /* Pela: erro médio 32.48 nos 45 patches */
-    m('m04', 'Pela', { fx: 'crossproc', p: { rc: -0.711, gc: -0.278, bc: 0.81, piv: 0.75, lift: -0.1, sat: 0.01, yellow: 0 } },
+    m('m04', 'ÂMBAR', { fx: 'crossproc', p: { rc: -0.711, gc: -0.278, bc: 0.81, piv: 0.75, lift: -0.1, sat: 0.01, yellow: 0 } },
       { exp: 0.049, con: 0.062, sat: -0.026, fade: 0.053, crush: 0.069, roll: 0.155, split: 0.875, skin: 0.3, shTint: '#5b3f00', hiTint: '#e3b373', grain: 0, vig: 0, sharp: 0 }),
     /* Indigo: erro médio 34.27 nos 45 patches */
-    m('m05', 'Indigo', { fx: 'crossproc', p: { rc: 1, gc: 0.155, bc: -0.569, piv: 0.498, lift: -0.085, sat: -0.357, yellow: 0.049 } },
+    m('m05', 'ÍNDIGO', { fx: 'crossproc', p: { rc: 1, gc: 0.155, bc: -0.569, piv: 0.498, lift: -0.085, sat: -0.357, yellow: 0.049 } },
       { exp: 0.132, con: 0.208, sat: 0.14, fade: 0.093, crush: 0, roll: 0.475, split: 0.543, skin: 0.3, shTint: '#1e202b', hiTint: '#ffe5a1', grain: 0, vig: 0, sharp: 0 }),
     /* Tuscan: erro médio 28.44 nos 45 patches */
-    m('m06', 'Tuscan', { fx: 'crossproc', p: { rc: 0.57, gc: 0.059, bc: 0.127, piv: 0.447, lift: -0.049, sat: -0.189, yellow: 0.055 } },
+    m('m06', 'TOSCANO', { fx: 'crossproc', p: { rc: 0.57, gc: 0.059, bc: 0.127, piv: 0.447, lift: -0.049, sat: -0.189, yellow: 0.055 } },
       { exp: 0.17, con: 0.328, sat: -0.084, fade: 0.12, crush: 0, roll: 0.542, split: 0.713, skin: 0.3, shTint: '#7d3f00', hiTint: '#ffd59a', grain: 0, vig: 0, sharp: 0 }),
     /* Two-Color: erro médio 36.47 nos 45 patches */
-    m('m07', 'Two-Color', { fx: 'chanmix', p: { rr: 1.225, rg: -0.218, rb: -0.018, gr: 0.121, gg: 1.111, gb: -0.272, br: 0.023, bg: 0.8, bb: 0.2, norm: 0 } },
+    m('m07', 'BICOLOR', { fx: 'chanmix', p: { rr: 1.225, rg: -0.218, rb: -0.018, gr: 0.121, gg: 1.111, gb: -0.272, br: 0.023, bg: 0.8, bb: 0.2, norm: 0 } },
       { exp: 0.041, con: -0.003, sat: -0.02, fade: 0, crush: 0.055, roll: 0.344, split: 0.343, skin: 0.3, shTint: '#1c2600', hiTint: '#ffcb7a', grain: 0, vig: 0, sharp: 0 }),
     /* 2 Strip: erro médio 30.06 nos 45 patches */
-    m('m08', '2 Strip', { fx: 'chanmix', p: { rr: 1.566, rg: -0.394, rb: -0.257, gr: 0.182, gg: 0.346, gb: 0.171, br: -0.073, bg: 0.056, bb: 0.652, norm: 0 } },
+    m('m08', '2 TIRAS', { fx: 'chanmix', p: { rr: 1.566, rg: -0.394, rb: -0.257, gr: 0.182, gg: 0.346, gb: 0.171, br: -0.073, bg: 0.056, bb: 0.652, norm: 0 } },
       { exp: 0.094, con: 0.35, sat: -0.121, fade: 0.201, crush: 0.064, roll: 0.606, split: 0.878, skin: 0.3, shTint: '#146f00', hiTint: '#a2b7b0', grain: 0, vig: 0, sharp: 0 }),
     /* 3-X: erro médio 21.65 nos 45 patches */
-    m('m09', '3-X', { fx: 'crossproc', p: { rc: 1, gc: -0.301, bc: -1, piv: 0.517, lift: 0.064, sat: -0.6, yellow: 0 } },
-      { exp: -0.172, con: 1.2, sat: -1, fade: 0.166, crush: 0, roll: 1, split: 0.592, skin: 0.3, shTint: '#576a44', hiTint: '#ffffff', grain: 0, vig: 0, sharp: 0 }),
+    m('m09', 'TRÊS-X', { fx: 'crossproc', p: { rc: 1, gc: -0.301, bc: -1, piv: 0.517, lift: 0.064, sat: -0.6, yellow: 0 } },
+      { exp: -0.172, con: 1.2, sat: -1, fade: 0.166, crush: 0, roll: 1, split: 0, skin: 0, shTint: '#808080', hiTint: '#ffffff', grain: 0, vig: 0, sharp: 0 }),
     /* Siena: erro médio 27.72 nos 45 patches */
-    m('m10', 'Siena', { fx: 'crossproc', p: { rc: 0.427, gc: 0.173, bc: -0.017, piv: 0.502, lift: -0.031, sat: -0.173, yellow: 0.027 } },
+    m('m10', 'TERRA', { fx: 'crossproc', p: { rc: 0.427, gc: 0.173, bc: -0.017, piv: 0.502, lift: -0.031, sat: -0.173, yellow: 0.027 } },
       { exp: -0.068, con: 0.09, sat: -0.478, fade: 0.073, crush: 0.025, roll: 0.385, split: 0.978, skin: 0.3, shTint: '#822f0c', hiTint: '#ffa77d', grain: 0, vig: 0, sharp: 0 }),
 
     /* ---- PRETO E BRANCO ---- */
