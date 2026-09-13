@@ -7326,6 +7326,40 @@ saturação −1 e tonalização 0; medido no motor, R=G=B em todos os patches
 (NOIR: rampa 7 → 145, branco → 255, azul → 10; TRÊS-X: 152, 221, 51 — as
 curvas medidas continuam).
 
+### 5m.10 A QUEIMADURA DE FILME na lente (13/09/2026)
+
+Pedido: *"no botão de lente, ao pressionar, o vazamento de filme são
+liberados efeitos de vídeos animados estilo Film Burn Light Leak Effect que
+percorrem o vídeo"*, com quatro imagens e um clipe de estoque (5,5 s,
+1920×1080). O clipe é de terceiro e não entra no site; entrou a MECÂNICA,
+lida dele a 15 quadros por segundo (`__prova/folha.html` + o receptor):
+
+```
+0,0–0,9 s   nada
+0,9–1,7 s   sobe (média 1 → 115); a banda quente nasce na coluna 11/32
+1,7–2,1 s   segura; a banda atravessa até a coluna 31/32 em ~0,9 s
+2,1–2,5 s   apaga (108 → 13)
+2,5–3,7 s   BRASA: borrões vermelhos fracos, pulsando (média 12–45)
+3,73 s      RELÂMPAGO na beira esquerda, um quadro só (máx 230)
+4,0–5,2 s   rescaldo até o preto
+paleta      (60,12,9) → (155,25,0) → (247,90,0) → (255,215,30) → quase branco
+```
+
+O efeito `queimadura` (js/fx5.js, película) é isso em GLSL: eventos
+sorteados por vaga de tempo (FREQUÊNCIA por 10 s), cada um com envelope
+sobe-segura-apaga, uma banda larga (σ 0,11 na frente, 0,16 atrás) de borda
+irregular (fbm) atravessando de fora a fora, um halo assimétrico (o rastro
+fica atrás), a brasa (borrão que pulsa e esfria por 1,3 × a duração) e o
+relâmpago na beira de saída; a rampa de calor é a do clipe; a luz entra por
+TELA e o miolo estoura em branco. Na filmadora, LENTE 1 põe a queimadura no
+lugar do vazamento do pacote, dosada pelo ajuste VAZAMENTO.
+
+Medido no motor (fonte lisa, 12 s a 15 leituras/s): eventos a cada ~4 s,
+cada um ~1,1 s, o pico da coluna andando 29 → 1 e 4 → 30 (os dois
+sentidos), rescaldo de ~1,5 s entre eles; folha de contato lida de volta
+pelo receptor — a primeira versão era uma linha fina de neon (σ 0,055) e
+virou a banda larga e irregular do clipe.
+
 ### 5m.6 O que NÃO foi feito
 
 - A máquina em movimento não foi vista (o painel). O visor a 60 fps, a roda

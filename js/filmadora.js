@@ -190,8 +190,11 @@
           if (p.amt + p.jump < 0.002) return;
           break;
         case 'lightleak':
+          /* a LENTE 1 é a QUEIMADURA DE FILME (o film burn medido), no lugar
+             do vazamento fixo do pacote; o ajuste VAZAMENTO dosa ela      */
           if (est.lente !== 1) return;
-          p.amt *= aj.vazamento;
+          id = 'queimadura'; p = VE.defaults('queimadura');
+          p.amt = 1.0*aj.vazamento;
           if (p.amt < 0.005) return;
           break;
         case 'halation':
