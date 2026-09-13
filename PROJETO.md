@@ -1,35 +1,67 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **11/09/2026** (vigésima
-> sexta). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> Documento de continuidade. Última sessão: **13/09/2026** (vigésima
+> sexta, em quatro voltas: 11, 12 e 13/09). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
 > decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
 
-**A vigésima sexta passada (11/09/2026, à noite) pôs a FILMADORA em TOOLS** —
-a traseira de uma câmera de filme flutuando no palco, na regra do polaroid
-(cada peça é uma função). Está na **seção 5m**:
+**A vigésima sexta passada (11–13/09/2026) construiu a FILMADORA em TOOLS**
+— a traseira de uma câmera de filme flutuando no palco, na regra do
+polaroid (cada peça é uma função) — e a levou por quatro voltas de pedidos
+do Bruno. Está toda na **seção 5m** (5m.1 a 5m.11). Estado em 13/09, tudo
+no ar (último commit `50a137a`):
 
 ```
-js/filmadora.js     o motor: as 4 bitolas, a cadeia da película (ops), as
-                    TEXTURAS calculadas (couro, rugosa, martelada, disco
-                    torneado), a gravação pelo exportador e os rolos
-js/filmadoraui.js   a tela: visor espelhando o #gl, seletor, botões, gavetas
-                    (bitolas em baixo, rolos à direita), telinha de ajustes
+js/filmadora.js     o motor: 4 bitolas (cada uma com a sua carcaça de FOTO
+                    fixa e a sua película), F.ops(t) — a cadeia que entra na
+                    prévia e na exportação —, F.filmes() lendo a família
+                    8 MM do catálogo, a gravação pelo exportador, os rolos
+js/filmadoraui.js   a tela: visor espelhando o #gl, os 5 botões na ordem do
+                    app (INFO · ROLOS · BITOLA · REBOB. · SOM), a LENTE em
+                    cima (LIMPA · QUEIMADURA · HALO), a roda do FILME com o
+                    TREMOR no centro, gaveta das bitolas, gaveta dos rolos,
+                    telinha (PLAQUETA e AJUSTES, com a seção QUEIMADURA)
 css/filmadora.css   tudo em --u (1% da largura da máquina)
+assets/filmadora/couro/   couro-preto (escurecido), couro-marrom, couro-bege
+                    (os três do Bruno, ladrilho espelhado 2×2) e
+                    metal-escovado (gerado) — 8 MM, SUPER 8, 16 MM, 35 MM
+js/filters.js       família 8 MM = os DEZ filmes do app MEDIDOS da saída
+                    dele (cadeias crossproc/chanmix → filmstock), nomes do
+                    laboratório: CRUZADO, NOIR P&B, ANOS 60, ÂMBAR, ÍNDIGO,
+                    TOSCANO, BICOLOR, 2 TIRAS, TRÊS-X, TERRA
+js/fx5.js           filmgrain sem o grão que voava (item 34 das armadilhas)
+                    e com GRÃO VIVO; pacote 8 mm recalibrado pela saída do
+                    app; QUEIMADURA DE FILME (o film burn, lampejos rápidos)
 ```
 
-Dois ganchos pequenos: `VE.filmadora.ops(t)` entra em `A.renderNow` como o
-último ajuste (prévia E exportação); `VE.exporter.emAndamento / cancelar /
-aoTerminar` são a porta de serviço do exportador para quem grava sem abrir a
-janela dele. **Medido no laboratório de verdade:** a película entra no quadro
-(barra da janela 4:3 em 11/10/8, miolo com o olhar 60s), o rolo sai com
-5,967 s de uma composição de 5,964 s e com a película DENTRO do arquivo, USAR
-põe o rolo na linha do tempo. **O que eu não vi:** a máquina em movimento
-(visor a 60 fps, a roda girando, a gaveta subindo) — o painel destas sessões
-estava com 280 px; as fotos vieram de um Chrome sem cabeça (ver 5m.4).
+**As medidas que sustentam isto** (não voltar a chutar):
+- o `.MOV` que o app gravou filmando `assets/labs/carta-de-calibracao.png`
+  deu, por filme, 45 patches → Nelder–Mead sobre o próprio shader (5m.8);
+  e a base do 8 mm: maciez σ 3,6 px em 960, grão de um nível, cintilação
+  zero, tremor só vertical e esporádico, janela quase no limite (5m.8);
+- a gravação de tela do app deu a ORDEM dos filmes e a função de cada
+  botão (5m.8), e a LENTE com três estados;
+- o clipe de film burn deu a paleta de fogo e o envelope; o ritmo é o das
+  imagens dele (lampejos), não o do clipe (5m.10–5m.11).
+
+**O que ficou para ele testar (ninguém viu em movimento):** o visor a
+60 fps; a roda girando; a gaveta subindo; os lampejos da queimadura no
+ritmo dele (RITMO e DURAÇÃO na engrenagem); o TREMOR no centro da roda;
+NOIR P&B e TRÊS-X em preto e branco; o couro preto fosco; o grão parado no
+filme. Se algo estiver forte, os ajustes MULTIPLICAM a calibração (1 = como
+medido).
+
+**Pendências deixadas em aberto:**
+- rolos não sobrevivem ao recarregar (blobs) — IndexedDB se ele pedir;
+- a queimadura na LENTE usa os defaults do efeito mais o que está em
+  `est.queima`; TAMANHO e LADO FRIO só pelo catálogo;
+- o ombro do app (tudo acima de 204 vira ~240) não cabe no modelo do
+  filmstock; um "ponto branco" no filmstock resolveria;
+- a cadência do 8 MM está em 18 (a identidade da bitola); o vídeo dele
+  estava em 24 — CADÊNCIA na engrenagem troca.
 
 ---
 
