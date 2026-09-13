@@ -201,95 +201,110 @@
     ].join('\n')
   });
 
-  /* QUEIMADURA DE FILME — o "film burn" das vinhetas de estoque, RECONSTRUÍDO
-     pela medida de um clipe de referência (13/09/2026, 5,5 s a 15 leituras
-     por segundo): nada; uma BANDA VERTICAL quente que sobe em 0,5 s, segura
-     0,5 s e atravessa o quadro (coluna 11/32 → 31/32 em 0,9 s) enquanto um
-     halo largo alaranja tudo; apaga em 0,4 s; depois a BRASA — borrões
-     vermelhos fracos pulsando por ~1,5 s — e às vezes um RELÂMPAGO de um
-     quadro só na beira por onde a banda saiu. A paleta é uma rampa de
-     calor lida do próprio clipe: (60,12,9) → (155,25,0) → (247,90,0) →
-     (255,215,30) → quase branco. É um efeito de TEMPO: cada evento é
-     sorteado num intervalo (FREQUÊNCIA eventos por 10 s) e entre eles não
-     há nada — como no rolo de verdade.                                 */
+  /* QUEIMADURA DE FILME — o "film burn" das vinhetas de estoque, pelas
+     referências do Bruno (13/09/2026): é RÁPIDO e TRÊMULO, aparece num
+     lugar (uma beira, um canto, os dois lados, ou atravessa o quadro num
+     lampejo), e tem várias paletas — fogo, âmbar, o véu verde com a beira
+     vermelha que estoura em branco, o azul de um lado e o laranja do outro,
+     rosa e ciano. Cada evento é sorteado numa vaga de tempo (FREQUÊNCIA por
+     10 s), dura DURAÇÃO (0,35 s de fábrica) com subida em 15% e queda em
+     28% do tempo, e pisca a 24 Hz por cima (TRÊMULA). ONDE e CORES podem
+     ser fixados ou sorteados a cada evento. A luz entra por TELA e o miolo
+     estoura em branco. O clipe de referência foi lido a 15 quadros/s para
+     a paleta de fogo e o envelope; nada dele entra no site.           */
   VE.def({
     id: 'queimadura', name: 'Queimadura de filme', cat: 'pelicula', color: '#ff7a1a',
-    desc: 'o film burn: a banda de fogo que atravessa o quadro, o halo laranja, a brasa que fica e o relâmpago na beira — vem e vai',
+    desc: 'o film burn: lampejos rápidos e trêmulos de luz queimada — numa beira, num canto, nos dois lados ou atravessando — em várias paletas',
     params: [
       { k: 'amt', label: 'Intensidade', min: 0, max: 2, def: 1 },
-      { k: 'freq', label: 'Frequência (eventos por 10 s)', min: 0.2, max: 8, step: 0.1, def: 2.5 },
-      { k: 'dur', label: 'Duração de cada queimadura (s)', min: 0.3, max: 4, def: 1.3 },
-      { k: 'lado', t: 's', label: 'Sentido', def: 0, opts: ['Sorteado', 'Da esquerda', 'Da direita'] },
-      { k: 'halo', label: 'Halo (o quadro inteiro alaranja)', min: 0, max: 1, def: 0.5 },
-      { k: 'brasa', label: 'Brasa depois (borrões que pulsam)', min: 0, max: 1, def: 0.6 },
-      { k: 'beira', label: 'Relâmpago na beira', min: 0, max: 1, def: 0.6 },
-      { k: 'tremer', label: 'A banda treme', min: 0, max: 1, def: 0.5 },
-      { k: 'quente', label: 'Calor (mais amarelo)', min: 0, max: 1, def: 0.5 },
+      { k: 'freq', label: 'Frequência (eventos por 10 s)', min: 0.2, max: 12, step: 0.1, def: 4 },
+      { k: 'dur', label: 'Duração de cada lampejo (s)', min: 0.05, max: 2, def: 0.35 },
+      { k: 'tremula', label: 'Trêmula (pisca)', min: 0, max: 1, def: 0.7 },
+      { k: 'estilo', t: 's', label: 'Onde aparece', def: 0, opts: ['Sorteado', 'Beira esquerda', 'Beira direita', 'Canto', 'Topo', 'Base', 'Atravessa', 'Os dois lados'] },
+      { k: 'cores', t: 's', label: 'Cores', def: 0, opts: ['Sorteado', 'Fogo', 'Âmbar', 'Verde e vermelho', 'Azul e laranja', 'Rosa e ciano'] },
+      { k: 'tamanho', label: 'Tamanho', min: 0.4, max: 2, def: 1 },
+      { k: 'halo', label: 'Lado frio e véu de cor', min: 0, max: 1, def: 0.6 },
       { k: 'semente', label: 'Semente', min: 0, max: 99, step: 1, def: 3 }
     ],
     glsl: [
-      /* envelope de um evento: sobe rápido, segura, apaga */
-      'float qEnv(float u){ return smoothstep(0.0, 0.34, u)*(1.0 - smoothstep(0.66, 1.0, u)); }',
-      /* a rampa de calor, lida do clipe: preto → vermelho fundo → laranja → amarelo → quase branco */
-      'vec3 qCalor(float i, float q){',
-      '  vec3 c = mix(vec3(0.0), vec3(0.24, 0.05, 0.035), smoothstep(0.0, 0.22, i));',
-      '  c = mix(c, vec3(0.61, 0.10, 0.0), smoothstep(0.22, 0.5, i));',
-      '  c = mix(c, vec3(0.97, 0.36, 0.0), smoothstep(0.5, 0.78, i));',
-      '  c = mix(c, mix(vec3(1.0, 0.62, 0.05), vec3(1.0, 0.86, 0.14), q), smoothstep(0.78, 1.0, i));',
-      '  c = mix(c, vec3(1.0, 0.97, 0.86), smoothstep(1.0, 1.35, i));',
-      '  return c;',
+      /* envelope: sobe em 15%, segura, cai nos últimos 28% */
+      'float qEnv(float u){ return smoothstep(0.0, 0.15, u)*(1.0 - smoothstep(0.72, 1.0, u)); }',
+      /* a rampa de calor de cada paleta: quatro paradas e o branco no fim */
+      'vec3 qPaleta(int cores, float i){',
+      '  vec3 a, b, c, d;',
+      '  if(cores == 1){ a = vec3(0.24, 0.05, 0.035); b = vec3(0.61, 0.10, 0.0); c = vec3(0.97, 0.36, 0.0); d = vec3(1.0, 0.86, 0.14); }',
+      '  else if(cores == 2){ a = vec3(0.30, 0.09, 0.0); b = vec3(0.85, 0.32, 0.0); c = vec3(1.0, 0.62, 0.10); d = vec3(1.0, 0.90, 0.45); }',
+      '  else if(cores == 3){ a = vec3(0.30, 0.02, 0.0); b = vec3(0.80, 0.05, 0.0); c = vec3(1.0, 0.45, 0.15); d = vec3(1.0, 0.95, 0.85); }',
+      '  else if(cores == 4){ a = vec3(0.35, 0.08, 0.0); b = vec3(0.85, 0.28, 0.0); c = vec3(1.0, 0.55, 0.05); d = vec3(1.0, 0.85, 0.40); }',
+      '  else { a = vec3(0.35, 0.05, 0.15); b = vec3(0.90, 0.20, 0.45); c = vec3(1.0, 0.55, 0.60); d = vec3(1.0, 0.90, 0.90); }',
+      '  vec3 col = mix(vec3(0.0), a, smoothstep(0.0, 0.2, i));',
+      '  col = mix(col, b, smoothstep(0.2, 0.5, i));',
+      '  col = mix(col, c, smoothstep(0.5, 0.8, i));',
+      '  col = mix(col, d, smoothstep(0.8, 1.05, i));',
+      '  col = mix(col, vec3(1.0), smoothstep(1.05, 1.4, i));',
+      '  return col;',
       '}',
+      /* o lado frio das paletas de duas cores */
+      'vec3 qFrio(int cores){',
+      '  if(cores == 3) return vec3(0.06, 0.28, 0.10);',
+      '  if(cores == 4) return vec3(0.10, 0.32, 0.65);',
+      '  return vec3(0.15, 0.75, 0.85);',
+      '}',
+      /* uma beira: larga e macia, com o fio da beira estourando */
+      'float qBeira(float x, float tam){ return exp(-x*x/(2.0*0.20*0.20*tam*tam))*(1.0 + 0.8*exp(-x*x/(2.0*0.05*0.05))); }',
       'vec3 fx(vec2 uv){',
       '  vec3 c = srccol(uv);',
       '  float P = 10.0/max(u_freq, 0.1);',
-      '  float I = 0.0;',
+      '  vec3 luz = vec3(0.0);',
       /* dois eventos podem se sobrepor: o desta vaga e o da anterior */
       '  for(int k = 0; k < 2; k++){',
-      '    float j = floor(uTime/P) - float(k) + u_semente*97.0;',
-      '    float t0 = (j - u_semente*97.0)*P + hash11(j*3.7 + 0.5)*P*0.55;',
-      '    float dur = u_dur*(0.7 + 0.6*hash11(j*5.1 + 0.9));',
+      '    float j = floor(uTime/P) - float(k);',
+      '    float s = j + u_semente*97.0;',
+      '    float t0 = j*P + hash11(s*3.7 + 0.5)*P*0.6;',
+      '    float dur = u_dur*(0.6 + 0.8*hash11(s*5.1 + 0.9));',
       '    float u = (uTime - t0)/dur;',
-      '    if(u < 0.0 || u > 2.4) continue;',
-      /* o sentido: sorteado, ou o pedido */
-      '    float dir = (u_lado < 0.5) ? (step(0.5, hash11(j*2.3 + 0.7))*2.0 - 1.0) : (u_lado < 1.5 ? 1.0 : -1.0);',
-      '    float e = qEnv(min(u, 1.0));',
-      /* a VARREDURA: a banda quente atravessa de fora a fora; a borda dela
-         treme (ruído em y, andando no tempo)                            */
-      '    float x0 = 0.5 + dir*(u*1.4 - 0.7);',
-      /* a borda da banda é irregular (fbm, não senoide) e a banda é LARGA e
-         macia, como no clipe: o miolo ocupa ~20% do quadro, o halo vai
-         atrás dela mais longe do que na frente (o rastro)               */
-      '    float wob = (fbm(vec2(uv.y*1.7 + j*0.37, uTime*0.9)) - 0.5)*0.34*u_tremer;',
-      '    float dx = (uv.x - x0 - wob)*dir;',
-      '    float sb = dx < 0.0 ? 0.16 : 0.11;',
-      '    float banda = exp(-dx*dx/(2.0*sb*sb));',
-      '    float sh = dx < 0.0 ? 0.55 : 0.34;',
-      '    float halo = exp(-dx*dx/(2.0*sh*sh));',
-      '    float vert = 0.8 + 0.4*vnoise(vec2(uv.y*1.3 + j, uTime*0.5));',
-      '    float text = 0.85 + 0.3*fbm(vec2(uv.x*2.0 + uTime*0.4, uv.y*2.0 + j));',
-      '    I += e*vert*(0.78*banda + 0.62*halo*u_halo*text);',
-      /* a BRASA: depois da varredura, um borrão que pulsa e esfria */
-      '    float ub = (uTime - t0 - dur)/(dur*1.3);',
-      '    if(ub > 0.0 && ub < 1.0){',
-      '      vec2 pb = vec2(hash11(j*4.4 + 0.2), hash11(j*6.6 + 0.4))*0.6 + 0.2;',
-      '      float db = length((uv - pb)*vec2(1.0, 1.4));',
-      '      float pulsa = 0.6 + 0.4*vnoise(vec2(uTime*2.6, j*1.7));',
-      '      I += u_brasa*(1.0 - ub)*pulsa*0.42*exp(-db*db/(2.0*0.24*0.24));',
+      '    if(u < 0.0 || u > 1.0) continue;',
+      '    float e = qEnv(u);',
+      /* trêmula: pisca a 24 Hz, com um ruído mais macio por baixo */
+      '    float fl = mix(1.0, 0.45 + 0.55*hash11(floor(uTime*24.0)*0.37 + s), u_tremula*0.8);',
+      '    fl *= mix(1.0, 0.7 + 0.6*vnoise(vec2(uTime*9.0, s)), u_tremula);',
+      '    e *= fl;',
+      /* onde e com que cores: fixo, ou sorteado por evento */
+      '    int estilo = (u_estilo < 0.5) ? int(floor(hash11(s*2.3 + 0.7)*6.999)) + 1 : int(u_estilo + 0.5);',
+      '    int cores = (u_cores < 0.5) ? int(floor(hash11(s*6.1 + 0.2)*4.999)) + 1 : int(u_cores + 0.5);',
+      '    float tam = u_tamanho*(0.75 + 0.5*hash11(s*7.7 + 0.1));',
+      /* a borda é irregular e mexe */
+      '    float wob = (fbm(vec2(uv.y*2.2 + s, uv.x*2.2 + uTime*1.5)) - 0.5)*0.22*tam;',
+      '    float I = 0.0, If = 0.0;',
+      /* na tela, uv.y = 1 é o TOPO do quadro (o canvas WebGL cresce para cima) */
+      '    if(estilo == 1 || estilo == 7) I += qBeira(uv.x + wob, tam);',
+      '    if(estilo == 2 || estilo == 7) I += qBeira(1.0 - uv.x + wob, tam);',
+      '    if(estilo == 3){',
+      '      vec2 cc = vec2(step(0.5, hash11(s*1.3 + 0.4)), step(0.5, hash11(s*1.9 + 0.8)));',
+      '      vec2 dd = (uv - cc)*vec2(1.0, 0.75); float r2 = dot(dd, dd);',
+      '      I += 1.15*exp(-r2/(2.0*0.30*0.30*tam*tam)) + 0.5*exp(-r2/(2.0*0.12*0.12));',
       '    }',
-      /* o RELÂMPAGO na beira por onde a banda saiu: um quadro só, quase branco */
-      '    if(u_beira > 0.001 && hash11(j*8.8 + 0.3) < u_beira){',
-      '      float ue = (uTime - t0 - dur*0.96)/(dur*0.07);',
-      '      float xe = dir > 0.0 ? 1.0 : 0.0;',
-      '      I += smoothstep(0.0, 0.5, ue)*(1.0 - smoothstep(0.5, 1.0, ue))*1.15*exp(-abs(uv.x - xe)*18.0);',
+      '    if(estilo == 4) I += qBeira(1.0 - uv.y + wob, tam*0.9);',
+      '    if(estilo == 5) I += qBeira(uv.y + wob, tam*0.9);',
+      '    if(estilo == 6){',
+      '      float dir = step(0.5, hash11(s*4.1 + 0.3))*2.0 - 1.0;',
+      '      float x0 = 0.5 + dir*(u*1.6 - 0.8);',
+      '      float dx = uv.x - x0 + wob*0.5;',
+      '      I += 0.9*exp(-dx*dx/(2.0*0.11*0.11*tam*tam)) + 0.35*exp(-dx*dx/(2.0*0.35*0.35));',
       '    }',
+      /* o lado frio: no lado oposto ao quente (e o verde vira um véu) */
+      '    if(cores >= 3){',
+      '      float xf = (estilo == 2) ? uv.x : (estilo == 1 ? 1.0 - uv.x : (estilo == 4 ? uv.y : (estilo == 5 ? 1.0 - uv.y : length(uv - vec2(0.2, 0.85)))));',
+      '      If = 0.6*exp(-xf*xf/(2.0*0.3*0.3))*u_halo;',
+      '      if(cores == 3) If = max(If, 0.35*u_halo);',
+      '    }',
+      '    I *= e; If *= e;',
+      '    luz += qPaleta(cores, I*u_amt) + qFrio(cores)*If*u_amt;',
       '  }',
-      '  I *= u_amt;',
-      '  if(I < 0.002) return c;',
-      '  vec3 q = qCalor(I, u_quente);',
-      /* a luz da queimadura ENTRA na imagem: tela (o que já é claro fica
-         claro) e o miolo estoura para o branco                         */
-      '  c = 1.0 - (1.0 - c)*(1.0 - q);',
-      '  c += q*q*0.35;',
+      '  if(max(luz.r, max(luz.g, luz.b)) < 0.003) return c;',
+      /* a luz ENTRA na imagem: tela, e o miolo estoura em branco */
+      '  c = 1.0 - (1.0 - c)*(1.0 - luz);',
+      '  c += luz*luz*0.3;',
       '  return clamp(c, 0.0, 1.0);',
       '}'
     ].join('\n')

@@ -90,6 +90,8 @@
     filme: 'm01',
     lente: 0,              /* a LENTE do app: 0 limpa · 1 vazamento · 2 halo */
     tremor: true,          /* o botão no centro da roda (o "frame jitter" do app) */
+    /* a queimadura da LENTE: onde aparece, com que cores, com que ritmo */
+    queima: { estilo: 0, cores: 0, freq: 4, dur: 0.35, tremula: 0.7 },
     som: false,            /* o botão da grade: grava em tempo real, com o áudio */
     cadencia: true,        /* o tranco da bitola; desligado, o vídeo anda como veio */
     aj: {},
@@ -106,6 +108,7 @@
       if (g.filme) est.filme = g.filme;
       if (g.lente === 0 || g.lente === 1 || g.lente === 2) est.lente = g.lente;
       if (typeof g.tremor === 'boolean') est.tremor = g.tremor;
+      if (g.queima) ['estilo', 'cores', 'freq', 'dur', 'tremula'].forEach(function (k) { var v = parseFloat(g.queima[k]); if (isFinite(v)) est.queima[k] = v; });
       if (typeof g.som === 'boolean') est.som = g.som;
       if (typeof g.cadencia === 'boolean') est.cadencia = g.cadencia;
       if (g.aj) Object.keys(AJ_PADRAO).forEach(function (k) {
@@ -117,7 +120,7 @@
     try {
       localStorage.setItem(CHAVE, JSON.stringify({
         bitola: est.bitola, filme: est.filme, lente: est.lente, tremor: est.tremor,
-        som: est.som, cadencia: est.cadencia, aj: est.aj
+        som: est.som, cadencia: est.cadencia, aj: est.aj, queima: est.queima
       }));
     } catch (e) { /* sem espaço: paciência */ }
   };
@@ -128,6 +131,7 @@
   F.reporAjustes = function () {
     Object.keys(AJ_PADRAO).forEach(function (k) { est.aj[k] = AJ_PADRAO[k]; });
     est.lente = 0; est.tremor = true; est.cadencia = true;
+    est.queima = { estilo: 0, cores: 0, freq: 4, dur: 0.35, tremula: 0.7 };
     F.guardar();
   };
   F.AJ_PADRAO = AJ_PADRAO;
@@ -195,6 +199,7 @@
           if (est.lente !== 1) return;
           id = 'queimadura'; p = VE.defaults('queimadura');
           p.amt = 1.0*aj.vazamento;
+          p.estilo = est.queima.estilo; p.cores = est.queima.cores; p.freq = est.queima.freq; p.dur = est.queima.dur; p.tremula = est.queima.tremula;
           if (p.amt < 0.005) return;
           break;
         case 'halation':

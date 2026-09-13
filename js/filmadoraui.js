@@ -505,6 +505,16 @@
           '<input class="fil-num" type="number" min="' + a[2] + '" max="' + a[3] + '" step="0.05" value="' + (+aj[a[0]]).toFixed(2) + '" data-ajn="' + a[0] + '"></div>' +
           (a[4] ? '<i>' + a[4] + '</i>' : '') + '</div>';
       }).join('') +
+      '<div class="fil-sub">QUEIMADURA (LENTE)</div>' +
+      '<div class="fil-nota">Os lampejos de luz queimada da lente. ONDE e CORES podem ser sorteados a cada lampejo.</div>' +
+      '<div class="fil-pilulas">' + ['SORTEADO', 'BEIRA ESQ.', 'BEIRA DIR.', 'CANTO', 'TOPO', 'BASE', 'ATRAVESSA', 'DOIS LADOS'].map(function (n, i) {
+        return '<button class="fil-pil' + (F.est.queima.estilo === i ? ' on' : '') + '" data-qestilo="' + i + '">' + n + '</button>'; }).join('') + '</div>' +
+      '<div class="fil-pilulas">' + ['SORTEADO', 'FOGO', 'ÂMBAR', 'VERDE E VERMELHO', 'AZUL E LARANJA', 'ROSA E CIANO'].map(function (n, i) {
+        return '<button class="fil-pil' + (F.est.queima.cores === i ? ' on' : '') + '" data-qcores="' + i + '">' + n + '</button>'; }).join('') + '</div>' +
+      [['freq', 'RITMO (LAMPEJOS POR 10 S)', 0.2, 12, 'quantas queimaduras por 10 segundos'], ['dur', 'DURAÇÃO (S)', 0.05, 2, 'cada lampejo dura isto, mais ou menos'], ['tremula', 'TRÊMULA', 0, 1, 'o piscar a 24 Hz por cima']].map(function (a) {
+        return '<div class="fil-ctrl"><label>' + a[1] + '</label><div class="fil-ctrl-l">' +
+          '<input type="range" min="' + a[2] + '" max="' + a[3] + '" step="0.01" value="' + F.est.queima[a[0]] + '" data-q="' + a[0] + '">' +
+          '<input class="fil-num" type="number" min="' + a[2] + '" max="' + a[3] + '" step="0.05" value="' + (+F.est.queima[a[0]]).toFixed(2) + '" data-qn="' + a[0] + '"></div><i>' + a[4] + '</i></div>'; }).join('') +
       '<div class="fil-sub">CADÊNCIA</div>' +
       '<div class="fil-pilulas">' +
         '<button class="fil-pil' + (F.est.cadencia ? ' on' : '') + '" data-cad="1">DA BITOLA · ' + F.bitola(F.est.bitola).fps + ' Q/S</button>' +
@@ -537,6 +547,19 @@
         var r = pag.querySelector('[data-aj="' + k + '"]'); if (r) { r.value = v; encher(r); }
       });
     });
+    pag.querySelectorAll('[data-qestilo]').forEach(function (b) {
+      b.addEventListener('click', function () { F.est.queima.estilo = +b.dataset.qestilo; F.guardar(); paginaAjustes(); });
+    });
+    pag.querySelectorAll('[data-qcores]').forEach(function (b) {
+      b.addEventListener('click', function () { F.est.queima.cores = +b.dataset.qcores; F.guardar(); paginaAjustes(); });
+    });
+    pag.querySelectorAll('[data-q]').forEach(function (r) {
+      encher(r);
+      r.addEventListener('input', function () { var k = r.dataset.q, v = parseFloat(r.value); F.est.queima[k] = v; F.guardar(); encher(r); var n = pag.querySelector('[data-qn="' + k + '"]'); if (n) n.value = v.toFixed(2); });
+    });
+    pag.querySelectorAll('[data-qn]').forEach(function (n) {
+      n.addEventListener('change', function () { var k = n.dataset.qn, v = parseFloat(n.value); if (!isFinite(v)) return; v = Math.max(+n.min, Math.min(+n.max, v)); F.est.queima[k] = v; F.guardar(); n.value = v.toFixed(2); var r = pag.querySelector('[data-q="' + k + '"]'); if (r) { r.value = v; encher(r); } });
+    });
     pag.querySelectorAll('[data-cad]').forEach(function (b) {
       b.addEventListener('click', function () { F.est.cadencia = b.dataset.cad === '1'; F.guardar(); paginaAjustes(); });
     });
@@ -560,7 +583,7 @@
         linha('VISOR', 'a composição com a película. Clique toca e pausa; a barra de espaço também.') +
         linha('BOTÃO VERMELHO', 'grava a composição (ou o trecho I–O) num rolo, com a película. Apertar de novo cancela.') +
         linha('CONTADOR', 'pés de filme desta bitola. A ' + b.fps + ' q/s, ' + b.ppf + ' quadros fazem um pé.') +
-        linha('LENTE', 'em cima, à direita: LIMPA, VAZAMENTO de luz, HALO — gira a cada toque.') +
+        linha('LENTE', 'em cima, à direita: LIMPA, QUEIMADURA (os lampejos de luz queimada; onde e com que cores, na engrenagem), HALO — gira a cada toque.') +
         linha('SELETOR', 'o filme: PURO é a película da bitola; os outros são os dez filmes do app, medidos da saída dele. Arraste, role ou toque. ← → também.') +
         linha('CENTRO DA RODA', 'o TREMOR do quadro, liga e desliga.') +
         linha('ROLOS', 'a tira de filme: os rolos gravados — baixar, usar na linha do tempo, apagar.') +

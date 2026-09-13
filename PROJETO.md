@@ -7360,6 +7360,33 @@ sentidos), rescaldo de ~1,5 s entre eles; folha de contato lida de volta
 pelo receptor — a primeira versão era uma linha fina de neon (σ 0,055) e
 virou a banda larga e irregular do clipe.
 
+### 5m.11 A queimadura refeita: rápida, trêmula, com ONDE e CORES (13/09/2026)
+
+O Bruno olhou a primeira queimadura e cortou: *"a animação está errada, não
+passa da direita pra esquerda de forma lenta, é bem rápido e pode ter outras
+posições também, aparecer só no canto — coloque nas configurações o estilo,
+onde vai aparecer; é bem rápida e trêmula; os anexos são diferentes, têm
+várias cores."* Eu tinha copiado o RITMO do clipe de estoque (a varredura
+de 1 s); as referências dele são lampejos.
+
+O efeito ficou com ONDE APARECE (sorteado · beira esquerda · beira direita ·
+canto · topo · base · atravessa · os dois lados) e CORES (sorteado · fogo ·
+âmbar · verde e vermelho · azul e laranja · rosa e ciano), DURAÇÃO de 0,35 s
+com subida em 15% e queda em 28%, e TRÊMULA — um piscar a 24 Hz (hash por
+quadro) sobre um ruído mais macio. As paletas de duas cores põem o lado
+frio no lado oposto ao quente; a verde vira um véu no quadro inteiro (a
+segunda imagem dele). A beira tem um fio que estoura em branco. Na
+filmadora, a seção QUEIMADURA da engrenagem guarda onde, cores, ritmo,
+duração e trêmula (`est.queima`), e a LENTE 1 passa isso ao efeito.
+
+Medido no motor (60 leituras/s, 8 s): lampejos de 0,28–0,42 s, três em 8 s
+(freq 4), média pulando ~5,5 níveis por quadro dentro do lampejo (a
+trêmula). Uma galeria de 18 combinações lida pelo receptor mostrou o
+TOPO na base: neste motor o canvas WebGL cresce para cima, `uv.y = 1` é
+o topo DA TELA — confirmado depois pela leitura das metades (TOPO acende as
+linhas de cima: 299 contra 49). A varredura ATRAVESSA saía branca demais
+(1,1 + 0,5) e caiu para 0,9 + 0,35.
+
 ### 5m.6 O que NÃO foi feito
 
 - A máquina em movimento não foi vista (o painel). O visor a 60 fps, a roda

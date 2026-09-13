@@ -1072,7 +1072,7 @@ ajustes é a única coisa que não é câmera.
 |---|---|
 | **o visor** | a composição com a película. Clique toca e pausa (a barra de espaço também). Nas bitolas de 8 mm ele é 4:3 e recorta as barras pretas que a janela deixa num vídeo largo — como o visor de uma câmera de verdade |
 | **o botão vermelho** | **GRAVA**: a exportação do laboratório, com a película dentro. A lâmpada pisca, o contador conta. Apertar de novo cancela |
-| **LENTE** (alto, à direita) | a lente do app: **LIMPA → QUEIMADURA → HALO**, girando a cada toque. A QUEIMADURA é o *film burn*: de tempos em tempos uma banda de fogo atravessa o quadro, o halo alaranja tudo, fica uma brasa pulsando e às vezes um relâmpago na beira — reconstruído de um clipe de referência, medido quadro a quadro. O ajuste VAZAMENTO dosa a força; o visor da porta mostra a lente |
+| **LENTE** (alto, à direita) | a lente do app: **LIMPA → QUEIMADURA → HALO**, girando a cada toque. A QUEIMADURA é o *film burn*: lampejos **rápidos e trêmulos** de luz queimada — numa beira, num canto, nos dois lados, atravessando o quadro — em paletas de fogo, âmbar, verde com a beira vermelha, azul de um lado e laranja do outro, rosa e ciano. Na engrenagem, a seção QUEIMADURA escolhe ONDE aparece e as CORES (ou sorteia a cada lampejo), o ritmo, a duração e a trêmula. O ajuste VAZAMENTO dosa a força |
 | **o centro da roda** | o **TREMOR** do quadro, liga e desliga (o "frame jitter" do app) |
 | **o contador** | pés de filme desta bitola. 50 pés de Super 8 a 18 q/s são 3 min 20 s — é conta real (72 quadros por pé no Super 8, 80 no 8 mm, 40 no 16, 16 no 35) |
 | **o seletor** (a roda do canto) | o **FILME**: PURO (a película da bitola como vem) ou um dos **dez filmes medidos da saída do app**, com nomes do laboratório na ordem do seletor dele — CRUZADO, NOIR P&B, ANOS 60, ÂMBAR, ÍNDIGO, TOSCANO, BICOLOR, 2 TIRAS, TRÊS-X, TERRA. NOIR P&B e TRÊS-X são preto e branco de verdade. Arraste em volta, role, toque no nome, ou ← → |
@@ -1177,11 +1177,14 @@ O grupo `película` reconstrói a câmera antiga inteira:
   bitola, sangria, perfuração lateral opcional, queda de luz nos cantos e tremor.
 * **Vazamento de luz** — a luz entrando pelo chassi, em vermelho, laranja, amarelo
   e branco, com a borda respirando e pulsação.
-* **Queimadura de filme** (13/09/2026) — o *film burn* dos clipes de estoque,
-  reconstruído por medida: uma banda quente que sobe em meio segundo e
-  atravessa o quadro em um, o halo que alaranja tudo, a brasa que fica
-  pulsando e o relâmpago na beira. Vem e vai — FREQUÊNCIA é quantas por
-  10 s; SENTIDO, HALO, BRASA, RELÂMPAGO e CALOR são as outras rodas.
+* **Queimadura de filme** (13/09/2026) — o *film burn* dos clipes de estoque:
+  lampejos rápidos (0,35 s de fábrica) e trêmulos (piscam a 24 Hz) de luz
+  queimada, numa BEIRA, num CANTO, no TOPO ou na BASE, nos DOIS LADOS ou
+  ATRAVESSANDO o quadro — sorteado a cada lampejo ou fixo em ONDE APARECE —
+  com cinco paletas: FOGO, ÂMBAR, VERDE E VERMELHO (o véu verde com a beira
+  que estoura em branco), AZUL E LARANJA (frio de um lado, quente do outro),
+  ROSA E CIANO. FREQUÊNCIA é quantos por 10 s; TAMANHO, LADO FRIO e SEMENTE
+  são as outras rodas.
 * **Flash de rolo** — o estouro de começo e fim de rolo, em pulsos irregulares.
 * **Grão por bitola** — 8 mm é grosso, 35 mm é fino. O tamanho do grão segue a área
   real do quadro.
