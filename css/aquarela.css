@@ -97,10 +97,25 @@
 .aq-mini:active{transform:translateY(1px)}
 .aq-mini:disabled{opacity:.3;cursor:default;transform:none}
 
+/* o tamanho do pincel: a linha é o campo, na lata */
+.aq-tamanho{display:flex;align-items:center;gap:calc(var(--u) * .5);padding:0 calc(var(--u) * .2)}
+.aq-tamanho label{font-size:calc(var(--u) * .6);letter-spacing:.14em;color:#5d594f;flex:0 0 auto}
+.aq-tamanho input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;min-width:0;height:3px;border-radius:3px;outline:none;
+  background:linear-gradient(90deg, #2a2620 var(--fill, 0%), rgba(0,0,0,.2) var(--fill, 0%));
+}
+.aq-tamanho input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:calc(var(--u) * 1.2);height:calc(var(--u) * 1.2);border-radius:3px;background:#2a2620;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.aq-tamanho input[type=range]::-moz-range-thumb{width:calc(var(--u) * 1.2);height:calc(var(--u) * 1.2);border:0;border-radius:3px;background:#2a2620;cursor:pointer}
+.aq-tamanho input[type=number]{
+  flex:0 0 calc(var(--u) * 4);min-width:0;font-family:var(--mono);font-size:calc(var(--u) * .7);color:#2a2620;
+  background:rgba(255,255,255,.5);border:1px solid rgba(0,0,0,.2);border-radius:5px;padding:calc(var(--u) * .25) calc(var(--u) * .2);text-align:center;
+}
+.aq-tamanho input[type=number]:focus{outline:none;border-color:var(--aq-azul)}
+
 /* a diluição: três pastilhas na lata, entre os pincéis e os utensílios */
 .aq-diluicao{display:flex;gap:2px;padding:2px;border-radius:999px;background:rgba(0,0,0,.14);box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
 .aq-diluicao button{
-  flex:1;border:0;background:transparent;color:#5d594f;cursor:pointer;font-family:var(--mono);
+  flex:1;border:0;background:transparent;color:#3e3a33;font-weight:500;cursor:pointer;font-family:var(--mono);
   font-size:calc(var(--u) * .62);letter-spacing:.14em;padding:calc(var(--u) * .42) 0;border-radius:999px;transition:background .12s,color .12s;
 }
 .aq-diluicao button.on{background:#2a2620;color:#f2eee4}
@@ -208,7 +223,15 @@
   background:#f2efe6;box-shadow:0 calc(var(--u) * .5) calc(var(--u) * 1.2) rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.2);
   overflow:hidden;
 }
-.aq-papel canvas{display:block;width:100%;height:100%;touch-action:none;cursor:none}
+/* com zoom a folha rola por barras discretas: finas, escuras, só quando há o que rolar */
+.aq-papel.com-zoom{overflow:auto;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.38) transparent}
+.aq-papel.com-zoom::-webkit-scrollbar{width:7px;height:7px}
+.aq-papel.com-zoom::-webkit-scrollbar-track{background:transparent}
+.aq-papel.com-zoom::-webkit-scrollbar-thumb{background:rgba(0,0,0,.38);border-radius:7px}
+.aq-papel.com-zoom::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.6)}
+.aq-papel.com-zoom::-webkit-scrollbar-corner{background:transparent}
+.aq-folha-caixa{position:relative;width:100%;height:100%;background:#f2efe6}
+.aq-papel canvas{display:block;width:100%;height:100%;touch-action:none;cursor:none;image-rendering:auto}
 .aq-papel .aq-folhear{position:absolute;inset:0;cursor:default}
 .aq-papel .aq-folhear.hidden{display:none}
 .aq-cursor{
@@ -216,6 +239,17 @@
   border:1px solid rgba(0,0,0,.65);box-shadow:0 0 0 1px rgba(255,255,255,.7);z-index:5;
 }
 .aq-cursor.hidden{display:none}
+/* o zoom: três teclas discretas no canto do vidro */
+.aq-zoom{
+  position:absolute;right:calc(var(--u) * 1.2);top:calc(var(--u) * 1.1);z-index:4;
+  display:flex;gap:2px;padding:2px;border-radius:999px;background:rgba(0,0,0,.42);
+}
+.aq-zoom button{
+  border:0;background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:var(--mono);
+  font-size:calc(var(--u) * .78);letter-spacing:.06em;height:calc(var(--u) * 2.2);min-width:calc(var(--u) * 2.2);padding:0 calc(var(--u) * .5);border-radius:999px;
+  transition:background .12s,color .12s;
+}
+.aq-zoom button:hover{background:rgba(255,255,255,.14);color:#fff}
 .aq-carimbo{
   position:absolute;right:calc(var(--u) * 1.4);bottom:calc(var(--u) * .9);z-index:3;
   font-size:calc(var(--u) * .68);letter-spacing:.2em;color:rgba(255,255,255,.55);

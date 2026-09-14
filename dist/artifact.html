@@ -4283,10 +4283,25 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 .aq-mini:active{transform:translateY(1px)}
 .aq-mini:disabled{opacity:.3;cursor:default;transform:none}
 
+/* o tamanho do pincel: a linha é o campo, na lata */
+.aq-tamanho{display:flex;align-items:center;gap:calc(var(--u) * .5);padding:0 calc(var(--u) * .2)}
+.aq-tamanho label{font-size:calc(var(--u) * .6);letter-spacing:.14em;color:#5d594f;flex:0 0 auto}
+.aq-tamanho input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;min-width:0;height:3px;border-radius:3px;outline:none;
+  background:linear-gradient(90deg, #2a2620 var(--fill, 0%), rgba(0,0,0,.2) var(--fill, 0%));
+}
+.aq-tamanho input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:calc(var(--u) * 1.2);height:calc(var(--u) * 1.2);border-radius:3px;background:#2a2620;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.aq-tamanho input[type=range]::-moz-range-thumb{width:calc(var(--u) * 1.2);height:calc(var(--u) * 1.2);border:0;border-radius:3px;background:#2a2620;cursor:pointer}
+.aq-tamanho input[type=number]{
+  flex:0 0 calc(var(--u) * 4);min-width:0;font-family:var(--mono);font-size:calc(var(--u) * .7);color:#2a2620;
+  background:rgba(255,255,255,.5);border:1px solid rgba(0,0,0,.2);border-radius:5px;padding:calc(var(--u) * .25) calc(var(--u) * .2);text-align:center;
+}
+.aq-tamanho input[type=number]:focus{outline:none;border-color:var(--aq-azul)}
+
 /* a diluição: três pastilhas na lata, entre os pincéis e os utensílios */
 .aq-diluicao{display:flex;gap:2px;padding:2px;border-radius:999px;background:rgba(0,0,0,.14);box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
 .aq-diluicao button{
-  flex:1;border:0;background:transparent;color:#5d594f;cursor:pointer;font-family:var(--mono);
+  flex:1;border:0;background:transparent;color:#3e3a33;font-weight:500;cursor:pointer;font-family:var(--mono);
   font-size:calc(var(--u) * .62);letter-spacing:.14em;padding:calc(var(--u) * .42) 0;border-radius:999px;transition:background .12s,color .12s;
 }
 .aq-diluicao button.on{background:#2a2620;color:#f2eee4}
@@ -4394,7 +4409,15 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   background:#f2efe6;box-shadow:0 calc(var(--u) * .5) calc(var(--u) * 1.2) rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.2);
   overflow:hidden;
 }
-.aq-papel canvas{display:block;width:100%;height:100%;touch-action:none;cursor:none}
+/* com zoom a folha rola por barras discretas: finas, escuras, só quando há o que rolar */
+.aq-papel.com-zoom{overflow:auto;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.38) transparent}
+.aq-papel.com-zoom::-webkit-scrollbar{width:7px;height:7px}
+.aq-papel.com-zoom::-webkit-scrollbar-track{background:transparent}
+.aq-papel.com-zoom::-webkit-scrollbar-thumb{background:rgba(0,0,0,.38);border-radius:7px}
+.aq-papel.com-zoom::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.6)}
+.aq-papel.com-zoom::-webkit-scrollbar-corner{background:transparent}
+.aq-folha-caixa{position:relative;width:100%;height:100%;background:#f2efe6}
+.aq-papel canvas{display:block;width:100%;height:100%;touch-action:none;cursor:none;image-rendering:auto}
 .aq-papel .aq-folhear{position:absolute;inset:0;cursor:default}
 .aq-papel .aq-folhear.hidden{display:none}
 .aq-cursor{
@@ -4402,6 +4425,17 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
   border:1px solid rgba(0,0,0,.65);box-shadow:0 0 0 1px rgba(255,255,255,.7);z-index:5;
 }
 .aq-cursor.hidden{display:none}
+/* o zoom: três teclas discretas no canto do vidro */
+.aq-zoom{
+  position:absolute;right:calc(var(--u) * 1.2);top:calc(var(--u) * 1.1);z-index:4;
+  display:flex;gap:2px;padding:2px;border-radius:999px;background:rgba(0,0,0,.42);
+}
+.aq-zoom button{
+  border:0;background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:var(--mono);
+  font-size:calc(var(--u) * .78);letter-spacing:.06em;height:calc(var(--u) * 2.2);min-width:calc(var(--u) * 2.2);padding:0 calc(var(--u) * .5);border-radius:999px;
+  transition:background .12s,color .12s;
+}
+.aq-zoom button:hover{background:rgba(255,255,255,.14);color:#fff}
 .aq-carimbo{
   position:absolute;right:calc(var(--u) * 1.4);bottom:calc(var(--u) * .9);z-index:3;
   font-size:calc(var(--u) * .68);letter-spacing:.2em;color:rgba(255,255,255,.55);
@@ -45537,7 +45571,10 @@ window.VE = window.VE || {};
                          anterior em azul e o seguinte em vermelho
      os godês .......... os oito pigmentos da paleta. Toque escolhe;
                          o ⇄ abre a gaveta dos 52
-     os pincéis ........ quatro redondos (n.º 2, 6, 12 e 24)
+     os pincéis ........ quatro redondos (n.º 2, 6, 12 e 24), e o
+                         TAMANHO livre por baixo deles — até bem grande
+     + − (no vidro) .... o zoom da folha; com zoom, barras discretas
+                         de rolagem (e Ctrl + roda sobre a folha)
      o pote ............ só água (molhar, diluir, floradas)
      a esponja ......... levanta tinta e água
      o pincel chato .... pincel SECO: só nas cristas do papel
@@ -45606,9 +45643,9 @@ window.VE = window.VE || {};
     if (!est) {
       est = {
         raf: 0, tela: null, gaveta: false, pincel: 2, ferr: 'pincel', slot: 0,
-        folheando: 0, fundoPedido: -1, secagem: 'normal', defin: 1024, base: 24,
+        folheando: 0, fundoPedido: -1, secagem: 'normal', defin: 'auto', base: 24,
         vegetal: true, vegForca: 0.55, codigo: false, arr: null, ultPasso: 0,
-        luzKnob: 0.55, diluicao: 'media', ultRolagem: 0
+        luzKnob: 0.55, diluicao: 'media', ultRolagem: 0, raio: 10, zoom: 1
       };
       carregarPrefs();
     }
@@ -45639,8 +45676,17 @@ window.VE = window.VE || {};
 
   /* a folha nasce do tamanho da composição (a proporção dela, com o lado
      maior na DEFINIÇÃO escolhida); sem projeto, 16:9                 */
+  /* AUTO: a folha tem a definição da composição, pixel a pixel, entre 1024
+     e 1280 no lado maior — nem uma composição pequena faz a folha pequena
+     (uma tela de 160×90 já esmagou uma aquarela), nem uma de 4K a faz
+     lenta. Os outros valores são escolha dele (1920 é lento).           */
+  function definicao(cw, ch) {
+    var d = est.defin;
+    if (d === 'auto' || !(d > 0)) return Math.max(1024, Math.min(1280, Math.max(cw, ch)));
+    return Math.max(512, d);
+  }
   function tamanhoDaFolha() {
-    var p = VE.project, cw = p ? p.canvas.w : 1920, ch = p ? p.canvas.h : 1080, lado = est.defin;
+    var p = VE.project, cw = p ? p.canvas.w : 1920, ch = p ? p.canvas.h : 1080, lado = definicao(cw, ch);
     var esc = lado / Math.max(cw, ch);
     return { w: Math.max(64, Math.round(cw * esc / 2) * 2), h: Math.max(64, Math.round(ch * esc / 2) * 2) };
   }
@@ -45682,6 +45728,8 @@ window.VE = window.VE || {};
               '<button class="aq-mini" id="aqRefazer" title="Refazer (Ctrl+Y)">' + svg('refazer') + '</button></div>' +
             '<div class="aq-godes" id="aqGodes"></div>' +
             '<div class="aq-pinceis" id="aqPinceis"></div>' +
+            '<div class="aq-tamanho" title="O tamanho do pincel, em pixels da folha ([ e ] também)"><label>TAMANHO</label>' +
+              '<input type="range" id="aqTamanho" min="1" max="300" step="1" value="10"><input type="number" id="aqTamanhoN" min="1" max="300" step="1" value="10"></div>' +
             '<div class="aq-diluicao" id="aqDiluicao" title="Quanta tinta o pincel leva: aguada clara, normal ou carregada">' +
               '<button data-dil="clara">CLARA</button><button data-dil="media" class="on">MÉDIA</button><button data-dil="forte">FORTE</button></div>' +
             '<div class="aq-utensilios">' +
@@ -45698,15 +45746,19 @@ window.VE = window.VE || {};
           /* ---- a mesa de luz ---- */
           '<div class="aq-vidro" id="aqVidro">' +
             '<div class="aq-pinos"><i></i><i class="fenda"></i><i></i></div>' +
-            '<div class="aq-papel" id="aqPapel"><canvas id="aqFolha"></canvas><canvas class="aq-folhear hidden" id="aqFolhear"></canvas>' +
+            '<div class="aq-papel" id="aqPapel"><div class="aq-folha-caixa" id="aqFolhaCaixa"><canvas id="aqFolha"></canvas><canvas class="aq-folhear hidden" id="aqFolhear"></canvas></div>' +
               '<div class="aq-cursor" id="aqCursor"></div></div>' +
+            '<div class="aq-zoom" id="aqZoom">' +
+              '<button id="aqZoomMenos" title="Afastar (Ctrl + roda)">−</button>' +
+              '<button id="aqZoomTxt" title="Voltar a caber inteira">100%</button>' +
+              '<button id="aqZoomMais" title="Aproximar (Ctrl + roda)">+</button></div>' +
             '<div class="aq-carimbo" id="aqCarimbo">QUADRO 01</div>' +
           '</div>' +
 
           /* ---- a coluna da direita ---- */
           '<div class="aq-coluna">' +
             '<div class="aq-luz" id="aqLuz" title="A mesa de luz: arraste. Quanto do vídeo aparece por baixo do papel; no fim do curso a luz vem por trás da pintura">' +
-              '<i class="aq-knob"><b></b></i><small>LUZ</small></div>' +
+              '<i class="aq-knob"><b></b></i><small id="aqLuzTxt">LUZ 55%</small></div>' +
             '<button class="aq-chave" id="aqVegetal" title="Papel vegetal: o quadro anterior em azul, o seguinte em vermelho"><i></i><small>VEGETAL</small></button>' +
             '<button class="aq-bt" id="aqInfo" title="O que cada peça faz">' + svg('info') + '</button>' +
             '<button class="aq-bt" id="aqAjustes" title="Ajustes: papel, secagem, granulação, modo código">' + svg('eng') + '</button>' +
@@ -45795,7 +45847,31 @@ window.VE = window.VE || {};
     if (h > ah) { h = ah; w = ah * ar; }
     pap.style.width = w + 'px'; pap.style.height = h + 'px';
     pap.style.top = (padT + (ah - h) / 2) + 'px';
-    var fl = el('aqFolhear'); fl.width = M.w; fl.height = M.h;
+    var cx = el('aqFolhaCaixa'), z = est.zoom || 1;
+    cx.style.width = (w * z) + 'px'; cx.style.height = (h * z) + 'px';
+    pap.classList.toggle('com-zoom', z > 1.001);
+    el('aqZoomTxt').textContent = Math.round(z * 100) + '%';
+    var fl = el('aqFolhear'); if (fl.width !== M.w) { fl.width = M.w; fl.height = M.h; }
+  }
+  var ZOOMS = [1, 1.5, 2, 3, 4, 6, 8];
+  /* muda o zoom mantendo fixo o ponto da folha que está sob (cx, cy) —
+     o centro da janela, ou o ponteiro                                 */
+  function zoomPara(z, cx, cy) {
+    var pap = el('aqPapel'), r = pap.getBoundingClientRect();
+    z = Math.max(1, Math.min(8, z));
+    if (cx == null) { cx = r.left + r.width / 2; cy = r.top + r.height / 2; }
+    var antes = est.zoom || 1;
+    var fx = (cx - r.left + pap.scrollLeft) / antes, fy = (cy - r.top + pap.scrollTop) / antes;
+    est.zoom = z;
+    ajustarVidro();
+    pap.scrollLeft = fx * z - (cx - r.left); pap.scrollTop = fy * z - (cy - r.top);
+    est.redesenha = true;
+  }
+  function zoomPasso(dir, cx, cy) {
+    var z = est.zoom || 1, i = 0, melhor = 1e9;
+    for (var k = 0; k < ZOOMS.length; k++) { var d = Math.abs(ZOOMS[k] - z); if (d < melhor) { melhor = d; i = k; } }
+    i = Math.max(0, Math.min(ZOOMS.length - 1, i + dir));
+    zoomPara(ZOOMS[i], cx, cy);
   }
 
   /* ==================================================================
@@ -45844,10 +45920,14 @@ window.VE = window.VE || {};
         '<u class="aq-trocar" data-trocar="' + i + '" title="Trocar o pigmento deste godê">⇄</u></button>';
     }).join('');
   }
+  function raioMax() { return M ? Math.max(40, Math.round(M.w * 0.3)) : 300; }
   function pintarPinceis() {
     el('aqPinceis').innerHTML = PINCEIS.map(function (p, i) {
-      return '<button class="aq-pincel' + (est.pincel === i && est.ferr === 'pincel' ? ' on' : '') + '" data-pincel="' + i + '" style="--n:' + (i + 1) + '" title="Pincel redondo n.º ' + p.n + '"><i></i><small>' + p.n + '</small></button>';
+      return '<button class="aq-pincel' + (Math.abs(est.raio - p.raio) < 0.01 && est.ferr === 'pincel' ? ' on' : '') + '" data-pincel="' + i + '" style="--n:' + (i + 1) + '" title="Pincel redondo n.º ' + p.n + '"><i></i><small>' + p.n + '</small></button>';
     }).join('');
+    var r = el('aqTamanho'), n = el('aqTamanhoN'), mx = raioMax();
+    r.max = mx; n.max = mx; r.value = est.raio; n.value = Math.round(est.raio);
+    r.style.setProperty('--fill', ((est.raio - 1) / (mx - 1) * 100).toFixed(1) + '%');
     $$('.aq-ut', el('aqCaixa')).forEach(function (b) { b.classList.toggle('on', b.dataset.ferr === est.ferr); });
     var nome = est.ferr === 'pincel' ? 'PINCEL N.º ' + PINCEIS[est.pincel].n : FERR_NOME[est.ferr];
     var pig = A.PIGBY[M.paleta[est.slot]];
@@ -45867,7 +45947,7 @@ window.VE = window.VE || {};
   var DILUICAO = { clara: { carga: 0.35, agua: 0.42 }, media: { carga: 0.75, agua: 0.30 }, forte: { carga: 1.3, agua: 0.20 } };
   function aplicarFerramenta() {
     if (!M) return;
-    var r = PINCEIS[est.pincel].raio, dil = DILUICAO[est.diluicao] || DILUICAO.media;
+    var r = est.raio, dil = DILUICAO[est.diluicao] || DILUICAO.media;
     var o = { raio: r, slot: est.slot, carga: dil.carga, agua: dil.agua };
     if (est.ferr === 'agua') { o.raio = r * 1.3; o.agua = 0.5; }
     if (est.ferr === 'esponja') o.raio = r * 1.6;
@@ -45905,6 +45985,7 @@ window.VE = window.VE || {};
     el('aqLuz').style.setProperty('--glow', Math.min(1, k * 1.6).toFixed(2));
     el('aqVidro').style.setProperty('--glow', Math.min(1, k * 1.4).toFixed(2));
     el('aqVegetal').classList.toggle('on', est.vegetal);
+    el('aqLuzTxt').textContent = k <= 0.7 ? 'LUZ ' + Math.round(k / 0.7 * 100) + '%' : 'RETRO ' + Math.round((k - 0.7) / 0.3 * 100) + '%';
     if (!M) return;
     /* 0..0,7 é o vídeo por baixo; de 0,7 a 1 a luz passa para trás da pintura */
     M.luz = Math.min(1, k / 0.7);
@@ -46021,6 +46102,15 @@ window.VE = window.VE || {};
       var s = VE.sources[id], primeiro = !VE.project;
       VE.app.ensureProject(s.w, s.h, Math.max(4, F.inicio + s.duration + 1));
       if (primeiro) VE.setCanvas(s.w, s.h, 'src');
+      /* a tela da composição nasce da primeira fonte, e uma fonte pequena
+         deixa a tela pequena (160×90 já aconteceu): a aquarela não pode
+         ser esmagada nela. A folha tem a proporção da composição, então
+         crescer a tela até a folha não muda o enquadramento de ninguém. */
+      var pc = VE.project.canvas, telaAntes = pc.w + '×' + pc.h;
+      if (!primeiro && (pc.w < s.w || pc.h < s.h)) {
+        VE.setCanvas(Math.max(pc.w, s.w), Math.max(pc.h, s.h));
+        toast('a tela da composição era ' + telaAntes + ' — foi para ' + VE.project.canvas.w + '×' + VE.project.canvas.h + ', a definição da folha, para a aquarela não perder qualidade');
+      }
       var c = VE.addMedia({ kind: 'quadros', name: s.name, src: id, start: F.inicio, dur: s.duration, fit: 'contain', over: true });
       /* sobre o vídeo, a aguada é uma TRANSPARÊNCIA: Multiplicar (índice 3 em VE.BLENDS) */
       if (F.modo === 'video') c.blend = 3;
@@ -46099,8 +46189,8 @@ window.VE = window.VE || {};
       '<div class="aq-sub">OS QUADROS</div>' +
       '<div class="aq-pilulas">' + [24, 25, 30].map(function (b) { return '<button class="aq-pil' + (est.base === b ? ' on' : '') + '" data-base="' + b + '">' + b + ' Q/S</button>'; }).join('') + '</div>' +
       '<div class="aq-nota">A cadência da composição. EM 1s pinta um desenho por quadro; EM 2s, um a cada dois (12 q/s a 24) — é como se anima à mão.</div>' +
-      '<div class="aq-pilulas">' + [512, 768, 1024, 1280].map(function (d) { return '<button class="aq-pil' + (est.defin === d ? ' on' : '') + '" data-defin="' + d + '">' + d + ' PX</button>'; }).join('') + '</div>' +
-      '<div class="aq-nota">A definição da folha (o lado maior). Mais pixels, mais detalhe e mais lento; a mudança vale para uma folha NOVA.</div>' +
+      '<div class="aq-pilulas">' + [['auto', 'AUTO'], [768, '768 PX'], [1024, '1024 PX'], [1280, '1280 PX'], [1920, '1920 PX · LENTO']].map(function (d) { return '<button class="aq-pil' + (String(est.defin) === String(d[0]) ? ' on' : '') + '" data-defin="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="aq-nota">A definição da folha (o lado maior). AUTO é a da composição, pixel a pixel, entre 1024 e 1280 — a folha nunca fica menor que isso. Mais pixels, mais detalhe e mais lento; a mudança vale para uma folha NOVA.</div>' +
       '<div class="aq-sub">A SAÍDA</div>' +
       '<div class="aq-pilulas">' +
         '<button class="aq-pil' + ((est.modo || 'video') === 'video' ? ' on' : '') + '" data-modo="video">SOBRE O VÍDEO</button>' +
@@ -46130,7 +46220,7 @@ window.VE = window.VE || {};
     $$('[data-papel]', pag).forEach(function (b) { b.addEventListener('click', function () { est.papel = b.dataset.papel; M.setPapel(est.papel); est.redesenha = true; paginaAjustes(); }); });
     $$('[data-secagem]', pag).forEach(function (b) { b.addEventListener('click', function () { est.secagem = b.dataset.secagem; aplicarAjustes(); paginaAjustes(); }); });
     $$('[data-base]', pag).forEach(function (b) { b.addEventListener('click', function () { est.base = +b.dataset.base; mudarPasso(A.filme.passo); paginaAjustes(); }); });
-    $$('[data-defin]', pag).forEach(function (b) { b.addEventListener('click', function () { est.defin = +b.dataset.defin; paginaAjustes(); toast('vale para a próxima folha nova (LIMPAR ou reabrir a mesa)'); }); });
+    $$('[data-defin]', pag).forEach(function (b) { b.addEventListener('click', function () { est.defin = b.dataset.defin === 'auto' ? 'auto' : +b.dataset.defin; paginaAjustes(); guardarPrefs(); toast('vale para a próxima folha nova (LIMPAR ou reabrir a mesa)'); }); });
     $$('[data-modo]', pag).forEach(function (b) { b.addEventListener('click', function () { est.modo = b.dataset.modo; A.filme.modo = est.modo; A.filme.quadros.forEach(function (q) { if (q.png) q.sujo = true; }); paginaAjustes(); }); });
     $$('[data-codigo]', pag).forEach(function (b) { b.addEventListener('click', function () { est.codigo = b.dataset.codigo === '1'; A.codigo.ligado = est.codigo; el('aqCodigo').classList.toggle('hidden', !est.codigo); pintarCodigo(); paginaAjustes(); }); });
     el('aqLimpar').addEventListener('click', function () {
@@ -46157,10 +46247,11 @@ window.VE = window.VE || {};
       '<div class="aq-nota">Uma aquarela por FÍSICA: a água anda pelo papel, leva o pigmento, seca pela beira — e a cor é Kubelka-Munk, o modelo que diz como pigmentos de verdade se misturam. É o modelo de Curtis e outros ("Computer-Generated Watercolor", SIGGRAPH 1997).</div>' +
       '<div class="aq-lista">' + [
         ['A FOLHA', 'pinte com o ponteiro. Caneta com pressão muda o traço e a carga.'],
-        ['A LUZ', 'arraste: quanto do vídeo da composição aparece por baixo. No fim do curso a luz vem por trás da pintura (retroiluminação).'],
+        ['A LUZ', 'arraste para a direita ou para cima para acender (esquerda ou baixo apaga; a roda também). Quanto do vídeo da composição aparece por baixo. No fim do curso a luz vem por trás da pintura (retroiluminação).'],
         ['VEGETAL', 'o papel vegetal do animador: o quadro anterior em azul, o seguinte em vermelho.'],
         ['GODÊS', 'os oito pigmentos da paleta. Toque escolhe; ⇄ abre a gaveta dos 52.'],
-        ['PINCÉIS', 'quatro redondos: 2, 6, 12 e 24. [ e ] mudam o tamanho.'],
+        ['PINCÉIS', 'quatro redondos: 2, 6, 12 e 24 — e o TAMANHO livre por baixo, até um terço da folha. [ e ] mudam.'],
+        ['+ − (no vidro)', 'o zoom da folha, de 100% a 800%. Com zoom, as barras discretas rolam a folha (a roda também; Ctrl + roda aproxima onde o ponteiro está). O número volta a 100%.'],
         ['ÁGUA', 'só água: molhe antes de pintar (molhado sobre molhado), dilua, provoque floradas.'],
         ['ESPONJA', 'levanta tinta e água. Pigmento que MANCHA (ftalos, quinacridonas) resiste; o que granula sai fácil.'],
         ['SECO', 'o pincel quase sem água: a tinta pega só nas cristas do papel.'],
@@ -46191,13 +46282,13 @@ window.VE = window.VE || {};
   var PREF = 'rgblab.aquarela';
   function guardarPrefs() {
     try {
-      localStorage.setItem(PREF, JSON.stringify({ paleta: M ? M.paleta : est.paleta, papel: est.papel, secagem: est.secagem, defin: est.defin, base: est.base, vegetal: est.vegetal, vegForca: est.vegForca, codigo: est.codigo, aj: est.aj, modo: est.modo, luz: est.luzKnob, pincel: est.pincel, diluicao: est.diluicao }));
+      localStorage.setItem(PREF, JSON.stringify({ paleta: M ? M.paleta : est.paleta, papel: est.papel, secagem: est.secagem, defin: est.defin, base: est.base, vegetal: est.vegetal, vegForca: est.vegForca, codigo: est.codigo, aj: est.aj, modo: est.modo, luz: est.luzKnob, pincel: est.pincel, diluicao: est.diluicao, raio: est.raio }));
     } catch (e) { }
   }
   function carregarPrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(PREF) || 'null'); if (!p) return;
-      ['papel', 'secagem', 'defin', 'base', 'vegetal', 'vegForca', 'codigo', 'aj', 'modo', 'pincel', 'diluicao'].forEach(function (k) { if (p[k] !== undefined) est[k] = p[k]; });
+      ['papel', 'secagem', 'defin', 'base', 'vegetal', 'vegForca', 'codigo', 'aj', 'modo', 'pincel', 'diluicao', 'raio'].forEach(function (k) { if (p[k] !== undefined) est[k] = p[k]; });
       if (p.paleta && p.paleta.length === 8) est.paleta = p.paleta;
       if (typeof p.luz === 'number') est.luzKnob = p.luz;
     } catch (e) { }
@@ -46223,8 +46314,8 @@ window.VE = window.VE || {};
       if (ev.key === ' ') { ev.preventDefault(); ev.stopPropagation(); folhear(); }
       if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); ev.stopPropagation(); if (M.desfazer()) est.redesenha = true; pintarDesfazer(); return; }
       if ((ev.ctrlKey || ev.metaKey) && (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey))) { ev.preventDefault(); ev.stopPropagation(); if (M.refazer()) est.redesenha = true; pintarDesfazer(); return; }
-      if (ev.key === ']') { est.pincel = Math.min(3, est.pincel + 1); aplicarFerramenta(); pintarPinceis(); }
-      if (ev.key === '[') { est.pincel = Math.max(0, est.pincel - 1); aplicarFerramenta(); pintarPinceis(); }
+      if (ev.key === ']') { est.raio = Math.min(raioMax(), Math.max(est.raio + 1, est.raio * 1.25)); aplicarFerramenta(); pintarPinceis(); }
+      if (ev.key === '[') { est.raio = Math.max(1, Math.min(est.raio - 1, est.raio / 1.25)); aplicarFerramenta(); pintarPinceis(); }
     }, true);
     el('aqPalco').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) b.blur(); });
     window.addEventListener('resize', function () { if (U.aberta()) ajustarVidro(); });
@@ -46237,8 +46328,8 @@ window.VE = window.VE || {};
     }
     function pressao(ev) { return ev.pointerType === 'mouse' ? 0.5 : (ev.pressure > 0 ? ev.pressure : 0.5); }
     function cursor(ev) {
-      var r = folha.getBoundingClientRect(), esc = r.width / M.w;
-      cur.style.left = (ev.clientX - r.left) + 'px'; cur.style.top = (ev.clientY - r.top) + 'px';
+      var r = folha.getBoundingClientRect(), esc = r.width / M.w, pap = el('aqPapel'), pr = pap.getBoundingClientRect();
+      cur.style.left = (ev.clientX - pr.left + pap.scrollLeft) + 'px'; cur.style.top = (ev.clientY - pr.top + pap.scrollTop) + 'px';
       var d = est.raioTela * 2 * esc * (est.arr ? (0.55 + 0.9 * pressao(ev)) : 1);
       cur.style.width = d + 'px'; cur.style.height = d + 'px';
       cur.classList.remove('hidden');
@@ -46298,10 +46389,23 @@ window.VE = window.VE || {};
     el('aqGavX').addEventListener('click', fecharGaveta);
     el('aqPinceis').addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-pincel]'); if (!b) return;
-      est.pincel = +b.dataset.pincel;
+      est.pincel = +b.dataset.pincel; est.raio = PINCEIS[est.pincel].raio;
       if (est.ferr !== 'seco') est.ferr = 'pincel';
       aplicarFerramenta(); pintarPinceis();
     });
+    /* o tamanho livre: a linha é o campo */
+    function tamanho(v) { est.raio = Math.max(1, Math.min(raioMax(), v)); aplicarFerramenta(); pintarPinceis(); }
+    el('aqTamanho').addEventListener('input', function () { tamanho(parseFloat(this.value)); });
+    el('aqTamanhoN').addEventListener('change', function () { var v = parseFloat(this.value); if (isFinite(v)) tamanho(v); });
+    /* o zoom */
+    el('aqZoomMais').addEventListener('click', function () { zoomPasso(1); });
+    el('aqZoomMenos').addEventListener('click', function () { zoomPasso(-1); });
+    el('aqZoomTxt').addEventListener('click', function () { zoomPara(1); });
+    el('aqPapel').addEventListener('wheel', function (ev) {
+      if (!(ev.ctrlKey || ev.metaKey)) return;                /* sem Ctrl a roda rola a folha */
+      ev.preventDefault();
+      zoomPasso(ev.deltaY < 0 ? 1 : -1, ev.clientX, ev.clientY);
+    }, { passive: false });
     $$('.aq-ut[data-ferr]', el('aqCaixa')).forEach(function (b) {
       b.addEventListener('click', function () {
         est.ferr = (est.ferr === b.dataset.ferr && b.dataset.ferr !== 'pincel') ? 'pincel' : b.dataset.ferr;
@@ -46318,9 +46422,12 @@ window.VE = window.VE || {};
 
     /* ---- a luz: arrasto vertical no botão ---- */
     var luz = el('aqLuz');
+    /* arrastar para a DIREITA ou para CIMA acende; para a esquerda ou para
+       baixo apaga — os dois eixos, porque quem gira um botão puxa para o
+       lado que lhe parecer natural                                      */
     luz.addEventListener('pointerdown', function (ev) {
-      var y0 = ev.clientY, k0 = est.luzKnob;
-      function mv(e) { est.luzKnob = Math.max(0, Math.min(1, k0 + (y0 - e.clientY) / 160)); pintarLuz(); }
+      var x0 = ev.clientX, y0 = ev.clientY, k0 = est.luzKnob;
+      function mv(e) { est.luzKnob = Math.max(0, Math.min(1, k0 + ((e.clientX - x0) + (y0 - e.clientY)) / 180)); pintarLuz(); }
       function up() { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); guardarPrefs(); }
       document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
       ev.preventDefault();
