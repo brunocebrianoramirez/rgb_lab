@@ -45,6 +45,16 @@ e cada passada por cima punha mais água sem teto. Agora a folha só segura
 0,8 (`wMax`), o filme tem tensão superficial (`tensao` 0,10, conservativa)
 e a beira é parede. Medido na placa dele: três passadas de CLARA na folha
 inteira, água 0,80 e xadrez 0,0002 (era 5,3 e 8,0); massa 0,0000%.
+**O segundo (14/09, 5n.12):** *"essas costelas que é o formato redondo do
+pincel, não aconteceria na física da aquarela na vida real né?"* — não
+aconteceria: a tinta de uma pincelada dependia de como os toques eram
+agrupados quadro a quadro (lotes de 6 pontos: 3,9; de 48: 1,3) e cada
+fronteira de lote somava tinta onde os círculos se cobriam. Agora o traço
+tem memória (`traco`): uma pincelada deixa no máximo TETO por célula, some
+quantos lotes forem. Medido: 1,200 em qualquer lote; o S em 1080p com
+física, 28 costelas → 0. **As pinceladas vão parecer mais claras que
+ontem na mesma diluição** — ontem a mão devagar punha até 3× a tinta
+calibrada; se ele achar fraco, o número é `DILUICAO` (aquarelaui.js).
 
 **O que ficou para ele testar:** o resto da lista — pintar com o ponteiro
 de verdade (pressão, coalescência), a água à vista secando, os pincéis e
@@ -7832,6 +7842,54 @@ na folha inteira, 1920×1080): antes, água média 5,33, máximo 23, xadrez
 112 passos, massa idêntica. Recorte 4× guardado na conversa (o tabuleiro
 e os vermes contra a aguada lisa com as faixas das passadas). Custo: 42
 ms por passo a 1080p contra 40–42 do código anterior, no mesmo minuto.
+
+### 5n.12 Sétima volta (14/09/2026): as costelas — a tinta de uma pincelada não pode depender do lote
+
+O print dele (um traço largo de ftalo em S, a 150%) e a pergunta: *"essa
+física de aparecer essas costelas que é o formato redondo do pincel, não
+aconteceria na física da aquarela na vida real né?"* Não aconteceria — e
+não era física, era o jeito de os toques entrarem no motor.
+
+**O que era.** A pincelada chega em LOTES: cada quadro da mesa aplica de
+uma vez os toques que a mão fez desde o quadro anterior (`aplicar`, até 48
+por passada). Dentro de um lote a cobertura dos círculos era SOMADA e
+cortada em 1,6; mas o lote seguinte começava do zero — na região onde o
+último círculo de um lote cobre o primeiro do seguinte, a tinta somava de
+novo. Medido num traço reto (`__costelas`, banco na página): em lotes de 6
+pontos o pigmento médio era **3,9**; de 12, 3,15; de 24, 2,2; de 48, 1,3 —
+e o máximo/mínimo ao longo do traço ia de 1,2 a 2,0, com o período do
+lote. Ou seja: mão devagar deixava 3× mais tinta que mão rápida, e cada
+fronteira de quadro era uma costela (um círculo escuro, no print e no
+banco). A diluição tinha sido calibrada no banco com lotes de 48; na mesa
+ninguém pintava com lotes de 48.
+
+**O que mudou.** O traço tem MEMÓRIA: uma textura `traco` (RGBA8, par),
+zerada a cada toque novo (`tocar`), guarda por célula o que ESTA
+pincelada já deixou (`ja`, em .r) e a água que havia antes dela (`wAntes`,
+em .g). No `FS_TOOL`, cada lote só pode deixar o que falta até o `TETO`
+(1,6): `cs = min(cobSoma, TETO − ja)` para o pincel e a água, `cm =
+min(cob, TETO − ja)` para o seco e a esponja; sal e álcool não somam. O
+filme enche contra `wAntes`, não contra a água que o próprio traço pôs —
+senão a pincelada em vários lotes punha menos água (0,41 contra 0,48). É a
+sétima saída da passada das ferramentas (`layout(location=6)`; a placa
+dele dá 8).
+
+**Medido.** Traço reto em lotes de 6, 12, 24 e 48: pigmento 1,200 nos
+quatro (máx/mín 1,001–1,003), água 0,480 nos quatro (era 0,42–0,48); o
+perfil transversal é um platô de 1,2 com as beiras macias (0,62 e 0,21). O
+S de 76 px em 1080p, lotes de 12 eventos com um passo de física por lote e
+30 no fim: antes 1,86 de média, máx/mín 2,0, 28 costelas; agora 1,200,
+máx/mín 1,01, **0**. A memória lida de volta: `ja` chega a 1,6 e para, 9102
+células tocadas, sem erro de GL. A física de antes não mexeu: borda 1,18,
+cruzamento 88%/43%, folha inteira ≤ 0,8 de água e xadrez 0,0002, desfazer
+e refazer (5572 → 0 → 5539). Recorte antes/agora guardado na conversa.
+
+**Consequência que ele vai ver:** as pinceladas ficam mais CLARAS do que
+ontem na mesma diluição, porque ontem a mão devagar punha até 3× a tinta
+calibrada. As três diluições continuam as do banco (CLARA 0,56, MÉDIA 1,2,
+FORTE 2,1 de espessura no platô); se ele achar fraco, o número é
+`DILUICAO` em aquarelaui.js — e agora o que ele ajustar vale para
+qualquer velocidade de mão.
 
 ### 5n.6 O que NÃO foi feito, e por quê
 

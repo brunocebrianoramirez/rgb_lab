@@ -483,7 +483,7 @@
   /* 7. as ferramentas: um lote de toques por passada ------------------ */
   var FS_TOOL = [
     PRE,
-    'uniform sampler2D uAgua, uSat, uPig0, uPig1, uDep0, uDep1, uPapel;',
+    'uniform sampler2D uAgua, uSat, uPig0, uPig1, uDep0, uDep1, uPapel, uTraco;',
     'uniform vec4 uDab[48];',      /* x, y (px), raio, força */
     'uniform int uN, uFerr, uSlot;',
     'uniform float uAgua1, uCarga, uLev, uSalQ, uWMax;',
@@ -494,6 +494,10 @@
     'layout(location=3) out vec4 oPig1;',
     'layout(location=4) out vec4 oDep0;',
     'layout(location=5) out vec4 oDep1;',
+    'layout(location=6) out vec4 oTraco;',
+    /* quanto UMA pincelada pode deixar numa célula, somando todos os toques
+       dela (os que se cobrem e os de lotes seguintes)                   */
+    'const float TETO = 1.6;',
     'void main(){',
     '  ivec2 ij = IJ();',
     '  vec2 p = gl_FragCoord.xy;',
@@ -514,7 +518,21 @@
     '    float an = smoothstep(r*0.35, r*0.9, dist)*(1.0 - smoothstep(r*0.9, r*1.25, dist));',
     '    if(an > anel){ anel = an; dirImp = normalize(p - d.xy + vec2(1e-3)); }',
     '  }',
-    '  cobSoma = min(cobSoma, 1.6);',
+    /* O TRAÇO tem memória: uTraco guarda o que esta pincelada já deixou em
+       cada célula (zerado a cada toque novo). Um lote só pode deixar o que
+       falta até o TETO — assim a tinta de uma pincelada não depende de como
+       os toques foram agrupados quadro a quadro (medido: em lotes de 6
+       pontos ficava 3,9, de 48 ficava 1,3; e cada fronteira de lote era
+       uma "costela" onde os círculos se cobriam e a tinta somava)     */
+    '  vec4 tr = texelFetch(uTraco, ij, 0);',
+    '  float ja = tr.r*2.0;',
+    /* a água que havia ANTES desta pincelada: é contra ela que o filme
+       enche (senão a pincelada em vários lotes via a própria água e punha
+       menos — 0,41 contra 0,48, medido)                                  */
+    '  float wAntes = (ja > 0.0) ? tr.g : st.a;',
+    '  float livre = max(TETO - ja, 0.0);',
+    '  float cs = min(cobSoma, livre);',      /* para o que soma os toques */
+    '  float cm = min(cob, livre);',          /* para o que usa a cobertura */
     '  vec4 sel0 = vec4(equal(ivec4(uSlot), ivec4(0,1,2,3)));',
     '  vec4 sel1 = vec4(equal(ivec4(uSlot), ivec4(4,5,6,7)));',
     '  if(uFerr == 0 || uFerr == 1){',            /* pincel molhado / só água */
@@ -523,16 +541,19 @@
        acima de ~0,8 a água da malha explode em xadrez (as "bolinhas").
        Também é o que guarda o pigmento no cruzamento de dois traços (92%
        sumia quando cada toque somava água inteira à área molhada)     */
-    '    if(cob > 0.02){ float add = uAgua1*cobSoma*clamp(1.0 - st.a/uWMax, 0.0, 1.0); ag.a = 1.0; ag.b += add; st.a += add; }',
-    '    st.r = min(st.r + uAgua1*cobSoma*2.0, pp.g);',
-    '    if(uFerr == 0){ g0 += sel0*uCarga*cobSoma; g1 += sel1*uCarga*cobSoma; }',
+    '    if(cob > 0.02){ float add = uAgua1*cs*clamp(1.0 - wAntes/uWMax, 0.0, 1.0); ag.a = 1.0; ag.b += add; st.a += add; }',
+    '    st.r = min(st.r + uAgua1*cs*2.0, pp.g);',
+    '    if(uFerr == 0){ g0 += sel0*uCarga*cs; g1 += sel1*uCarga*cs; }',
+    '    ja += cs;',
     '  } else if(uFerr == 2){',                    /* pincel seco: só nas cristas do papel */
     '    float crista = smoothstep(0.5, 0.78, pp.r);',
-    '    d0 += sel0*uCarga*cob*crista*1.6; d1 += sel1*uCarga*cob*crista*1.6;',
+    '    d0 += sel0*uCarga*cm*crista*1.6; d1 += sel1*uCarga*cm*crista*1.6;',
+    '    ja += cm;',
     '  } else if(uFerr == 3){',                    /* esponja / pano: levanta */
-    '    ag.b -= uLev*cob*1.5; st.a = max(st.a - uLev*cob*1.5, 0.0);',
-    '    g0 *= (1.0 - 0.85*cob); g1 *= (1.0 - 0.85*cob);',
-    '    d0 *= (1.0 - uLev*cob/uMancha0); d1 *= (1.0 - uLev*cob/uMancha1);',
+    '    ag.b -= uLev*cm*1.5; st.a = max(st.a - uLev*cm*1.5, 0.0);',
+    '    g0 *= (1.0 - 0.85*cm); g1 *= (1.0 - 0.85*cm);',
+    '    d0 *= (1.0 - uLev*cm/uMancha0); d1 *= (1.0 - uLev*cm/uMancha1);',
+    '    ja += cm;',
     '  } else if(uFerr == 4){',                    /* sal: cristais */
     '    if(cobDura > 0.5 && pp.b*0.6 + hash21(p*0.37)*0.4 > 0.45) st.g = 1.0;',
     '  } else if(uFerr == 5){',                    /* álcool: gota que repele */
@@ -543,6 +564,7 @@
     '    g0 *= (1.0 - 0.7*cob); g1 *= (1.0 - 0.7*cob);',
     '  }',
     '  oAgua = ag; oSat = st; oPig0 = g0; oPig1 = g1; oDep0 = d0; oDep1 = d1;',
+    '  oTraco = vec4(min(ja, 2.0)*0.5, clamp(wAntes, 0.0, 1.0), 0.0, 1.0);',
     '}'
   ].join('\n');
 
@@ -748,6 +770,8 @@
     T.papel = this.mkTex(gl.RGBA8);
     T.fundo = this.mkTex(gl.RGBA8); T.vegAnt = this.mkTex(gl.RGBA8); T.vegAnt2 = this.mkTex(gl.RGBA8); T.vegProx = this.mkTex(gl.RGBA8);
     T.u8 = [this.mkTex(gl.RGBA8), this.mkTex(gl.RGBA8)];
+    /* a memória da pincelada: o que o traço em curso já deixou em cada célula */
+    T.traco = [this.mkTex(gl.RGBA8), this.mkTex(gl.RGBA8)];
     /* o que o desenho amostra: somas em 16 bits (filtro linear é de série
        no WebGL2 para 16F) e o papel em 8 bits                          */
     T.x0 = this.mkTex(gl.RGBA16F); T.x1 = this.mkTex(gl.RGBA16F); T.molh = this.mkTex(gl.RGBA16F);
@@ -914,6 +938,7 @@
   Motor.prototype.tocar = function (x, y, pr) {
     this.guardarDesfazer();
     this.ultimoDab = null;
+    this.zerar(this.tex.traco[0]);            /* pincelada nova: a memória do traço começa vazia */
     this.arrastar(x, y, pr);
   };
   Motor.prototype.arrastar = function (x, y, pr) {
@@ -957,8 +982,8 @@
     var arr = new Float32Array(48 * 4);
     for (var i = 0; i < n; i++) { arr[i * 4] = lote[i][0]; arr[i * 4 + 1] = lote[i][1]; arr[i * 4 + 2] = lote[i][2]; arr[i * 4 + 3] = lote[i][3]; }
     var pr = this.prog('tool', FS_TOOL);
-    this.passar(pr, { uAgua: T.agua[0], uSat: T.sat[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uDep0: T.dep0[0], uDep1: T.dep1[0], uPapel: T.papel },
-      [T.agua[1], T.sat[1], T.pig0[1], T.pig1[1], T.dep0[1], T.dep1[1]], function (u) {
+    this.passar(pr, { uAgua: T.agua[0], uSat: T.sat[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uDep0: T.dep0[0], uDep1: T.dep1[0], uPapel: T.papel, uTraco: T.traco[0] },
+      [T.agua[1], T.sat[1], T.pig0[1], T.pig1[1], T.dep0[1], T.dep1[1], T.traco[1]], function (u) {
         gl.uniform4fv(u.uDab, arr); gl.uniform1i(u.uN, n);
         gl.uniform1i(u.uFerr, FERR[self.ferr]); gl.uniform1i(u.uSlot, self.slot);
         gl.uniform1f(u.uAgua1, self.agua1); gl.uniform1f(u.uCarga, self.carga); gl.uniform1f(u.uLev, self.lev); gl.uniform1f(u.uWMax, self.par.wMax);
@@ -966,7 +991,7 @@
         for (k = 0; k < 8; k++) { var p = A.PIGBY[self.paleta[k]]; man.push(p ? p.mancha : 2); }
         gl.uniform4fv(u.uMancha0, man.slice(0, 4)); gl.uniform4fv(u.uMancha1, man.slice(4, 8));
       });
-    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { self.troca(k); });
+    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1', 'traco'].forEach(function (k) { self.troca(k); });
     if (this.ferr === 'pincel' || this.ferr === 'seco') this.ativos[this.slot] = 1;
     this.molhada = true;
     var pig = this.paleta[this.slot];
