@@ -303,61 +303,75 @@
 
   /* 2. (a relaxação de divergência do artigo saiu daqui — ver o cabeçalho) (Curtis, uma iteração por passada) ------ */
   /* 3. transporte do pigmento (fluxo pelas faces, conservativo) ------- */
+  /* Os dois pigmentos e a água viajam pelas MESMAS faces com os MESMOS
+     pesos: uma passada só, três alvos — as leituras de água e saturação
+     das vizinhas são feitas uma vez (eram três passadas; a 1080p cada
+     passada a mais custa ~3 ms)                                          */
   var FS_PIG = [
     PRE,
-    'uniform sampler2D uPig, uAgua, uSat;',
-    'uniform int uSoAgua;',   /* 1 = transportar só a ÁGUA (o canal a de uSat), os outros passam */
-    'out vec4 o;',
-    'float molhada(ivec2 q){ return smoothstep(0.0, 0.01, texelFetch(uSat, q, 0).a); }',
+    'uniform sampler2D uPig0, uPig1, uAgua, uSat;',
+    'layout(location=0) out vec4 oPig0;',
+    'layout(location=1) out vec4 oPig1;',
+    'layout(location=2) out vec4 oSat;',
     'void main(){',
     '  ivec2 ij = IJ();',
-    '  vec4 g = texelFetch(uPig, ij, 0);',
+    '  vec4 g0 = texelFetch(uPig0, ij, 0), g1 = texelFetch(uPig1, ij, 0), st = texelFetch(uSat, ij, 0);',
     '  vec4 a = texelFetch(uAgua, ij, 0);',
-    '  if(a.a < 0.5){ o = g; return; }',
+    '  if(a.a < 0.5){ oPig0 = g0; oPig1 = g1; oSat = st; return; }',
     '  float uR = a.r, vU = a.g;',
     '  ivec2 qL = CL(ij + ivec2(-1,0)), qR = CL(ij + ivec2(1,0)), qD = CL(ij + ivec2(0,-1)), qU = CL(ij + ivec2(0,1));',
     '  float uL = texelFetch(uAgua, qL, 0).r, vD = texelFetch(uAgua, qD, 0).g;',
-    '  float sai = (max(uR, 0.0) + max(-uL, 0.0) + max(vU, 0.0) + max(-vD, 0.0))*molhada(ij);',
-    '  vec4 entra = max(uL, 0.0)*molhada(qL)*texelFetch(uPig, qL, 0)',
-    '             + max(-uR, 0.0)*molhada(qR)*texelFetch(uPig, qR, 0)',
-    '             + max(vD, 0.0)*molhada(qD)*texelFetch(uPig, qD, 0)',
-    '             + max(-vU, 0.0)*molhada(qU)*texelFetch(uPig, qU, 0);',
-    '  vec4 novo = max(g*(1.0 - sai) + entra, vec4(0.0));',
-    '  if(uSoAgua == 1){ o = vec4(g.rgb, novo.a); return; }',
-    '  o = novo;',
+    '  vec4 sL = texelFetch(uSat, qL, 0), sR = texelFetch(uSat, qR, 0), sD = texelFetch(uSat, qD, 0), sU = texelFetch(uSat, qU, 0);',
+    '  float mL = smoothstep(0.0, 0.01, sL.a), mR = smoothstep(0.0, 0.01, sR.a), mD = smoothstep(0.0, 0.01, sD.a), mU = smoothstep(0.0, 0.01, sU.a);',
+    '  float sai = (max(uR, 0.0) + max(-uL, 0.0) + max(vU, 0.0) + max(-vD, 0.0))*smoothstep(0.0, 0.01, st.a);',
+    '  float pL = max(uL, 0.0)*mL, pR = max(-uR, 0.0)*mR, pD = max(vD, 0.0)*mD, pU = max(-vU, 0.0)*mU;',
+    '  oPig0 = max(g0*(1.0 - sai) + pL*texelFetch(uPig0, qL, 0) + pR*texelFetch(uPig0, qR, 0) + pD*texelFetch(uPig0, qD, 0) + pU*texelFetch(uPig0, qU, 0), vec4(0.0));',
+    '  oPig1 = max(g1*(1.0 - sai) + pL*texelFetch(uPig1, qL, 0) + pR*texelFetch(uPig1, qR, 0) + pD*texelFetch(uPig1, qD, 0) + pU*texelFetch(uPig1, qU, 0), vec4(0.0));',
+    '  float w = max(st.a*(1.0 - sai) + pL*sL.a + pR*sR.a + pD*sD.a + pU*sU.a, 0.0);',
+    '  oSat = vec4(st.rgb, w);',
     '}'
   ].join('\n');
 
   /* 4. transferir: depositar e levantar ------------------------------ */
   var FS_TRANS = [
     PRE,
-    'uniform sampler2D uPig, uDep, uPapel, uAgua, uSat, uMasc;',
-    'uniform vec4 uDens, uMancha, uGran;',
+    'uniform sampler2D uPig0, uPig1, uDep0, uDep1, uPapel, uAgua, uSat, uMasc;',
+    'uniform vec4 uDens0, uMancha0, uGran0, uDens1, uMancha1, uGran1;',
     'uniform float uTaxa;',
-    'layout(location=0) out vec4 oPig;',
-    'layout(location=1) out vec4 oDep;',
+    'layout(location=0) out vec4 oPig0;',
+    'layout(location=1) out vec4 oPig1;',
+    'layout(location=2) out vec4 oDep0;',
+    'layout(location=3) out vec4 oDep1;',
+    /* o que se calcula uma vez por célula (água, papel, sal, álcool) vale
+       para os oito godês; a conta por godê é a de sempre, feita duas vezes */
+    'void transferir(vec4 g, vec4 d, vec4 uDens, vec4 uMancha, vec4 uGran, float h, float agua, float alc, float orla, float sal, out vec4 oPig, out vec4 oDep){',
+    '  vec4 desce = g*(1.0 - h*uGran)*uDens*uTaxa*(0.12 + 0.88*(1.0 - agua));',
+    '  vec4 sobe  = d*(1.0 + (h - 1.0)*uGran)*uDens/uMancha*uTaxa*agua;',
+    '  desce *= (1.0 - 0.85*alc);',
+    '  desce *= (1.0 + 2.5*orla);',
+    '  if(sal > 0.5){ desce *= 0.1; sobe = min(sobe + d*0.03, d); g *= 0.85; }',
+    '  desce = min(desce, g); sobe = min(sobe, d);',
+    '  oPig = max(g - desce + sobe, vec4(0.0));',
+    '  oDep = max(d + desce - sobe, vec4(0.0));',
+    '}',
     'void main(){',
     '  ivec2 ij = IJ();',
-    '  vec4 g = texelFetch(uPig, ij, 0), d = texelFetch(uDep, ij, 0);',
+    '  vec4 g0 = texelFetch(uPig0, ij, 0), d0 = texelFetch(uDep0, ij, 0), g1 = texelFetch(uPig1, ij, 0), d1 = texelFetch(uDep1, ij, 0);',
     '  vec4 a = texelFetch(uAgua, ij, 0), pp = texelFetch(uPapel, ij, 0), st = texelFetch(uSat, ij, 0);',
-    '  if(a.a < 0.5){ oPig = vec4(0.0); oDep = (st.g > 0.5) ? d : d + g; return; }',   /* secou: tudo assenta — menos o que o cristal de sal levou */
+    /* secou: tudo assenta — menos o que o cristal de sal levou */
+    '  if(a.a < 0.5){ oPig0 = vec4(0.0); oPig1 = vec4(0.0); oDep0 = (st.g > 0.5) ? d0 : d0 + g0; oDep1 = (st.g > 0.5) ? d1 : d1 + g1; return; }',
     '  float h = pp.r;',
     /* com água por cima o pigmento fica em suspensão e VIAJA; é quando a
        água vai embora que ele assenta — é isso que leva pigmento à beira */
     '  float agua = clamp(st.a/0.15, 0.0, 1.0);',
-    '  vec4 desce = g*(1.0 - h*uGran)*uDens*uTaxa*(0.12 + 0.88*(1.0 - agua));',
-    '  vec4 sobe  = d*(1.0 + (h - 1.0)*uGran)*uDens/uMancha*uTaxa*agua;',
-    /* o álcool repele: onde há álcool o pigmento não assenta */
-    '  desce *= (1.0 - 0.85*clamp(st.b, 0.0, 1.0));',
-    /* o sal: o cristal captura a água com o pigmento (fica claro); na
-       orla, o pigmento que a água trouxe assenta mais (fica escuro)   */
+    /* o álcool repele (onde há álcool o pigmento não assenta); o sal: o
+       cristal captura a água com o pigmento (fica claro) e na orla, o
+       pigmento que a água trouxe assenta mais (fica escuro)           */
+    '  float alc = clamp(st.b, 0.0, 1.0);',
     '  float sb = texelFetch(uMasc, ij, 0).g;',
     '  float orla = smoothstep(0.02, 0.12, sb)*(1.0 - smoothstep(0.12, 0.5, sb))*(1.0 - step(0.5, st.g));',
-    '  desce *= (1.0 + 2.5*orla);',
-    '  if(st.g > 0.5){ desce *= 0.1; sobe = min(sobe + d*0.03, d); g *= 0.85; }',   /* o cristal bebe a água e fica com o pigmento */
-    '  desce = min(desce, g); sobe = min(sobe, d);',
-    '  oPig = max(g - desce + sobe, vec4(0.0));',
-    '  oDep = max(d + desce - sobe, vec4(0.0));',
+    '  transferir(g0, d0, uDens0, uMancha0, uGran0, h, agua, alc, orla, st.g, oPig0, oDep0);',
+    '  transferir(g1, d1, uDens1, uMancha1, uGran1, h, agua, alc, orla, st.g, oPig1, oDep1);',
     '}'
   ].join('\n');
 
@@ -563,10 +577,20 @@
 
   var FS_VER = [
     PRE,
-    'uniform sampler2D uX0, uX1, uMolh, uPapel, uFundo, uVegAnt, uVegProx;',
-    'uniform float uLuz, uRetro, uVegA, uVegP, uMostraAgua;',
-    'uniform int uTemFundo;',
+    'uniform sampler2D uX0, uX1, uMolh, uPapel, uFundo, uVegAnt, uVegAnt2, uVegProx;',
+    'uniform float uLuz, uRetro, uVegA, uVegA2, uVegP, uMostraAgua;',
+    'uniform int uTemFundo, uVegModo, uVegOpaco;',
     GL_KM,
+    /* o papel vegetal: o quadro guardado (cor sobre branco + alfa) entra
+       como uma aguada leve — nas CORES dele (modo 0) ou tingido (modo 1:
+       o anterior em azul, o seguinte em vermelho, como o animador faz) */
+    'vec3 vegetal(vec3 cor, sampler2D q, float forca, vec3 tinta){',
+    '  vec4 pa = texture(q, vUv); vec3 ca = aLin(pa.rgb);',
+    '  if(uVegOpaco == 1){ ca = clamp(ca/vec3(0.905, 0.895, 0.865), 0.0, 1.0); pa.a = 1.0; }',
+    '  float t = (1.0 - min(min(ca.r, ca.g), ca.b))*pa.a;',
+    '  if(uVegModo == 0) return cor*mix(vec3(1.0), ca, forca*pa.a);',
+    '  return cor*mix(vec3(1.0), mix(vec3(1.0), tinta, clamp(t*1.4, 0.0, 1.0)), forca);',
+    '}',
     'out vec4 o;',
     'void main(){',
     '  vec2 uv = vUv;',
@@ -584,8 +608,9 @@
     /* retroiluminação: a luz vem por trás do papel, o que se vê é o que ATRAVESSA */
     '  if(uRetro > 0.001){ vec3 Tp; pilha(x0, x1, vec3(0.0), Tp); vec3 luz = Tp*vec3(1.0, 0.98, 0.94)*1.15 + 0.06*R; cor = mix(cor, luz, uRetro); }',
     /* o papel vegetal: o quadro anterior em azul, o seguinte em vermelho */
-    '  if(uVegA > 0.001){ vec3 pa = aLin(texture(uVegAnt, vUv).rgb); float t = 1.0 - min(min(pa.r, pa.g), pa.b); cor *= mix(vec3(1.0), mix(vec3(1.0), vec3(0.45, 0.6, 1.0), clamp(t*1.4, 0.0, 1.0)), uVegA); }',
-    '  if(uVegP > 0.001){ vec3 pr = aLin(texture(uVegProx, vUv).rgb); float t2 = 1.0 - min(min(pr.r, pr.g), pr.b); cor *= mix(vec3(1.0), mix(vec3(1.0), vec3(1.0, 0.5, 0.45), clamp(t2*1.4, 0.0, 1.0)), uVegP); }',
+    '  if(uVegA2 > 0.001) cor = vegetal(cor, uVegAnt2, uVegA2, vec3(0.6, 0.72, 1.0));',
+    '  if(uVegA > 0.001) cor = vegetal(cor, uVegAnt, uVegA, vec3(0.45, 0.6, 1.0));',
+    '  if(uVegP > 0.001) cor = vegetal(cor, uVegProx, uVegP, vec3(1.0, 0.5, 0.45));',
     '  o = vec4(aSrgb(cor), 1.0);',
     '}'
   ].join('\n');
@@ -693,9 +718,12 @@
     /* as texturas de estado, em par */
     var T = this.tex = {};
     ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (n) { T[n] = [self.mkTex(gl.RGBA32F), self.mkTex(gl.RGBA32F)]; });
-    T.masc = [this.mkTex(gl.RGBA32F), this.mkTex(gl.RGBA32F)];
-    T.papel = this.mkTex(gl.RGBA32F);
-    T.fundo = this.mkTex(gl.RGBA8); T.vegAnt = this.mkTex(gl.RGBA8); T.vegProx = this.mkTex(gl.RGBA8);
+    /* o borrão e o papel não precisam de 32 bits (o relevo em 8 bits basta
+       à transferência; o declive é uma força ínfima) — a 1080p isso são
+       100 MB a menos                                                    */
+    T.masc = [this.mkTex(gl.RGBA16F), this.mkTex(gl.RGBA16F)];
+    T.papel = this.mkTex(gl.RGBA8);
+    T.fundo = this.mkTex(gl.RGBA8); T.vegAnt = this.mkTex(gl.RGBA8); T.vegAnt2 = this.mkTex(gl.RGBA8); T.vegProx = this.mkTex(gl.RGBA8);
     T.u8 = [this.mkTex(gl.RGBA8), this.mkTex(gl.RGBA8)];
     /* o que o desenho amostra: somas em 16 bits (filtro linear é de série
        no WebGL2 para 16F) e o papel em 8 bits                          */
@@ -726,7 +754,7 @@
     };
     this.passos = 0; this.ultimoToque = -1e9;
     this.fila = []; this.ultimoDab = null;
-    this.luz = 0.55; this.retro = 0; this.vegA = 0; this.vegP = 0;
+    this.luz = 0.55; this.retro = 0; this.vegA = 0; this.vegA2 = 0; this.vegP = 0; this.vegModo = 0; this.vegOpaco = 0;
     this.limpar();
   }
 
@@ -805,12 +833,11 @@
     this.papelTipo = A.PAPEIS[tipo] ? tipo : 'frio';
     this.papelSemente = semente || this.papelSemente || 7;
     var dados = A.gerarPapel(this.w, this.h, this.papelTipo, this.papelSemente);
-    gl.bindTexture(gl.TEXTURE_2D, this.tex.papel);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this.w, this.h, 0, gl.RGBA, gl.FLOAT, dados);
-    /* a cópia de 8 bits para o desenho */
     var b = new Uint8Array(dados.length);
     for (var i = 0; i < dados.length; i++) b[i] = Math.max(0, Math.min(255, Math.round(dados[i] * 255)));
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.bindTexture(gl.TEXTURE_2D, this.tex.papel);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.w, this.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, b);
     gl.bindTexture(gl.TEXTURE_2D, this.tex.papel8);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.w, this.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, b);
   };
@@ -924,8 +951,8 @@
     if (!this.molhada) return false;
     var self = this, gl = this.gl, T = this.tex, P = this.par;
     this.aplicar();
-    /* o borrão da máscara e do sal (só a cada 2 passos: muda devagar) */
-    if (this.passos % 2 === 0) {
+    /* o borrão da máscara e do sal (só a cada 3 passos: muda devagar) */
+    if (this.passos % 3 === 0) {
       var pb = this.prog('blur', FS_BLUR);
       this.passar(pb, { uSrc: T.agua[0], uSat: T.sat[0] }, [T.masc[1]], function (u) { gl.uniform2i(u.uDir, 1, 0); gl.uniform1i(u.uModo, 0); });
       this.passar(pb, { uSrc: T.masc[1], uSat: T.sat[0] }, [T.masc[0]], function (u) { gl.uniform2i(u.uDir, 0, 1); gl.uniform1i(u.uModo, 1); });
@@ -937,24 +964,11 @@
       gl.uniform1f(u.uMu, P.mu); gl.uniform1f(u.uKappa, P.kappa); gl.uniform1f(u.uDeclive, P.declive); gl.uniform1f(u.uSalPuxa, P.salPuxa); gl.uniform1f(u.uPressao, P.pressao);
     });
     this.troca('agua');
-    /* 2. o pigmento anda com a água */
-    var pp = this.prog('pig', FS_PIG);
-    this.passar(pp, { uPig: T.pig0[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.pig0[1]], function (u) { gl.uniform1i(u.uSoAgua, 0); }); this.troca('pig0');
-    this.passar(pp, { uPig: T.pig1[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.pig1[1]], function (u) { gl.uniform1i(u.uSoAgua, 0); }); this.troca('pig1');
-    /* a própria água anda com o fluxo */
-    this.passar(pp, { uPig: T.sat[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.sat[1]], function (u) { gl.uniform1i(u.uSoAgua, 1); }); this.troca('sat');
+    /* 2. o pigmento (os dois) e a própria água andam com o fluxo */
+    this.passar(this.prog('pig', FS_PIG), { uPig0: T.pig0[0], uPig1: T.pig1[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.pig0[1], T.pig1[1], T.sat[1]]);
+    this.troca('pig0'); this.troca('pig1'); this.troca('sat');
     /* 3. deposita e levanta */
-    var pt = this.prog('trans', FS_TRANS);
-    this.armarKM({}, gl);
-    var dens = this.__dens, man = this.__man, gran = this.__gran;
-    [0, 1].forEach(function (b) {
-      var pg = 'pig' + b, dp = 'dep' + b;
-      self.passar(pt, { uPig: T[pg][0], uDep: T[dp][0], uPapel: T.papel, uAgua: T.agua[0], uSat: T.sat[0], uMasc: T.masc[0] }, [T[pg][1], T[dp][1]], function (u) {
-        gl.uniform4fv(u.uDens, dens.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uMancha, man.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uGran, gran.slice(b * 4, b * 4 + 4));
-        gl.uniform1f(u.uTaxa, P.taxa);
-      });
-      self.troca(pg); self.troca(dp);
-    });
+    this.transferir(P.taxa);
     /* 4. capilar, evaporação, borda, secagem */
     this.passar(this.prog('cap', FS_CAP), { uSat: T.sat[0], uAgua: T.agua[0], uPapel: T.papel, uMasc: T.masc[0] }, [T.sat[1], T.agua[1]], function (u) {
       gl.uniform1f(u.uAlfa, P.alfa); gl.uniform1f(u.uEps, P.eps); gl.uniform1f(u.uSigma, P.sigma);
@@ -971,21 +985,23 @@
   Motor.prototype.secagemPassos = function () { return Math.round(1.1 / Math.max(this.par.evap, 1e-4)); };
 
   /* secar de vez: a água some, o que estava nela assenta, o sal sai */
-  Motor.prototype.secar = function () {
-    var self = this, gl = this.gl, T = this.tex;
-    this.aplicar();
-    var pt = this.prog('trans', FS_TRANS);
+  /* a passada de transferência, usada pelo passo e pelo secar */
+  Motor.prototype.transferir = function (taxa) {
+    var gl = this.gl, T = this.tex;
     this.armarKM({}, gl);
-    this.zerar(T.agua[1]); this.troca('agua');              /* M = 0, p = 0, u = v = 0 */
     var dens = this.__dens, man = this.__man, gran = this.__gran;
-    [0, 1].forEach(function (b) {
-      var pg = 'pig' + b, dp = 'dep' + b;
-      self.passar(pt, { uPig: T[pg][0], uDep: T[dp][0], uPapel: T.papel, uAgua: T.agua[0], uSat: T.sat[0], uMasc: T.masc[0] }, [T[pg][1], T[dp][1]], function (u) {
-        gl.uniform4fv(u.uDens, dens.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uMancha, man.slice(b * 4, b * 4 + 4)); gl.uniform4fv(u.uGran, gran.slice(b * 4, b * 4 + 4));
-        gl.uniform1f(u.uTaxa, self.par.taxa);
-      });
-      self.troca(pg); self.troca(dp);
+    this.passar(this.prog('trans', FS_TRANS), { uPig0: T.pig0[0], uPig1: T.pig1[0], uDep0: T.dep0[0], uDep1: T.dep1[0], uPapel: T.papel, uAgua: T.agua[0], uSat: T.sat[0], uMasc: T.masc[0] }, [T.pig0[1], T.pig1[1], T.dep0[1], T.dep1[1]], function (u) {
+      gl.uniform4fv(u.uDens0, dens.slice(0, 4)); gl.uniform4fv(u.uMancha0, man.slice(0, 4)); gl.uniform4fv(u.uGran0, gran.slice(0, 4));
+      gl.uniform4fv(u.uDens1, dens.slice(4, 8)); gl.uniform4fv(u.uMancha1, man.slice(4, 8)); gl.uniform4fv(u.uGran1, gran.slice(4, 8));
+      gl.uniform1f(u.uTaxa, taxa);
     });
+    this.troca('pig0'); this.troca('pig1'); this.troca('dep0'); this.troca('dep1');
+  };
+  Motor.prototype.secar = function () {
+    var T = this.tex;
+    this.aplicar();
+    this.zerar(T.agua[1]); this.troca('agua');              /* M = 0, p = 0, u = v = 0 */
+    this.transferir(this.par.taxa);
     this.zerar(T.sat[1]); this.troca('sat');                /* o sal sai com a escova, depois de levar o que levou */
     this.molhada = false;
     registrar('secar', []);
@@ -1005,6 +1021,7 @@
     dep0: { esc: [0.25, 0.25, 0.25, 0.25], desl: [0, 0, 0, 0] }, dep1: { esc: [0.25, 0.25, 0.25, 0.25], desl: [0, 0, 0, 0] }
   };
   Motor.HIST = 12;
+  Motor.prototype.niveis = function () { return Math.max(4, Math.min(Motor.HIST, Math.round(Motor.HIST * (1280 * 720) / (this.w * this.h)))); };
   Motor.prototype.jogo = function () {
     if (this.reserva.length) return this.reserva.pop();
     var self = this, gl = this.gl, n = {};
@@ -1033,7 +1050,7 @@
     this.aplicar();
     this.hist.push(this.instantaneo());
     while (this.refaz.length) this.reserva.push(this.refaz.pop());
-    while (this.hist.length > Motor.HIST) this.reserva.push(this.hist.shift());
+    while (this.hist.length > this.niveis()) this.reserva.push(this.hist.shift());
   };
   Motor.prototype.desfazer = function () {
     if (!this.hist.length) return false;
@@ -1072,12 +1089,23 @@
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
   };
   Motor.prototype.setVegetal = function (qual, fonte) {
-    var gl = this.gl, t = qual === 'prox' ? this.tex.vegProx : this.tex.vegAnt;
-    if (!fonte) { if (qual === 'prox') this.temVegP = 0; else this.temVegA = 0; return; }
+    var gl = this.gl, t = qual === 'prox' ? this.tex.vegProx : (qual === 'ant2' ? this.tex.vegAnt2 : this.tex.vegAnt);
+    var flag = qual === 'prox' ? 'temVegP' : (qual === 'ant2' ? 'temVegA2' : 'temVegA');
+    if (!fonte) { this[flag] = 0; return; }
+    /* Um ImageBitmap subido direto para a textura chega VAZIO nesta placa
+       (Intel UHD / ANGLE D3D11) — sem erro de GL nenhum; pelo Chrome sem
+       cabeça funcionava. Medido em 13/09/2026: o mesmo bitmap desenhado
+       num canvas 2D e subido dali chega inteiro. Então é sempre por aí. */
+    if (typeof ImageBitmap !== 'undefined' && fonte instanceof ImageBitmap) {
+      var cv = this.cvVeg || (this.cvVeg = document.createElement('canvas'));
+      if (cv.width !== fonte.width || cv.height !== fonte.height) { cv.width = fonte.width; cv.height = fonte.height; }
+      var c2 = cv.getContext('2d'); c2.clearRect(0, 0, cv.width, cv.height); c2.drawImage(fonte, 0, 0);
+      fonte = cv;
+    }
     gl.bindTexture(gl.TEXTURE_2D, t);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, fonte); if (qual === 'prox') this.temVegP = 1; else this.temVegA = 1; }
-    catch (e) { }
+    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, fonte); this[flag] = 1; }
+    catch (e) { this[flag] = 0; }
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
   };
 
@@ -1095,10 +1123,11 @@
     var self = this, gl = this.gl, T = this.tex;
     this.aplicar();
     this.preDesenho();
-    this.passar(this.prog('ver', FS_VER), { uX0: T.x0, uX1: T.x1, uMolh: T.molh, uPapel: T.papel8, uFundo: T.fundo, uVegAnt: T.vegAnt, uVegProx: T.vegProx }, null, function (u) {
+    this.passar(this.prog('ver', FS_VER), { uX0: T.x0, uX1: T.x1, uMolh: T.molh, uPapel: T.papel8, uFundo: T.fundo, uVegAnt: T.vegAnt, uVegAnt2: T.vegAnt2, uVegProx: T.vegProx }, null, function (u) {
       self.armarKM(u, gl);
       gl.uniform1f(u.uLuz, self.luz); gl.uniform1f(u.uRetro, self.retro);
-      gl.uniform1f(u.uVegA, self.temVegA ? self.vegA : 0); gl.uniform1f(u.uVegP, self.temVegP ? self.vegP : 0);
+      gl.uniform1f(u.uVegA, self.temVegA ? self.vegA : 0); gl.uniform1f(u.uVegA2, self.temVegA2 ? self.vegA2 : 0); gl.uniform1f(u.uVegP, self.temVegP ? self.vegP : 0);
+      gl.uniform1i(u.uVegModo, self.vegModo | 0); gl.uniform1i(u.uVegOpaco, self.vegOpaco | 0);
       gl.uniform1f(u.uMostraAgua, self.mostraAgua === false ? 0 : 1);
       gl.uniform1i(u.uTemFundo, self.temFundo);
       /* no desenho, filtro bilinear puro (o quincôncio fica para a saída) */

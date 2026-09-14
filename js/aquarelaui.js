@@ -13,8 +13,10 @@
                          composição aparece por baixo do papel.
                          No fim do curso a luz vem POR TRÁS da
                          pintura (retroiluminação)
-     o vegetal ......... o papel vegetal do animador: o quadro
-                         anterior em azul e o seguinte em vermelho
+     o vegetal ......... o papel vegetal: o quadro anterior como
+                         uma aguada leve nas cores dele (ou, na
+                         engrenagem, anterior em azul e seguinte
+                         em vermelho). A tecla V liga e desliga
      os godês .......... os oito pigmentos da paleta. Toque escolhe;
                          o ⇄ abre a gaveta dos 52
      os pincéis ........ quatro redondos (n.º 2, 6, 12 e 24), e o
@@ -90,7 +92,7 @@
       est = {
         raf: 0, tela: null, gaveta: false, pincel: 2, ferr: 'pincel', slot: 0,
         folheando: 0, fundoPedido: -1, secagem: 'normal', defin: 'auto', base: 24,
-        vegetal: true, vegForca: 0.55, codigo: false, arr: null, ultPasso: 0,
+        vegetal: true, vegForca: 0.4, vegModo: 'cores', vegAtras: 2, codigo: false, arr: null, ultPasso: 0,
         luzKnob: 0.55, diluicao: 'media', ultRolagem: 0, raio: 10, zoom: 1
       };
       carregarPrefs();
@@ -123,12 +125,12 @@
   /* a folha nasce do tamanho da composição (a proporção dela, com o lado
      maior na DEFINIÇÃO escolhida); sem projeto, 16:9                 */
   /* AUTO: a folha tem a definição da composição, pixel a pixel, entre 1024
-     e 1280 no lado maior — nem uma composição pequena faz a folha pequena
+     e 1920 no lado maior — nem uma composição pequena faz a folha pequena
      (uma tela de 160×90 já esmagou uma aquarela), nem uma de 4K a faz
-     lenta. Os outros valores são escolha dele (1920 é lento).           */
+     inviável. Os outros valores são escolha dele (1280 é mais leve).   */
   function definicao(cw, ch) {
     var d = est.defin;
-    if (d === 'auto' || !(d > 0)) return Math.max(1024, Math.min(1280, Math.max(cw, ch)));
+    if (d === 'auto' || !(d > 0)) return Math.max(1024, Math.min(1920, Math.max(cw, ch)));
     return Math.max(512, d);
   }
   function tamanhoDaFolha() {
@@ -339,7 +341,14 @@
     if (!U.aberta() || !M || !M.gl) return;
     if (est.folheando) return;
     var t0 = performance.now();
-    var deu = M.passo();
+    /* o relógio do quadro, suavizado: numa folha grande (1080p custa ~34 ms
+       por passo na placa dele) o passo da água pula quadro sim, quadro não
+       ENQUANTO se pinta, para o traço acompanhar a mão; parada a mão, a
+       água anda a cada quadro                                          */
+    est.dtQuadro = est.dtQuadro ? est.dtQuadro * 0.8 + (t0 - (est.tQuadro || t0)) * 0.2 : 16;
+    est.tQuadro = t0;
+    var pesado = est.dtQuadro > 26 && est.arr && (est.ultPasso & 1);
+    var deu = pesado ? false : M.passo();
     if (deu && performance.now() - t0 < 7) M.passo();
     if (M.molhada || est.sujo || est.redesenha) { M.desenhar(); est.redesenha = false; }
     if (M.molhada) est.sujo = true;
@@ -448,7 +457,12 @@
     /* 0..0,7 é o vídeo por baixo; de 0,7 a 1 a luz passa para trás da pintura */
     M.luz = Math.min(1, k / 0.7);
     M.retro = k <= 0.7 ? 0 : (k - 0.7) / 0.3;
-    M.vegA = est.vegetal ? est.vegForca : 0; M.vegP = est.vegetal ? est.vegForca * 0.8 : 0;
+    /* CORES: só o que veio antes, o de dois atrás mais leve; AZUL E VERMELHO:
+       o anterior em azul, o seguinte em vermelho                        */
+    var f = est.vegetal ? est.vegForca : 0, cores = est.vegModo !== 'azul';
+    M.vegModo = cores ? 0 : 1;
+    M.vegA = f; M.vegA2 = est.vegAtras >= 2 ? f * 0.45 : 0; M.vegP = cores ? 0 : f * 0.8;
+    M.vegOpaco = A.filme.modo === 'papel' ? 1 : 0;
     est.redesenha = true;
   }
 
@@ -487,8 +501,9 @@
   }
   /* o vegetal: o anterior e o seguinte, dos bitmaps já decodificados */
   function vegetais() {
-    var F = A.filme, a = F.quadros[F.atual - 1], p = F.quadros[F.atual + 1];
+    var F = A.filme, a = F.quadros[F.atual - 1], a2 = F.quadros[F.atual - 2], p = F.quadros[F.atual + 1];
     M.setVegetal('ant', a && a.bitmap ? a.bitmap : null);
+    M.setVegetal('ant2', a2 && a2.bitmap ? a2.bitmap : null);
     M.setVegetal('prox', p && p.bitmap ? p.bitmap : null);
   }
   function novoQuadro() {
@@ -630,7 +645,7 @@
     ['granMul', 'GRANULAÇÃO', 0, 2, 'quanto o pigmento assenta nos vales do papel. 1 é o pigmento como ele é'],
     ['borda', 'BORDA ESCURA', 0, 2, 'a água escoa para a beira da mancha e o pigmento vai atrás — a assinatura da aquarela'],
     ['floradas', 'FLORADAS', 0, 1, 'a água que caminha pelo papel molha de novo o que estava secando e empurra o pigmento (os "blooms")'],
-    ['vegForca', 'VEGETAL', 0, 1, 'a força do papel vegetal']
+    ['vegForca', 'FORÇA DO VEGETAL', 0, 1, 'quanto o quadro anterior aparece por cima da folha']
   ];
   function paginaAjustes() {
     var pag = el('aqTelaPag'), aj = est.aj || (est.aj = { granMul: 1, borda: 1, floradas: 1 });
@@ -640,6 +655,10 @@
       '<div class="aq-nota">Trocar o papel troca o relevo da folha inteira: o que já foi pintado continua, mas assenta noutro grão daqui em diante.</div>' +
       '<div class="aq-sub">A ÁGUA</div>' +
       '<div class="aq-pilulas">' + [['rapida', 'SECAGEM RÁPIDA'], ['normal', 'NORMAL'], ['lenta', 'LENTA']].map(function (s) { return '<button class="aq-pil' + (est.secagem === s[0] ? ' on' : '') + '" data-secagem="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="aq-sub">O VEGETAL</div>' +
+      '<div class="aq-pilulas"><button class="aq-pil' + (est.vegModo !== 'azul' ? ' on' : '') + '" data-veg="cores">CORES DA ANTERIOR</button><button class="aq-pil' + (est.vegModo === 'azul' ? ' on' : '') + '" data-veg="azul">AZUL E VERMELHO</button></div>' +
+      '<div class="aq-pilulas"><button class="aq-pil' + (est.vegAtras === 1 ? ' on' : '') + '" data-vegatras="1">1 QUADRO ATRÁS</button><button class="aq-pil' + (est.vegAtras !== 1 ? ' on' : '') + '" data-vegatras="2">2 ATRÁS (O 2.º MAIS LEVE)</button></div>' +
+      '<div class="aq-nota">CORES mostra o quadro anterior como uma aguada leve, nas cores dele — onde e com o que você pintou. AZUL E VERMELHO é o vegetal do animador: o anterior em azul, o seguinte em vermelho. A chave VEGETAL (ou a tecla V) liga e desliga.</div>' +
       AJ.map(function (a) {
         var v = a[0] === 'vegForca' ? est.vegForca : aj[a[0]];
         return '<div class="aq-ctrl"><label>' + a[1] + '</label><div class="aq-ctrl-l">' +
@@ -649,8 +668,8 @@
       '<div class="aq-sub">OS QUADROS</div>' +
       '<div class="aq-pilulas">' + [24, 25, 30].map(function (b) { return '<button class="aq-pil' + (est.base === b ? ' on' : '') + '" data-base="' + b + '">' + b + ' Q/S</button>'; }).join('') + '</div>' +
       '<div class="aq-nota">A cadência da composição. EM 1s pinta um desenho por quadro; EM 2s, um a cada dois (12 q/s a 24) — é como se anima à mão.</div>' +
-      '<div class="aq-pilulas">' + [['auto', 'AUTO'], [768, '768 PX'], [1024, '1024 PX'], [1280, '1280 PX'], [1920, '1920 PX · LENTO']].map(function (d) { return '<button class="aq-pil' + (String(est.defin) === String(d[0]) ? ' on' : '') + '" data-defin="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>' +
-      '<div class="aq-nota">A definição da folha (o lado maior). AUTO é a da composição, pixel a pixel, entre 1024 e 1280 — a folha nunca fica menor que isso. Mais pixels, mais detalhe e mais lento; a mudança vale para uma folha NOVA.</div>' +
+      '<div class="aq-pilulas">' + [['auto', 'AUTO'], [768, '768 PX'], [1024, '1024 PX'], [1280, '1280 PX · LEVE'], [1920, '1920 PX']].map(function (d) { return '<button class="aq-pil' + (String(est.defin) === String(d[0]) ? ' on' : '') + '" data-defin="' + d[0] + '">' + d[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="aq-nota">A definição da folha (o lado maior). AUTO é a da composição, pixel a pixel (1024 a 1920) — a folha nunca fica menor que 1024. Mais pixels, mais detalhe e mais lento (1080p custa o dobro de 720p por passo); a mudança vale para uma folha NOVA.</div>' +
       '<div class="aq-sub">A SAÍDA</div>' +
       '<div class="aq-pilulas">' +
         '<button class="aq-pil' + ((est.modo || 'video') === 'video' ? ' on' : '') + '" data-modo="video">SOBRE O VÍDEO</button>' +
@@ -677,11 +696,13 @@
         var r = $('[data-aj="' + k + '"]', pag); r.value = v; r.dispatchEvent(new Event('input'));
       });
     });
+    $$('[data-veg]', pag).forEach(function (b) { b.addEventListener('click', function () { est.vegModo = b.dataset.veg; est.vegetal = true; pintarLuz(); guardarPrefs(); paginaAjustes(); }); });
+    $$('[data-vegatras]', pag).forEach(function (b) { b.addEventListener('click', function () { est.vegAtras = +b.dataset.vegatras; pintarLuz(); guardarPrefs(); paginaAjustes(); }); });
     $$('[data-papel]', pag).forEach(function (b) { b.addEventListener('click', function () { est.papel = b.dataset.papel; M.setPapel(est.papel); est.redesenha = true; paginaAjustes(); }); });
     $$('[data-secagem]', pag).forEach(function (b) { b.addEventListener('click', function () { est.secagem = b.dataset.secagem; aplicarAjustes(); paginaAjustes(); }); });
     $$('[data-base]', pag).forEach(function (b) { b.addEventListener('click', function () { est.base = +b.dataset.base; mudarPasso(A.filme.passo); paginaAjustes(); }); });
     $$('[data-defin]', pag).forEach(function (b) { b.addEventListener('click', function () { est.defin = b.dataset.defin === 'auto' ? 'auto' : +b.dataset.defin; paginaAjustes(); guardarPrefs(); toast('vale para a próxima folha nova (LIMPAR ou reabrir a mesa)'); }); });
-    $$('[data-modo]', pag).forEach(function (b) { b.addEventListener('click', function () { est.modo = b.dataset.modo; A.filme.modo = est.modo; A.filme.quadros.forEach(function (q) { if (q.png) q.sujo = true; }); paginaAjustes(); }); });
+    $$('[data-modo]', pag).forEach(function (b) { b.addEventListener('click', function () { est.modo = b.dataset.modo; A.filme.modo = est.modo; A.filme.quadros.forEach(function (q) { if (q.png) q.sujo = true; }); pintarLuz(); paginaAjustes(); }); });
     $$('[data-codigo]', pag).forEach(function (b) { b.addEventListener('click', function () { est.codigo = b.dataset.codigo === '1'; A.codigo.ligado = est.codigo; el('aqCodigo').classList.toggle('hidden', !est.codigo); pintarCodigo(); paginaAjustes(); }); });
     el('aqLimpar').addEventListener('click', function () {
       var t = tamanhoDaFolha();
@@ -708,7 +729,7 @@
       '<div class="aq-lista">' + [
         ['A FOLHA', 'pinte com o ponteiro. Caneta com pressão muda o traço e a carga.'],
         ['A LUZ', 'arraste para a direita ou para cima para acender (esquerda ou baixo apaga; a roda também). Quanto do vídeo da composição aparece por baixo. No fim do curso a luz vem por trás da pintura (retroiluminação).'],
-        ['VEGETAL', 'o papel vegetal do animador: o quadro anterior em azul, o seguinte em vermelho.'],
+        ['VEGETAL', 'o papel vegetal: o quadro anterior como uma aguada leve, nas cores dele (e o de dois atrás, mais leve) — ou, na engrenagem, o anterior em azul e o seguinte em vermelho. A tecla V liga e desliga.'],
         ['GODÊS', 'os oito pigmentos da paleta. Toque escolhe; ⇄ abre a gaveta dos 52.'],
         ['PINCÉIS', 'quatro redondos: 2, 6, 12 e 24 — e o TAMANHO livre por baixo, até um terço da folha. [ e ] mudam.'],
         ['+ − (no vidro)', 'o zoom da folha, de 100% a 800%. Com zoom, as barras discretas rolam a folha (a roda também; Ctrl + roda aproxima onde o ponteiro está). O número volta a 100%.'],
@@ -725,7 +746,7 @@
         ['+ · ⧉ · 🗑 · ▶', 'quadro novo, copiar o anterior, apagar, folhear.'],
         ['USAR', 'a sequência entra na linha do tempo por cima do vídeo, em Multiplicar — a aguada como transparência. Em NO PAPEL (ajustes) entra opaca.'],
         ['DO CLIPE', 'com um clipe de aquarela escolhido na linha do tempo, traz a sequência de volta para continuar.'],
-        ['TECLAS', '← → quadros · espaço folheia · Ctrl+Z desfaz · Ctrl+Y refaz · [ ] pincel · Esc fecha.']
+        ['TECLAS', '← → quadros · espaço folheia · V vegetal · Ctrl+Z desfaz · Ctrl+Y refaz · [ ] pincel · Esc fecha.']
       ].map(function (l) { return '<div class="aq-item"><b>' + l[0] + '</b><span>' + l[1] + '</span></div>'; }).join('') + '</div>';
   }
 
@@ -742,13 +763,13 @@
   var PREF = 'rgblab.aquarela';
   function guardarPrefs() {
     try {
-      localStorage.setItem(PREF, JSON.stringify({ paleta: M ? M.paleta : est.paleta, papel: est.papel, secagem: est.secagem, defin: est.defin, base: est.base, vegetal: est.vegetal, vegForca: est.vegForca, codigo: est.codigo, aj: est.aj, modo: est.modo, luz: est.luzKnob, pincel: est.pincel, diluicao: est.diluicao, raio: est.raio }));
+      localStorage.setItem(PREF, JSON.stringify({ paleta: M ? M.paleta : est.paleta, papel: est.papel, secagem: est.secagem, defin: est.defin, base: est.base, vegetal: est.vegetal, vegForca: est.vegForca, codigo: est.codigo, aj: est.aj, modo: est.modo, luz: est.luzKnob, pincel: est.pincel, diluicao: est.diluicao, raio: est.raio, vegModo: est.vegModo, vegAtras: est.vegAtras }));
     } catch (e) { }
   }
   function carregarPrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(PREF) || 'null'); if (!p) return;
-      ['papel', 'secagem', 'defin', 'base', 'vegetal', 'vegForca', 'codigo', 'aj', 'modo', 'pincel', 'diluicao', 'raio'].forEach(function (k) { if (p[k] !== undefined) est[k] = p[k]; });
+      ['papel', 'secagem', 'defin', 'base', 'vegetal', 'vegForca', 'codigo', 'aj', 'modo', 'pincel', 'diluicao', 'raio', 'vegModo', 'vegAtras'].forEach(function (k) { if (p[k] !== undefined) est[k] = p[k]; });
       if (p.paleta && p.paleta.length === 8) est.paleta = p.paleta;
       if (typeof p.luz === 'number') est.luzKnob = p.luz;
     } catch (e) { }
@@ -774,6 +795,7 @@
       if (ev.key === ' ') { ev.preventDefault(); ev.stopPropagation(); folhear(); }
       if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); ev.stopPropagation(); if (M.desfazer()) est.redesenha = true; pintarDesfazer(); return; }
       if ((ev.ctrlKey || ev.metaKey) && (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey))) { ev.preventDefault(); ev.stopPropagation(); if (M.refazer()) est.redesenha = true; pintarDesfazer(); return; }
+      if (ev.key === 'v' || ev.key === 'V') { est.vegetal = !est.vegetal; pintarLuz(); guardarPrefs(); toast(est.vegetal ? 'VEGETAL ligado' : 'VEGETAL desligado'); }
       if (ev.key === ']') { est.raio = Math.min(raioMax(), Math.max(est.raio + 1, est.raio * 1.25)); aplicarFerramenta(); pintarPinceis(); }
       if (ev.key === '[') { est.raio = Math.max(1, Math.min(est.raio - 1, est.raio / 1.25)); aplicarFerramenta(); pintarPinceis(); }
     }, true);
@@ -795,7 +817,9 @@
       cur.classList.remove('hidden');
     }
     folha.addEventListener('pointerdown', function (ev) {
-      if (!M || !M.gl || est.folheando) return;
+      /* no meio de uma troca de quadro a folha ainda vai ser reposta: um
+         traço agora seria apagado pela reposição (aconteceu no banco)  */
+      if (!M || !M.gl || est.folheando || trocando) return;
       /* o ESTADO primeiro; a captura do ponteiro depois, dentro de try —
          ela pode ser recusada e a exceção não sobe (ver as armadilhas) */
       est.arr = { id: ev.pointerId };
@@ -925,5 +949,6 @@
 
   /* para os testes: o estado e o motor */
   U.__est = function () { return est; };
+  U.__trocando = function () { return trocando; };
   U.__motor = function () { return M; };
 })(window.VE);
