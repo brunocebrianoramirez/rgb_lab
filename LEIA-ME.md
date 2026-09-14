@@ -1150,8 +1150,9 @@ branco de titânio cobre e o ftalo não.
 | **SAL** | sobre a aguada ainda molhada: os cristais bebem a água e deixam **estrelas claras de borda escura** |
 | **ÁLCOOL** | gotas que repelem o pigmento: olhos claros com a borda escura |
 | **SECAR** | seca a folha agora. Trocar de quadro também seca |
-| **↶** | desfaz a última pincelada (Ctrl+Z) — três níveis |
-| **a tira** | os **QUADROS** da sequência. ◀ ▶ andam, e **a composição anda junto**: cada quadro é um instante do vídeo. **+** cria um quadro depois deste, **⧉** copia o anterior para este, 🗑 apaga, ▶ **folheia** a sequência (espaço) |
+| **↶ ↷** | desfazer e refazer (**Ctrl+Z**, **Ctrl+Y** ou Ctrl+Shift+Z): doze passos — pincelada, sal, álcool, secar, limpar, copiar o anterior. Trocar de quadro zera o histórico |
+| **CLARA · MÉDIA · FORTE** | a diluição: quanta tinta o pincel leva a cada toque. CLARA é a aguada (espessura ~1), MÉDIA a cor cheia (~2), FORTE quase tinta de tubo (~3,5) |
+| **a tira** | os **QUADROS** da sequência. ◀ ▶ andam (a **roda do mouse** sobre a tira também, um quadro por dente), e **a composição anda junto**: cada quadro é um instante do vídeo. **+** cria um quadro depois deste, **⧉** copia o anterior para este, 🗑 apaga, ▶ **folheia** a sequência (espaço) |
 | **EM 1s · 2s · 3s** | a cadência: um desenho por quadro, por dois, por três — como se anima à mão (a 24 q/s, EM 2s são 12 desenhos por segundo) |
 | **USAR** (o vermelho) | a sequência entra na linha do tempo **por cima do vídeo**, no instante em que começou, em modo **Multiplicar** — a aguada como transparência. É a animação em cima da animação |
 | **DO CLIPE** | com um clipe de aquarela escolhido na linha do tempo, traz a sequência de volta para a mesa, **editável** (o rolo guarda o depositado de cada quadro) |

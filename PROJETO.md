@@ -7608,6 +7608,42 @@ Chrome sem cabeça — foi assim que apareceram a madeira em espinha de peixe,
 as aguadas fracas (carga 0,26 → 0,42) e a telinha saindo da janela (o
 conjunto encolhe a 0,86 com ela aberta).
 
+### 5n.7 Segunda volta (13/09/2026, à noite): desfazer/refazer, a roda nos quadros, as cores
+
+Três pedidos: *"ctrl z e ctrl y"*, *"rolagem entre os quadros"*, *"aumentar
+as cores"*.
+
+**Desfazer e refazer.** O de antes eram três cópias em float sem volta. Agora
+é um histórico linear (`hist` / `refaz`) de instantâneos em **RGBA8** com
+escala e deslocamento por canal (velocidade ±0,5, pigmento 0..4, o resto
+0..1) — 13,5 MB por nível a 1024×576, doze níveis (`Motor.HIST`), jogos de
+textura numa reserva reaproveitada. Entra no histórico: pincelada, sal,
+álcool (`tocar`), SECAR, LIMPAR e COPIAR O ANTERIOR; trocar de quadro zera.
+Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z e os dois botões na tampa da lata (acendem e
+apagam conforme há o que desfazer). Medido (`__teste2.html`, apagado): cada
+volta repõe o estado com erro de um degrau (pigmento 0,0078, velocidade
+0,001, água 0,002); três traços → três desfazer → folha vazia → quarto
+devolve `false`; três refazer → o terceiro traço de volta; ação nova esvazia
+o refazer; 15 toques → hist 12, 13 jogos no total; secar e desfazer devolve
+a água (2012 → 0 → 2012, molhada); guardar 0,04 ms, desfazer 0,07 ms. No
+laboratório, pelo teclado de verdade: hansa 0,098 → Ctrl+Z 0 → Ctrl+Y 0,094.
+
+**A roda nos quadros.** `wheel` sobre a tira anda um quadro por dente, com
+respiro de 140 ms (uma rolada de trackpad atravessaria a sequência): três
+dentes seguidos contam um. Medido: 1 dente → quadro 2; três rápidos → 3;
+volta → 2.
+
+**As cores.** A carga de fábrica subiu (0,42 → 0,75) e a lata ganhou a
+DILUIÇÃO — CLARA (carga 0,35, água 0,42), MÉDIA (0,75, 0,30), FORTE (1,3,
+0,20): a espessura de uma pincelada vai de ~1 (a aguada) a ~3,5 (quase
+massa). Medido de passagem: um traço por cima de um traço ainda molhado
+perdia **92%** do pigmento no cruzamento em 20 passos — cada toque somava
+água à área molhada, o morro de água disparava o fluxo e levava o pigmento.
+Água nova sobre área molhada agora entra a 40% (`1 − 0,6·clamp(w/0,3)`) e
+a pressão caiu de 0,5 para 0,4: o cruzamento guarda 69% em 20 passos e 42%
+em 220 (o molhado sobre molhado espalha, não some); a borda escura continua
+1,36.
+
 ### 5n.6 O que NÃO foi feito, e por quê
 
 - **A mesa em movimento não foi vista** (o painel). O ponteiro de verdade
@@ -7621,6 +7657,9 @@ conjunto encolhe a 0,86 com ela aberta).
 - **Corpo sobre o vídeo**: pigmento opaco sobre vídeo escuro perde o corpo
   em Multiplicar (5n.3). Um modo de mistura próprio resolveria.
 - **Sem pincel chato, sem leque, sem spray** — só redondos.
+- O histórico de desfazer é por quadro (trocar de quadro zera) e mora na
+  placa de vídeo: doze níveis são 162 MB a 1024×576 — se a máquina dele
+  reclamar, `Motor.HIST` é o número.
 - A paleta é lembrada entre sessões (localStorage); os rolos só vivem na
   linha do tempo (o clipe) — não há gaveta de rolos como na filmadora.
 

@@ -95,6 +95,15 @@
 }
 .aq-mini svg{width:60%;height:60%;fill:currentColor;display:block}
 .aq-mini:active{transform:translateY(1px)}
+.aq-mini:disabled{opacity:.3;cursor:default;transform:none}
+
+/* a diluição: três pastilhas na lata, entre os pincéis e os utensílios */
+.aq-diluicao{display:flex;gap:2px;padding:2px;border-radius:999px;background:rgba(0,0,0,.14);box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.aq-diluicao button{
+  flex:1;border:0;background:transparent;color:#5d594f;cursor:pointer;font-family:var(--mono);
+  font-size:calc(var(--u) * .62);letter-spacing:.14em;padding:calc(var(--u) * .42) 0;border-radius:999px;transition:background .12s,color .12s;
+}
+.aq-diluicao button.on{background:#2a2620;color:#f2eee4}
 
 /* os godês: pastilhas fundas numa bandeja */
 .aq-godes{

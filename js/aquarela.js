@@ -483,7 +483,10 @@
     '  vec4 sel0 = vec4(equal(ivec4(uSlot), ivec4(0,1,2,3)));',
     '  vec4 sel1 = vec4(equal(ivec4(uSlot), ivec4(4,5,6,7)));',
     '  if(uFerr == 0 || uFerr == 1){',            /* pincel molhado / só água */
-    '    if(cob > 0.02){ ag.a = 1.0; ag.b += uAgua1*cobSoma; st.a += uAgua1*cobSoma; }',
+    /* água nova sobre área já molhada entra em parte: senão cada toque
+       faz um morro de água que dispara o fluxo e leva o pigmento embora
+       (medido: 92% do pigmento sumia do cruzamento de dois traços)   */
+    '    if(cob > 0.02){ float add = uAgua1*cobSoma*(1.0 - 0.6*clamp(st.a/0.3, 0.0, 1.0)); ag.a = 1.0; ag.b += add; st.a += add; }',
     '    st.r = min(st.r + uAgua1*cobSoma*2.0, pp.g);',
     '    if(uFerr == 0){ g0 += sel0*uCarga*cobSoma; g1 += sel1*uCarga*cobSoma; }',
     '  } else if(uFerr == 2){',                    /* pincel seco: só nas cristas do papel */
@@ -612,6 +615,23 @@
     '  o = texelFetch(uSrc, ij, 0)*4.0;',
     '}'
   ].join('\n');
+  /* 11. os instantâneos do desfazer: cada textura de estado cabe em RGBA8
+     com uma escala e um deslocamento por canal (velocidade ±0,5, pigmento
+     0..4, o resto 0..1) — o erro é o de um degrau, e só na volta        */
+  var FS_SNAP = [
+    PRE,
+    'uniform sampler2D uSrc;',
+    'uniform vec4 uEsc, uDesl;',
+    'out vec4 o;',
+    'void main(){ o = clamp(texelFetch(uSrc, IJ(), 0)*uEsc + uDesl, 0.0, 1.0); }'
+  ].join('\n');
+  var FS_UNSNAP = [
+    PRE,
+    'uniform sampler2D uSrc;',
+    'uniform vec4 uEsc, uDesl;',
+    'out vec4 o;',
+    'void main(){ o = (texelFetch(uSrc, IJ(), 0) - uDesl)/uEsc; }'
+  ].join('\n');
   var FS_ZERO = [PRE, 'out vec4 o;', 'void main(){ o = vec4(0.0); }'].join('\n');
   var FS_COPY = [PRE, 'uniform sampler2D uSrc;', 'out vec4 o;', 'void main(){ o = texelFetch(uSrc, IJ(), 0); }'].join('\n');
 
@@ -637,13 +657,10 @@
     T.papel = this.mkTex(gl.RGBA32F);
     T.fundo = this.mkTex(gl.RGBA8); T.vegAnt = this.mkTex(gl.RGBA8); T.vegProx = this.mkTex(gl.RGBA8);
     T.u8 = [this.mkTex(gl.RGBA8), this.mkTex(gl.RGBA8)];
-    /* desfazer: três níveis, seis texturas cada */
-    this.desf = []; this.desfN = 0;
-    for (var i = 0; i < 3; i++) {
-      var n = {};
-      ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { n[k] = self.mkTex(gl.RGBA32F); });
-      this.desf.push(n);
-    }
+    /* desfazer e refazer: um histórico de instantâneos em RGBA8 (14 MB cada
+       a 1024×576), até HIST no total, com uma reserva de jogos de textura
+       para não alocar a cada pincelada                                   */
+    this.hist = []; this.refaz = []; this.reserva = [];
     this.fbo = gl.createFramebuffer();
     this.temFundo = 0;
     this.papelTipo = opts.papel || 'frio';
@@ -655,7 +672,7 @@
     this.raio = 9; this.agua1 = 0.30; this.carga = 0.42; this.lev = 0.55;
     /* as constantes do modelo — os nomes são os do artigo */
     this.par = {
-      mu: 0.10, kappa: 0.06, pressao: 0.5, declive: 0.001,
+      mu: 0.10, kappa: 0.06, pressao: 0.4, declive: 0.001,
       alfa: 0.0004, eps: 0.10, sigma: 0.5, sangra: 0.2, eta: 0.0025, evap: 0.0006,
       secaP: 10, taxa: 0.05, salPuxa: 0.35, salBebe: 0.012,
       granMul: 1, floradas: 1, borda: 1
@@ -748,7 +765,6 @@
     var self = this;
     ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1', 'masc'].forEach(function (n) { self.zerar(self.tex[n][0]); self.zerar(self.tex[n][1]); });
     this.fila = []; this.ultimoDab = null; this.molhada = false; this.passos = 0;
-    this.desfN = 0;
     registrar('limpar', []);
   };
 
@@ -913,23 +929,73 @@
     registrar('secar', []);
   };
 
-  /* ----------------------------------------------------- desfazer */
-  Motor.prototype.guardarDesfazer = function () {
-    var self = this, n = this.desf[this.desfN % 3];
-    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { self.copiar(self.tex[k][0], n[k]); });
+  /* ------------------------------------------- desfazer e refazer
+     Um histórico linear: `hist` guarda os estados ANTERIORES a cada ação
+     (pincelada, secar, limpar, copiar), `refaz` os que o desfazer tirou.
+     Uma ação nova esvazia o refazer. Os jogos de textura voltam para a
+     reserva e são reaproveitados. Tudo em RGBA8 quantizado — o que se
+     paga é um degrau (1/64 no pigmento, 1/500 na velocidade), uma vez. */
+  var ESTADO = ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'];
+  var SNAP = {
+    agua: { esc: [2, 2, 1, 1], desl: [0.5, 0.5, 0, 0] },
+    sat: { esc: [1, 1, 1, 1], desl: [0, 0, 0, 0] },
+    pig0: { esc: [0.25, 0.25, 0.25, 0.25], desl: [0, 0, 0, 0] }, pig1: { esc: [0.25, 0.25, 0.25, 0.25], desl: [0, 0, 0, 0] },
+    dep0: { esc: [0.25, 0.25, 0.25, 0.25], desl: [0, 0, 0, 0] }, dep1: { esc: [0.25, 0.25, 0.25, 0.25], desl: [0, 0, 0, 0] }
+  };
+  Motor.HIST = 12;
+  Motor.prototype.jogo = function () {
+    if (this.reserva.length) return this.reserva.pop();
+    var self = this, gl = this.gl, n = {};
+    ESTADO.forEach(function (k) { n[k] = self.mkTex(gl.RGBA8); });
+    return n;
+  };
+  Motor.prototype.instantaneo = function () {
+    var self = this, gl = this.gl, n = this.jogo(), pr = this.prog('snap', FS_SNAP);
+    ESTADO.forEach(function (k) {
+      self.passar(pr, { uSrc: self.tex[k][0] }, [n[k]], function (u) { gl.uniform4fv(u.uEsc, SNAP[k].esc); gl.uniform4fv(u.uDesl, SNAP[k].desl); });
+    });
     n.molhada = this.molhada; n.ultimoToque = this.ultimoToque;
-    this.desfN++;
-    this.desfMax = Math.min(3, (this.desfMax || 0) + 1);
+    return n;
+  };
+  Motor.prototype.repor = function (n) {
+    var self = this, gl = this.gl, pr = this.prog('unsnap', FS_UNSNAP);
+    ESTADO.forEach(function (k) {
+      self.passar(pr, { uSrc: n[k] }, [self.tex[k][0]], function (u) { gl.uniform4fv(u.uEsc, SNAP[k].esc); gl.uniform4fv(u.uDesl, SNAP[k].desl); });
+    });
+    this.molhada = !!n.molhada; this.ultimoToque = this.passos; this.fila = []; this.ultimoDab = null;
+  };
+  /* guardar o estado de AGORA como o passo anterior da próxima ação */
+  Motor.prototype.guardarDesfazer = function () {
+    var self = this;
+    this.aplicar();
+    this.hist.push(this.instantaneo());
+    while (this.refaz.length) this.reserva.push(this.refaz.pop());
+    while (this.hist.length > Motor.HIST) this.reserva.push(this.hist.shift());
   };
   Motor.prototype.desfazer = function () {
-    if (!this.desfMax) return false;
-    var self = this;
-    this.desfN--; this.desfMax--;
-    var n = this.desf[((this.desfN % 3) + 3) % 3];
-    ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { self.copiar(n[k], self.tex[k][0]); });
-    this.molhada = true; this.ultimoToque = this.passos; this.fila = []; this.ultimoDab = null;
+    if (!this.hist.length) return false;
+    this.aplicar();
+    this.refaz.push(this.instantaneo());
+    var n = this.hist.pop();
+    this.repor(n); this.reserva.push(n);
     registrar('desfazer', []);
     return true;
+  };
+  Motor.prototype.refazer = function () {
+    if (!this.refaz.length) return false;
+    this.aplicar();
+    this.hist.push(this.instantaneo());
+    var n = this.refaz.pop();
+    this.repor(n); this.reserva.push(n);
+    registrar('refazer', []);
+    return true;
+  };
+  Motor.prototype.podeDesfazer = function () { return this.hist.length > 0; };
+  Motor.prototype.podeRefazer = function () { return this.refaz.length > 0; };
+  /* trocar de quadro é outra folha: o histórico não atravessa */
+  Motor.prototype.limparHistorico = function () {
+    while (this.hist.length) this.reserva.push(this.hist.pop());
+    while (this.refaz.length) this.reserva.push(this.refaz.pop());
   };
 
   /* --------------------------------------------- o fundo e o vegetal */
@@ -1007,6 +1073,7 @@
   };
   Motor.prototype.desempacotar = function (bytes) {
     var self = this, gl = this.gl, T = this.tex, pr = this.prog('unpack', FS_UNPACK), n = this.w * this.h * 4;
+    this.limparHistorico();
     this.limpar();
     [0, 1].forEach(function (b) {
       gl.bindTexture(gl.TEXTURE_2D, T.u8[1]);
@@ -1130,7 +1197,7 @@
   A.reporQuadro = function (i) {
     var m = A.motor, F = A.filme, q = F.quadros[i];
     F.atual = i;
-    if (!q || !q.estado) { m.limpar(); return Promise.resolve(); }
+    if (!q || !q.estado) { m.limparHistorico(); m.limpar(); return Promise.resolve(); }
     return descomprimir(q.estado, 'deflate').then(function (bytes) { m.desempacotar(bytes); });
   };
   /* ir para um quadro: guarda o atual, repõe o destino (cria se não existir) */
@@ -1157,7 +1224,11 @@
   A.copiarAnterior = function () {
     var F = A.filme, q = F.quadros[F.atual - 1];
     if (!q || !q.estado) return Promise.resolve(false);
-    return descomprimir(q.estado, 'deflate').then(function (bytes) { A.motor.desempacotar(bytes); F.quadros[F.atual].sujo = true; return true; });
+    return descomprimir(q.estado, 'deflate').then(function (bytes) {
+      var m = A.motor, antes = m.instantaneo();          /* o copiar se desfaz */
+      m.desempacotar(bytes); m.hist.push(antes);
+      F.quadros[F.atual].sujo = true; return true;
+    });
   };
   A.novoFilme = function (w, h) {
     var F = A.filme;

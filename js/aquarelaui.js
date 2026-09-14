@@ -24,8 +24,11 @@
      o saleiro ......... sal sobre a aguada molhada
      o conta-gotas ..... álcool: gotas que repelem o pigmento
      o secador ......... seca a folha agora
+     ↶ ↷ .............. desfazer e refazer (Ctrl+Z, Ctrl+Y), doze passos
+     CLARA·MÉDIA·FORTE  a diluição: quanta tinta o pincel leva
      a tira ............ os QUADROS: um por instante da composição.
-                         ◀ ▶ andam (e a composição anda junto),
+                         ◀ ▶ andam (e a composição anda junto), a
+                         roda do mouse sobre a tira também anda,
                          + cria, ⧉ copia o anterior, ▶ folheia
      EM 1s / 2s / 3s ... a cadência: um desenho por quadro, por
                          dois, por três — como se anima à mão
@@ -55,6 +58,7 @@
     info: '<path d="M12 4.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM9.6 9.4h3.6v7.4h1.7v2H9.3v-2h1.7v-5.4H9.6z"/>',
     eng: '<path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3H9l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h6l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/>',
     desfazer: '<path d="M9 7.5V4L3.5 9 9 14v-3.5c4 0 7 1.5 8.5 5 .3-4.7-3-8-8.5-8z"/>',
+    refazer: '<path d="M15 7.5V4l5.5 5-5.5 5v-3.5c-4 0-7 1.5-8.5 5-.3-4.7 3-8 8.5-8z"/>',
     ant: '<path d="M15.5 5v14L7 12z"/>',
     prox: '<path d="M8.5 5v14L17 12z"/>',
     play: '<path d="M8 5.2v13.6L18.6 12z"/>',
@@ -84,7 +88,7 @@
         raf: 0, tela: null, gaveta: false, pincel: 2, ferr: 'pincel', slot: 0,
         folheando: 0, fundoPedido: -1, secagem: 'normal', defin: 1024, base: 24,
         vegetal: true, vegForca: 0.55, codigo: false, arr: null, ultPasso: 0,
-        luzKnob: 0.55
+        luzKnob: 0.55, diluicao: 'media', ultRolagem: 0
       };
       carregarPrefs();
     }
@@ -154,9 +158,12 @@
           /* ---- a caixa de tintas ---- */
           '<div class="aq-caixa" id="aqCaixa">' +
             '<div class="aq-caixa-tampa"><b>AQUARELA</b><span>52 PIGMENTOS · KUBELKA-MUNK</span>' +
-              '<button class="aq-mini" id="aqDesfazer" title="Desfazer a última pincelada (Ctrl+Z)">' + svg('desfazer') + '</button></div>' +
+              '<button class="aq-mini" id="aqDesfazer" title="Desfazer (Ctrl+Z)">' + svg('desfazer') + '</button>' +
+              '<button class="aq-mini" id="aqRefazer" title="Refazer (Ctrl+Y)">' + svg('refazer') + '</button></div>' +
             '<div class="aq-godes" id="aqGodes"></div>' +
             '<div class="aq-pinceis" id="aqPinceis"></div>' +
+            '<div class="aq-diluicao" id="aqDiluicao" title="Quanta tinta o pincel leva: aguada clara, normal ou carregada">' +
+              '<button data-dil="clara">CLARA</button><button data-dil="media" class="on">MÉDIA</button><button data-dil="forte">FORTE</button></div>' +
             '<div class="aq-utensilios">' +
               '<button class="aq-ut aq-pote" data-ferr="agua" title="Só água: molhar o papel, diluir, fazer floradas"><i></i><small>ÁGUA</small></button>' +
               '<button class="aq-ut aq-esponja" data-ferr="esponja" title="Esponja: levanta a tinta molhada (a que mancha resiste)"><i></i><small>ESPONJA</small></button>' +
@@ -283,6 +290,7 @@
     if (M.molhada || est.sujo || est.redesenha) { M.desenhar(); est.redesenha = false; }
     if (M.molhada) est.sujo = true;
     if (!M.molhada && est.sujo) { est.sujo = false; A.filme.quadros[A.filme.atual].sujo = true; M.desenhar(); }
+    if ((est.ultPasso++ & 7) === 0) pintarDesfazer();
   }
 
   /* o fundo: a composição no instante do quadro, lida do #gl depois de
@@ -325,12 +333,23 @@
     var pig = A.PIGBY[M.paleta[est.slot]];
     if ((est.ferr === 'pincel' || est.ferr === 'seco') && pig) nome += ' · ' + pig.nome.toUpperCase();
     el('aqFerrNome').textContent = nome;
+    $$('#aqDiluicao button').forEach(function (b) { b.classList.toggle('on', b.dataset.dil === est.diluicao); });
+    pintarDesfazer();
   }
+  function pintarDesfazer() {
+    if (!M) return;
+    el('aqDesfazer').disabled = !M.podeDesfazer();
+    el('aqRefazer').disabled = !M.podeRefazer();
+  }
+  /* a diluição: quanta tinta (e quanta água) o pincel leva a cada toque.
+     Uma pincelada normal sobrepõe uns três toques: MÉDIA dá espessura
+     ~2 (cor cheia), CLARA ~1 (a aguada), FORTE ~3,5 (quase massa)     */
+  var DILUICAO = { clara: { carga: 0.35, agua: 0.42 }, media: { carga: 0.75, agua: 0.30 }, forte: { carga: 1.3, agua: 0.20 } };
   function aplicarFerramenta() {
     if (!M) return;
-    var r = PINCEIS[est.pincel].raio;
-    var o = { raio: r, slot: est.slot };
-    if (est.ferr === 'agua') { o.raio = r * 1.3; o.agua = 0.5; } else o.agua = 0.30;
+    var r = PINCEIS[est.pincel].raio, dil = DILUICAO[est.diluicao] || DILUICAO.media;
+    var o = { raio: r, slot: est.slot, carga: dil.carga, agua: dil.agua };
+    if (est.ferr === 'agua') { o.raio = r * 1.3; o.agua = 0.5; }
     if (est.ferr === 'esponja') o.raio = r * 1.6;
     if (est.ferr === 'seco') o.raio = r * 1.2;
     if (est.ferr === 'sal') o.raio = Math.max(14, r * 2.2);
@@ -429,7 +448,7 @@
     if (trocando) return;
     A.copiarAnterior().then(function (ok) {
       if (!ok) { toast('não há quadro anterior com pintura', 'err'); return; }
-      est.redesenha = true; toast('o quadro anterior foi copiado para este');
+      est.redesenha = true; pintarDesfazer(); toast('o quadro anterior foi copiado para este');
     });
   }
   function mudarPasso(p) {
@@ -597,7 +616,8 @@
     el('aqLimpar').addEventListener('click', function () {
       var t = tamanhoDaFolha();
       if (M.w !== t.w || M.h !== t.h) { A.novoFilme(t.w, t.h); prepararFolha(); pintarCaixa(); pintarPinceis(); pintarTira(); pedirFundo(); }
-      M.limpar(); A.filme.quadros[A.filme.atual] = {}; est.redesenha = true; pintarTira();
+      M.guardarDesfazer();                     /* o limpar se desfaz */
+      M.limpar(); A.filme.quadros[A.filme.atual] = {}; est.redesenha = true; pintarTira(); pintarDesfazer();
     });
   }
   function aplicarAjustes() {
@@ -627,12 +647,14 @@
         ['SAL', 'sobre a aguada ainda molhada: os cristais bebem a água e deixam estrelas claras de borda escura.'],
         ['ÁLCOOL', 'gotas que repelem o pigmento: olhos claros com a borda escura.'],
         ['SECAR', 'seca a folha agora. Trocar de quadro também seca.'],
-        ['A TIRA', 'os quadros da sequência. ◀ ▶ andam, e a composição anda junto — cada quadro é um instante do vídeo.'],
+        ['↶ ↷', 'desfazer e refazer, doze passos: pincelada, sal, álcool, secar, limpar, copiar. Trocar de quadro zera o histórico.'],
+        ['CLARA · MÉDIA · FORTE', 'a diluição: quanta tinta o pincel leva. CLARA é a aguada; FORTE é quase tinta de tubo.'],
+        ['A TIRA', 'os quadros da sequência. ◀ ▶ andam, e a composição anda junto — cada quadro é um instante do vídeo. A roda do mouse sobre a tira também anda.'],
         ['EM 1s · 2s · 3s', 'a cadência: um desenho por quadro, por dois, por três.'],
         ['+ · ⧉ · 🗑 · ▶', 'quadro novo, copiar o anterior, apagar, folhear.'],
         ['USAR', 'a sequência entra na linha do tempo por cima do vídeo, em Multiplicar — a aguada como transparência. Em NO PAPEL (ajustes) entra opaca.'],
         ['DO CLIPE', 'com um clipe de aquarela escolhido na linha do tempo, traz a sequência de volta para continuar.'],
-        ['TECLAS', '← → quadros · espaço folheia · Ctrl+Z desfaz · [ ] pincel · Esc fecha.']
+        ['TECLAS', '← → quadros · espaço folheia · Ctrl+Z desfaz · Ctrl+Y refaz · [ ] pincel · Esc fecha.']
       ].map(function (l) { return '<div class="aq-item"><b>' + l[0] + '</b><span>' + l[1] + '</span></div>'; }).join('') + '</div>';
   }
 
@@ -649,13 +671,13 @@
   var PREF = 'rgblab.aquarela';
   function guardarPrefs() {
     try {
-      localStorage.setItem(PREF, JSON.stringify({ paleta: M ? M.paleta : est.paleta, papel: est.papel, secagem: est.secagem, defin: est.defin, base: est.base, vegetal: est.vegetal, vegForca: est.vegForca, codigo: est.codigo, aj: est.aj, modo: est.modo, luz: est.luzKnob, pincel: est.pincel }));
+      localStorage.setItem(PREF, JSON.stringify({ paleta: M ? M.paleta : est.paleta, papel: est.papel, secagem: est.secagem, defin: est.defin, base: est.base, vegetal: est.vegetal, vegForca: est.vegForca, codigo: est.codigo, aj: est.aj, modo: est.modo, luz: est.luzKnob, pincel: est.pincel, diluicao: est.diluicao }));
     } catch (e) { }
   }
   function carregarPrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(PREF) || 'null'); if (!p) return;
-      ['papel', 'secagem', 'defin', 'base', 'vegetal', 'vegForca', 'codigo', 'aj', 'modo', 'pincel'].forEach(function (k) { if (p[k] !== undefined) est[k] = p[k]; });
+      ['papel', 'secagem', 'defin', 'base', 'vegetal', 'vegForca', 'codigo', 'aj', 'modo', 'pincel', 'diluicao'].forEach(function (k) { if (p[k] !== undefined) est[k] = p[k]; });
       if (p.paleta && p.paleta.length === 8) est.paleta = p.paleta;
       if (typeof p.luz === 'number') est.luzKnob = p.luz;
     } catch (e) { }
@@ -679,7 +701,8 @@
       if (ev.key === 'ArrowRight') { ev.preventDefault(); ev.stopPropagation(); irPara(A.filme.atual + 1); }
       if (ev.key === 'ArrowLeft') { ev.preventDefault(); ev.stopPropagation(); irPara(A.filme.atual - 1); }
       if (ev.key === ' ') { ev.preventDefault(); ev.stopPropagation(); folhear(); }
-      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') { ev.preventDefault(); ev.stopPropagation(); if (M.desfazer()) est.redesenha = true; }
+      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z' && !ev.shiftKey) { ev.preventDefault(); ev.stopPropagation(); if (M.desfazer()) est.redesenha = true; pintarDesfazer(); return; }
+      if ((ev.ctrlKey || ev.metaKey) && (ev.key.toLowerCase() === 'y' || (ev.key.toLowerCase() === 'z' && ev.shiftKey))) { ev.preventDefault(); ev.stopPropagation(); if (M.refazer()) est.redesenha = true; pintarDesfazer(); return; }
       if (ev.key === ']') { est.pincel = Math.min(3, est.pincel + 1); aplicarFerramenta(); pintarPinceis(); }
       if (ev.key === '[') { est.pincel = Math.max(0, est.pincel - 1); aplicarFerramenta(); pintarPinceis(); }
     }, true);
@@ -707,7 +730,7 @@
       est.arr = { id: ev.pointerId };
       var p = pos(ev);
       M.tocar(p.x, p.y, pressao(ev));
-      est.sujo = true;
+      est.sujo = true; pintarDesfazer();
       try { folha.setPointerCapture(ev.pointerId); } catch (e) { }
       cursor(ev);
       ev.preventDefault();
@@ -765,8 +788,13 @@
         aplicarFerramenta(); pintarPinceis();
       });
     });
-    el('aqSecar').addEventListener('click', function () { M.secar(); est.redesenha = true; est.sujo = false; A.filme.quadros[A.filme.atual].sujo = true; toast('folha seca'); });
-    el('aqDesfazer').addEventListener('click', function () { if (M.desfazer()) est.redesenha = true; else toast('nada para desfazer'); });
+    el('aqSecar').addEventListener('click', function () { M.guardarDesfazer(); M.secar(); est.redesenha = true; est.sujo = false; A.filme.quadros[A.filme.atual].sujo = true; pintarDesfazer(); toast('folha seca'); });
+    el('aqDesfazer').addEventListener('click', function () { if (M.desfazer()) est.redesenha = true; else toast('nada para desfazer'); pintarDesfazer(); });
+    el('aqRefazer').addEventListener('click', function () { if (M.refazer()) est.redesenha = true; else toast('nada para refazer'); pintarDesfazer(); });
+    el('aqDiluicao').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-dil]'); if (!b) return;
+      est.diluicao = b.dataset.dil; aplicarFerramenta(); pintarPinceis(); guardarPrefs();
+    });
 
     /* ---- a luz: arrasto vertical no botão ---- */
     var luz = el('aqLuz');
@@ -795,6 +823,17 @@
     el('aqFolheia').addEventListener('click', folhear);
     el('aqLista').addEventListener('click', function (ev) { var b = ev.target.closest('[data-q]'); if (b) irPara(+b.dataset.q); });
     el('aqCadencia').addEventListener('click', function (ev) { var b = ev.target.closest('[data-passo]'); if (b) mudarPasso(+b.dataset.passo); });
+    /* a roda do mouse sobre a tira anda um quadro por dente (com um respiro
+       de 140 ms, senão uma rolada de trackpad atravessa a sequência)    */
+    el('aqTira').addEventListener('wheel', function (ev) {
+      ev.preventDefault();
+      var agora = performance.now();
+      if (agora - est.ultRolagem < 140 || trocando) return;
+      var d = Math.abs(ev.deltaY) >= Math.abs(ev.deltaX) ? ev.deltaY : ev.deltaX;
+      if (!d) return;
+      est.ultRolagem = agora;
+      irPara(A.filme.atual + (d > 0 ? 1 : -1));
+    }, { passive: false });
   }
 
   /* para os testes: o estado e o motor */
