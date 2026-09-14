@@ -4313,6 +4313,10 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 .aq-diluicao button{
   flex:1;border:0;background:transparent;color:#3e3a33;font-weight:500;cursor:pointer;font-family:var(--mono);
   font-size:calc(var(--u) * .62);letter-spacing:.14em;padding:calc(var(--u) * .42) 0;border-radius:999px;transition:background .12s,color .12s;
+  /* o laboratório alinha todo botão à esquerda (system.css); pastilha mais
+     larga que o texto tem de centrar — e o text-indent devolve o meio
+     caractere que o letter-spacing sobra à direita                    */
+  text-align:center;text-indent:.14em;
 }
 .aq-diluicao button.on{background:#2a2620;color:#f2eee4}
 
@@ -4443,7 +4447,7 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 .aq-zoom button{
   border:0;background:transparent;color:rgba(255,255,255,.75);cursor:pointer;font-family:var(--mono);
   font-size:calc(var(--u) * .78);letter-spacing:.06em;height:calc(var(--u) * 2.2);min-width:calc(var(--u) * 2.2);padding:0 calc(var(--u) * .5);border-radius:999px;
-  transition:background .12s,color .12s;
+  transition:background .12s,color .12s;text-align:center;text-indent:.06em;
 }
 .aq-zoom button:hover{background:rgba(255,255,255,.14);color:#fff}
 .aq-carimbo{
@@ -4545,6 +4549,7 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 .aq-cadencia button{
   border:0;background:transparent;color:#8f8d87;cursor:pointer;font-family:var(--mono);
   font-size:calc(var(--u) * .62);letter-spacing:.1em;padding:calc(var(--u) * .4) calc(var(--u) * .7);border-radius:999px;
+  text-align:center;text-indent:.1em;
 }
 .aq-cadencia button.on{background:var(--aq-azul);color:#fff}
 
@@ -4607,6 +4612,7 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
 .aq-pil{
   flex:1 0 30%;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;padding:7px 9px;border-radius:999px;cursor:pointer;
   border:1px solid rgba(255,255,255,.16);background:transparent;color:var(--aq-tx2);transition:all .14s;
+  text-align:center;text-indent:.12em;
 }
 .aq-pil:hover{border-color:rgba(255,255,255,.45);color:var(--aq-tx)}
 .aq-pil.on{background:var(--aq-azul);border-color:var(--aq-azul);color:#fff}
