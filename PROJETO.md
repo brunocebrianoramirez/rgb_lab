@@ -7676,6 +7676,46 @@ lia o eixo vertical. Agora soma os dois (direita ou cima acende) e escreve
 o valor embaixo (LUZ 0–100%, depois RETRO 0–100%). Medido: 0,3 → arrasto
 90 px à direita → 0,8 (RETRO 33%); 90 px para baixo → 0,3.
 
+### 5n.9 Quarta volta (13/09/2026): o acabamento — a folha desenhada maior que a simulação
+
+*"Consegue deixar o acabamento da pintura mais refinado e menos pixelado?"*,
+com dois prints a 300% de zoom: a beira das manchas em degraus de célula.
+A simulação tem 1024–1280 células no lado maior e a orla escura (onde o
+pigmento se concentra) cai numa fronteira de células inteiras; ampliada
+3×, cada degrau tem 3 px. A física não muda; o que muda é como se DESENHA:
+
+1. **Uma pré-passada** (`FS_PRE`) soma depositado + suspenso por godê em
+   duas texturas de 16 bits, na resolução da simulação, mais o molhado à
+   vista. O desenho (`FS_VER`) e a saída (`FS_EXP`) amostram ESSAS, por
+   uv, com filtro bilinear, em qualquer resolução — o papel de desenho é
+   uma cópia de 8 bits. A pilha de Kubelka-Munk continua por pixel, mas só
+   dos godês que já pintaram na folha (`ativos`, uniforme `uAtivo[8]`).
+2. **O canvas cresce com o zoom** (`escalaTela`, até 2× a folha, em
+   passos de ¼, pelo tamanho em que aparece × devicePixelRatio): a 300%
+   uma folha de 1280 é desenhada a 2560 e o navegador só reduz.
+3. **O quadro que vai para a linha do tempo sai na resolução da
+   COMPOSIÇÃO** (até 2× a folha; `A.filme.saida`, `exportar(modo, W, H)`
+   com um alvo do tamanho pedido), com quatro toques em quincôncio de meio
+   texel (`uSuave`) — o laboratório não reescala mais nada. O rolo passou a
+   guardar `sim` (o tamanho dos estados) ao lado de `w×h` (o dos PNGs); o
+   DO CLIPE abre a folha no tamanho da simulação.
+4. O relevo do papel no desenho ficou mais calmo (0,16/0,10 → 0,12/0,08).
+
+**O que a medida mandou refazer no meio:** a primeira versão amostrava as
+texturas de 32 bits direto, com o quincôncio (16 leituras de 16 bytes por
+pixel): desenhar a 2× custava **35 ms** na placa dele — e pular godês
+vazios não mudou nada (33 ms com a folha vazia), porque o custo era
+LARGURA DE BANDA, não a conta. Com a pré-passada em 16 bits: **13 ms a 2×,
+9 a 1,5×, 7,5 a 1×**; passo + desenho a 2× = 25 ms (~40 q/s pintando com
+zoom). A saída a 1920×1080: ~36 ms + PNG 105 ms + estado 86 ms + decodificar
+29 ms (a troca de quadro fica em ~260 ms em 1080p). O `gl.finish()` desta
+ANGLE não espera nada — medir sempre com um `readPixels` de 1 px.
+
+Visto no banco: a 300%, a beira do ultramar é uma diagonal limpa com a orla
+macia. No laboratório: composição 1920×1080 → folha 1280×720 (AUTO) →
+saída 1920×1080 (PNG de 96 KB) → o clipe entra 1:1; DO CLIPE reabre a folha
+a 1280×720 com o depositado intacto (1,19).
+
 ### 5n.6 O que NÃO foi feito, e por quê
 
 - **A mesa em movimento não foi vista** (o painel). O ponteiro de verdade

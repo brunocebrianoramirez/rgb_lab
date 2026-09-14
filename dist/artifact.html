@@ -44740,6 +44740,7 @@ window.VE = window.VE || {};
   /* 8. a cor: Kubelka-Munk, a pilha de até oito pigmentos ------------ */
   var GL_KM = [
     'uniform vec3 uKa[8], uKb[8], uKs[8];',
+    'uniform int uAtivo[8];',      /* 1 = este godê já pintou nesta folha; os outros o laço pula */
     'vec3 kmR(int k, float x, out vec3 T){',
     '  vec3 a = uKa[k], b = uKb[k];',
     '  vec3 y = clamp(b*uKs[k]*x, vec3(0.0), vec3(30.0));',
@@ -44752,6 +44753,7 @@ window.VE = window.VE || {};
     'vec3 pilha(vec4 x0, vec4 x1, vec3 Rt, out vec3 Tt){',
     '  Tt = vec3(1.0);',
     '  for(int k = 0; k < 8; k++){',
+    '    if(uAtivo[k] == 0) continue;',
     '    float x = (k < 4) ? x0[k] : x1[k - 4];',
     '    if(x < 1e-4) continue;',
     '    vec3 T; vec3 R = kmR(k, x, T);',
@@ -44763,32 +44765,47 @@ window.VE = window.VE || {};
     '}',
     'vec3 aLin(vec3 c){ return mix(c/12.92, pow(max((c + 0.055)/1.055, vec3(1e-4)), vec3(2.4)), step(0.04045, c)); }',
     'vec3 aSrgb(vec3 c){ c = max(c, vec3(0.0)); return mix(c*12.92, 1.055*pow(max(c, vec3(1e-6)), vec3(1.0/2.4)) - 0.055, step(0.0031308, c)); }',
-    'vec3 papelBase(ivec2 ij, sampler2D pap){',
-    '  vec4 pp = texelFetch(pap, ij, 0);',
-    '  float hR = texelFetch(pap, CL(ij + ivec2(1,0)), 0).r, hU = texelFetch(pap, CL(ij + ivec2(0,1)), 0).r;',
-    '  float sh = 1.0 + 0.16*(pp.r - hR) + 0.10*(pp.r - hU) + 0.025*(pp.b - 0.5);',
+    /* o desenho e a saída amostram pelo uv, com filtro bilinear, em qualquer
+       resolução: é o que deixa a folha ser DESENHADA maior que a simulação
+       sem degraus. As espessuras levam quatro toques em quincôncio de meio
+       texel (uSuave) — uma suavização de um texel, só no que se vê.      */
+    /* a espessura chega já SOMADA (depositado + em suspensão) em duas
+       texturas de 16 bits, feitas pela pré-passada (FS_PRE) na resolução da
+       simulação: desenhar a 2× com as de 32 bits custava 35 ms só de
+       largura de banda (16 leituras de 16 bytes por pixel) — medido    */
+    'uniform float uSuave;',
+    'vec4 espessura(sampler2D x, vec2 uv){',
+    '  if(uSuave < 0.01) return texture(x, uv);',
+    '  vec2 t = uSuave*0.5/vec2(uTam);',
+    '  vec2 o1 = vec2(t.x, t.y), o2 = vec2(-t.x, t.y);',
+    '  return (texture(x, uv + o1) + texture(x, uv - o1) + texture(x, uv + o2) + texture(x, uv - o2))*0.25;',
+    '}',
+    'vec3 papelBase(vec2 uv, sampler2D pap){',
+    '  vec2 t = 1.0/vec2(uTam);',
+    '  vec4 pp = texture(pap, uv);',
+    '  float hR = texture(pap, uv + vec2(t.x, 0.0)).r, hU = texture(pap, uv + vec2(0.0, t.y)).r;',
+    '  float sh = 1.0 + 0.12*(pp.r - hR) + 0.08*(pp.r - hU) + 0.02*(pp.b - 0.5);',
     '  return vec3(0.905, 0.895, 0.865)*sh;',
     '}'
   ].join('\n');
 
   var FS_VER = [
     PRE,
-    'uniform sampler2D uDep0, uDep1, uPig0, uPig1, uPapel, uAgua, uSat, uFundo, uVegAnt, uVegProx;',
+    'uniform sampler2D uX0, uX1, uMolh, uPapel, uFundo, uVegAnt, uVegProx;',
     'uniform float uLuz, uRetro, uVegA, uVegP, uMostraAgua;',
     'uniform int uTemFundo;',
     GL_KM,
     'out vec4 o;',
     'void main(){',
-    '  ivec2 ij = IJ();',
-    '  vec4 x0 = texelFetch(uDep0, ij, 0) + texelFetch(uPig0, ij, 0);',
-    '  vec4 x1 = texelFetch(uDep1, ij, 0) + texelFetch(uPig1, ij, 0);',
-    '  vec3 base = papelBase(ij, uPapel);',
+    '  vec2 uv = vUv;',
+    '  vec4 x0 = espessura(uX0, uv);',
+    '  vec4 x1 = espessura(uX1, uv);',
+    '  vec3 base = papelBase(uv, uPapel);',
     '  vec3 fundo = base;',
     '  if(uTemFundo == 1){ vec3 vid = aLin(texture(uFundo, vUv).rgb); fundo = mix(base, vid*base/vec3(0.905,0.895,0.865)*0.98 + 0.02, uLuz); }',
     '  vec3 Tt; vec3 R = pilha(x0, x1, fundo, Tt);',
-    '  vec4 a = texelFetch(uAgua, ij, 0); float w = texelFetch(uSat, ij, 0).a;',
     /* a água à vista: a mancha molhada é um pouco mais escura e brilha */
-    '  float molh = a.a*clamp(w*3.0, 0.0, 1.0)*uMostraAgua;',
+    '  float molh = texture(uMolh, uv).r*uMostraAgua;',
     '  R *= (1.0 - 0.09*molh);',
     '  R += 0.03*molh*vec3(1.0);',
     '  vec3 cor = R;',
@@ -44801,24 +44818,42 @@ window.VE = window.VE || {};
     '}'
   ].join('\n');
 
+  /* 8b. a pré-passada do desenho: soma depositado + suspenso por godê e o
+     molhado à vista, na resolução da simulação, em 16 bits — é o que o
+     desenho e a saída amostram, em qualquer escala                        */
+  var FS_PRE = [
+    PRE,
+    'uniform sampler2D uDep0, uDep1, uPig0, uPig1, uAgua, uSat;',
+    'layout(location=0) out vec4 oX0;',
+    'layout(location=1) out vec4 oX1;',
+    'layout(location=2) out vec4 oMolh;',
+    'void main(){',
+    '  ivec2 ij = IJ();',
+    '  oX0 = texelFetch(uDep0, ij, 0) + texelFetch(uPig0, ij, 0);',
+    '  oX1 = texelFetch(uDep1, ij, 0) + texelFetch(uPig1, ij, 0);',
+    '  vec4 a = texelFetch(uAgua, ij, 0); float w = texelFetch(uSat, ij, 0).a;',
+    '  oMolh = vec4(a.a*clamp(w*3.0, 0.0, 1.0), w, 0.0, 1.0);',
+    '}'
+  ].join('\n');
+
   /* 9. a saída: o quadro para o laboratório (invertido em y = PNG) ----- */
   var FS_EXP = [
     PRE,
-    'uniform sampler2D uDep0, uDep1, uPig0, uPig1, uPapel;',
+    'uniform sampler2D uX0, uX1, uPapel;',
     'uniform int uModo;',     /* 0 = sobre o vídeo (C_w + alfa) · 1 = no papel (opaco) */
     GL_KM,
     'out vec4 o;',
     'void main(){',
-    '  ivec2 ij = ivec2(int(gl_FragCoord.x), uTam.y - 1 - int(gl_FragCoord.y));',
-    '  vec4 x0 = texelFetch(uDep0, ij, 0) + texelFetch(uPig0, ij, 0);',
-    '  vec4 x1 = texelFetch(uDep1, ij, 0) + texelFetch(uPig1, ij, 0);',
+    '  vec2 uv = vec2(vUv.x, 1.0 - vUv.y);',              /* PNG: a linha 0 é o topo */
+    '  vec4 x0 = espessura(uX0, uv);',
+    '  vec4 x1 = espessura(uX1, uv);',
     '  vec3 Tt;',
     '  if(uModo == 0){',
     '    vec3 Cw = pilha(x0, x1, vec3(1.0), Tt);',
     '    float cob = clamp((1.0 - min(min(Cw.r, Cw.g), Cw.b))*12.0, 0.0, 1.0);',
     '    o = vec4(aSrgb(Cw), cob);',
     '  } else {',
-    '    vec3 R = pilha(x0, x1, papelBase(ij, uPapel), Tt);',
+    '    vec3 R = pilha(x0, x1, papelBase(uv, uPapel), Tt);',
     '    o = vec4(aSrgb(R), 1.0);',
     '  }',
     '}'
@@ -44872,6 +44907,11 @@ window.VE = window.VE || {};
     var gl = this.gl = canvas.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false, depth: false, stencil: false, alpha: false });
     if (!gl) { this.falhou = 'sem WebGL2'; return; }
     if (!gl.getExtension('EXT_color_buffer_float')) { this.falhou = 'a placa não renderiza em texturas float'; return; }
+    /* o desenho e a saída amostram as texturas de estado com filtro bilinear
+       (a folha desenhada maior que a simulação, sem degraus); as passadas
+       da simulação usam texelFetch e não sentem o filtro                */
+    this.linear = !!gl.getExtension('OES_texture_float_linear');
+    this.suave = 1;
     this.progs = {};
     this.quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
@@ -44885,6 +44925,10 @@ window.VE = window.VE || {};
     T.papel = this.mkTex(gl.RGBA32F);
     T.fundo = this.mkTex(gl.RGBA8); T.vegAnt = this.mkTex(gl.RGBA8); T.vegProx = this.mkTex(gl.RGBA8);
     T.u8 = [this.mkTex(gl.RGBA8), this.mkTex(gl.RGBA8)];
+    /* o que o desenho amostra: somas em 16 bits (filtro linear é de série
+       no WebGL2 para 16F) e o papel em 8 bits                          */
+    T.x0 = this.mkTex(gl.RGBA16F); T.x1 = this.mkTex(gl.RGBA16F); T.molh = this.mkTex(gl.RGBA16F);
+    T.papel8 = this.mkTex(gl.RGBA8);
     /* desfazer e refazer: um histórico de instantâneos em RGBA8 (14 MB cada
        a 1024×576), até HIST no total, com uma reserva de jogos de textura
        para não alocar a cada pincelada                                   */
@@ -44897,6 +44941,9 @@ window.VE = window.VE || {};
     while (this.paleta.length < 8) this.paleta.push(null);
     this.ferr = 'pincel';
     this.slot = 0;
+    /* quais godês já pintaram nesta folha: o desenho e a saída só compõem
+       esses (medido: o custo da pilha é por godê, 8 custava 35 ms a 2×) */
+    this.ativos = [0, 0, 0, 0, 0, 0, 0, 0];
     this.raio = 9; this.agua1 = 0.30; this.carga = 0.42; this.lev = 0.55;
     /* as constantes do modelo — os nomes são os do artigo */
     this.par = {
@@ -44917,7 +44964,8 @@ window.VE = window.VE || {};
   Motor.prototype.mkTex = function (fmt) {
     var gl = this.gl, t = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, t);
-    var flt = (fmt === gl.RGBA32F) ? gl.NEAREST : gl.LINEAR;
+    var flt = (fmt === gl.RGBA32F && !this.linear) ? gl.NEAREST : gl.LINEAR;
+    if (fmt === gl.RGBA16F) { gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, this.w, this.h, 0, gl.RGBA, gl.HALF_FLOAT, null); return t; }
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, flt);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, flt);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -44948,7 +44996,7 @@ window.VE = window.VE || {};
 
   /* uma passada: programa, texturas de entrada {nome: tex}, alvos [tex…]
      (null = a tela), e uma função que arma os uniformes restantes     */
-  Motor.prototype.passar = function (pr, entradas, alvos, arma) {
+  Motor.prototype.passar = function (pr, entradas, alvos, arma, tam) {
     var gl = this.gl;
     gl.useProgram(pr.p);
     if (alvos) {
@@ -44960,7 +45008,9 @@ window.VE = window.VE || {};
       }
       gl.drawBuffers(bufs);
     } else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, this.w, this.h);
+    if (tam) gl.viewport(0, 0, tam.w, tam.h);
+    else if (alvos) gl.viewport(0, 0, this.w, this.h);
+    else gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     var un = 0;
     Object.keys(entradas).forEach(function (k) {
       if (pr.u[k] === undefined) return;
@@ -44986,6 +45036,15 @@ window.VE = window.VE || {};
     gl.bindTexture(gl.TEXTURE_2D, this.tex.papel);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, this.w, this.h, 0, gl.RGBA, gl.FLOAT, dados);
+    /* a cópia de 8 bits para o desenho */
+    var b = new Uint8Array(dados.length);
+    for (var i = 0; i < dados.length; i++) b[i] = Math.max(0, Math.min(255, Math.round(dados[i] * 255)));
+    gl.bindTexture(gl.TEXTURE_2D, this.tex.papel8);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.w, this.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, b);
+  };
+  Motor.prototype.preDesenho = function () {
+    var T = this.tex;
+    this.passar(this.prog('pre', FS_PRE), { uDep0: T.dep0[0], uDep1: T.dep1[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uAgua: T.agua[0], uSat: T.sat[0] }, [T.x0, T.x1, T.molh]);
   };
 
   /* ---------------------------------------------- limpar a folha */
@@ -44993,6 +45052,7 @@ window.VE = window.VE || {};
     var self = this;
     ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1', 'masc'].forEach(function (n) { self.zerar(self.tex[n][0]); self.zerar(self.tex[n][1]); });
     this.fila = []; this.ultimoDab = null; this.molhada = false; this.passos = 0;
+    this.ativos = [0, 0, 0, 0, 0, 0, 0, 0];
     registrar('limpar', []);
   };
 
@@ -45006,6 +45066,7 @@ window.VE = window.VE || {};
       dens.push(p ? p.dens : 0.5); man.push(p ? p.mancha : 2); gran.push(p ? Math.min(0.98, p.gran * this.par.granMul) : 0);
     }
     if (u.uKa) { gl.uniform3fv(u.uKa, a); gl.uniform3fv(u.uKb, b); gl.uniform3fv(u.uKs, s); }
+    if (u.uAtivo) gl.uniform1iv(u.uAtivo, this.ativos);
     this.__dens = dens; this.__man = man; this.__gran = gran;
   };
 
@@ -45080,6 +45141,7 @@ window.VE = window.VE || {};
         gl.uniform4fv(u.uMancha0, man.slice(0, 4)); gl.uniform4fv(u.uMancha1, man.slice(4, 8));
       });
     ['agua', 'sat', 'pig0', 'pig1', 'dep0', 'dep1'].forEach(function (k) { self.troca(k); });
+    if (this.ferr === 'pincel' || this.ferr === 'seco') this.ativos[this.slot] = 1;
     this.molhada = true;
     var pig = this.paleta[this.slot];
     registrar(this.ferr, [Math.round(lote[0][0]), Math.round(lote[0][1]), +lote[0][2].toFixed(1), n, this.ferr === 'pincel' || this.ferr === 'seco' ? pig : undefined]);
@@ -45182,7 +45244,7 @@ window.VE = window.VE || {};
     ESTADO.forEach(function (k) {
       self.passar(pr, { uSrc: self.tex[k][0] }, [n[k]], function (u) { gl.uniform4fv(u.uEsc, SNAP[k].esc); gl.uniform4fv(u.uDesl, SNAP[k].desl); });
     });
-    n.molhada = this.molhada; n.ultimoToque = this.ultimoToque;
+    n.molhada = this.molhada; n.ultimoToque = this.ultimoToque; n.ativos = this.ativos.slice();
     return n;
   };
   Motor.prototype.repor = function (n) {
@@ -45191,6 +45253,7 @@ window.VE = window.VE || {};
       self.passar(pr, { uSrc: n[k] }, [self.tex[k][0]], function (u) { gl.uniform4fv(u.uEsc, SNAP[k].esc); gl.uniform4fv(u.uDesl, SNAP[k].desl); });
     });
     this.molhada = !!n.molhada; this.ultimoToque = this.passos; this.fila = []; this.ultimoDab = null;
+    if (n.ativos) this.ativos = n.ativos.slice();
   };
   /* guardar o estado de AGORA como o passo anterior da próxima ação */
   Motor.prototype.guardarDesfazer = function () {
@@ -45246,16 +45309,28 @@ window.VE = window.VE || {};
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
   };
 
-  /* ------------------------------------------------------- desenhar */
+  /* ------------------------------------------------------- desenhar
+     A folha pode ser desenhada MAIOR que a simulação (até 2×): o canvas
+     cresce, o desenho amostra por uv com filtro bilinear e a suavização —
+     é o que tira os degraus quando a mesa está com zoom.               */
+  Motor.prototype.escalaTela = function (esc) {
+    esc = Math.max(1, Math.min(2, esc || 1));
+    var W = Math.round(this.w * esc), H = Math.round(this.h * esc);
+    if (this.canvas.width !== W || this.canvas.height !== H) { this.canvas.width = W; this.canvas.height = H; }
+    this.escTela = esc;
+  };
   Motor.prototype.desenhar = function () {
     var self = this, gl = this.gl, T = this.tex;
     this.aplicar();
-    this.passar(this.prog('ver', FS_VER), { uDep0: T.dep0[0], uDep1: T.dep1[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uPapel: T.papel, uAgua: T.agua[0], uSat: T.sat[0], uFundo: T.fundo, uVegAnt: T.vegAnt, uVegProx: T.vegProx }, null, function (u) {
+    this.preDesenho();
+    this.passar(this.prog('ver', FS_VER), { uX0: T.x0, uX1: T.x1, uMolh: T.molh, uPapel: T.papel8, uFundo: T.fundo, uVegAnt: T.vegAnt, uVegProx: T.vegProx }, null, function (u) {
       self.armarKM(u, gl);
       gl.uniform1f(u.uLuz, self.luz); gl.uniform1f(u.uRetro, self.retro);
       gl.uniform1f(u.uVegA, self.temVegA ? self.vegA : 0); gl.uniform1f(u.uVegP, self.temVegP ? self.vegP : 0);
       gl.uniform1f(u.uMostraAgua, self.mostraAgua === false ? 0 : 1);
       gl.uniform1i(u.uTemFundo, self.temFundo);
+      /* no desenho, filtro bilinear puro (o quincôncio fica para a saída) */
+      gl.uniform1f(u.uSuave, 0);
     });
   };
 
@@ -45273,21 +45348,39 @@ window.VE = window.VE || {};
   };
   /* a tela, em bytes (RGBA, de baixo para cima como o GL) */
   Motor.prototype.lerTela = function () {
-    var gl = this.gl;
+    var gl = this.gl, W = this.canvas.width, H = this.canvas.height;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    var out = new Uint8Array(this.w * this.h * 4);
-    gl.readPixels(0, 0, this.w, this.h, gl.RGBA, gl.UNSIGNED_BYTE, out);
+    var out = new Uint8Array(W * H * 4);
+    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, out);
     return out;
   };
 
   /* --------------------------------------------- a saída do quadro */
-  Motor.prototype.exportar = function (modo) {
+  Motor.prototype.exportar = function (modo, W, H) {
     var self = this, gl = this.gl, T = this.tex;
-    this.passar(this.prog('exp', FS_EXP), { uDep0: T.dep0[0], uDep1: T.dep1[0], uPig0: T.pig0[0], uPig1: T.pig1[0], uPapel: T.papel }, [T.u8[0]], function (u) {
+    W = Math.max(8, Math.min(Math.round(this.w * 2), Math.round(W || this.w)));
+    H = Math.max(8, Math.min(Math.round(this.h * 2), Math.round(H || this.h)));
+    var alvo = T.u8[0], tam = null;
+    if (W !== this.w || H !== this.h) {
+      /* um alvo do tamanho pedido, guardado enquanto o tamanho não muda */
+      if (!this.texExp || this.texExpW !== W || this.texExpH !== H) {
+        if (this.texExp) gl.deleteTexture(this.texExp);
+        this.texExp = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.texExp);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        this.texExpW = W; this.texExpH = H;
+      }
+      alvo = this.texExp; tam = { w: W, h: H };
+    }
+    this.preDesenho();
+    this.passar(this.prog('exp', FS_EXP), { uX0: T.x0, uX1: T.x1, uPapel: T.papel8 }, [alvo], function (u) {
       self.armarKM(u, gl); gl.uniform1i(u.uModo, modo === 'papel' ? 1 : 0);
-    });
-    var out = new Uint8Array(this.w * this.h * 4);
-    gl.readPixels(0, 0, this.w, this.h, gl.RGBA, gl.UNSIGNED_BYTE, out);
+      gl.uniform1f(u.uSuave, self.suave);
+    }, tam);
+    var out = new Uint8Array(W * H * 4);
+    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, out);
+    out.w = W; out.h = H;
     return out;
   };
   /* o estado seco (só o depositado), dois RGBA8 de cima para baixo */
@@ -45303,6 +45396,12 @@ window.VE = window.VE || {};
     var self = this, gl = this.gl, T = this.tex, pr = this.prog('unpack', FS_UNPACK), n = this.w * this.h * 4;
     this.limparHistorico();
     this.limpar();
+    /* quais godês têm pigmento: um canal por godê, nos dois RGBA8 */
+    for (var k = 0; k < 8; k++) {
+      var ini = (k < 4 ? 0 : n) + (k & 3), fim = (k < 4 ? n : 2 * n), achou = 0;
+      for (var i = ini; i < fim; i += 4) { if (bytes[i]) { achou = 1; break; } }
+      this.ativos[k] = achou;
+    }
     [0, 1].forEach(function (b) {
       gl.bindTexture(gl.TEXTURE_2D, T.u8[1]);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
@@ -45395,15 +45494,18 @@ window.VE = window.VE || {};
      A sequência. Cada quadro: { estado (deflate dos dois RGBA8), png
      (bytes), thumb (data-url) }. O quadro ATUAL vive na GPU; trocar de
      quadro seca, empacota e guarda o que estava, e repõe o de destino. */
-  A.filme = { quadros: [], atual: 0, fps: 12, passo: 2, inicio: 0, w: 0, h: 0, modo: 'video' };
+  /* `saida` é o tamanho do quadro que vai para o laboratório: o da
+     composição (até 2× a simulação), para não haver reescala depois     */
+  A.filme = { quadros: [], atual: 0, fps: 12, passo: 2, inicio: 0, w: 0, h: 0, modo: 'video', saida: null };
 
   A.guardarAtual = function () {
     var m = A.motor, F = A.filme; if (!m || !m.gl) return Promise.resolve();
     if (m.molhada) m.secar();
     var q = F.quadros[F.atual]; if (!q) { q = F.quadros[F.atual] = {}; }
-    var estado = m.empacotar(), rgba = m.exportar(F.modo);
-    q.w = m.w; q.h = m.h; q.sujo = false;
-    return Promise.all([comprimir(estado, 'deflate'), A.png(m.w, m.h, rgba)]).then(function (r) {
+    var sw = (F.saida && F.saida.w) || m.w, sh = (F.saida && F.saida.h) || m.h;
+    var estado = m.empacotar(), rgba = m.exportar(F.modo, sw, sh);
+    q.w = rgba.w; q.h = rgba.h; q.sujo = false;
+    return Promise.all([comprimir(estado, 'deflate'), A.png(rgba.w, rgba.h, rgba)]).then(function (r) {
       q.estado = r[0]; q.png = r[1];
       q.blob = new Blob([q.png], { type: 'image/png' });
       if (q.bitmap) { try { q.bitmap.close(); } catch (e) { } q.bitmap = null; }
@@ -45458,10 +45560,10 @@ window.VE = window.VE || {};
       F.quadros[F.atual].sujo = true; return true;
     });
   };
-  A.novoFilme = function (w, h) {
+  A.novoFilme = function (w, h, saida) {
     var F = A.filme;
     F.quadros.forEach(function (q) { if (q.bitmap) { try { q.bitmap.close(); } catch (e) { } } });
-    F.quadros = [{}]; F.atual = 0; F.w = w; F.h = h;
+    F.quadros = [{}]; F.atual = 0; F.w = w; F.h = h; F.saida = saida || null;
   };
   A.tempoDoQuadro = function (i) { return A.filme.inicio + i / A.filme.fps; };
 
@@ -45507,6 +45609,8 @@ window.VE = window.VE || {};
     var cab = JSON.stringify({
       app: 'rgb_lab', tipo: 'aquarela', v: 1, fps: fps, w: w, h: h, n: quadros.length,
       paleta: paleta || null,
+      /* os PNGs têm w×h (a saída); os estados têm o tamanho da simulação */
+      sim: A.motor ? [A.motor.w, A.motor.h] : [w, h],
       tamanhos: quadros.map(function (q) { return q.png.length; }),
       /* os estados (o depositado, comprimido) vão junto: é o que deixa o
          DO CLIPE trazer a sequência de volta para a mesa, editável      */
@@ -45696,6 +45800,15 @@ window.VE = window.VE || {};
     var esc = lado / Math.max(cw, ch);
     return { w: Math.max(64, Math.round(cw * esc / 2) * 2), h: Math.max(64, Math.round(ch * esc / 2) * 2) };
   }
+  /* o quadro que vai para o laboratório sai no tamanho da COMPOSIÇÃO (até
+     2× a folha), desenhado com filtro e suavização — sem reescala depois  */
+  function saidaDaFolha(t) {
+    var p = VE.project; if (!p) return { w: t.w, h: t.h };
+    var cw = p.canvas.w, ch = p.canvas.h;
+    if (cw <= t.w && ch <= t.h) return { w: t.w, h: t.h };
+    var esc = Math.min(2, cw / t.w, ch / t.h);
+    return { w: Math.round(t.w * esc), h: Math.round(t.h * esc) };
+  }
   function prepararFolha(reabrir) {
     var t = tamanhoDaFolha(), cv = el('aqFolha');
     var novo = !M || !M.gl || M.w !== t.w || M.h !== t.h;
@@ -45703,7 +45816,7 @@ window.VE = window.VE || {};
       M = A.abrirMotor(cv, t.w, t.h, { papel: est.papel || 'frio', paleta: est.paleta });
       if (M.falhou) { toast('aquarela: ' + M.falhou, 'err'); return; }
       aplicarAjustes();
-      A.novoFilme(t.w, t.h);
+      A.novoFilme(t.w, t.h, saidaDaFolha(t));
       var F = A.filme;
       F.fps = est.base / (F.passo || 2);
       F.inicio = VE.project ? Math.floor(VE.project.time * F.fps + 1e-6) / F.fps : 0;
@@ -45855,6 +45968,9 @@ window.VE = window.VE || {};
     pap.style.top = (padT + (ah - h) / 2) + 'px';
     var cx = el('aqFolhaCaixa'), z = est.zoom || 1;
     cx.style.width = (w * z) + 'px'; cx.style.height = (h * z) + 'px';
+    /* o canvas é desenhado no tamanho em que aparece (até 2× a folha) */
+    var dpr = Math.min(2, window.devicePixelRatio || 1), esc = Math.ceil((w * z * dpr) / M.w * 4) / 4;
+    M.escalaTela(esc); est.redesenha = true;
     pap.classList.toggle('com-zoom', z > 1.001);
     el('aqZoomTxt').textContent = Math.round(z * 100) + '%';
     var fl = el('aqFolhear'); if (fl.width !== M.w) { fl.width = M.w; fl.height = M.h; }
@@ -46146,11 +46262,13 @@ window.VE = window.VE || {};
     if (!s.blob) { toast('esse clipe não guarda o rolo', 'err'); return; }
     A.desempacotarRolo(s.blob).then(function (r) {
       if (!r.estados) { toast('esse rolo não tem os estados — só os quadros prontos', 'err'); return; }
-      var t = { w: r.cab.w, h: r.cab.h };
+      /* a folha volta no tamanho da SIMULAÇÃO do rolo (os estados são desse
+         tamanho); a saída continua a do rolo                            */
+      var t = { w: r.cab.sim ? r.cab.sim[0] : r.cab.w, h: r.cab.sim ? r.cab.sim[1] : r.cab.h };
       M = A.abrirMotor(el('aqFolha'), t.w, t.h, { papel: est.papel || 'frio', paleta: r.cab.paleta || est.paleta });
       if (r.cab.paleta) M.paleta = r.cab.paleta.slice(0, 8);
       aplicarAjustes(); aplicarFerramenta(); ajustarVidro();
-      A.novoFilme(t.w, t.h);
+      A.novoFilme(t.w, t.h, { w: r.cab.w, h: r.cab.h });
       var F = A.filme;
       F.fps = r.cab.fps; F.passo = Math.max(1, Math.round(est.base / r.cab.fps)); F.inicio = sel.start; F.modo = s.modo || 'video';
       F.quadros = r.quadros.map(function (q, i) { return { png: q.png, blob: q.blob, w: q.w, h: q.h, estado: r.estados[i] }; });

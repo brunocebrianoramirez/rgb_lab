@@ -1176,7 +1176,9 @@ enquanto você pinta — as de verdade, com os números de verdade
 `aquarela.secar()`, `aquarela.quadro(4)`).
 
 **O que vai para a linha do tempo** é uma fonte de QUADROS: a sequência
-guardada em PNG com alfa (o rolo, um arquivo só, com os estados dentro), que
+guardada em PNG com alfa **na resolução da composição** (até o dobro da
+folha, desenhada com filtro e suavização — nada é reescalado depois; o
+rolo, um arquivo só, leva os estados dentro), que
 o laboratório desenha quadro a quadro pelo tempo — vale velocidade, reverso,
 entrada, como num vídeo, e vai para a sessão guardada e para o .rgblab. Sem
 composição aberta, a mesa funciona como uma aquarela solta: 16:9, e o USAR

@@ -136,6 +136,15 @@
     var esc = lado / Math.max(cw, ch);
     return { w: Math.max(64, Math.round(cw * esc / 2) * 2), h: Math.max(64, Math.round(ch * esc / 2) * 2) };
   }
+  /* o quadro que vai para o laboratório sai no tamanho da COMPOSIÇÃO (até
+     2× a folha), desenhado com filtro e suavização — sem reescala depois  */
+  function saidaDaFolha(t) {
+    var p = VE.project; if (!p) return { w: t.w, h: t.h };
+    var cw = p.canvas.w, ch = p.canvas.h;
+    if (cw <= t.w && ch <= t.h) return { w: t.w, h: t.h };
+    var esc = Math.min(2, cw / t.w, ch / t.h);
+    return { w: Math.round(t.w * esc), h: Math.round(t.h * esc) };
+  }
   function prepararFolha(reabrir) {
     var t = tamanhoDaFolha(), cv = el('aqFolha');
     var novo = !M || !M.gl || M.w !== t.w || M.h !== t.h;
@@ -143,7 +152,7 @@
       M = A.abrirMotor(cv, t.w, t.h, { papel: est.papel || 'frio', paleta: est.paleta });
       if (M.falhou) { toast('aquarela: ' + M.falhou, 'err'); return; }
       aplicarAjustes();
-      A.novoFilme(t.w, t.h);
+      A.novoFilme(t.w, t.h, saidaDaFolha(t));
       var F = A.filme;
       F.fps = est.base / (F.passo || 2);
       F.inicio = VE.project ? Math.floor(VE.project.time * F.fps + 1e-6) / F.fps : 0;
@@ -295,6 +304,9 @@
     pap.style.top = (padT + (ah - h) / 2) + 'px';
     var cx = el('aqFolhaCaixa'), z = est.zoom || 1;
     cx.style.width = (w * z) + 'px'; cx.style.height = (h * z) + 'px';
+    /* o canvas é desenhado no tamanho em que aparece (até 2× a folha) */
+    var dpr = Math.min(2, window.devicePixelRatio || 1), esc = Math.ceil((w * z * dpr) / M.w * 4) / 4;
+    M.escalaTela(esc); est.redesenha = true;
     pap.classList.toggle('com-zoom', z > 1.001);
     el('aqZoomTxt').textContent = Math.round(z * 100) + '%';
     var fl = el('aqFolhear'); if (fl.width !== M.w) { fl.width = M.w; fl.height = M.h; }
@@ -586,11 +598,13 @@
     if (!s.blob) { toast('esse clipe não guarda o rolo', 'err'); return; }
     A.desempacotarRolo(s.blob).then(function (r) {
       if (!r.estados) { toast('esse rolo não tem os estados — só os quadros prontos', 'err'); return; }
-      var t = { w: r.cab.w, h: r.cab.h };
+      /* a folha volta no tamanho da SIMULAÇÃO do rolo (os estados são desse
+         tamanho); a saída continua a do rolo                            */
+      var t = { w: r.cab.sim ? r.cab.sim[0] : r.cab.w, h: r.cab.sim ? r.cab.sim[1] : r.cab.h };
       M = A.abrirMotor(el('aqFolha'), t.w, t.h, { papel: est.papel || 'frio', paleta: r.cab.paleta || est.paleta });
       if (r.cab.paleta) M.paleta = r.cab.paleta.slice(0, 8);
       aplicarAjustes(); aplicarFerramenta(); ajustarVidro();
-      A.novoFilme(t.w, t.h);
+      A.novoFilme(t.w, t.h, { w: r.cab.w, h: r.cab.h });
       var F = A.filme;
       F.fps = r.cab.fps; F.passo = Math.max(1, Math.round(est.base / r.cab.fps)); F.inicio = sel.start; F.modo = s.modo || 'video';
       F.quadros = r.quadros.map(function (q, i) { return { png: q.png, blob: q.blob, w: q.w, h: q.h, estado: r.estados[i] }; });
