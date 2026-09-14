@@ -1,66 +1,99 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **14/09/2026** (a sexta volta da
-> vigésima sétima: a AQUARELA; a vigésima sexta foi a filmadora, em quatro voltas). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> Documento de continuidade. Última sessão: **14/09/2026** (a sexta e a sétima
+> voltas da vigésima sétima: a AQUARELA, sete voltas ao todo; a vigésima sexta
+> foi a filmadora, em quatro). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
 > decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
 
-**A vigésima sétima passada (13/09/2026) construiu a AQUARELA em TOOLS** —
-a mesa de luz de um animador, flutuando no palco: pinta-se com água e
+**A vigésima sétima passada (13–14/09/2026) construiu a AQUARELA em TOOLS**
+— a mesa de luz de um animador, flutuando no palco: pinta-se com água e
 pigmento de verdade (o modelo de Curtis na GPU, a cor por Kubelka-Munk, 52
 pigmentos) POR CIMA do quadro da composição, um quadro de cada vez, e a
 sequência entra na linha do tempo em Multiplicar — a animação em cima da
-animação, que foi o pedido. Está toda na **seção 5n**. Estado em 13/09:
+animação, que foi o pedido. Está toda na **seção 5n** (5n.1–5n.5 a
+construção, 5n.7–5n.12 as sete voltas de pedidos dele, 5n.6 o que falta).
+Tudo no ar; último commit `4d949e0` (14/09, conferido no GitHub Pages).
 
 ```
 js/aquarela.js      o motor: os 52 pigmentos (K e S por canal, de duas cores),
-                    o papel (relevo calculado), a simulação (água rasa,
-                    pigmento, capilar, sal, álcool) em texturas RGBA32F, o
-                    Kubelka-Munk no shader, os quadros (estado quantizado +
-                    deflate, PNG escrito à mão), o ROLO e a fonte 'quadros'
-js/aquarelaui.js    a mesa: caixa de tintas (8 godês, 4 pincéis, 6 utensílios),
-                    folha, LUZ, VEGETAL, tira de quadros, telinha (papel,
-                    secagem, granulação, borda, floradas, cadência, definição,
+                    o papel (relevo calculado), a simulação (água rasa com
+                    teto e tensão superficial, pigmento, capilar, sal,
+                    álcool) em texturas RGBA32F, a memória do traço, o
+                    Kubelka-Munk no shader, desfazer/refazer, os quadros
+                    (estado quantizado + deflate, PNG escrito à mão), o ROLO
+                    e a fonte 'quadros'
+js/aquarelaui.js    a mesa: caixa de tintas (8 godês, 4 pincéis, TAMANHO,
+                    DILUIÇÃO, 6 utensílios, desfazer/refazer), folha com zoom
+                    e barras, LUZ, VEGETAL (em cores ou azul/vermelho), tira
+                    de quadros, telinha (papel, secagem, granulação, borda,
+                    floradas, vegetal, cadência, definição AUTO até 1920,
                     saída, MODO CÓDIGO), gaveta dos 52, DO CLIPE, USAR
 css/aquarela.css    tudo em --u (1% da largura da mesa)
 js/media.js         a fonte kind 'quadros' no plano (pelo tempo da fonte) e o
                     rolo em media.recriar (sessão guardada e .rgblab)
 ```
 
-**O que a medida provou** (5n.5): massa do pigmento conservada a 0,000%;
-borda 1,4× mais escura que o miolo; ultramar granula (−0,71) e ftalo quase
-não (−0,15); o sal clareia o cristal; o traço sangra 2 px; estado, PNG e
-rolo vão e voltam; no laboratório de verdade, três quadros viraram o clipe
-"AQUARELA 01" em Multiplicar e o `#gl` deu azul em t=1,00, amarelo em
-t=1,17 e branco fora do clipe. Na placa dele: 9,8 ms por passo a 1024×576.
+**As seis voltas de pedidos depois da construção, numa linha cada** (os
+números são os medidos; a construção é a primeira volta, 5n.1–5n.5):
+1. (5n.7) Ctrl+Z/Y com histórico em RGBA8; a roda na tira; DILUIÇÃO
+   CLARA/MÉDIA/FORTE (carga 0,35/0,75/1,3).
+2. (5n.8) zoom 100–800% com barras finas; TAMANHO até 30% da folha; a LUZ
+   pelos dois eixos com o valor escrito; DEFINIÇÃO AUTO e o USAR que
+   cresce a tela da composição.
+3. (5n.9) o acabamento: pré-passada em 16 bits, desenho bilinear maior
+   que a simulação, saída na resolução da composição (35 → 13 ms a 2×).
+4. (5n.10) a folha em 1080p (33,7 ms/passo na placa dele) e o VEGETAL em
+   cores; duas armadilhas (ImageBitmap vazio; pintar durante a troca).
+5. (5n.11) **o xadrez da água** — "bolinhas" e o borrão que crescia: a
+   onda de gravidade explícita explode acima de w ≈ 0,79; agora a folha só
+   segura `wMax` 0,8, o filme tem `tensao` 0,10 (conservativa, na
+   capilar), a beira é parede. Três passadas de CLARA: xadrez 8,0 → 0,0002.
+6. (5n.12) **as costelas** — a tinta de uma pincelada dependia do lote de
+   toques por quadro (mão devagar = 3×): o traço tem memória (`traco`,
+   teto 1,6 por pincelada). 28 costelas → 0. As pinceladas ficam mais
+   claras do que ele via na mesma diluição.
 
-**O primeiro retorno dele (14/09, 5n.11):** *"quando eu pinto toda a tela,
-meio que acumula tinta e começa a crescer esse borrão… pq fica meio com
-umas bolinhas antes de secar?"* — a água da malha explodia em tabuleiro de
-xadrez acima de ~0,8 de altura (a onda de gravidade do esquema explícito),
-e cada passada por cima punha mais água sem teto. Agora a folha só segura
-0,8 (`wMax`), o filme tem tensão superficial (`tensao` 0,10, conservativa)
-e a beira é parede. Medido na placa dele: três passadas de CLARA na folha
-inteira, água 0,80 e xadrez 0,0002 (era 5,3 e 8,0); massa 0,0000%.
-**O segundo (14/09, 5n.12):** *"essas costelas que é o formato redondo do
-pincel, não aconteceria na física da aquarela na vida real né?"* — não
-aconteceria: a tinta de uma pincelada dependia de como os toques eram
-agrupados quadro a quadro (lotes de 6 pontos: 3,9; de 48: 1,3) e cada
-fronteira de lote somava tinta onde os círculos se cobriam. Agora o traço
-tem memória (`traco`): uma pincelada deixa no máximo TETO por célula, some
-quantos lotes forem. Medido: 1,200 em qualquer lote; o S em 1080p com
-física, 28 costelas → 0. **As pinceladas vão parecer mais claras que
-ontem na mesma diluição** — ontem a mão devagar punha até 3× a tinta
-calibrada; se ele achar fraco, o número é `DILUICAO` (aquarelaui.js).
+**Onde estão os botões do modelo, para não procurar:** `M.par` em
+`Motor` (aquarela.js): `pressao` 0,4, `mu` 0,10, `kappa` 0,06, `wMax` 0,8,
+`tensao` 0,10, `sangra` 0,2, `evap` 0,0006 (a telinha troca por
+rápida/lenta), `eta` 0,0025, `alfa` 0,0004, `taxa` 0,05; `TETO` 1,6 dentro
+do `FS_TOOL`; `DILUICAO` (carga e água por diluição) em aquarelaui.js;
+`Motor.HIST` 12 (níveis do desfazer, escalados pelo tamanho da folha).
+O limiar da onda depende de `pressao·w`: quem subir `pressao` ou `wMax`
+tem de medir o xadrez de novo (o banco de 5n.11).
 
-**O que ficou para ele testar:** o resto da lista — pintar com o ponteiro
-de verdade (pressão, coalescência), a água à vista secando, os pincéis e
-utensílios pela caixa, folhear, o vegetal. E o olho dele para a força das
-aguadas, a granulação e as floradas (a couve-flor ainda cresce pouco —
-5n.6).
+**Os bancos de prova desta sessão viveram só na conversa** (rotinas no
+console da página, nada ficou em arquivo — de propósito). Para refazer
+amanhã, cada um é uma dúzia de linhas sobre `VE.aquarela.abrirMotor(canvas,
+w, h, {papel})` + `M.ferramenta/tocar/arrastar/soltar/passo` + `M.ler`:
+- **xadrez**: retângulo de água no meio de 320×200, `altas` = média de
+  |w − média das 4 vizinhas| ao longo dos passos (estável cai para ~0,0004;
+  instável sobe para > 1); a folha inteira em 3 passadas de CLARA tem de
+  dar água ≤ 0,8 e `altas` ≤ 0,001;
+- **costelas**: traço reto com `M.aplicar()` forçado a cada 6/12/24/48
+  pontos — o pigmento no meio do traço tem de dar o MESMO (1,200) nos
+  quatro, máx/mín ≤ 1,01;
+- **regressão da física**: disco MÉDIA r 40 seco até o fim → d na orla
+  (32–39) ÷ d no miolo (< 14) = **1,18**; dois traços MÉDIA cruzados →
+  **88%** em 20 passos e **43%** em 220; massa (pig + dep) em 200 passos →
+  **0,0000%**; desfazer → 0 → refazer;
+- **custo**: 20 passos a 1920×1080 cronometrados com um `readPixels` de
+  1 px antes e depois (o `gl.finish` desta ANGLE não espera): ~42 ms.
+Duas armadilhas de banco: `M.ler` lê em FLOAT e devolve zeros numa textura
+RGBA8 (`traco`) — para essa, `readPixels` em UNSIGNED_BYTE; e no painel
+do app com a aba ESCONDIDA (`visibilityState: hidden`) o `rAF` e o
+`setTimeout` andam a 0,5 q/s — os bancos chamam `M.passo()` na mão.
+
+**O que ficou para ele testar (a lista é a verificação que falta):**
+pintar com o ponteiro de verdade (pressão, coalescência), a força das
+três diluições depois das costelas (ficaram mais claras — se achar fraco,
+`DILUICAO`), a água à vista secando, os pincéis e utensílios pela caixa,
+folhear, o vegetal em cores. E o olho dele para a granulação e as floradas
+(a couve-flor ainda cresce pouco — 5n.6).
 
 ---
 
@@ -7913,8 +7946,16 @@ qualquer velocidade de mão.
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
 **Antes de tudo: a lista do Bruno.** Ele fecha cada sessão usando o que entrou
-e trazendo o que quebrou — foi assim que os três defeitos da 5c apareceram.
-Começar por ela; o que está abaixo é só o que sobra quando ela acaba.
+e trazendo o que quebrou — foi assim que os três defeitos da 5c apareceram,
+e assim que o xadrez da água e as costelas da aquarela apareceram (5n.11,
+5n.12: dois prints dele valeram mais que todos os bancos). Começar por ela;
+o que está abaixo é só o que sobra quando ela acaba.
+
+**Na AQUARELA (a mais recente), o que sobra está em 5n.6:** a florada grande
+(constantes em `M.par` — `sangra`, `evap`, `eta`, `pressao` — com o olho
+dele), o corpo dos pigmentos opacos sobre vídeo escuro (um modo de mistura
+próprio, índice 27 em `VE.BLENDS`, o "corpo" no alfa), pincel chato/leque,
+e o RETOMAR AQUI diz como refazer os bancos.
 
 Em ordem de valor. Os dois primeiros vieram do que a 4v mediu e não consertou.
 
