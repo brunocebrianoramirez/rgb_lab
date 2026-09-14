@@ -1,7 +1,7 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **13/09/2026** (vigésima
-> sétima: a AQUARELA; a vigésima sexta foi a filmadora, em quatro voltas). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> Documento de continuidade. Última sessão: **14/09/2026** (a sexta volta da
+> vigésima sétima: a AQUARELA; a vigésima sexta foi a filmadora, em quatro voltas). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
 > decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
@@ -37,11 +37,20 @@ rolo vão e voltam; no laboratório de verdade, três quadros viraram o clipe
 "AQUARELA 01" em Multiplicar e o `#gl` deu azul em t=1,00, amarelo em
 t=1,17 e branco fora do clipe. Na placa dele: 9,8 ms por passo a 1024×576.
 
-**O que ficou para ele testar (ninguém viu a mesa em movimento):** pintar
-com o ponteiro de verdade (pressão, coalescência), a água à vista secando,
-os pincéis e utensílios pela caixa, folhear, o vegetal. E o olho dele para a
-força das aguadas, a granulação e as floradas (a couve-flor ainda cresce
-pouco — 5n.6).
+**O primeiro retorno dele (14/09, 5n.11):** *"quando eu pinto toda a tela,
+meio que acumula tinta e começa a crescer esse borrão… pq fica meio com
+umas bolinhas antes de secar?"* — a água da malha explodia em tabuleiro de
+xadrez acima de ~0,8 de altura (a onda de gravidade do esquema explícito),
+e cada passada por cima punha mais água sem teto. Agora a folha só segura
+0,8 (`wMax`), o filme tem tensão superficial (`tensao` 0,10, conservativa)
+e a beira é parede. Medido na placa dele: três passadas de CLARA na folha
+inteira, água 0,80 e xadrez 0,0002 (era 5,3 e 8,0); massa 0,0000%.
+
+**O que ficou para ele testar:** o resto da lista — pintar com o ponteiro
+de verdade (pressão, coalescência), a água à vista secando, os pincéis e
+utensílios pela caixa, folhear, o vegetal. E o olho dele para a força das
+aguadas, a granulação e as floradas (a couve-flor ainda cresce pouco —
+5n.6).
 
 ---
 
@@ -7762,6 +7771,67 @@ do quadro 1 como aguadas leves; quadro 3 com o amarelo leve e os dois
 primeiros mais leves ainda; o modo azul tingindo os dois de azul. No
 laboratório dele: quadro 3, um atrás (hansa) = (240,239,205), dois atrás
 (ultramar) = (229,230,234), papel (244,243,239); a tecla V devolve o papel.
+
+### 5n.11 Sexta volta (14/09/2026): o xadrez da água — as "bolinhas" e o borrão que crescia
+
+O primeiro retorno dele usando a mesa de verdade, com dois prints (a folha
+inteira em azul ftalo, e um recorte a 300% cheio de pontinhos numa grade):
+*"quando eu pinto toda a tela, meio que acumula tinta e começa a crescer
+esse borrão e fica assim, e outra coisa, pq fica meio com umas bolinhas
+antes de secar?"*
+
+**O que era.** Uma coisa só, com duas caras. A água é ALTURA (5n.2) e a
+velocidade vem do gradiente dela — é uma onda de gravidade em água rasa,
+integrada de forma explícita, e onda explícita só é estável até uma
+velocidade de onda (`c² = pressao·w`), ou seja, até uma ALTURA de água. A
+análise linear do esquema (com a viscosidade 0,10 matando a memória da
+velocidade no modo de célula alternada) dá o limiar em w ≈ 0,79; o banco
+confirmou: 0,77 estável (o xadrez cai de 0,0067 para 0,0004 em 100
+passos), 1,08 explode (1,71 em 25 passos e fica). E o pincel punha água
+sem teto: uma passada de CLARA na folha inteira já dava 1,04; três davam
+**5,3** (máximo 11). Daí:
+- as **bolinhas**: o modo instável é o de célula sim, célula não — um
+  tabuleiro de xadrez na água (e no pigmento, que anda com ela); a folha
+  desenhada a 1/3 faz moiré disso e vira uma grade de pontos; ao secar, o
+  que assentou guarda o desenho;
+- o **borrão que crescia**: onde as passadas se sobrepunham mais havia um
+  morro de água (5 contra 2) que escorria e empurrava o pigmento em
+  suspensão para a orla — uma florada do tamanho da folha, com as
+  fronteiras de fase do xadrez desenhando "vermes" (é o contorno do
+  borrão no print dele).
+
+**O que mudou (no modelo; nada na aparência):**
+1. **A folha só segura tanta água** — `par.wMax` 0,8: o pincel e a água
+   enchem o filme assintoticamente (`add·clamp(1 − w/wMax)`), no lugar do
+   piso de 40% da segunda volta. Numa área molhada a 0,48 (MÉDIA) entra o
+   mesmo que antes; a 0,67 (CLARA) entra 16%, não 40%. O cruzamento de
+   dois traços continua guardando 88% em 20 passos e 42% em 220.
+2. **Tensão superficial do filme** — `par.tensao` 0,10, na passada
+   capilar: cada célula molhada troca água com as vizinhas molhadas do
+   MESMO campo (simétrica, conservativa, nunca dá mais de 4×0,10 do que
+   tem). Sobe o limiar da onda: com 0,06 a folha aguenta 1,17; com 0,10,
+   1,61 sem um traço de xadrez (medido em 320×200, sem teto). Com o teto
+   em 0,8 a margem passa de 2×. Só a água sente isso (o pigmento não
+   difunde); a borda escura de um disco MÉDIA foi de 1,14 para 1,18, o
+   sangrado de +1,7 px ficou +1,7, a massa 0,0000%.
+3. **A beira da folha é parede**: a última coluna/linha não passa água
+   para fora (`FS_VEL`) e a primeira não recebe de si mesma (`FS_PIG`) —
+   antes, a folha inteira perdia 1,3% do pigmento em 200 passos pela
+   beira (no centro, 0,000%).
+
+**A armadilha do meio.** A primeira tensão foi posta no transporte:
+laplaciano do campo VELHO somado ao campo já transportado, com piso em
+zero. Onde a célula tinha perdido 96% no transporte a soma ficava
+negativa, o piso CRIAVA água, e a massa explodiu (42 mil → 2·10¹¹ em 100
+passos). A troca tem de ser feita sobre o mesmo campo que dá o piso —
+daí a capilar, que já lia as quatro vizinhas.
+
+**Medido na placa dele, na mesa aberta** (três passadas de CLARA a 76 px
+na folha inteira, 1920×1080): antes, água média 5,33, máximo 23, xadrez
+8,00 aos 175 passos; agora, água 0,72 (máximo 0,73), xadrez 0,0002 aos
+112 passos, massa idêntica. Recorte 4× guardado na conversa (o tabuleiro
+e os vermes contra a aguada lisa com as faixas das passadas). Custo: 42
+ms por passo a 1080p contra 40–42 do código anterior, no mesmo minuto.
 
 ### 5n.6 O que NÃO foi feito, e por quê
 

@@ -44530,9 +44530,11 @@ window.VE = window.VE || {};
     '  v += (sU - s0)*uSalPuxa;',
     /* arrasto */
     '  u *= (1.0 - uKappa); v *= (1.0 - uKappa);',
-    /* contorno: a face com uma célula seca não deixa passar água */
-    '  if(R.a < 0.5) u = 0.0;',
-    '  if(U.a < 0.5) v = 0.0;',
+    /* contorno: a face com uma célula seca não deixa passar água — e a
+       beira da folha é parede (a última coluna mandava água e pigmento
+       para fora da folha: −1,3% do pigmento em 200 passos, medido)     */
+    '  if(R.a < 0.5 || ij.x == uTam.x - 1) u = 0.0;',
+    '  if(U.a < 0.5 || ij.y == uTam.y - 1) v = 0.0;',
     /* CFL: no máximo 0,24 célula por passo, para o transporte conservar massa */
     '  u = clamp(u, -0.24, 0.24); v = clamp(v, -0.24, 0.24);',
     '  o = vec4(u, v, w0, M);',
@@ -44558,7 +44560,8 @@ window.VE = window.VE || {};
     '  if(a.a < 0.5){ oPig0 = g0; oPig1 = g1; oSat = st; return; }',
     '  float uR = a.r, vU = a.g;',
     '  ivec2 qL = CL(ij + ivec2(-1,0)), qR = CL(ij + ivec2(1,0)), qD = CL(ij + ivec2(0,-1)), qU = CL(ij + ivec2(0,1));',
-    '  float uL = texelFetch(uAgua, qL, 0).r, vD = texelFetch(uAgua, qD, 0).g;',
+    /* a face de fora da folha é parede: a primeira coluna não recebe de si mesma */
+    '  float uL = (ij.x == 0) ? 0.0 : texelFetch(uAgua, qL, 0).r, vD = (ij.y == 0) ? 0.0 : texelFetch(uAgua, qD, 0).g;',
     '  vec4 sL = texelFetch(uSat, qL, 0), sR = texelFetch(uSat, qR, 0), sD = texelFetch(uSat, qD, 0), sU = texelFetch(uSat, qU, 0);',
     '  float mL = smoothstep(0.0, 0.01, sL.a), mR = smoothstep(0.0, 0.01, sR.a), mD = smoothstep(0.0, 0.01, sD.a), mU = smoothstep(0.0, 0.01, sU.a);',
     '  float sai = (max(uR, 0.0) + max(-uL, 0.0) + max(vU, 0.0) + max(-vD, 0.0))*smoothstep(0.0, 0.01, st.a);',
@@ -44617,13 +44620,31 @@ window.VE = window.VE || {};
   var FS_CAP = [
     PRE,
     'uniform sampler2D uSat, uAgua, uPapel, uMasc;',
-    'uniform float uAlfa, uEps, uSigma, uEvap, uEta, uSecaP, uSalBebe, uSangra;',
+    'uniform float uAlfa, uEps, uSigma, uEvap, uEta, uSecaP, uSalBebe, uSangra, uTensao;',
     'layout(location=0) out vec4 oSat;',
     'layout(location=1) out vec4 oAgua;',
     'void main(){',
     '  ivec2 ij = IJ();',
     '  vec4 st = texelFetch(uSat, ij, 0), a = texelFetch(uAgua, ij, 0), pp = texelFetch(uPapel, ij, 0);',
     '  float s = st.r, c = pp.g, p = a.b, M = a.a, w = st.a;',
+    '  ivec2 qL = CL(ij + ivec2(-1,0)), qR = CL(ij + ivec2(1,0)), qD = CL(ij + ivec2(0,-1)), qU = CL(ij + ivec2(0,1));',
+    '  float wL = texelFetch(uSat, qL, 0).a, wR = texelFetch(uSat, qR, 0).a, wD = texelFetch(uSat, qD, 0).a, wU = texelFetch(uSat, qU, 0).a;',
+    '  bool ML = texelFetch(uAgua, qL, 0).a > 0.5, MR = texelFetch(uAgua, qR, 0).a > 0.5, MD = texelFetch(uAgua, qD, 0).a > 0.5, MU = texelFetch(uAgua, qU, 0).a > 0.5;',
+    /* a TENSÃO SUPERFICIAL do filme: uma troca de água entre vizinhas
+       molhadas, do MESMO campo (conservativa, simétrica, e a célula nunca
+       dá mais de 4×uTensao do que tem), que achata o que é do tamanho de
+       uma célula. É o modo que explodia: a onda de gravidade da malha só é
+       estável até uma altura de água (~0,79 sem isto — medido: a 1,08 a
+       água virava um tabuleiro de xadrez em 25 passos, as "bolinhas");
+       com a tensão o limiar sobe, e a folha só segura uWMax           */
+    '  if(M > 0.5){',
+    '    float lap = 0.0;',
+    '    if(ML && ij.x > 0) lap += wL - w;',
+    '    if(MR && ij.x < uTam.x - 1) lap += wR - w;',
+    '    if(MD && ij.y > 0) lap += wD - w;',
+    '    if(MU && ij.y < uTam.y - 1) lap += wU - w;',
+    '    w = max(w + uTensao*lap, 0.0);',
+    '  }',
     /* absorção: da água rasa para dentro do papel */
     '  if(M > 0.5){ float ab = min(min(uAlfa, max(c - s, 0.0)), w); s += ab; w -= ab; }',
     /* difusão capilar entre vizinhas (forma de coleta, conservativa) */
@@ -44652,7 +44673,7 @@ window.VE = window.VE || {};
     /* secagem: sem água por uns passos (e as vizinhas também sem), a célula
        deixa de estar molhada. O contador vive no próprio M: 1 é molhada,
        cai a cada passo seco, abaixo de 0,7 seca de vez                 */
-    '  float wv = max(max(texelFetch(uSat, CL(ij + ivec2(-1,0)), 0).a, texelFetch(uSat, CL(ij + ivec2(1,0)), 0).a), max(texelFetch(uSat, CL(ij + ivec2(0,-1)), 0).a, texelFetch(uSat, CL(ij + ivec2(0,1)), 0).a));',
+    '  float wv = max(max(wL, wR), max(wD, wU));',
     '  if(M > 0.5){',
     '    if(w <= 0.0008 && wv <= 0.0008) M -= 0.3/uSecaP; else M = 1.0;',
     '    if(M < 0.7){ M = 0.0; p = 0.0; w = 0.0; }',
@@ -44663,7 +44684,7 @@ window.VE = window.VE || {};
        (saturação alta): é por isso que uma gota sobre uma aguada que está
        secando corre longe e empurra o pigmento (a florada), e sobre papel
        seco o traço só sangra um ou dois pixels.                        */
-    '    bool vizM = texelFetch(uAgua, CL(ij + ivec2(-1,0)), 0).a > 0.5 || texelFetch(uAgua, CL(ij + ivec2(1,0)), 0).a > 0.5 || texelFetch(uAgua, CL(ij + ivec2(0,-1)), 0).a > 0.5 || texelFetch(uAgua, CL(ij + ivec2(0,1)), 0).a > 0.5;',
+    '    bool vizM = ML || MR || MD || MU;',
     '    float limiar = uSangra*(1.0 - 0.85*clamp(s/uSigma, 0.0, 1.0));',
     /* e o papel CHEIO (saturação acima de σ, Curtis) devolve água à
        superfície ao lado de uma célula molhada — a florada corre por aí */
@@ -44703,7 +44724,7 @@ window.VE = window.VE || {};
     'uniform sampler2D uAgua, uSat, uPig0, uPig1, uDep0, uDep1, uPapel;',
     'uniform vec4 uDab[48];',      /* x, y (px), raio, força */
     'uniform int uN, uFerr, uSlot;',
-    'uniform float uAgua1, uCarga, uLev, uSalQ;',
+    'uniform float uAgua1, uCarga, uLev, uSalQ, uWMax;',
     'uniform vec4 uMancha0, uMancha1;',
     'layout(location=0) out vec4 oAgua;',
     'layout(location=1) out vec4 oSat;',
@@ -44735,10 +44756,12 @@ window.VE = window.VE || {};
     '  vec4 sel0 = vec4(equal(ivec4(uSlot), ivec4(0,1,2,3)));',
     '  vec4 sel1 = vec4(equal(ivec4(uSlot), ivec4(4,5,6,7)));',
     '  if(uFerr == 0 || uFerr == 1){',            /* pincel molhado / só água */
-    /* água nova sobre área já molhada entra em parte: senão cada toque
-       faz um morro de água que dispara o fluxo e leva o pigmento embora
-       (medido: 92% do pigmento sumia do cruzamento de dois traços)   */
-    '    if(cob > 0.02){ float add = uAgua1*cobSoma*(1.0 - 0.6*clamp(st.a/0.3, 0.0, 1.0)); ag.a = 1.0; ag.b += add; st.a += add; }',
+    /* a folha só segura tanta água (uWMax): o filme enche até o teto e
+       para — cada passada por cima punha mais um morro de água, sem fim, e
+       acima de ~0,8 a água da malha explode em xadrez (as "bolinhas").
+       Também é o que guarda o pigmento no cruzamento de dois traços (92%
+       sumia quando cada toque somava água inteira à área molhada)     */
+    '    if(cob > 0.02){ float add = uAgua1*cobSoma*clamp(1.0 - st.a/uWMax, 0.0, 1.0); ag.a = 1.0; ag.b += add; st.a += add; }',
     '    st.r = min(st.r + uAgua1*cobSoma*2.0, pp.g);',
     '    if(uFerr == 0){ g0 += sel0*uCarga*cobSoma; g1 += sel1*uCarga*cobSoma; }',
     '  } else if(uFerr == 2){',                    /* pincel seco: só nas cristas do papel */
@@ -44988,7 +45011,11 @@ window.VE = window.VE || {};
       mu: 0.10, kappa: 0.06, pressao: 0.4, declive: 0.001,
       alfa: 0.0004, eps: 0.10, sigma: 0.5, sangra: 0.2, eta: 0.0025, evap: 0.0006,
       secaP: 10, taxa: 0.05, salPuxa: 0.35, salBebe: 0.012,
-      granMul: 1, floradas: 1, borda: 1
+      granMul: 1, floradas: 1, borda: 1,
+      /* a água que a folha segura (o pincel enche o filme até aqui) e a
+         tensão superficial do filme — os dois juntos mantêm a água abaixo
+         do limiar em que a malha explode (14/09, o xadrez do Bruno)   */
+      wMax: 0.8, tensao: 0.10
     };
     this.passos = 0; this.ultimoToque = -1e9;
     this.fila = []; this.ultimoDab = null;
@@ -45172,7 +45199,7 @@ window.VE = window.VE || {};
       [T.agua[1], T.sat[1], T.pig0[1], T.pig1[1], T.dep0[1], T.dep1[1]], function (u) {
         gl.uniform4fv(u.uDab, arr); gl.uniform1i(u.uN, n);
         gl.uniform1i(u.uFerr, FERR[self.ferr]); gl.uniform1i(u.uSlot, self.slot);
-        gl.uniform1f(u.uAgua1, self.agua1); gl.uniform1f(u.uCarga, self.carga); gl.uniform1f(u.uLev, self.lev);
+        gl.uniform1f(u.uAgua1, self.agua1); gl.uniform1f(u.uCarga, self.carga); gl.uniform1f(u.uLev, self.lev); gl.uniform1f(u.uWMax, self.par.wMax);
         var man = [], k;
         for (k = 0; k < 8; k++) { var p = A.PIGBY[self.paleta[k]]; man.push(p ? p.mancha : 2); }
         gl.uniform4fv(u.uMancha0, man.slice(0, 4)); gl.uniform4fv(u.uMancha1, man.slice(4, 8));
@@ -45211,7 +45238,7 @@ window.VE = window.VE || {};
     this.passar(this.prog('cap', FS_CAP), { uSat: T.sat[0], uAgua: T.agua[0], uPapel: T.papel, uMasc: T.masc[0] }, [T.sat[1], T.agua[1]], function (u) {
       gl.uniform1f(u.uAlfa, P.alfa); gl.uniform1f(u.uEps, P.eps); gl.uniform1f(u.uSigma, P.sigma);
       gl.uniform1f(u.uEvap, P.evap); gl.uniform1f(u.uEta, P.eta * P.borda); gl.uniform1f(u.uSecaP, P.secaP); gl.uniform1f(u.uSalBebe, P.salBebe);
-      gl.uniform1f(u.uSangra, P.floradas ? P.sangra : 9.0);
+      gl.uniform1f(u.uSangra, P.floradas ? P.sangra : 9.0); gl.uniform1f(u.uTensao, P.tensao);
     });
     this.troca('sat'); this.troca('agua');
     this.passos++;
