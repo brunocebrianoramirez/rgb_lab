@@ -1140,10 +1140,11 @@ branco de titânio cobre e o ftalo não.
 | Peça | O que ela faz |
 |---|---|
 | **a folha** | o papel. Pinte com o ponteiro — caneta com pressão muda o traço e a carga. A água fica à vista enquanto a folha está molhada |
-| **LUZ** (o botão de latão) | a mesa de luz: arraste. Quanto do **vídeo da composição** aparece por baixo do papel — é o quadro do instante em que a folha está. No fim do curso a luz vem **por trás** da pintura (retroiluminação: o que se vê é o que atravessa) |
+| **LUZ** (o botão de latão) | a mesa de luz: arraste **para a direita ou para cima** para acender (esquerda ou baixo apaga; a roda do mouse também), e o valor fica escrito embaixo. Quanto do **vídeo da composição** aparece por baixo do papel — é o quadro do instante em que a folha está. No fim do curso a luz vem **por trás** da pintura (retroiluminação: o que se vê é o que atravessa) |
 | **VEGETAL** | o papel vegetal do animador: o quadro **anterior em azul**, o **seguinte em vermelho**, por cima da folha |
 | **os godês** | os oito pigmentos da paleta. Toque escolhe; o **⇄** abre a gaveta dos 52, em seis grupos, com o índice de cor e as marcas GRANULA e MANCHA |
-| **os pincéis** | quatro redondos: **n.º 2, 6, 12 e 24**. `[` e `]` mudam |
+| **os pincéis** | quatro redondos: **n.º 2, 6, 12 e 24** — e o **TAMANHO** livre por baixo deles, de 1 px a um terço da folha (bem grande). `[` e `]` mudam |
+| **− 100% +** (no canto do vidro) | o **zoom** da folha, de 100% a 800%. Com zoom, **barras discretas** rolam a folha (a roda do mouse também; **Ctrl + roda** aproxima onde o ponteiro está). O número volta a 100% |
 | **ÁGUA** | só água: molhe antes de pintar (molhado sobre molhado), dilua, provoque floradas |
 | **ESPONJA** | levanta tinta e água. Pigmento que MANCHA (ftalos, quinacridonas, perilenos) resiste; o que granula sai fácil |
 | **SECO** | o pincel quase sem água: a tinta pega só nas cristas do papel |
@@ -1165,7 +1166,8 @@ relevo da folha inteira), a SECAGEM (rápida, normal, lenta), a GRANULAÇÃO
 para a beira da mancha e o pigmento vai atrás — a assinatura da aquarela),
 as FLORADAS (a água que invade o papel ao lado, e corre longe em papel ainda
 úmido), a força do VEGETAL, a cadência da composição (24, 25, 30), a
-DEFINIÇÃO da folha (512 a 1280 px no lado maior; vale para uma folha nova),
+DEFINIÇÃO da folha (AUTO casa com a composição pixel a pixel, entre 1024 e
+1280 no lado maior; ou 768, 1024, 1280, 1920 — vale para uma folha nova),
 a SAÍDA (**SOBRE O VÍDEO**, transparente em Multiplicar; ou **NO PAPEL**,
 opaca, com o papel — a animação por si) e o **MODO CÓDIGO**: liga e a mesa
 mostra, num terminal de canto, as chamadas que o simulador está fazendo
@@ -1178,7 +1180,10 @@ guardada em PNG com alfa (o rolo, um arquivo só, com os estados dentro), que
 o laboratório desenha quadro a quadro pelo tempo — vale velocidade, reverso,
 entrada, como num vídeo, e vai para a sessão guardada e para o .rgblab. Sem
 composição aberta, a mesa funciona como uma aquarela solta: 16:9, e o USAR
-cria a composição no tamanho da folha.
+cria a composição no tamanho da folha. E se a composição for **menor que a
+folha** (a tela nasce da primeira fonte carregada — uma fonte de 160×90
+deixa a tela de 160×90), o USAR **cresce a tela até a folha** e avisa: a
+aquarela não é esmagada numa tela pequena.
 
 ### A região de um efeito pode ser um traçado
 

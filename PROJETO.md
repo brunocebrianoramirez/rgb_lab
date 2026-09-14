@@ -7644,6 +7644,38 @@ a pressão caiu de 0,5 para 0,4: o cruzamento guarda 69% em 20 passos e 42%
 em 220 (o molhado sobre molhado espalha, não some); a borda escura continua
 1,36.
 
+### 5n.8 Terceira volta (13/09/2026): zoom com barras, pincel bem grande, a luz pelos dois eixos, a tela pequena
+
+O print dele: uma composição de **160×90** com a aquarela dentro, a 396% de
+zoom do laboratório — *"quando inseri na linha do tempo, ficou com a
+qualidade péssima"*. A tela da composição nasce da primeira fonte carregada
+(`setCanvas(s.w, s.h, 'src')` em app.js); uma fonte pequena deixa a tela
+pequena, e a folha de 1024×576 era esmagada nela. Agora: (1) a DEFINIÇÃO tem
+**AUTO** (padrão): o lado maior da composição, entre 1024 e 1280 — a folha
+casa com a composição pixel a pixel e nunca fica pequena; 1920 existe, com
+aviso de lento; (2) o **USAR cresce a tela** até a folha quando ela é menor
+(a folha tem a proporção da composição, o enquadramento não muda) e avisa.
+Medido no laboratório: tela 160×90 → folha 1024×576 → USAR → tela 1024×576,
+toast escrito.
+
+**Zoom e rolagem.** `− 100% +` no canto do vidro (100 a 800%, o número
+volta a 100%), Ctrl + roda aproxima onde o ponteiro está (`zoomPara` mantém
+fixo o ponto sob o cursor). A folha vive numa caixa dentro do papel; com
+zoom o papel ganha `overflow:auto` com barras finas e escuras (as
+"discretas" que ele pediu); sem zoom não há barra. O cursor do pincel passou
+a somar o `scrollLeft/Top`. Medido no banco: zoom 2 → caixa 1138×640 num
+papel de 569×320, rola, cursor no lugar do ponteiro mais a rolagem.
+
+**Pincel bem grande.** Os quatro presets ficaram; por baixo, TAMANHO livre
+(a linha é o campo) de 1 px a **30% da largura da folha** (307 em 1024), com
+`[` e `]` em passos de 1,25×. Medido: preset 24 → 20 px, três `]` → 39,
+slider 250 → motor 250, teto 307.
+
+**A luz.** *"clico e arrasto pra direita e vai pra esquerda"* — o botão só
+lia o eixo vertical. Agora soma os dois (direita ou cima acende) e escreve
+o valor embaixo (LUZ 0–100%, depois RETRO 0–100%). Medido: 0,3 → arrasto
+90 px à direita → 0,8 (RETRO 33%); 90 px para baixo → 0,3.
+
 ### 5n.6 O que NÃO foi feito, e por quê
 
 - **A mesa em movimento não foi vista** (o painel). O ponteiro de verdade
