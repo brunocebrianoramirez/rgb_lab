@@ -7716,6 +7716,53 @@ macia. No laboratório: composição 1920×1080 → folha 1280×720 (AUTO) →
 saída 1920×1080 (PNG de 96 KB) → o clipe entra 1:1; DO CLIPE reabre a folha
 a 1280×720 com o depositado intacto (1,19).
 
+### 5n.10 Quinta volta (13/09/2026): a folha na definição da composição, e o VEGETAL em cores
+
+*"Tá bem, faça"* (a simulação na definição da composição) e *"tem como ter
+a opção de ver uma leve camada da anterior, na atual? … qual a proposta
+você dá?"*
+
+**A folha em 1080p.** AUTO passou a ir até 1920 (1024–1920 pelo lado maior
+da composição); 1280 ficou como a opção LEVE. Como 1080p custa 2,25× por
+passo, o motor foi enxugado antes: o transporte dos DOIS pigmentos e da
+água numa passada só (três alvos; era três passadas lendo as mesmas
+vizinhas), a transferência dos oito godês numa passada (quatro alvos; era
+duas), o papel da simulação em 8 bits e o borrão em 16 (100 MB a menos em
+1080p), o borrão a cada 3 passos (era 2), e os níveis do desfazer pelo
+tamanho da folha (12 a 720p, 5 a 1080p). Medido na placa dele: massa do
+pigmento conservada (460,14 → 460,14), borda 1,35, secagem igual; 1080p:
+**33,7 ms por passo**, 11,5 ms para desenhar. Para o traço acompanhar a mão
+numa folha pesada, o laço pula o passo da água quadro sim, quadro não
+ENQUANTO se pinta (só quando o quadro passa de 26 ms); parada a mão, a água
+anda a cada quadro.
+
+**O vegetal.** Já existia (anterior em azul, seguinte em vermelho), mas
+fraco e sem o que ele pediu: a anterior NAS CORES. A proposta que ficou:
+modo CORES (padrão) — o quadro anterior entra como uma aguada leve nas
+cores dele (`cor *= mix(1, ca, força·alfa)`), o de dois atrás a 45% da
+força; modo AZUL E VERMELHO — o clássico do animador; 1 ou 2 quadros atrás;
+a força (0,4 de fábrica); a chave VEGETAL ou a tecla V. Texturas
+`vegAnt`, `vegAnt2`, `vegProx`; no modo NO PAPEL o quadro guardado é opaco e
+o vegetal divide pela cor do papel (`uVegOpaco`).
+
+**Duas armadilhas desta volta, as duas do tipo que não dá erro:**
+1. **ImageBitmap subido direto para a textura chega VAZIO nesta placa**
+   (Intel UHD / ANGLE D3D11): `texImage2D(…, bitmap)` sem erro de GL, e a
+   textura toda zero — pelo Chrome sem cabeça o vegetal aparecia, no
+   laboratório dele não. O mesmo bitmap desenhado num canvas 2D e subido
+   dali chega inteiro (`setVegetal` faz isso sempre). Medido lendo a
+   textura de volta: (0,0,0,0) contra (246,245,143,255).
+2. **Pintar no meio da troca de quadro apagava o traço**: a reposição do
+   quadro de destino é assíncrona (deflate, PNG, miniatura) e um traço
+   feito antes de ela terminar era limpo por ela. A folha ignora o ponteiro
+   enquanto `trocando`.
+
+Visto no banco: quadro 2 com o traço amarelo cheio e o azul e o vermelho
+do quadro 1 como aguadas leves; quadro 3 com o amarelo leve e os dois
+primeiros mais leves ainda; o modo azul tingindo os dois de azul. No
+laboratório dele: quadro 3, um atrás (hansa) = (240,239,205), dois atrás
+(ultramar) = (229,230,234), papel (244,243,239); a tecla V devolve o papel.
+
 ### 5n.6 O que NÃO foi feito, e por quê
 
 - **A mesa em movimento não foi vista** (o painel). O ponteiro de verdade
