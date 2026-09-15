@@ -2000,6 +2000,33 @@ não há tremor para ajustar, em STOP MOTION não há troca.
 **ANIMAR** mostra o resultado na folha; **ENVIAR PRA TIMELINE** leva uma cópia
 própria dos ajustes, então mexer no laboratório depois não muda o que já foi.
 
+### PASTILHA — o letreiro de metrô
+
+O botão **PASTILHA** (a terceira mesa, com as letras recortadas e a escrita à
+mão) assenta o texto da ficha em pastilhas, como um letreiro de estação:
+fiadas de pastilhas paralelas à borda da letra, cortadas nas quinas, o
+rejunte entre elas, e — no **painel inteiro** — o campo em volta, o **aro**
+(as fiadas de contorno na cor clara) e a **moldura** na beira. A família, o
+corpo, o peso e o arranjo vêm da ficha; mude lá e a folha acompanha.
+
+| controle | o que faz |
+|---|---|
+| **Passo da pastilha** | o tamanho, em % da altura das letras (10 % é o letreiro clássico) |
+| **Rejunte** | a junta entre pastilhas, em % do passo |
+| **Cobertura mínima do caco** | o pedaço cortado que ficou menor que isso não se assenta |
+| **Canto arredondado** | a pastilha de canto vivo ou de vidro |
+| **Desenho** | só as letras (fundo transparente) ou o painel inteiro |
+| **Fiadas de contorno** | quantas voltas de aro em torno da letra (0 a 3) |
+| **Campo** | grade reta · tijolo · **calçada portuguesa** · **calçada de Copacabana** (a pedra com as ondas do calçadão) · **azulejo do Bulcão** (módulo girado ao acaso) · **ladrilho hidráulico** |
+| **Moldura** | nenhuma · lisa · onda de Copacabana · xadrez · diagonal — e a largura em pastilhas |
+| **Paleta** | doze do letreiro de Nova York e doze brasileiras (marcadas **·br**): Copacabana, Avenida Atlântica, Bulcão, azulejo colonial, pastilha anos 50, pastilha rosa, ladrilho hidráulico, verde e amarelo, Pelourinho, Metrô de São Paulo, cerâmica da Bahia, noite tropical. Mexer numa cor à mão vira Personalizada |
+| **Variação de tom** | cada pastilha um pouco mais clara ou mais escura — é o que faz parecer vidro e não vetor |
+| **Assentar uma a uma** | a animação: as pastilhas entram na ordem em que o mosaiqueiro as põe, na duração escolhida |
+
+**SORTEAR** troca os tons e as pedras; **ASSENTAR** mostra a animação na
+folha; **ENVIAR PRA TIMELINE** leva o painel no tamanho da composição (com a
+animação, se ligada); **PNG** salva em dobro do palco.
+
 ### Saída — no rodapé da coluna, sempre visível
 
 O bloco **SAÍDA** fica preso no pé da coluna da esquerda, com a barra vermelha do
@@ -2093,6 +2120,9 @@ js/view.js                    viewport: zoom, pan, fit, réguas
 js/timeline.js                a mesa de edição
 js/mosaico.js                 a grade do mosaico: geometria e montagem dos quadros
 js/mosaicoui.js               a janela do mosaico: mapa, pincel de fontes, controles
+js/pastilha.js                pastilha (LAB 03): o assentamento — campo de distância, fiadas, quinas, campos, paletas
+js/pastilhaui.js              a mesa da pastilha: folha, barra, vigia do palco, saídas
+css/pastilha.css              a folha e a barra da pastilha
 js/musica.js                  núcleo musical: escalas, vozes, síntese, .mid, render
 js/sonografo.js               sonógrafo: a linha parada e o detector do que cruza
 js/sonografoui.js             a janela do sonógrafo: visor, régua, piano roll, mesa

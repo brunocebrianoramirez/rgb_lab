@@ -1,13 +1,26 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **14/09/2026** (a vigésima oitava: a
-> GRAVURA de dois tons pela régua da Spiral Betty — 5o; antes dela, no mesmo
-> dia, a sexta e a sétima voltas da AQUARELA — 5n). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> Documento de continuidade. Última sessão: **15/09/2026** (a vigésima nona: a
+> PASTILHA, o letreiro de metrô no LAB 03 — 5p; a vigésima oitava foi a GRAVURA
+> de dois tons — 5o; antes, a AQUARELA — 5n). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
 > decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
+
+**A vigésima nona passada (15/09/2026) pôs a PASTILHA no LAB 03** — a terceira
+MESA da tipografia, ao lado de LETRAS RECORTADAS e ESCREVER À MÃO: o texto da
+ficha assentado em pastilhas como num letreiro de metrô (a lógica do
+mosaiqueiro: fiadas paralelas à borda, cortadas nas quinas), com o campo em
+volta, o aro, a moldura, 24 paletas (12 do gerador de referência, 12
+brasileiras — Copacabana, Bulcão, azulejo colonial, ladrilho hidráulico,
+Pelourinho, Metrô de São Paulo…), a CALÇADA PORTUGUESA com as ondas de
+Copacabana, o azulejo em módulo girado do Bulcão, e a animação ASSENTAR.
+`js/pastilha.js` (motor) + `js/pastilhaui.js` (mesa) + `css/pastilha.css`;
+`VE.type.mascara()` em type.js dá a máscara das letras. **Seção 5p.** Medido
+no laboratório (483 pastilhas em 223 ms a 1080², o clipe na linha do tempo
+lido no `#gl`); o olho dele é o que falta.
 
 **A vigésima oitava passada (14/09/2026, à noite) refez a GRAVURA / HACHURA**
 (`engrave`, js/fx4.js) pela régua da Spiral Betty, a pedido: *"atualize a
@@ -8091,6 +8104,139 @@ de zoom: a borda das hastes em serra. Duas causas, uma por cima da outra:
 - As paletas com degradê do site (uns dez pares) não entraram.
 - A espessura do contorno de "para colorir" (1,6 px) é chute meu — o site
   usa um traço de 1 px cinza com o miolo branco.
+
+## 5p. A PASTILHA — o letreiro de metrô no LAB 03 (vigésima nona passada)
+
+O pedido (15/09/2026), com três prints do *Mosaic Type Generator* (um
+gerador vetorial de letras em ladrilho de metrô de Nova York — pitch, grout,
+coverage, corner radius, tile/field, paletas, export SVG/PNG/OTF): *"vamos
+em tipografia, vai inserir uma tool nele… mas use também elementos
+brasileiros, tem vários"*.
+
+### 5p.1 O que é, e onde mora
+
+A terceira MESA do laboratório de tipografia (as outras: LETRAS RECORTADAS e
+ESCREVER À MÃO), com o nome daqui — PASTILHA, que é o nome da peça: a
+pastilha de vidro das fachadas brasileiras e dos letreiros de metrô. Item
+`pastilha` em `TOOLS` (type.js, `janela: 'pastilhaui'`, `btn: 'tyPastilha'`),
+uma folha por cima do palco (`.pastilha-folha`, com os pixels do palco) e a
+barra ao lado (`.tinta-bar.pastilha-bar`, o mesmo desenho das outras). O
+texto, a família, o corpo, o peso e o arranjo são os da FICHA: a mesa só
+recebe a máscara das letras — `VE.type.mascara()`, o motor emprestado da
+miniatura, desenha o texto como está no palco em t = 0 com tudo o que é de
+tempo, trama e sombra desligado, SEM refazer as letras (o arrasto à mão
+fica). Um relógio de meio segundo compara a assinatura da máscara (o alfa
+numa grade de 48×48) e reassenta quando o palco muda.
+
+### 5p.2 Como se assenta (a lógica do mosaiqueiro, sem Clipper)
+
+O gerador de referência é vetorial: opentype.js para os contornos e Clipper
+para as operações booleanas; ele risca uma linha paralela à borda da letra,
+assenta uma FIADA de pastilhas ao longo dela virando cada uma para seguir a
+curva, risca a próxima fiada uma pastilha para dentro, e corta nas quinas.
+Aqui a mesma lógica sem dependências, a partir da máscara:
+
+1. **Campo de distância** exato da máscara (Felzenszwalb–Huttenlocher, duas
+   passadas 1D, `edt`): cada pixel de dentro sabe a distância à borda
+   (`dIn`) e cada pixel de fora sabe a distância à letra (`dOut`).
+2. **As linhas riscadas**: marching squares sobre `dIn` no nível
+   (k + ½)·passo — a linha do meio da fiada k — com interpolação na aresta,
+   os segmentos encadeados em laços, e Douglas–Peucker a passo/10 (acima de
+   900 mil pixels o campo é lido de 2 em 2).
+3. **As corridas**: o laço quebra em cada QUINA (giro > 36°, medido com meio
+   passo de cada lado para não ver ruído; quinas mais perto que um passo são
+   uma só); cada corrida é reamostrada por comprimento de arco em n =
+   round(L/passo) pastilhas iguais. Cada pastilha é um polígono que segue a
+   curva (a orla de fora e a de dentro a ± (passo − rejunte)/2 da linha, com
+   pontos a cada meio passo), e nas pontas de uma corrida aberta o corte em
+   MEIA-ESQUADRIA: a linha do corte passa pela quina na direção que
+   bissecta a chegada e a saída (`tB − tA`), meio rejunte para cada lado.
+4. **O recorte é por pixel**, pelos campos: cada pixel de dentro pertence à
+   fiada k = ⌊d/passo⌋ e está no rejunte se d − k·passo cair a menos de
+   meio rejunte das bordas da fiada; a pastilha desenhada só vale dentro
+   da sua fiada. Onde duas corridas da mesma fiada se encontram (o miolo de
+   uma haste), a assentada por último corta a anterior — e o rejunte do
+   polígono dela faz a junta. A `cobertura` (%) descarta o caco que ficou
+   pequeno demais depois do corte (medido numa passada de IDENTIDADE: cada
+   pastilha pintada com o índice na cor, os pixels contados por fiada). O
+   que sobrar sem dono dentro da letra (o miolo fundo demais, as cunhas)
+   vira caco de enchimento na tinta, com um tom por célula.
+5. **O aro**: as fiadas de contorno FORA da letra, pelo mesmo caminho sobre
+   `dOut`, na cor do aro (a fiada clara que os letreiros de Nova York têm).
+6. **O campo**, no modo painel: grade reta ou de tijolo (pastilhas quadradas
+   cortadas pela letra a meio rejunte), **calçada portuguesa** (sementes numa
+   grade sacudida, cada pixel vai para a mais próxima, o rejunte é a
+   fronteira entre pedras) — e a **calçada de Copacabana**, a mesma pedra com
+   as faixas onduladas do calçadão (fase y/faixa + senos em x, quatro passos
+   de largura por faixa); o **azulejo do Bulcão** (um quarto de disco ou uma
+   diagonal por módulo, girados ao acaso); o **ladrilho hidráulico** (estrela
+   de quatro pontas alternada). E a **moldura** na beira do painel: lisa (na
+   cor do aro), onda de Copacabana, xadrez, diagonal.
+7. **A composição é feita uma vez por jogo de cores** e guardada no painel:
+   a imagem cheia, o fundo sem as pastilhas da letra, e o MAPA DE ORDEM (a
+   que pastilha cada pixel pertence, na ordem do assentamento). Um quadro
+   da animação ASSENTAR é escolher, por pixel, entre a cheia e o fundo.
+
+**As paletas**: as doze do gerador com nomes daqui (Cobalto e areia é a de
+fábrica) e doze brasileiras — Copacabana (pedra preta e branca, calçada com
+ondas), Avenida Atlântica, Bulcão Brasília (azul e branco, campo em módulo,
+aro branco), Azulejo colonial, Pastilha anos 50, Pastilha rosa, Ladrilho
+hidráulico (terracota e ocre, moldura xadrez), Verde e amarelo, Pelourinho,
+Metrô de São Paulo, Cerâmica da Bahia, Noite tropical — e a Personalizada
+(tinta, papel, aro e rejunte à mão; mexer numa cor sai do preset). O rejunte
+de fábrica é o papel puxado para um cinza quente.
+
+**Saídas**: ENVIAR PRA TIMELINE (a máscara escalada por 'contain' para o
+tamanho da composição, o assentamento refeito ali, fonte `type` com
+`render(local)` — parado, um quadro; animando, o mapa de ordem), PNG em
+dobro do palco, e a prévia ASSENTAR na folha.
+
+### 5p.3 Medido (laboratório de verdade, lab2 via index)
+
+```
+"Bharmacia", corpo 230, peso 700, 1080×1080, passo 10 %
+  483 pastilhas · 1 fiada · aro 434 · assentar 223 ms · compor ~230 ms
+"RIO", corpo 520, peso 900, passo 7 %: 222 pastilhas · 2 fiadas · 0 cacos
+  repintar com a mesma cor (cache) 1 ms · um quadro da animação 45 ms
+  animação: pixels de tinta 0 em t=0, 48 629 no meio, 119 342 no fim
+vigia: RIO → "RIO 40" com a mesa aberta: 125 → 209 pastilhas sozinho
+linha do tempo: composição 1280×720, clipe PASTILHA_001 (type), fonte
+  1280×720, o #gl lido em t=0,5 com as cores da paleta (aro (200,16,46),
+  rejunte (203,201,194), papel (243,243,239), tinta (10,59,139))
+PNG em dobro (2160²): 4,9 s (a calçada é o que pesa)
+```
+
+Visto em folha de contato (guardada na conversa): Bharmacia em cobalto e
+areia com o aro; RIO em duas fiadas; Copacabana com as ondas; Bulcão; o
+ladrilho hidráulico com a moldura; Metrô de São Paulo com moldura lisa e
+dois aros; o modo só letras (fundo transparente).
+
+### 5p.4 Armadilhas desta passada
+
+1. **Coalescer com `requestAnimationFrame` numa mesa que vigia o palco**:
+   o rAF só corre com a aba pintando; no painel do app o relógio de meio
+   segundo via a mudança e o pedido ficava preso no rAF. `setTimeout` de 16
+   ms coalesce igual e corre sempre.
+2. **`var top = …` no console do navegador é `window.top`** — a variável
+   não sobrescreve, e devolver o objeto dá "circular structure". Meia hora
+   de "o teste está errado" antes de olhar o nome.
+
+### 5p.5 O que falta
+
+- **O olho dele** na mesa: a barra, as paletas, o assentamento numa
+  família LAB (a máscara vem do traço desenhado por código — funciona,
+  porque a máscara é só alfa, mas ninguém viu).
+- **Encaixe na grade** (o *snap spacing* do gerador: avanço e kern
+  arredondados a uma pastilha inteira, para a grade correr sem quebra pela
+  palavra) — aqui a mesa recebe a máscara pronta; seria mexer no entreletra
+  da ficha.
+- **SVG e OTF**: o gerador é vetorial e exporta os dois; aqui o recorte é
+  por pixel — PNG e linha do tempo. Uma saída SVG das pastilhas inteiras
+  (sem o corte da fiada) seria possível, mas mentiria nas bordas.
+- A CALÇADA a 2160² custa 4,9 s (busca da pedra mais próxima por pixel);
+  se incomodar, um mapa de ordem de Voronoi por varredura.
+- O gerador tem paletas de várias cores por letra e degradês; aqui são
+  três cores (tinta, papel, aro) mais o rejunte.
 
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 

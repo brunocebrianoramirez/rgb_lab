@@ -286,7 +286,8 @@
        inteiro e BASE, que é a 01 desde sempre, virava 03. As mesas nunca
        mostram número — mostram símbolo (`icon`).                       */
     { id: 'recorte', g: 'mesa', n: 'LETRAS RECORTADAS', d: 'cada letra é um papel — arraste', icon: '✂', janela: 'recorteui', btn: 'tyRecorte' },
-    { id: 'tinta', g: 'mesa', n: 'ESCREVER À MÃO', d: 'desenhe o traço; ele se escreve', icon: '✎', janela: 'tinta', btn: 'tyTinta' }
+    { id: 'tinta', g: 'mesa', n: 'ESCREVER À MÃO', d: 'desenhe o traço; ele se escreve', icon: '✎', janela: 'tinta', btn: 'tyTinta' },
+    { id: 'pastilha', g: 'mesa', n: 'PASTILHA', d: 'o letreiro de metrô assentado em ladrilhos', icon: '▦', janela: 'pastilhaui', btn: 'tyPastilha' }
   ];
 
   /* ---------------- inicialização ---------------- */
@@ -595,6 +596,7 @@
        fecha essa porta.                                                 */
     var r = box.querySelector('#tyRecorte'); if (r) r.__rec = 1;
     var ti = box.querySelector('#tyTinta'); if (ti) ti.__tinta = 1;
+    var pa = box.querySelector('#tyPastilha'); if (pa) pa.__past = 1;
     pend.length = 0;
     observarQuandoCouber(box, 0);
     box.querySelectorAll('[data-tyfam]').forEach(function (b) {
@@ -987,6 +989,37 @@
     emMini = false;
     return ok;
   };
+
+  /* ==================== A MÁSCARA DAS LETRAS ====================
+     Para as mesas que assentam coisa EM CIMA da letra (a PASTILHA): o
+     texto como está no palco — família, corpo, arranjo, o que foi
+     arrastado à mão — em tinta chapada sobre nada, em t = 0, com tudo o
+     que é de tempo, de trama e de sombra desligado. O mesmo motor
+     emprestado da miniatura: guarda-se o estado, aponta-se para o alvo,
+     desenha-se, devolve-se. As letras NÃO são refeitas (build), para a
+     máscara ser exatamente o que está na tela. Só o alfa interessa a quem
+     a pede.                                                            */
+  T.mascara = function () {
+    var alvo = document.createElement('canvas'); alvo.width = W; alvo.height = H;
+    var sCv = cv, sCx = cx, sP = P, sSel = selLetter, sMouse = mouse;
+    emMini = true;
+    try {
+      cx = alvo.getContext('2d'); cv = alvo;
+      selLetter = -1; mouse = { x: -9999, y: -9999, down: false };
+      P = T.params = Object.assign({}, sP, {
+        bgAlpha: 1, colorMode: 0, c1: '#ffffff', outline: 0, fill: 1, stroke: 0,
+        shX: 0, shY: 0, shBlur: 0, slice: 0, rgb: 0, repeat: 1, mouseK: 0,
+        linhas: 0, tiras: 0, brilho: 0, grao: 0,
+        writeMode: 0, entryMode: 0, exitMode: 0, loopMode: 0,
+        waveAmp: 0, rotAmp: 0, scaleAmp: 0
+      });
+      T.draw(0);
+    } catch (e) { }
+    cv = sCv; cx = sCx; P = T.params = sP; selLetter = sSel; mouse = sMouse;
+    emMini = false;
+    return alvo;
+  };
+  T.tamanhoDoPalco = function () { return { w: W, h: H }; };
 
   /* ==================== PAINEL QUE SE MOVE ====================
      As duas mesas nascem presas no canto de cima à direita do palco, e é

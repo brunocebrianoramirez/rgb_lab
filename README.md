@@ -56,6 +56,11 @@ função, e o que produzem vira **fonte** do laboratório:
 | **FILMADORA** | a traseira de uma câmera de filme: bitola, seletor de filme e o vermelho que grava a composição com a película — medida, não imitada |
 | **AQUARELA** | a mesa de luz do animador: água e pigmento de verdade (o modelo de Curtis na GPU, 52 pigmentos por Kubelka-Munk) sobre o quadro da composição, um quadro de cada vez — a animação em cima da animação |
 
+No laboratório de tipografia, três **mesas**: LETRAS RECORTADAS (cada letra
+um pedaço de papel), ESCREVER À MÃO e **PASTILHA** — o letreiro de metrô
+assentado em ladrilhos, com a calçada de Copacabana, o azulejo do Bulcão e
+as paletas brasileiras.
+
 Cada laboratório tem um tutorial dentro dele (`? COMO USAR`).
 
 ---
