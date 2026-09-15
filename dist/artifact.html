@@ -9203,42 +9203,206 @@ window.VE = window.VE || {};
   });
 
   /* ===================== GRAVURA ===================== */
+  /* A gravura de dois tons: uma ESPIRAL, LINHAS paralelas ou uma retícula
+     de PONTOS cuja espessura (ou tamanho) segue a sombra da imagem — o que
+     a Spiral Betty faz numa foto, aqui feito quadro a quadro, por pixel.
+     As contas são as dela, lidas do próprio código (14/09/2026):
+     · o escuro de um pixel: claridade (mistura com branco ou preto) →
+       contraste (259(k+255)/(255(259−k))) → luma 0,30/0,59/0,11 → 1 − luma;
+     · LINHAS: passo = lado/linhas; a meia-largura de cada lado da linha vai
+       de 0,165 a 0,835 do meio-passo, amostrada 0,25 meio-passo para
+       aquele lado (a linha engorda para o lado em que a imagem é escura);
+     · ESPIRAL: raio = lado/2, passo = raio/(voltas+1), espiral de
+       Arquimedes r = passo·θ/2π, começa em π/12 e dá 'voltas' voltas menos
+       0,35 (1,5× mais quando não fica contida no disco); meia-espessura
+       de cada lado = max(escuro·0,42·passo, 0,07·passo), amostrada 0,105
+       passo para aquele lado;
+     · PONTOS: malha hexagonal com passo = lado/(pontos+0,25) e linhas a
+       passo·√3/2; o escuro do ponto é o centro (peso 4) mais quatro
+       vizinhos a 0,65 do meio-passo; raio = meio-passo·(mín + escuro·(máx − mín)).
+     O lado é o menor lado do quadro; o padrão cobre o quadro inteiro (o
+     site recorta a foto num quadrado). As paletas são as dela, com nomes
+     do laboratório; 'Para colorir' desenha só o contorno. A HACHURA
+     CRUZADA de antes ficou como o quarto desenho.                        */
+
+  var PALETAS_GRAVURA = [
+    ['Ciano e ameixa', '#00e5c8', '#851f73'], ['Preto no branco', '#ffffff', '#000000'], ['Para colorir', '#ffffff', '#bbbbbb'],
+    ['Amarelo e azul', '#ffd800', '#0055c5'], ['Palha e roxo', '#f3dd6d', '#810065'], ['Areia e carvão', '#d7c9b8', '#3d3536'],
+    ['Ciano e anil', '#00fcff', '#0028e6'], ['Coral e marinho', '#ff4137', '#1c3c63'], ['Água e vinho', '#88dbdf', '#981012'],
+    ['Limão e verde', '#fef08d', '#037a44'], ['Menta e marinho', '#43fd90', '#05407a'], ['Amarelo e rosa', '#fff809', '#dc51d2'],
+    ['Verde-água e ameixa', '#90d3ca', '#513750'], ['Laranja e marinho', '#ff6436', '#1e3265'], ['Água e vermelho', '#9defe1', '#e72b3c'],
+    ['Framboesa e marinho', '#f03061', '#2e3060'], ['Amarelo e violeta', '#fff639', '#4a1bcd'], ['Rosa e azul', '#f5ccd3', '#4539e5'],
+    ['Verde e preto', '#71f85b', '#000000'], ['Cinza e chumbo', '#bcc3c4', '#43455a'], ['Gelo e preto', '#98f9ff', '#000000'],
+    ['Salmão e magenta', '#f46864', '#a40360'], ['Turquesa e roxo', '#2dd9e7', '#900cb8'], ['Rosa-velho e ardósia', '#db9692', '#314454'],
+    ['Ouro e preto', '#fbdc60', '#000000'], ['Branco e verde-mar', '#ffffff', '#48a9a8'], ['Azul-céu e vinho', '#4c9cfe', '#602237'],
+    ['Céu e anil', '#50c7e6', '#110151'], ['Lilás e azul', '#e5ccfb', '#5630f9'], ['Lima e azul', '#c8e210', '#5392d9'],
+    ['Verde e violeta', '#14ea66', '#6715e8'], ['Personalizada', null, null]
+  ];
+  function hex3(h) { return 'vec3(' + [1, 3, 5].map(function (i) { return (parseInt(h.substr(i, 2), 16) / 255).toFixed(4); }).join(',') + ')'; }
+  var GL_PALETAS = ['void paletaGravura(int i, out vec3 papel, out vec3 tinta){', '  papel = u_paper; tinta = u_ink;']
+    .concat(PALETAS_GRAVURA.filter(function (p) { return p[1]; }).map(function (p, i) {
+      return '  if(i == ' + i + '){ papel = ' + hex3(p[1]) + '; tinta = ' + hex3(p[2]) + '; }';
+    })).concat(['}']).join('\n');
 
   D({
     id: 'engrave', name: 'Gravura / Hachura', cat: 'impressao', color: '#1b4fd8',
-    desc: 'linhas paralelas que engrossam na sombra',
+    desc: 'espiral, linhas ou pontos que engrossam na sombra — a gravura de dois tons',
     params: [
-      { k: 'pitch', label: 'Espaçamento', min: 2, max: 40, step: 0.5, def: 7 },
-      { k: 'weight', label: 'Espessura', min: 0.1, max: 2.5, def: 1.15 },
-      { k: 'ang', label: 'Ângulo', min: 0, max: 180, step: 1, def: 35 },
-      { k: 'cross', t: 'b', label: 'Hachura cruzada', def: 1 },
-      { k: 'crossAng', label: 'Ângulo do cruzamento', min: 10, max: 170, step: 1, def: 90 },
-      { k: 'crossThr', label: 'Limiar do cruzamento', min: 0, max: 1, def: 0.42 },
-      { k: 'warp', label: 'Ondulação', min: 0, max: 2, def: 0.55 },
-      { k: 'warpScale', label: 'Escala da ondulação', min: 0.5, max: 20, step: 0.5, def: 5 },
-      { k: 'black', label: 'Ponto preto', min: 0, max: 1, def: 0.05 },
-      { k: 'white', label: 'Ponto branco', min: 0, max: 1.5, def: 0.95 },
-      { k: 'gamma', label: 'Gama', min: 0.2, max: 3, def: 1 },
-      { k: 'ink', t: 'c', label: 'Tinta', def: '#1c3f5e' },
-      { k: 'paper', t: 'c', label: 'Papel', def: '#dfeaee' }
+      { k: 'modo', t: 's', label: 'Desenho', def: 0, opts: ['Linhas', 'Espiral', 'Pontos', 'Hachura cruzada'] },
+      { k: 'linhas', label: 'Linhas · quantas', min: 7, max: 121, step: 2, def: 49 },
+      { k: 'ang', label: 'Linhas · ângulo', min: 0, max: 180, step: 5, def: 30 },
+      { k: 'voltas', label: 'Espiral · voltas', min: 8, max: 64, step: 2, def: 32 },
+      { k: 'conter', t: 'b', label: 'Espiral · contida no disco', def: 1 },
+      { k: 'pagina', t: 'b', label: 'Espiral · página branca em volta', def: 1 },
+      { k: 'pontos', label: 'Pontos · quantos', min: 13, max: 105, step: 4, def: 57 },
+      { k: 'pontoMin', label: 'Pontos · menor', min: 0, max: 1, step: 0.01, def: 0.4 },
+      { k: 'pontoMax', label: 'Pontos · maior', min: 0, max: 1, step: 0.01, def: 0.9 },
+      { k: 'forma', t: 's', label: 'Pontos · forma', def: 0, opts: ['Círculo', 'Coração', 'Triângulo', 'Faísca', 'Estrela', 'Quadrado', 'Confete'] },
+      { k: 'claridade', label: 'Claridade', min: -50, max: 50, step: 1, def: 0 },
+      { k: 'contraste', label: 'Contraste', min: -100, max: 100, step: 1, def: 0 },
+      { k: 'inverter', t: 'b', label: 'Inverter', def: 0 },
+      { k: 'paleta', t: 's', label: 'Paleta', def: 0, opts: PALETAS_GRAVURA.map(function (p) { return p[0]; }) },
+      { k: 'ink', t: 'c', label: 'Tinta (personalizada)', def: '#1c3f5e' },
+      { k: 'paper', t: 'c', label: 'Papel (personalizado)', def: '#dfeaee' },
+      /* a hachura cruzada de antes, intacta */
+      { k: 'pitch', label: 'Hachura · espaçamento', min: 2, max: 40, step: 0.5, def: 7 },
+      { k: 'weight', label: 'Hachura · espessura', min: 0.1, max: 2.5, def: 1.15 },
+      { k: 'cross', t: 'b', label: 'Hachura · cruzada', def: 1 },
+      { k: 'crossAng', label: 'Hachura · ângulo do cruzamento', min: 10, max: 170, step: 1, def: 90 },
+      { k: 'crossThr', label: 'Hachura · limiar do cruzamento', min: 0, max: 1, def: 0.42 },
+      { k: 'warp', label: 'Hachura · ondulação', min: 0, max: 2, def: 0.55 },
+      { k: 'warpScale', label: 'Hachura · escala da ondulação', min: 0.5, max: 20, step: 0.5, def: 5 },
+      { k: 'black', label: 'Hachura · ponto preto', min: 0, max: 1, def: 0.05 },
+      { k: 'white', label: 'Hachura · ponto branco', min: 0, max: 1.5, def: 0.95 },
+      { k: 'gamma', label: 'Hachura · gama', min: 0.2, max: 3, def: 1 }
     ],
     glsl: [
+      GL_PALETAS,
+      /* o escuro de um pixel, na conta da referência */
+      'float escuroGrav(vec2 uv){',
+      '  vec3 c = srccol(uv);',
+      '  float t = u_claridade/100.0;',
+      '  c = mix(c, vec3(t < 0.0 ? 0.0 : 1.0), abs(t));',
+      '  float k = clamp(u_contraste, -100.0, 100.0);',
+      '  float fc = 259.0*(k + 255.0)/(255.0*(259.0 - k));',
+      '  c = clamp((c - 0.5)*fc + 0.5, 0.0, 1.0);',
+      '  float d = 1.0 - dot(c, vec3(0.30, 0.59, 0.11));',
+      '  return u_inverter > 0.5 ? 1.0 - d : d;',
+      '}',
+      /* a distância assinada (px, negativo = dentro) até a borda de um ponto
+         de raio r, na forma pedida; as formas polares usam raio − R(φ)   */
+      'float estrelaR(float phi, float r, float ri, float n, float fase){',
+      '  float b = PI/n;',
+      '  float a = phi - fase; a = a - floor(a/(2.0*b))*(2.0*b); a = b - abs(a - b);',   /* 0..b, do vértice de fora */
+      '  return r*ri*sin(b)/max(ri*sin(b - a) + r*sin(a), 1e-4);',
+      '}',
+      'float formaSD(vec2 rel, float r, int forma, vec2 semente){',
+      '  if(forma == 6){',                              /* confete: forma e giro sorteados por ponto */
+      '    float h = hash21(semente*0.173 + 3.1);',
+      '    forma = int(floor(h*6.0));',
+      '    float g = hash21(semente*0.371 + 7.7)*6.2832;',
+      '    rel = vec2(cos(g)*rel.x - sin(g)*rel.y, sin(g)*rel.x + cos(g)*rel.y);',
+      '  }',
+      '  float d = length(rel);',
+      '  if(forma == 0) return d - r;',
+      '  float phi = (d > 1e-4) ? atan(rel.y, rel.x) : 0.0;',
+      '  if(forma == 1){',                              /* coração: (x²+y²−1)³ − x²y³ */
+      '    vec2 q = rel/max(r*0.92, 1e-3); q.y += 0.12;',
+      '    float e = q.x*q.x + q.y*q.y - 1.0; float f = e*e*e - q.x*q.x*q.y*q.y*q.y;',
+      /* o gradiente analítico (dFdx/dFdy salpicava a fronteira entre células) */
+      '    vec2 gr = vec2(6.0*e*e*q.x - 2.0*q.x*q.y*q.y*q.y, 6.0*e*e*q.y - 3.0*q.x*q.x*q.y*q.y);',
+      '    return f/max(length(gr), 1e-4)*(r*0.92);',
+      '  }',
+      '  if(forma == 2) return d - estrelaR(phi, r, r*0.5, 3.0, PI*0.5);',        /* triângulo: polígono de 3 (r interno = r·cos60°) */
+      '  if(forma == 3){ float cc = abs(cos(2.0*phi)); return d - r*mix(0.22, 1.0, cc*cc*cc); }', /* faísca: quatro pontas côncavas */
+      '  if(forma == 4) return d - estrelaR(phi, r, r*0.5, 5.0, PI*0.5);',        /* estrela de cinco pontas */
+      '  return max(abs(rel.x), abs(rel.y)) - r*0.82;',                            /* quadrado */
+      '}',
       'vec3 fx(vec2 uv){',
       '  vec2 px = uv*uRes;',
-      '  float l = luma(srccol(uv));',
-      '  l = clamp((l - u_black)/max(u_white - u_black, 0.02), 0.0, 1.0);',
-      '  l = pow(l, max(u_gamma, 0.05));',
-      '  float wob = (fbm(uv*u_warpScale) - 0.5)*u_warp*38.0;',
-      '  float pitch = max(u_pitch, 2.0);',
-      '  float c1 = rot2(px, radians(u_ang)).y + wob;',
-      '  float t1 = abs(fract(c1/pitch) - 0.5)*2.0;',
-      '  float ink = step(t1, (1.0 - l)*u_weight);',
-      '  if(u_cross > 0.5){',
-      '    float c2 = rot2(px, radians(u_ang + u_crossAng)).y + wob*0.7;',
-      '    float t2 = abs(fract(c2/pitch) - 0.5)*2.0;',
-      '    ink = max(ink, step(t2, max(0.0, (1.0 - l)*u_weight - u_crossThr)));',
+      '  float S = min(uRes.x, uRes.y);',
+      '  vec2 cen = uRes*0.5;',
+      '  vec2 p = px - cen;',
+      '  int modo = int(u_modo + 0.5);',
+      '  float sd = 1e5;',
+      '  bool pagina = false;',
+      '  if(modo == 0){',                                                 /* LINHAS */
+      '    float a = radians(u_ang);',
+      '    vec2 perp = vec2(-sin(a), cos(a));',
+      '    float H = S/max(u_linhas, 1.0), G = H*0.5;',
+      '    float c = dot(p, perp);',
+      '    float d = c - floor(c/H + 0.5)*H;',
+      '    float lado = d < 0.0 ? -1.0 : 1.0;',
+      '    vec2 q = px - (d - lado*0.25*G)*perp;',
+      '    float k = escuroGrav(q/uRes);',
+      '    float meia = G*(0.165 + 0.67*k);',
+      '    sd = abs(d) - meia;',
+      '  } else if(modo == 1){',                                          /* ESPIRAL */
+      '    float B = S*0.5;',
+      '    float D = B/(max(u_voltas, 1.0) + 1.0), I = D/(2.0*PI);',
+      '    float r = length(p);',
+      '    float phi = (r > 1e-4) ? atan(p.y, p.x) : 0.0; if(phi < 0.0) phi += 2.0*PI;',
+      '    float kk = floor((r/I - phi)/(2.0*PI) + 0.5);',
+      '    float th = phi + 2.0*PI*kk;',
+      '    float delta = r - I*th;',
+      '    float w = u_voltas*(u_conter > 0.5 ? 1.0 : 1.5)*2.0*PI - PI*0.7;',
+      '    float O = D*0.42, U = O*0.25;',
+      '    vec2 dir = vec2(cos(phi), sin(phi));',
+      '    vec2 q = cen + dir*(I*th + (delta > 0.0 ? U : -U));',
+      '    float k = escuroGrav(q/uRes);',
+      '    float meia = max(k*O, O/6.0);',
+      '    sd = abs(delta) - meia;',
+      '    if(th < PI/12.0 || th > w) sd = 1e5;',
+      '    if(u_conter > 0.5 && r > B*1.02) pagina = true;',
+      '  } else if(modo == 2){',                                          /* PONTOS */
+      '    float T = S/(max(u_pontos, 1.0) + 0.25), k2 = T*0.5, R = k2*1.7320508;',
+      '    float jc = floor(p.y/R + 0.5);',
+      '    float melhor = 1e9; vec2 bc = vec2(0.0);',
+      '    for(int dj = -1; dj <= 1; dj++){',
+      '      float j = jc + float(dj);',
+      '      float par = j - 2.0*floor(j*0.5);',                          /* 0 ou 1, sem mod() */
+      '      float off = par*0.5*T;',
+      '      float i = floor((p.x - off)/T + 0.5);',
+      '      vec2 c = vec2(i*T + off, j*R);',
+      '      float dd = length(p - c);',
+      '      if(dd < melhor){ melhor = dd; bc = c; }',
+      '    }',
+      '    vec2 cpx = cen + bc;',
+      '    float Bm = 0.65*k2;',
+      '    float kc = escuroGrav(cpx/uRes);',
+      '    float ks = escuroGrav((cpx + vec2(Bm, 0.0))/uRes) + escuroGrav((cpx - vec2(Bm, 0.0))/uRes) + escuroGrav((cpx + vec2(0.0, Bm))/uRes) + escuroGrav((cpx - vec2(0.0, Bm))/uRes);',
+      '    float k = (4.0*kc + ks)/8.0;',
+      '    float mn = min(u_pontoMin, u_pontoMax), mx = max(u_pontoMin, u_pontoMax);',
+      '    float rr = k2*(mn + k*(mx - mn));',
+      '    sd = formaSD(p - bc, rr, int(u_forma + 0.5), bc);',
+      '  } else {',                                                       /* HACHURA CRUZADA (a de antes) */
+      '    float l = luma(srccol(uv));',
+      '    l = clamp((l - u_black)/max(u_white - u_black, 0.02), 0.0, 1.0);',
+      '    l = pow(l, max(u_gamma, 0.05));',
+      '    float wob = (fbm(uv*u_warpScale) - 0.5)*u_warp*38.0;',
+      '    float pitch = max(u_pitch, 2.0);',
+      '    float c1 = rot2(px, radians(u_ang)).y + wob;',
+      '    float t1 = abs(fract(c1/pitch) - 0.5)*2.0;',
+      '    float ink = step(t1, (1.0 - l)*u_weight);',
+      '    if(u_cross > 0.5){',
+      '      float c2 = rot2(px, radians(u_ang + u_crossAng)).y + wob*0.7;',
+      '      float t2 = abs(fract(c2/pitch) - 0.5)*2.0;',
+      '      ink = max(ink, step(t2, max(0.0, (1.0 - l)*u_weight - u_crossThr)));',
+      '    }',
+      '    sd = ink > 0.5 ? -1.0 : 1.0;',
       '  }',
-      '  return mix(u_paper, u_ink, clamp(ink, 0.0, 1.0));',
+      '  vec3 papel, tinta;',
+      '  int ip = int(u_paleta + 0.5);',
+      '  paletaGravura(ip, papel, tinta);',
+      '  float cob = 1.0 - smoothstep(-0.7, 0.7, sd);',
+      '  vec3 col;',
+      '  if(ip == 2){',                                                   /* para colorir: contorno cinza, miolo quase branco */
+      '    float borda = clamp(cob - (1.0 - smoothstep(-0.7, 0.7, sd + 1.6)), 0.0, 1.0);',
+      '    col = mix(papel, vec3(0.945), cob);',
+      '    col = mix(col, tinta, borda);',
+      '  } else col = mix(papel, tinta, cob);',
+      '  if(pagina && u_pagina > 0.5) col = vec3(1.0);',
+      '  return col;',
       '}'
     ].join('\n')
   });
@@ -9892,7 +10056,15 @@ window.VE = window.VE || {};
     },
     {
       id: 'gravura', name: 'Gravura', desc: 'hachura cruzada em tinta azul',
-      fx: [['color', { con: 0.35, sat: -1 }], ['engrave', {}]]
+      fx: [['color', { con: 0.35, sat: -1 }], ['engrave', { modo: 3, paleta: 31 }]]
+    },
+    {
+      id: 'espiral', name: 'Espiral', desc: 'a foto numa espiral que engrossa na sombra',
+      fx: [['engrave', { modo: 1 }]]
+    },
+    {
+      id: 'reticula', name: 'Retícula', desc: 'pontos que crescem na sombra, em dois tons',
+      fx: [['engrave', { modo: 2 }]]
     },
     {
       id: 'cianotipia', name: 'Cianotipia', desc: 'papel azul de arquivo',

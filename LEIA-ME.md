@@ -279,6 +279,17 @@ instrumento de criação, e não um site com filtros.
   binária, e cada pedaço vem de outro lugar E de outro instante, com escala,
   espelhamento, separação de canais e filete entre os pedaços.
 * **ESTABILIZADOR DE VÍDEO** — mede o tremor e o cancela. Ver mais abaixo.
+* **GRAVURA / HACHURA (a de dois tons)** — a imagem vira um desenho de
+  duas cores de três jeitos: **LINHAS** paralelas que engordam na sombra,
+  uma **ESPIRAL** cuja espessura segue a sombra (contida num disco sobre a
+  página branca, ou solta pelo quadro), ou uma retícula de **PONTOS** que
+  crescem na sombra — em círculo, coração, triângulo, faísca, estrela,
+  quadrado ou confete. Quantidade, ângulo, tamanho mínimo e máximo,
+  claridade, contraste, inverter, 31 paletas de dois tons ("Ciano e
+  ameixa" é a de fábrica; "Para colorir" desenha só o contorno) e a
+  personalizada com Tinta e Papel. A hachura cruzada de antes continua
+  como o quarto desenho. Estilos prontos: GRAVURA (a hachura), ESPIRAL e
+  RETÍCULA.
 
 #### Onde um efeito vive
 

@@ -1,13 +1,23 @@
 # rgb_lab — estado do projeto
 
-> Documento de continuidade. Última sessão: **14/09/2026** (a sexta e a sétima
-> voltas da vigésima sétima: a AQUARELA, sete voltas ao todo; a vigésima sexta
-> foi a filmadora, em quatro). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
+> Documento de continuidade. Última sessão: **14/09/2026** (a vigésima oitava: a
+> GRAVURA de dois tons pela régua da Spiral Betty — 5o; antes dela, no mesmo
+> dia, a sexta e a sétima voltas da AQUARELA — 5n). O manual de uso é o [LEIA-ME.md](LEIA-ME.md); aqui fica o que foi
 > decidido, o que está pronto, o que não foi verificado e o que vem depois.
 
 ---
 
 ### RETOMAR AQUI
+
+**A vigésima oitava passada (14/09/2026, à noite) refez a GRAVURA / HACHURA**
+(`engrave`, js/fx4.js) pela régua da Spiral Betty, a pedido: *"atualize a
+função de gravura/hachura para algo igual a esse site"*. Três desenhos —
+LINHAS, ESPIRAL, PONTOS (sete formas) — com claridade, contraste, inverter e
+31 paletas de dois tons; as contas foram LIDAS do código do site, não
+adivinhadas; a hachura cruzada de antes ficou como o quarto desenho. Medido
+contra as fórmulas dela (largura das linhas em cinco escuros, cobertura dos
+pontos, cobertura da espiral) — **seção 5o**. O que falta é o olho dele numa
+foto de verdade.
 
 **A vigésima sétima passada (13–14/09/2026) construiu a AQUARELA em TOOLS**
 — a mesa de luz de um animador, flutuando no palco: pinta-se com água e
@@ -7942,6 +7952,102 @@ qualquer velocidade de mão.
   reclamar, `Motor.HIST` é o número.
 - A paleta é lembrada entre sessões (localStorage); os rolos só vivem na
   linha do tempo (o clipe) — não há gaveta de rolos como na filmadora.
+
+## 5o. A GRAVURA DE DOIS TONS — espiral, linhas e pontos pela régua da Spiral Betty (vigésima oitava passada)
+
+O pedido, com três prints do site (14/09/2026): *"Atualize a função de
+gravura/hachura para algo igual a esse site https://spiralbetty.com/"*. O
+site transforma uma foto num desenho de dois tons de três jeitos: uma
+ESPIRAL cuja espessura segue a sombra, LINHAS paralelas que engordam na
+sombra, ou uma retícula de PONTOS (círculo, coração, triângulo, faísca,
+estrela, quadrado, confete) que crescem na sombra — com quantidade, ângulo
+ou mínimo/máximo, claridade e contraste, dezenas de paletas de dois tons e
+um modo "para colorir".
+
+### 5o.1 A régua foi lida, não adivinhada
+
+O site roda inteiro no navegador; o pacote (`assets/index-*.js`, 929 KB)
+tem as três funções legíveis. O que saiu de lá e entrou no shader, tal qual:
+
+- **o escuro de um pixel**: claridade (−50..50) mistura o canal com branco
+  ou preto por |t|/100; contraste (−100..100) é a fórmula clássica
+  `259(k+255)/(255(259−k))·(c−128)+128`; luma 0,30/0,59/0,11; escuro =
+  1 − luma (e o inverter);
+- **LINHAS** (7..121, passo 2, padrão 49; ângulo 0..180 passo 5, padrão
+  30): passo = lado/linhas; cada LADO da linha tem a sua meia-largura,
+  de 0,165 a 0,835 do meio-passo, amostrada 0,25 meio-passo para aquele
+  lado — a linha engorda para o lado em que a imagem está escura;
+- **ESPIRAL** (voltas 8..64, passo 2, padrão 32): raio = lado/2, passo =
+  raio/(voltas+1), espiral de Arquimedes `r = passo·θ/2π` começando em
+  π/12 e dando `voltas` voltas menos 0,35 (1,5× quando não fica contida
+  no disco); meia-espessura de cada lado = max(escuro·0,42·passo,
+  0,07·passo), amostrada 0,105 passo para aquele lado; fora do disco, a
+  página branca;
+- **PONTOS** (13..105, passo 4, padrão 57; tamanhos 0,4..0,9): malha
+  HEXAGONAL com passo = lado/(pontos+0,25) e linhas a passo·√3/2; o escuro
+  do ponto é o do centro (peso 4) mais quatro vizinhos a 0,65 do
+  meio-passo; raio = meio-passo·(mín + escuro·(máx − mín));
+- as paletas: 31 pares sólidos do site, com nomes do laboratório ("Ciano e
+  ameixa" é a de fábrica, "Preto no branco", "Para colorir"…) e
+  "Personalizada" com Tinta e Papel; os pares com degradê ficaram de fora.
+
+### 5o.2 O que é diferente do site, e por quê
+
+- O site recorta a foto num QUADRADO; aqui o padrão cobre o quadro inteiro
+  (o lado de referência é o menor lado) — é vídeo, não sticker.
+- O SCALE do site é o zoom da foto dentro do quadrado; aqui isso é
+  MOTION (transformar), não parâmetro do efeito.
+- Por pixel, em GLSL, quadro a quadro (é uma FÓRMULA — 19ª passada): para
+  cada pixel acha-se a linha/o braço da espiral/o ponto mais próximo e a
+  distância assinada à borda da tinta, com meio pixel de suavização.
+  As formas dos pontos são distâncias polares (estrela e triângulo pela
+  reta entre vértice e vértice interno, faísca por |cos 2φ|³) e o coração
+  pela curva implícita `(x²+y²−1)³ − x²y³`.
+- "Para colorir": só o contorno (1,6 px, cinza) com o miolo quase branco.
+- A HACHURA CRUZADA de antes ficou intacta como o quarto desenho (com os
+  dez parâmetros dela, rotulados "Hachura ·"); o estilo pronto GRAVURA
+  aponta para ela (`modo: 3`, paleta personalizada = a tinta azul de
+  sempre); dois estilos novos, ESPIRAL e RETÍCULA. **O padrão do efeito é
+  LINHAS** — um projeto antigo com `engrave` sem `modo` passa a render
+  linhas em ciano e ameixa; foi a decisão (o pedido é "igual ao site").
+
+### 5o.3 Medido (laboratório de verdade, `#gl` lido de volta)
+
+Fonte: um degradê horizontal preto → branco.
+
+```
+LINHAS a 90°, 49 linhas (passo 4,86 px na tela de 422)
+  escuro 0,95 → largura 3,89 (fórmula 3,90) · 0,72 → 3,15 (3,13)
+  0,48 → 2,42 (2,36) · 0,24 → 1,54 (1,59) · 0,05 → 1,03 (0,97)
+PONTOS, 57, círculo, 0,4..0,9 (cobertura = π·raio²/célula)
+  escuro 0,95 → 0,696 (0,695) · 0,50 → 0,404 (0,383) · 0,05 → 0,184 (0,164)
+ESPIRAL, 32 voltas, contida: fora do disco (255,255,255);
+  cobertura no lado escuro 0,551 (≈0,574), no claro 0,288 (≈0,266)
+```
+
+E em foto (um retrato sintético 720×720, dez casos numa folha de contato
+guardada na conversa): os três desenhos, as sete formas em ponto grande,
+quatro paletas, "para colorir", a hachura antiga, claridade/contraste.
+O shader compila com 26 uniformes; nenhum pixel fora do par de cores.
+
+### 5o.4 Duas armadilhas
+
+1. **`pow()` com base negativa** no cubo do coração — nesta placa dá NaN
+   (5ª passada); virou `e*e*e`. E `pow(|cos|, 3)` virou `cc*cc*cc`.
+2. **Derivada de tela (`dFdx/dFdy`) numa função que SALTA entre células**
+   salpica a fronteira: a distância do coração era `f/|∇f|` com o
+   gradiente tirado da tela, e o gradiente atravessava a borda da célula
+   vizinha. Gradiente analítico, e o salpico sumiu (o que sobra — 142
+   pixels de 275 mil — são as pontas dos corações).
+
+### 5o.5 O que falta
+
+- O olho dele numa foto de verdade, nos três desenhos, e a direção do
+  ângulo das linhas (aqui 0 = horizontal, 90 = vertical, crescendo no
+  sentido anti-horário; o site pode espelhar).
+- As paletas com degradê do site (uns dez pares) não entraram.
+- A espessura do contorno de "para colorir" (1,6 px) é chute meu — o site
+  usa um traço de 1 px cinza com o miolo branco.
 
 ## 14. O QUE FAZER NA PRÓXIMA PASSADA
 
