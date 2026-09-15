@@ -488,7 +488,13 @@
     if (!VE.project) return;
     if (exportSize) return;
     var c = VE.project.canvas;
-    renderer.setSize(Math.max(32, c.w * quality), Math.max(32, c.h * quality));
+    /* 200% renderiza a composição em dobro (a borda dos efeitos lisa no
+       zoom); acima de 100% o lado maior fica limitado a 4096 px — uma
+       composição 4K em dobro seria 33 Mpx por alvo, e o compositor tem
+       uma dúzia de alvos                                                */
+    var q = quality;
+    if (q > 1) q = Math.max(1, Math.min(q, 4096 / Math.max(c.w, c.h)));
+    renderer.setSize(Math.max(32, Math.round(c.w * q)), Math.max(32, Math.round(c.h * q)));
     VE.view.apply();
   }
   A.setRenderSize = function (w, h) { exportSize = [w, h]; renderer.setSize(w, h); VE.view.apply(); };

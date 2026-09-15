@@ -6518,7 +6518,8 @@ body.recorte-on #tyCanvas{opacity:.2;filter:grayscale(1)}
           <div><label class="chk" title="Caixa de transformação sobre o clipe selecionado"><input type="checkbox" id="xformChk" checked> CAIXA</label></div>
           <div class="spacer"></div>
           <div><span class="micro">QUALIDADE</span>
-            <select class="field" id="quality" style="width:74px">
+            <select class="field" id="quality" style="width:74px" title="Resolução em que a prévia é calculada. 200% renderiza a composição em dobro: com zoom acima de 100% a borda dos efeitos sai lisa (custa 4× por quadro)">
+              <option value="2">200%</option>
               <option value="1">100%</option>
               <option value="0.66" selected>66%</option>
               <option value="0.5">50%</option>
@@ -9313,15 +9314,23 @@ window.VE = window.VE || {};
       '}',
       /* o escuro médio ao longo de uma direção (px), em ±L, com peso de
          cosseno levantado — é o que faz a haste virar um fuso            */
+      /* Os toques ficam numa GRADE PRESA À IMAGEM (passo L/6 ao longo da
+         direção) e só os pesos mudam com o pixel: assim a média é contínua.
+         Com os toques presos ao pixel, uma borda dura na fonte fazia a
+         média saltar cada vez que um toque a cruzava — 13 degraus por
+         fuso, visíveis no zoom (medido, 14/09)                          */
       'float escuroAoLongo(vec2 q, vec2 dir, float L){',
       '  if(L < 0.5) return escuroGrav(q/uRes);',
+      '  float passo = L/6.0;',
+      '  float sAqui = dot(q, dir), base = floor(sAqui/passo)*passo;',
       '  float soma = 0.0, peso = 0.0;',
-      '  for(int i = -6; i <= 6; i++){',
-      '    float t = float(i)/6.0;',
-      '    float w = 0.5 + 0.5*cos(PI*t);',
-      '    soma += w*escuroGrav((q + dir*(t*L))/uRes); peso += w;',
+      '  for(int i = -6; i <= 7; i++){',
+      '    float si = base + float(i)*passo;',
+      '    float t = (si - sAqui)/L;',
+      '    float w = (abs(t) < 1.0) ? 0.5 + 0.5*cos(PI*t) : 0.0;',
+      '    soma += w*escuroGrav((q + dir*(si - sAqui))/uRes); peso += w;',
       '  }',
-      '  return soma/peso;',
+      '  return soma/max(peso, 1e-4);',
       '}',
       'float formaSD(vec2 rel, float r, int forma, vec2 semente){',
       '  if(forma == 6){',                              /* confete: forma e giro sorteados por ponto */
@@ -9379,15 +9388,19 @@ window.VE = window.VE || {};
       '    float k;',
       '    float L = u_suave*S*0.25;',
       '    if(L < 0.5) k = escuroGrav((cen + dir*rl)/uRes);',
-      '    else {',                                                     /* pelo arco: dθ = t/r */
+      '    else {',                                                     /* pelo arco, numa grade presa: s = I·θ²/2 */
+      '      float passo = L/6.0;',
+      '      float sAqui = 0.5*I*th*th, base = floor(sAqui/passo)*passo;',
       '      float soma = 0.0, peso = 0.0;',
-      '      for(int i = -6; i <= 6; i++){',
-      '        float t = float(i)/6.0, w = 0.5 + 0.5*cos(PI*t);',
-      '        float thi = th + clamp(t*L/max(rl, 1.0), -PI, PI);',
+      '      for(int i = -6; i <= 7; i++){',
+      '        float si = max(base + float(i)*passo, 0.0);',
+      '        float t = (si - sAqui)/L;',
+      '        float w = (abs(t) < 1.0) ? 0.5 + 0.5*cos(PI*t) : 0.0;',
+      '        float thi = sqrt(2.0*si/I);',
       '        vec2 qi = cen + vec2(cos(thi), sin(thi))*(I*thi + (delta > 0.0 ? U : -U));',
       '        soma += w*escuroGrav(qi/uRes); peso += w;',
       '      }',
-      '      k = soma/peso;',
+      '      k = soma/max(peso, 1e-4);',
       '    }',
       '    float meia = max(k*O, O/6.0);',
       '    sd = abs(delta) - meia;',
@@ -52422,7 +52435,13 @@ window.VE = window.VE || {};
     if (!VE.project) return;
     if (exportSize) return;
     var c = VE.project.canvas;
-    renderer.setSize(Math.max(32, c.w * quality), Math.max(32, c.h * quality));
+    /* 200% renderiza a composição em dobro (a borda dos efeitos lisa no
+       zoom); acima de 100% o lado maior fica limitado a 4096 px — uma
+       composição 4K em dobro seria 33 Mpx por alvo, e o compositor tem
+       uma dúzia de alvos                                                */
+    var q = quality;
+    if (q > 1) q = Math.max(1, Math.min(q, 4096 / Math.max(c.w, c.h)));
+    renderer.setSize(Math.max(32, Math.round(c.w * q)), Math.max(32, Math.round(c.h * q)));
     VE.view.apply();
   }
   A.setRenderSize = function (w, h) { exportSize = [w, h]; renderer.setSize(w, h); VE.view.apply(); };

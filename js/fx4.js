@@ -155,15 +155,23 @@
       '}',
       /* o escuro médio ao longo de uma direção (px), em ±L, com peso de
          cosseno levantado — é o que faz a haste virar um fuso            */
+      /* Os toques ficam numa GRADE PRESA À IMAGEM (passo L/6 ao longo da
+         direção) e só os pesos mudam com o pixel: assim a média é contínua.
+         Com os toques presos ao pixel, uma borda dura na fonte fazia a
+         média saltar cada vez que um toque a cruzava — 13 degraus por
+         fuso, visíveis no zoom (medido, 14/09)                          */
       'float escuroAoLongo(vec2 q, vec2 dir, float L){',
       '  if(L < 0.5) return escuroGrav(q/uRes);',
+      '  float passo = L/6.0;',
+      '  float sAqui = dot(q, dir), base = floor(sAqui/passo)*passo;',
       '  float soma = 0.0, peso = 0.0;',
-      '  for(int i = -6; i <= 6; i++){',
-      '    float t = float(i)/6.0;',
-      '    float w = 0.5 + 0.5*cos(PI*t);',
-      '    soma += w*escuroGrav((q + dir*(t*L))/uRes); peso += w;',
+      '  for(int i = -6; i <= 7; i++){',
+      '    float si = base + float(i)*passo;',
+      '    float t = (si - sAqui)/L;',
+      '    float w = (abs(t) < 1.0) ? 0.5 + 0.5*cos(PI*t) : 0.0;',
+      '    soma += w*escuroGrav((q + dir*(si - sAqui))/uRes); peso += w;',
       '  }',
-      '  return soma/peso;',
+      '  return soma/max(peso, 1e-4);',
       '}',
       'float formaSD(vec2 rel, float r, int forma, vec2 semente){',
       '  if(forma == 6){',                              /* confete: forma e giro sorteados por ponto */
@@ -221,15 +229,19 @@
       '    float k;',
       '    float L = u_suave*S*0.25;',
       '    if(L < 0.5) k = escuroGrav((cen + dir*rl)/uRes);',
-      '    else {',                                                     /* pelo arco: dθ = t/r */
+      '    else {',                                                     /* pelo arco, numa grade presa: s = I·θ²/2 */
+      '      float passo = L/6.0;',
+      '      float sAqui = 0.5*I*th*th, base = floor(sAqui/passo)*passo;',
       '      float soma = 0.0, peso = 0.0;',
-      '      for(int i = -6; i <= 6; i++){',
-      '        float t = float(i)/6.0, w = 0.5 + 0.5*cos(PI*t);',
-      '        float thi = th + clamp(t*L/max(rl, 1.0), -PI, PI);',
+      '      for(int i = -6; i <= 7; i++){',
+      '        float si = max(base + float(i)*passo, 0.0);',
+      '        float t = (si - sAqui)/L;',
+      '        float w = (abs(t) < 1.0) ? 0.5 + 0.5*cos(PI*t) : 0.0;',
+      '        float thi = sqrt(2.0*si/I);',
       '        vec2 qi = cen + vec2(cos(thi), sin(thi))*(I*thi + (delta > 0.0 ? U : -U));',
       '        soma += w*escuroGrav(qi/uRes); peso += w;',
       '      }',
-      '      k = soma/peso;',
+      '      k = soma/max(peso, 1e-4);',
       '    }',
       '    float meia = max(k*O, O/6.0);',
       '    sd = abs(delta) - meia;',

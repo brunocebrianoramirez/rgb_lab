@@ -289,8 +289,10 @@ instrumento de criação, e não um site com filtros.
   ameixa" é a de fábrica; "Para colorir" desenha só o contorno) e a
   personalizada com Tinta e Papel. **Hastes suaves (fuso)** faz a largura
   variar devagar ao longo da haste (numa fonte de borda dura ela saltaria em
-  degrau) — é o desenho de código de barras em fuso. A hachura cruzada de
-  antes continua como o quarto desenho. Estilos prontos: GRAVURA (a
+  degrau) — é o desenho de código de barras em fuso. Para ver a borda lisa
+  com zoom acima de 100%, **QUALIDADE 200%** na barra do visor (a
+  composição é calculada em dobro; custa 4× por quadro). A hachura cruzada
+  de antes continua como o quarto desenho. Estilos prontos: GRAVURA (a
   hachura), ESPIRAL e RETÍCULA.
 
 #### Onde um efeito vive

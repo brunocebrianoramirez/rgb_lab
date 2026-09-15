@@ -8061,6 +8061,28 @@ linhas a 90°): largura 1,72 fora e 9,18 dentro; a transição 10–90% é de
 seja, a transição mede L. Folha antes/depois guardada na conversa: as
 pontas quadradas viram fusos.
 
+**Terceira volta, no mesmo dia: "a borda full lisa".** O print dele a 223%
+de zoom: a borda das hastes em serra. Duas causas, uma por cima da outra:
+
+1. **O zoom.** O efeito é calculado na resolução da composição (QUALIDADE
+   100%) e o visor amplia os pixels 2,2× — cada degrau de 1 px vira 2,2 na
+   tela. A QUALIDADE ganhou **200%** (`#quality`, app.js `applyQuality`):
+   a composição renderizada em dobro, o lado maior limitado a 4096 px
+   (uma composição 4K em dobro seria 33 Mpx por alvo, e o compositor tem
+   uma dúzia). No zoom de 223% fica quase 1:1 e a borda sai lisa. Custa
+   4× por quadro; é escolha dele, não padrão.
+2. **Os degraus do fuso — este era meu.** A média ao longo da haste tinha
+   13 toques PRESOS AO PIXEL: numa borda dura da fonte a média saltava cada
+   vez que um toque cruzava a borda — 13 degraus por fuso (0,8 px cada),
+   visíveis nas duas qualidades, mais nítidos a 200%. Agora os toques
+   ficam numa **grade presa à imagem** (passo L/6 ao longo da direção; na
+   espiral, no comprimento de arco s = I·θ²/2) e só os PESOS mudam com o
+   pixel — a média é contínua. Medido no perfil de largura de uma haste ao
+   longo do fuso (2,59 → 13,06 px): máxima segunda diferença entre linhas
+   vizinhas **0,012 px** (era ~0,8, um degrau por toque). Folha a 223%
+   guardada na conversa: fusos lisos nas duas qualidades, borda nítida a
+   200%.
+
 ### 5o.5 O que falta
 
 - O olho dele numa foto de verdade, nos três desenhos, e a direção do
