@@ -9268,6 +9268,11 @@ window.VE = window.VE || {};
       { k: 'pontoMin', label: 'Pontos · menor', min: 0, max: 1, step: 0.01, def: 0.4 },
       { k: 'pontoMax', label: 'Pontos · maior', min: 0, max: 1, step: 0.01, def: 0.9 },
       { k: 'forma', t: 's', label: 'Pontos · forma', def: 0, opts: ['Círculo', 'Coração', 'Triângulo', 'Faísca', 'Estrela', 'Quadrado', 'Confete'] },
+      /* a largura de uma haste segue a imagem ponto a ponto; numa fonte de
+         borda dura ela salta em degrau. Com suavidade, o escuro é a média
+         AO LONGO da haste (ou do braço da espiral, ou em volta do ponto)
+         numa janela de até um quarto do lado — a haste vira um fuso      */
+      { k: 'suave', label: 'Hastes suaves (fuso)', min: 0, max: 1, step: 0.01, def: 0 },
       { k: 'claridade', label: 'Claridade', min: -50, max: 50, step: 1, def: 0 },
       { k: 'contraste', label: 'Contraste', min: -100, max: 100, step: 1, def: 0 },
       { k: 'inverter', t: 'b', label: 'Inverter', def: 0 },
@@ -9305,6 +9310,18 @@ window.VE = window.VE || {};
       '  float b = PI/n;',
       '  float a = phi - fase; a = a - floor(a/(2.0*b))*(2.0*b); a = b - abs(a - b);',   /* 0..b, do vértice de fora */
       '  return r*ri*sin(b)/max(ri*sin(b - a) + r*sin(a), 1e-4);',
+      '}',
+      /* o escuro médio ao longo de uma direção (px), em ±L, com peso de
+         cosseno levantado — é o que faz a haste virar um fuso            */
+      'float escuroAoLongo(vec2 q, vec2 dir, float L){',
+      '  if(L < 0.5) return escuroGrav(q/uRes);',
+      '  float soma = 0.0, peso = 0.0;',
+      '  for(int i = -6; i <= 6; i++){',
+      '    float t = float(i)/6.0;',
+      '    float w = 0.5 + 0.5*cos(PI*t);',
+      '    soma += w*escuroGrav((q + dir*(t*L))/uRes); peso += w;',
+      '  }',
+      '  return soma/peso;',
       '}',
       'float formaSD(vec2 rel, float r, int forma, vec2 semente){',
       '  if(forma == 6){',                              /* confete: forma e giro sorteados por ponto */
@@ -9344,7 +9361,7 @@ window.VE = window.VE || {};
       '    float d = c - floor(c/H + 0.5)*H;',
       '    float lado = d < 0.0 ? -1.0 : 1.0;',
       '    vec2 q = px - (d - lado*0.25*G)*perp;',
-      '    float k = escuroGrav(q/uRes);',
+      '    float k = escuroAoLongo(q, vec2(cos(a), sin(a)), u_suave*S*0.25);',
       '    float meia = G*(0.165 + 0.67*k);',
       '    sd = abs(d) - meia;',
       '  } else if(modo == 1){',                                          /* ESPIRAL */
@@ -9358,8 +9375,20 @@ window.VE = window.VE || {};
       '    float w = u_voltas*(u_conter > 0.5 ? 1.0 : 1.5)*2.0*PI - PI*0.7;',
       '    float O = D*0.42, U = O*0.25;',
       '    vec2 dir = vec2(cos(phi), sin(phi));',
-      '    vec2 q = cen + dir*(I*th + (delta > 0.0 ? U : -U));',
-      '    float k = escuroGrav(q/uRes);',
+      '    float rl = I*th + (delta > 0.0 ? U : -U);',
+      '    float k;',
+      '    float L = u_suave*S*0.25;',
+      '    if(L < 0.5) k = escuroGrav((cen + dir*rl)/uRes);',
+      '    else {',                                                     /* pelo arco: dθ = t/r */
+      '      float soma = 0.0, peso = 0.0;',
+      '      for(int i = -6; i <= 6; i++){',
+      '        float t = float(i)/6.0, w = 0.5 + 0.5*cos(PI*t);',
+      '        float thi = th + clamp(t*L/max(rl, 1.0), -PI, PI);',
+      '        vec2 qi = cen + vec2(cos(thi), sin(thi))*(I*thi + (delta > 0.0 ? U : -U));',
+      '        soma += w*escuroGrav(qi/uRes); peso += w;',
+      '      }',
+      '      k = soma/peso;',
+      '    }',
       '    float meia = max(k*O, O/6.0);',
       '    sd = abs(delta) - meia;',
       '    if(th < PI/12.0 || th > w) sd = 1e5;',
@@ -9382,6 +9411,16 @@ window.VE = window.VE || {};
       '    float kc = escuroGrav(cpx/uRes);',
       '    float ks = escuroGrav((cpx + vec2(Bm, 0.0))/uRes) + escuroGrav((cpx - vec2(Bm, 0.0))/uRes) + escuroGrav((cpx + vec2(0.0, Bm))/uRes) + escuroGrav((cpx - vec2(0.0, Bm))/uRes);',
       '    float k = (4.0*kc + ks)/8.0;',
+      '    float Lp = u_suave*S*0.125;',
+      '    if(Lp > 0.5){',                                              /* doze toques em dois anéis: o tamanho muda devagar entre pontos vizinhos */
+      '      float soma = 2.0*k, peso = 2.0;',
+      '      for(int i = 0; i < 6; i++){',
+      '        float an = float(i)*1.0471976;',
+      '        vec2 dv = vec2(cos(an), sin(an));',
+      '        soma += escuroGrav((cpx + dv*Lp*0.5)/uRes) + escuroGrav((cpx + dv*Lp)/uRes); peso += 2.0;',
+      '      }',
+      '      k = soma/peso;',
+      '    }',
       '    float mn = min(u_pontoMin, u_pontoMax), mx = max(u_pontoMin, u_pontoMax);',
       '    float rr = k2*(mn + k*(mx - mn));',
       '    sd = formaSD(p - bc, rr, int(u_forma + 0.5), bc);',

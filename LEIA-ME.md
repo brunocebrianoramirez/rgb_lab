@@ -287,9 +287,11 @@ instrumento de criação, e não um site com filtros.
   quadrado ou confete. Quantidade, ângulo, tamanho mínimo e máximo,
   claridade, contraste, inverter, 31 paletas de dois tons ("Ciano e
   ameixa" é a de fábrica; "Para colorir" desenha só o contorno) e a
-  personalizada com Tinta e Papel. A hachura cruzada de antes continua
-  como o quarto desenho. Estilos prontos: GRAVURA (a hachura), ESPIRAL e
-  RETÍCULA.
+  personalizada com Tinta e Papel. **Hastes suaves (fuso)** faz a largura
+  variar devagar ao longo da haste (numa fonte de borda dura ela saltaria em
+  degrau) — é o desenho de código de barras em fuso. A hachura cruzada de
+  antes continua como o quarto desenho. Estilos prontos: GRAVURA (a
+  hachura), ESPIRAL e RETÍCULA.
 
 #### Onde um efeito vive
 

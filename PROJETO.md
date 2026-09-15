@@ -8040,6 +8040,27 @@ O shader compila com 26 uniformes; nenhum pixel fora do par de cores.
    vizinha. Gradiente analítico, e o salpico sumiu (o que sobra — 142
    pixels de 275 mil — são as pontas dos corações).
 
+### 5o.6 Segunda volta (14/09/2026): as hastes suaves — o fuso
+
+O print dele: a prancheta preto no branco em LINHAS a 90°, com as hastes
+saltando em degrau em cada borda dura; e ao lado uma referência (um
+código de barras arco-íris "BRASIL") em que a largura das hastes varia
+suavemente, em fuso. *"Quero que tenha a opção de deixar as hastes de
+forma suave e ondulada, ao invés de quadrado como está."*
+
+O site amostra a imagem ponto a ponto ao longo da haste; numa fonte de
+borda dura a largura salta junto. **Hastes suaves (fuso)** (`suave`,
+0..1, padrão 0 = igual ao site): o escuro que dita a largura passa a ser
+a média AO LONGO da haste, numa janela de ±L com peso de cosseno
+levantado (13 toques), L = suave × lado/4. Na ESPIRAL a média é pelo
+arco (dθ = t/r); nos PONTOS é um disco em volta do ponto (dois anéis de
+seis, L = suave × lado/8), e o tamanho muda devagar entre pontos
+vizinhos. Medido numa prancheta de borda dura (barra preta vertical,
+linhas a 90°): largura 1,72 fora e 9,18 dentro; a transição 10–90% é de
+**0 px** com suavidade 0, **56 px** com 0,25 e **112 px** com 0,5 — ou
+seja, a transição mede L. Folha antes/depois guardada na conversa: as
+pontas quadradas viram fusos.
+
 ### 5o.5 O que falta
 
 - O olho dele numa foto de verdade, nos três desenhos, e a direção do
